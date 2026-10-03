@@ -504,9 +504,12 @@ function TextPanel({
   const fontName = typeof s.fontFamily === "string" ? s.fontFamily : "";
   const fontToken = typeof s.fontFamily === "object" ? s.fontFamily.token : "";
   const fontValue = fontToken ? `token:${fontToken}` : fontName || "";
-  const fontOptions: Array<{ value: string; label: string; group?: string }> = [
-    { value: "", label: "Bawaan sistem", group: "Dasar" },
-  ];
+  const fontOptions: Array<{
+    value: string;
+    label: string;
+    group?: string;
+    fontFamily?: string;
+  }> = [{ value: "", label: "Bawaan sistem", group: "Dasar" }];
 
   if (Object.keys(tokens.fonts).length > 0) {
     for (const [tokenKey, tokenVal] of Object.entries(tokens.fonts)) {
@@ -514,6 +517,7 @@ function TextPanel({
         value: `token:${tokenKey}`,
         label: `${tokenKey} (${tokenVal})`,
         group: "Token Tema",
+        fontFamily: tokenVal,
       });
     }
   }
@@ -525,6 +529,7 @@ function TextPanel({
         value: f.family,
         label: f.name,
         group: cat.label,
+        fontFamily: f.family,
       });
     }
   }
@@ -537,6 +542,7 @@ function TextPanel({
       value: fontName,
       label: fontName,
       group: "Font Lainnya",
+      fontFamily: fontName,
     });
   }
 

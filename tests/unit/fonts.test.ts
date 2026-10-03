@@ -12,9 +12,9 @@ import { fontNameSchema } from "@/lib/schema/primitives";
 import type { CanonicalDocument } from "@/lib/schema";
 
 describe("Font Catalog", () => {
-  it("defines at least 30 curated fonts across all categories", () => {
-    expect(INVITATION_FONTS.length).toBeGreaterThanOrEqual(30);
-    expect(FONT_CATEGORIES.length).toBe(5);
+  it("defines at least 80 curated fonts across all 6 categories", () => {
+    expect(INVITATION_FONTS.length).toBeGreaterThanOrEqual(80);
+    expect(FONT_CATEGORIES.length).toBe(6);
 
     for (const cat of FONT_CATEGORIES) {
       const fontsInCat = INVITATION_FONTS.filter((f) => f.category === cat.id);
@@ -33,6 +33,7 @@ describe("Font Catalog", () => {
     expect(isGoogleFont("Great Vibes")).toBe(true);
     expect(isGoogleFont("Playfair Display")).toBe(true);
     expect(isGoogleFont("Plus Jakarta Sans")).toBe(true);
+    expect(isGoogleFont("Pacifico")).toBe(true);
     expect(isGoogleFont("Arial")).toBe(false);
     expect(isGoogleFont("Georgia")).toBe(false);
     expect(isGoogleFont("Unknown Nonexistent")).toBe(false);
@@ -40,6 +41,7 @@ describe("Font Catalog", () => {
 
   it("resolves appropriate category-aware fallbacks", () => {
     expect(getFontFallback("Great Vibes")).toBe("cursive, sans-serif");
+    expect(getFontFallback("Pacifico")).toBe("cursive, sans-serif");
     expect(getFontFallback("Playfair Display")).toBe("serif");
     expect(getFontFallback("Georgia")).toBe("serif");
     expect(getFontFallback("Inter")).toBe("sans-serif");

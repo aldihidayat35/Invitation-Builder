@@ -156,6 +156,7 @@ export interface SelectOption<T extends string | number> {
   readonly value: T;
   readonly label: string;
   readonly group?: string;
+  readonly fontFamily?: string;
 }
 
 export interface SelectFieldProps<T extends string | number> {
@@ -194,7 +195,15 @@ export function SelectField<T extends string | number>({
               const groupOptions = options.filter((o) => (o.group || "") === groupName);
               if (!groupName) {
                 return groupOptions.map((o) => (
-                  <option key={String(o.value)} value={String(o.value)}>
+                  <option
+                    key={String(o.value)}
+                    value={String(o.value)}
+                    style={
+                      o.fontFamily
+                        ? { fontFamily: `'${o.fontFamily}', cursive, sans-serif` }
+                        : undefined
+                    }
+                  >
                     {o.label}
                   </option>
                 ));
@@ -202,7 +211,15 @@ export function SelectField<T extends string | number>({
               return (
                 <optgroup key={groupName} label={groupName}>
                   {groupOptions.map((o) => (
-                    <option key={String(o.value)} value={String(o.value)}>
+                    <option
+                      key={String(o.value)}
+                      value={String(o.value)}
+                      style={
+                        o.fontFamily
+                          ? { fontFamily: `'${o.fontFamily}', cursive, sans-serif` }
+                          : undefined
+                      }
+                    >
                       {o.label}
                     </option>
                   ))}
@@ -210,7 +227,15 @@ export function SelectField<T extends string | number>({
               );
             })
           : options.map((o) => (
-              <option key={String(o.value)} value={String(o.value)}>
+              <option
+                key={String(o.value)}
+                value={String(o.value)}
+                style={
+                  o.fontFamily
+                    ? { fontFamily: `'${o.fontFamily}', cursive, sans-serif` }
+                    : undefined
+                }
+              >
                 {o.label}
               </option>
             ))}
