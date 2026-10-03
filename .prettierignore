@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+build
+coverage
+playwright-report
+test-results
+package-lock.json
+next-env.d.ts
+# PRD sources and the verbatim baseline must never be reformatted (checksum-verified).
+PRD_Digital_Invitation_Builder_v1.0.md
+Prompt_Implementasi_Bertahap_Digital_Invitation_Builder_v1.0.md
+docs/PRD_BASELINE.md

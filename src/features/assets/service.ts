@@ -1,0 +1,257 @@
+/**
+ * Asset service (server-only): upload init/finalize, validation, listing and
+ * delivery (FR-AST-001..002, FR-EDT-008, NFR-SEC-002).
+ *
+ * Trust model: the client only declares filename/MIME/bytes. Finalize re-reads
+ * the stored object and derives type, size and dimensions from the bytes; a
+ * mismatch marks the asset `failed` and deletes the object.
+ *
+ * Authorization policy (mirrors templates): operations naming a workspace give
+ * ForbiddenError to non-members; operations by asset id give AssetNotFoundError
+ * to non-members so existence is not leaked across workspaces.
+ */
+import "server-only";
+import { randomUUID } from "node:crypto";
+import { findRole, requireCapability, type Actor } from "@/lib/auth/authorization";
+import { insertAuditLog } from "@/lib/db/repositories/audit";
+import {
+  findAssetById,
+  insertAsset,
+  listReadyAssets,
+  markAssetFailed,
+  markAssetReady,
+} from "@/lib/db/repositories/assets";
+import type { AssetRow } from "@/lib/db/schema";
+import type { Database } from "@/lib/db/types";
+import {
+  ASSET_LIMITS,
+  EXTENSIONS_BY_MIME,
+  IMAGE_MIME_TYPES,
+  assetUploadInitSchema,
+  type AllowedMimeType,
+} from "@/lib/schema";
+import { sniffImage } from "@/lib/storage/image-sniff";
+import type { PresignedUpload, StorageDriver } from "@/lib/storage/types";
+import { z } from "zod";
+import { assetContentUrl } from "./urls";
+
+export class AssetNotFoundError extends Error {
+  constructor() {
+    super("Aset tidak ditemukan.");
+    this.name = "AssetNotFoundError";
+  }
+}
+
+/** Input is invalid or the uploaded bytes are not an acceptable image. Message is user-safe. */
+export class AssetRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AssetRejectedError";
+  }
+}
+
+export interface AssetSummary {
+  readonly id: string;
+  readonly filename: string;
+  readonly mimeType: string;
+  readonly bytes: number;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly createdAt: Date;
+}
+
+export interface UploadInit {
+  readonly assetId: string;
+  readonly upload: PresignedUpload;
+}
+
+const idSchema = z.uuid();
+const isImageMime = (mime: string): boolean =>
+  (IMAGE_MIME_TYPES as readonly string[]).includes(mime);
+
+function toSummary(row: AssetRow): AssetSummary {
+  return {
+    id: row.id,
+    filename: row.filename,
+    mimeType: row.mimeType,
+    bytes: row.bytes,
+    width: row.width,
+    height: row.height,
+    createdAt: row.createdAt,
+  };
+}
+
+async function loadAuthorized(
+  db: Database,
+  actor: Actor,
+  assetId: string,
+  capability: "asset:read" | "asset:write",
+): Promise<AssetRow> {
+  if (!idSchema.safeParse(assetId).success) throw new AssetNotFoundError();
+  const row = await findAssetById(db, assetId);
+  if (!row) throw new AssetNotFoundError();
+  if (!(await findRole(db, actor, row.workspaceId))) throw new AssetNotFoundError();
+  await requireCapability(db, actor, row.workspaceId, capability);
+  return row;
+}
+
+async function fail(
+  db: Database,
+  storage: StorageDriver,
+  row: AssetRow,
+  message: string,
+): Promise<never> {
+  await markAssetFailed(db, row.id);
+  await storage.remove(row.storageKey).catch(() => undefined);
+  throw new AssetRejectedError(message);
+}
+
+/** Step 1: validate declared metadata, reserve the asset row and hand out an upload target. */
+export async function initUpload(
+  db: Database,
+  storage: StorageDriver,
+  actor: Actor,
+  input: { workspaceId: string; filename: unknown; mimeType: unknown; bytes: unknown },
+): Promise<UploadInit> {
+  if (!idSchema.safeParse(input.workspaceId).success)
+    throw new AssetRejectedError("Workspace tidak valid.");
+  await requireCapability(db, actor, input.workspaceId, "asset:write");
+
+  const parsed = assetUploadInitSchema.safeParse({
+    filename: input.filename,
+    mimeType: input.mimeType,
+    bytes: input.bytes,
+  });
+  if (!parsed.success) {
+    throw new AssetRejectedError(parsed.error.issues.map((i) => i.message).join("; "));
+  }
+  const upload = parsed.data;
+  if (!isImageMime(upload.mimeType)) {
+    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF) yang didukung saat ini.");
+  }
+
+  const id = randomUUID();
+  const ext = EXTENSIONS_BY_MIME[upload.mimeType as AllowedMimeType][0]!;
+  const storageKey = `ws/${input.workspaceId}/${id}.${ext}`;
+  await insertAsset(db, {
+    id,
+    workspaceId: input.workspaceId,
+    filename: upload.filename,
+    mimeType: upload.mimeType,
+    bytes: upload.bytes,
+    storageKey,
+    uploadedBy: actor.userId,
+  });
+
+  const presigned = await storage.presignPut(storageKey, upload.mimeType, upload.bytes);
+  return {
+    assetId: id,
+    upload: presigned ?? {
+      method: "PUT",
+      url: assetContentUrl(id),
+      headers: { "Content-Type": upload.mimeType },
+    },
+  };
+}
+
+/** Step 2 (local driver only): the app receives the bytes, enforcing the declared size. */
+export async function receiveContent(
+  db: Database,
+  storage: StorageDriver,
+  actor: Actor,
+  assetId: string,
+  data: Uint8Array,
+): Promise<void> {
+  const row = await loadAuthorized(db, actor, assetId, "asset:write");
+  if (row.status !== "uploading") throw new AssetRejectedError("Aset sudah diproses.");
+  if (data.byteLength > ASSET_LIMITS.imageMaxBytes || data.byteLength !== row.bytes) {
+    await fail(db, storage, row, "Ukuran berkas tidak sesuai dengan yang dinyatakan.");
+  }
+  await storage.put(row.storageKey, data, row.mimeType);
+}
+
+/** Step 3: verify the stored object from its bytes, then mark the asset `ready`. */
+export async function finalizeUpload(
+  db: Database,
+  storage: StorageDriver,
+  actor: Actor,
+  assetId: string,
+): Promise<AssetSummary> {
+  const row = await loadAuthorized(db, actor, assetId, "asset:write");
+  if (row.status === "ready") return toSummary(row);
+  if (row.status !== "uploading") throw new AssetRejectedError("Upload ini sudah ditolak.");
+
+  const data = await storage.read(row.storageKey, ASSET_LIMITS.imageMaxBytes);
+  if (!data) throw new AssetRejectedError("Berkas belum diunggah.");
+  if (data.byteLength > ASSET_LIMITS.imageMaxBytes) {
+    return fail(db, storage, row, "Berkas melebihi batas ukuran.");
+  }
+  if (data.byteLength !== row.bytes) {
+    return fail(db, storage, row, "Ukuran berkas tidak sesuai dengan yang dinyatakan.");
+  }
+  const sniffed = sniffImage(data);
+  if (!sniffed) return fail(db, storage, row, "Berkas bukan gambar yang valid.");
+  if (sniffed.mime !== row.mimeType) {
+    return fail(db, storage, row, "Isi berkas tidak sesuai dengan tipe yang dinyatakan.");
+  }
+  if (
+    sniffed.width > ASSET_LIMITS.imageMaxDimension ||
+    sniffed.height > ASSET_LIMITS.imageMaxDimension
+  ) {
+    return fail(db, storage, row, `Dimensi gambar maksimal ${ASSET_LIMITS.imageMaxDimension}px.`);
+  }
+
+  const ready = await markAssetReady(db, row.id, {
+    mimeType: sniffed.mime,
+    bytes: data.byteLength,
+    width: sniffed.width,
+    height: sniffed.height,
+  });
+  if (!ready) throw new AssetRejectedError("Aset sudah diproses.");
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "asset.upload",
+    entityType: "asset",
+    entityId: row.id,
+    metadata: { filename: row.filename, bytes: ready.bytes },
+  });
+  return toSummary(ready);
+}
+
+export async function listAssets(
+  db: Database,
+  actor: Actor,
+  workspaceId: string,
+  options: { search?: string } = {},
+): Promise<AssetSummary[]> {
+  if (!idSchema.safeParse(workspaceId).success)
+    throw new AssetRejectedError("Workspace tidak valid.");
+  await requireCapability(db, actor, workspaceId, "asset:read");
+  const rows = await listReadyAssets(db, workspaceId, {
+    ...(options.search ? { search: options.search.slice(0, 100) } : {}),
+  });
+  return rows.map(toSummary);
+}
+
+export interface DeliverableAsset {
+  readonly bytes: Uint8Array;
+  readonly mimeType: string;
+}
+
+/**
+ * Public delivery by capability URL: ids are unguessable UUIDs and only `ready`
+ * images are served. Published invitations reference assets this way (F9).
+ */
+export async function getDeliverableAsset(
+  db: Database,
+  storage: StorageDriver,
+  assetId: string,
+): Promise<DeliverableAsset | null> {
+  if (!idSchema.safeParse(assetId).success) return null;
+  const row = await findAssetById(db, assetId);
+  if (!row || row.status !== "ready" || !isImageMime(row.mimeType)) return null;
+  const bytes = await storage.read(row.storageKey, ASSET_LIMITS.imageMaxBytes);
+  if (!bytes) return null;
+  return { bytes, mimeType: row.mimeType };
+}

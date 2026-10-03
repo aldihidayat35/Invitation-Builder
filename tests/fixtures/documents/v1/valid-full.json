@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "design": {
+    "baseWidth": 390,
+    "tokens": {
+      "colors": { "primary": "#8b5e3c", "paper": "#fbf6ef", "ink": "#2b2118" },
+      "fonts": { "display": "Playfair Display", "body": "Lora" },
+      "spacing": { "gutter": 24 }
+    }
+  },
+  "variables": [
+    {
+      "key": "couple.bride.fullName",
+      "type": "text",
+      "label": "Nama lengkap mempelai wanita",
+      "required": true
+    },
+    {
+      "key": "couple.bride.nickname",
+      "type": "text",
+      "label": "Nama panggilan mempelai wanita",
+      "required": false
+    },
+    {
+      "key": "couple.groom.fullName",
+      "type": "text",
+      "label": "Nama lengkap mempelai pria",
+      "required": true
+    },
+    {
+      "key": "couple.groom.nickname",
+      "type": "text",
+      "label": "Nama panggilan mempelai pria",
+      "required": false
+    },
+    {
+      "key": "event.ceremony.startAt",
+      "type": "datetime",
+      "label": "Waktu akad",
+      "required": true
+    },
+    { "key": "venue.name", "type": "text", "label": "Nama lokasi", "required": true },
+    { "key": "venue.address", "type": "text", "label": "Alamat", "required": true },
+    {
+      "key": "venue.coordinate",
+      "type": "coordinate",
+      "label": "Koordinat lokasi",
+      "required": false
+    },
+    { "key": "media.coverPhoto", "type": "image", "label": "Foto cover", "required": false },
+    { "key": "guest.name", "type": "guest-context", "label": "Nama tamu", "required": false }
+  ],
+  "sections": [
+    {
+      "id": "sec_cover",
+      "name": "Cover",
+      "baseHeight": 844,
+      "background": { "color": { "token": "paper" } },
+      "elements": [
+        {
+          "id": "el_cover_photo",
+          "type": "image",
+          "name": "Foto cover",
+          "frame": { "x": 0, "y": 0, "w": 390, "h": 420, "rotation": 0 },
+          "source": { "bind": "media.coverPhoto" },
+          "alt": "Foto mempelai",
+          "style": { "fit": "cover", "focal": { "x": 0.5, "y": 0.4 }, "radius": 0, "opacity": 1 }
+        },
+        {
+          "id": "el_title",
+          "type": "text",
+          "name": "Judul nama pasangan",
+          "frame": { "x": 32, "y": 460, "w": 326, "h": 88, "rotation": 0 },
+          "content": {
+            "segments": [
+              { "bind": "couple.bride.nickname", "fallback": "Mempelai Wanita" },
+              { "text": " & " },
+              { "bind": "couple.groom.nickname", "fallback": "Mempelai Pria" }
+            ]
+          },
+          "style": {
+            "fontFamily": { "token": "display" },
+            "fontSize": 40,
+            "fontWeight": 600,
+            "textAlign": "center",
+            "color": { "token": "ink" }
+          },
+          "animations": {
+            "enter": {
+              "presetId": "charRise",
+              "trigger": "onEnterViewport",
+              "durationMs": 700,
+              "delayMs": 100,
+              "easing": "power2.out",
+              "staggerUnit": "char",
+              "staggerAmountMs": 40
+            }
+          }
+        },
+        {
+          "id": "el_divider",
+          "type": "shape",
+          "shapeType": "line",
+          "frame": { "x": 135, "y": 570, "w": 120, "h": 2, "rotation": 0 },
+          "style": { "stroke": { "color": { "token": "primary" }, "width": 1 } }
+        },
+        {
+          "id": "wdg_greeting",
+          "type": "widget",
+          "widgetType": "guestGreeting",
+          "frame": { "x": 32, "y": 600, "w": 326, "h": 60, "rotation": 0 },
+          "props": {
+            "guestName": { "bind": "guest.name" },
+            "prefix": "Kepada Yth.",
+            "fallback": "Tamu Undangan"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sec_event",
+      "name": "Acara",
+      "baseHeight": 844,
+      "background": { "color": "#fbf6ef" },
+      "elements": [
+        {
+          "id": "el_ceremony_date",
+          "type": "text",
+          "frame": { "x": 32, "y": 120, "w": 326, "h": 40, "rotation": 0 },
+          "content": {
+            "segments": [
+              {
+                "bind": "event.ceremony.startAt",
+                "formatter": { "name": "datetime", "style": "full" }
+              }
+            ]
+          },
+          "style": { "fontSize": 20, "textAlign": "center" }
+        },
+        {
+          "id": "el_venue_name",
+          "type": "text",
+          "frame": { "x": 32, "y": 180, "w": 326, "h": 36, "rotation": 0 },
+          "content": {
+            "segments": [{ "bind": "venue.name", "formatter": { "name": "uppercase" } }]
+          },
+          "style": { "fontSize": 22, "fontWeight": 700, "textAlign": "center" }
+        },
+        {
+          "id": "wdg_countdown",
+          "type": "widget",
+          "widgetType": "countdown",
+          "frame": { "x": 32, "y": 300, "w": 326, "h": 96, "rotation": 0 },
+          "props": {
+            "targetDateTime": { "bind": "event.ceremony.startAt" },
+            "labels": { "days": "Hari", "hours": "Jam", "minutes": "Menit", "seconds": "Detik" },
+            "afterState": "hide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sec_location",
+      "name": "Lokasi",
+      "baseHeight": 600,
+      "background": {},
+      "overflow": "hidden",
+      "elements": [
+        {
+          "id": "el_ornament",
+          "type": "shape",
+          "shapeType": "circle",
+          "frame": { "x": 135, "y": 40, "w": 120, "h": 120, "rotation": 0 },
+          "style": { "fill": "#8b5e3c33", "opacity": 0.8 }
+        },
+        {
+          "id": "wdg_map",
+          "type": "widget",
+          "widgetType": "map",
+          "frame": { "x": 32, "y": 220, "w": 326, "h": 120, "rotation": 0 },
+          "props": {
+            "coordinate": { "bind": "venue.coordinate" },
+            "label": { "bind": "venue.name" },
+            "buttonText": "Buka Google Maps"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+/* Dashboard-only global styles. Scoped to the (dashboard) root layout so they
+ * never reach the public runtime (PRD §5.1 — renderer CSS must not leak). */
+
+:root {
+  --dash-bg: hsl(232 28% 7%);
+  --dash-surface: hsl(232 24% 11% / 0.72);
+  --dash-surface-strong: hsl(232 22% 14%);
+  --dash-border: hsl(232 20% 24% / 0.6);
+  --dash-text: hsl(230 30% 96%);
+  --dash-muted: hsl(230 14% 66%);
+  --dash-accent: hsl(338 82% 66%);
+  --dash-accent-2: hsl(268 84% 70%);
+  --dash-gold: hsl(40 88% 68%);
+  --dash-radius: 18px;
+  --dash-font:
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, hsl(338 82% 40% / 0.22), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, hsl(268 84% 45% / 0.2), transparent 60%),
+    var(--dash-bg);
+  color: var(--dash-text);
+  font-family: var(--dash-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--dash-gold);
+  outline-offset: 3px;
+}

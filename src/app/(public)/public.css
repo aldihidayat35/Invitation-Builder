@@ -1,0 +1,25 @@
+/* Public runtime base reset. Loaded only by the (public) root layout —
+ * dashboard styles are never included here (PRD §5.1, ADR 0001 #3). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: #0f0d14;
+  -webkit-font-smoothing: antialiased;
+}

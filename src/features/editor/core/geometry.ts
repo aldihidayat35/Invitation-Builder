@@ -1,0 +1,179 @@
+/**
+ * Editor geometry: zoom and coordinate transforms.
+ *
+ * PRD refs: FR-EDT-001 (zoom 25-200% without changing saved coordinates),
+ * FR-EDT-002 (transform persisted), section 9.2 (values stored in the 390 px
+ * canonical space, never in zoomed screen space), P-07.
+ *
+ * Pivot decision (documented in ADR 0005): `frame` is the UNROTATED box
+ * (x, y, w, h) and `rotation` (degrees) rotates it around its CENTER. This
+ * matches CSS `transform: rotate()` default origin, so the HTML renderer
+ * reproduces editor geometry exactly.
+ */
+import { CANONICAL_BASE_WIDTH, type Frame } from "@/lib/schema";
+
+export const MIN_ZOOM = 0.25;
+export const MAX_ZOOM = 2;
+export const DEFAULT_ZOOM = 1;
+export const ZOOM_STEPS: readonly number[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+export function clampZoom(zoom: number): number {
+  if (!Number.isFinite(zoom)) return DEFAULT_ZOOM;
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom * 1000) / 1000));
+}
+
+/** Next preset step above (or below) the current zoom; stays within 25-200%. */
+export function stepZoom(current: number, direction: 1 | -1): number {
+  const z = clampZoom(current);
+  if (direction === 1) return ZOOM_STEPS.find((s) => s > z + 1e-9) ?? MAX_ZOOM;
+  return [...ZOOM_STEPS].reverse().find((s) => s < z - 1e-9) ?? MIN_ZOOM;
+}
+
+/** Zoom that makes the 390 px artboard fill `availableWidth` (screen px), clamped. */
+export function fitZoom(availableWidth: number): number {
+  return clampZoom(availableWidth / CANONICAL_BASE_WIDTH);
+}
+
+/** Screen offset (relative to the artboard's top-left) -> canonical coordinate. */
+export function screenToCanvas(point: Point, zoom: number): Point {
+  const z = clampZoom(zoom);
+  return { x: point.x / z, y: point.y / z };
+}
+
+export function canvasToScreen(point: Point, zoom: number): Point {
+  const z = clampZoom(zoom);
+  return { x: point.x * z, y: point.y * z };
+}
+
+export function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** Normalizes degrees into (-180, 180]. */
+export function normalizeRotation(deg: number): number {
+  if (!Number.isFinite(deg)) return 0;
+  let r = ((((deg + 180) % 360) + 360) % 360) - 180;
+  if (r === -180) r = 180;
+  return round2(r);
+}
+
+/** Konva node attributes that render `frame` with a center pivot. */
+export interface NodeAttrs {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly offsetX: number;
+  readonly offsetY: number;
+  readonly rotation: number;
+}
+
+export function nodeAttrsFromFrame(frame: Frame): NodeAttrs {
+  return {
+    x: frame.x + frame.w / 2,
+    y: frame.y + frame.h / 2,
+    width: frame.w,
+    height: frame.h,
+    offsetX: frame.w / 2,
+    offsetY: frame.h / 2,
+    rotation: frame.rotation,
+  };
+}
+
+export interface NodeTransformState {
+  /** Pivot position in section space (Konva `x`/`y` with a center offset). */
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly scaleX: number;
+  readonly scaleY: number;
+  readonly rotation: number;
+}
+
+export const MIN_ELEMENT_SIZE = 1;
+
+/**
+ * Commits a (possibly scaled) Konva node back to a canonical frame. Scale is
+ * folded into width/height so the stored model never contains scale factors,
+ * and values are rounded so pointer noise does not leak into the document.
+ */
+export function frameFromNodeAttrs(node: NodeTransformState): Frame {
+  const w = Math.max(MIN_ELEMENT_SIZE, Math.abs(node.width * node.scaleX));
+  const h = Math.max(MIN_ELEMENT_SIZE, Math.abs(node.height * node.scaleY));
+  return {
+    x: round2(node.x - w / 2),
+    y: round2(node.y - h / 2),
+    w: round2(w),
+    h: round2(h),
+    rotation: normalizeRotation(node.rotation),
+  };
+}
+
+/** Bounding box of a rotated frame (used for snapping and hit math). */
+export function rotatedBounds(frame: Frame): { x: number; y: number; w: number; h: number } {
+  const rad = (frame.rotation * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const w = frame.w * cos + frame.h * sin;
+  const h = frame.w * sin + frame.h * cos;
+  const cx = frame.x + frame.w / 2;
+  const cy = frame.y + frame.h / 2;
+  return { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
+// ------------------------------------------------------------------- snapping
+
+export interface SnapResult {
+  /** Offset to add to the frame position so it lines up. */
+  readonly dx: number;
+  readonly dy: number;
+  /** Guide positions (section space) that were matched. */
+  readonly guides: { readonly vertical: number[]; readonly horizontal: number[] };
+}
+
+export const SNAP_THRESHOLD = 6;
+
+/**
+ * Snaps the frame's edges/center to the section's edges/center (FR-EDT-005,
+ * P1: section guides only - neighbour alignment is not implemented yet).
+ */
+export function snapToSection(
+  frame: Frame,
+  section: { readonly width: number; readonly height: number },
+  threshold: number = SNAP_THRESHOLD,
+): SnapResult {
+  const b = rotatedBounds(frame);
+  const candidatesX = [
+    { edge: b.x, target: 0 },
+    { edge: b.x + b.w / 2, target: section.width / 2 },
+    { edge: b.x + b.w, target: section.width },
+  ];
+  const candidatesY = [
+    { edge: b.y, target: 0 },
+    { edge: b.y + b.h / 2, target: section.height / 2 },
+    { edge: b.y + b.h, target: section.height },
+  ];
+  const pick = (list: { edge: number; target: number }[]) => {
+    let best: { delta: number; target: number } | null = null;
+    for (const c of list) {
+      const delta = c.target - c.edge;
+      if (Math.abs(delta) <= threshold && (!best || Math.abs(delta) < Math.abs(best.delta))) {
+        best = { delta, target: c.target };
+      }
+    }
+    return best;
+  };
+  const sx = pick(candidatesX);
+  const sy = pick(candidatesY);
+  return {
+    dx: sx ? round2(sx.delta) : 0,
+    dy: sy ? round2(sy.delta) : 0,
+    guides: { vertical: sx ? [sx.target] : [], horizontal: sy ? [sy.target] : [] },
+  };
+}

@@ -1,0 +1,9 @@
+{
+  "note": "Sample data used ONLY by tests to prove data/design separation (P-02). Never embed these values in templates.",
+  "couple.bride.fullName": "Anindya Larasati",
+  "couple.bride.nickname": "Anin",
+  "couple.groom.fullName": "Bagas Wicaksono",
+  "couple.groom.nickname": "Bagas",
+  "venue.name": "Gedung Kartini",
+  "venue.address": "Jl. Melati No. 12, Yogyakarta"
+}

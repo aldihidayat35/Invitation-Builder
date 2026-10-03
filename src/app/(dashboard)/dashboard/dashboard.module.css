@@ -1,0 +1,222 @@
+.main {
+  padding: 48px clamp(20px, 5vw, 64px) 72px;
+  max-width: 1200px;
+}
+
+.hero {
+  padding: 36px;
+  border-radius: calc(var(--dash-radius) + 6px);
+  border: 1px solid var(--dash-border);
+  background:
+    linear-gradient(135deg, hsl(338 82% 60% / 0.12), hsl(268 84% 60% / 0.08) 50%, transparent),
+    var(--dash-surface);
+  backdrop-filter: blur(16px);
+  margin-bottom: 44px;
+  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  color: var(--dash-gold);
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 20px;
+  max-width: 62ch;
+  color: var(--dash-muted);
+  line-height: 1.6;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.fact {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: var(--dash-muted);
+  background: hsl(232 22% 18% / 0.7);
+  border: 1px solid var(--dash-border);
+}
+
+.fact strong {
+  color: var(--dash-text);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--dash-accent), var(--dash-accent-2));
+  box-shadow: 0 10px 30px hsl(338 82% 50% / 0.35);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px hsl(338 82% 50% / 0.45);
+}
+
+.cta span {
+  transition: transform 180ms ease;
+}
+
+.cta:hover span {
+  transform: translateX(3px);
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  margin: 0 0 18px;
+  color: var(--dash-muted);
+  font-weight: 600;
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 20px;
+  border-radius: var(--dash-radius);
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  transition:
+    transform 200ms ease,
+    border-color 200ms ease;
+  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: hsl(338 82% 66% / 0.5);
+}
+
+.card[data-status="in-progress"] {
+  border-color: hsl(40 88% 68% / 0.55);
+  box-shadow:
+    0 0 0 1px hsl(40 88% 68% / 0.15),
+    0 12px 32px hsl(40 88% 40% / 0.12);
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.phaseId {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--dash-accent);
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--dash-muted);
+  border: 1px solid var(--dash-border);
+}
+
+.card[data-status="in-progress"] .badge {
+  color: var(--dash-gold);
+  border-color: hsl(40 88% 68% / 0.5);
+}
+
+.card[data-status="done"] .badge {
+  color: hsl(150 60% 65%);
+  border-color: hsl(150 60% 55% / 0.5);
+}
+
+.cardTitle {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 0.68rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: hsl(232 22% 18% / 0.8);
+  color: var(--dash-muted);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .card {
+    animation: none;
+  }
+
+  .card,
+  .cta,
+  .cta span {
+    transition: none;
+  }
+}
+
+.ghost {
+  display: inline-flex;
+  margin-left: 12px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--dash-muted);
+  border: 1px solid var(--dash-border);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ghost:hover {
+  color: var(--dash-text);
+  border-color: var(--dash-accent);
+}

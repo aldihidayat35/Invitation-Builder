@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "design": { "baseWidth": 390, "tokens": { "colors": {}, "fonts": {}, "spacing": {} } },
+  "variables": [],
+  "sections": []
+}

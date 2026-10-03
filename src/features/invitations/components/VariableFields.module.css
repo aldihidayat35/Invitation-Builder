@@ -1,0 +1,68 @@
+.groups {
+  display: grid;
+  gap: 16px;
+}
+
+.group {
+  margin: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--dash-border);
+  border-radius: 14px;
+  background: var(--dash-surface);
+  display: grid;
+  gap: 12px;
+}
+
+.legend {
+  padding: 0 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dash-gold);
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+}
+
+.label {
+  font-size: 0.82rem;
+  color: var(--dash-muted);
+}
+
+.required {
+  color: var(--dash-accent);
+}
+
+.input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--dash-border);
+  background: hsl(232 24% 12%);
+  color: var(--dash-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--dash-accent);
+  outline-offset: 1px;
+}
+
+.field[data-invalid="true"] .input {
+  border-color: hsl(0 80% 62%);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--dash-muted);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: hsl(0 85% 72%);
+}
