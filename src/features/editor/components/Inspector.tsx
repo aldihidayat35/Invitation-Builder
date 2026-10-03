@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { Element } from "@/lib/schema";
 import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
@@ -35,9 +36,8 @@ import { PanelSection } from "./PanelSection";
 import { WidgetPanel } from "./WidgetPanel";
 import { AnimationPanel } from "./AnimationPanel";
 import styles from "./editor.module.css";
-import type { Element } from "@/lib/schema";
+import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 
-const FONT_PRESETS = ["Playfair Display", "Lora", "Inter", "Georgia", "Times New Roman", "Arial"];
 const WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900].map((w) => ({
   value: w,
   label: String(w),
@@ -492,13 +492,41 @@ function TextPanel({
   const fontName = typeof s.fontFamily === "string" ? s.fontFamily : "";
   const fontToken = typeof s.fontFamily === "object" ? s.fontFamily.token : "";
   const fontValue = fontToken ? `token:${fontToken}` : fontName || "";
-  const fontOptions = [
-    { value: "", label: "Bawaan sistem" },
-    ...Object.keys(tokens.fonts).map((t) => ({ value: `token:${t}`, label: `Token: ${t}` })),
-    ...FONT_PRESETS.map((f) => ({ value: f, label: f })),
+  const fontOptions: Array<{ value: string; label: string; group?: string }> = [
+    { value: "", label: "Bawaan sistem", group: "Dasar" },
   ];
-  if (fontName && !FONT_PRESETS.includes(fontName))
-    fontOptions.push({ value: fontName, label: fontName });
+
+  if (Object.keys(tokens.fonts).length > 0) {
+    for (const [tokenKey, tokenVal] of Object.entries(tokens.fonts)) {
+      fontOptions.push({
+        value: `token:${tokenKey}`,
+        label: `${tokenKey} (${tokenVal})`,
+        group: "Token Tema",
+      });
+    }
+  }
+
+  for (const cat of FONT_CATEGORIES) {
+    const fontsInCat = INVITATION_FONTS.filter((f) => f.category === cat.id);
+    for (const f of fontsInCat) {
+      fontOptions.push({
+        value: f.family,
+        label: f.name,
+        group: cat.label,
+      });
+    }
+  }
+
+  if (
+    fontName &&
+    !INVITATION_FONTS.some((f) => f.family.toLowerCase() === fontName.toLowerCase())
+  ) {
+    fontOptions.push({
+      value: fontName,
+      label: fontName,
+      group: "Font Lainnya",
+    });
+  }
 
   return (
     <>
@@ -562,12 +590,29 @@ function TextPanel({
         options={fontOptions}
         disabled={readOnly}
         onChange={(value) => {
-          if (value === "") act().patchStyle([id], { fontFamily: undefined });
-          else if (value.startsWith("token:")) {
-            act().patchStyle([id], { fontFamily: { token: value.slice(6) } });
-          } else act().patchStyle([id], { fontFamily: value });
+          if (value === "") {
+            act().patchStyle([id], { fontFamily: undefined });
+          } else if (value.startsWith("token:")) {
+            const token = value.slice(6);
+            act().patchStyle([id], { fontFamily: { token } });
+            const resolved = tokens.fonts[token];
+            if (resolved) void ensureFontLoaded(resolved);
+          } else {
+            act().patchStyle([id], { fontFamily: value });
+            void ensureFontLoaded(value);
+          }
         }}
       />
+      {fontName ? (
+        <div
+          className={styles.fontPreviewBadge}
+          style={{ fontFamily: `"${fontName}", sans-serif` }}
+          title={`Pratinjau font: ${fontName}`}
+        >
+          <span className={styles.fontPreviewName}>{fontName}</span>
+          <span className={styles.fontPreviewSample}>The Wedding of Romeo &amp; Juliet</span>
+        </div>
+      ) : null}
       <div className={styles.grid2}>
         <NumberField
           id="insp-font-size"

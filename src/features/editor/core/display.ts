@@ -3,6 +3,7 @@
  * resolution and human-readable element labels. Pure.
  */
 import type { CanonicalDocument, Element, ThemeTokens } from "@/lib/schema";
+import { getFontFallback } from "@/lib/fonts";
 
 type ColorInput = string | { readonly token: string } | undefined;
 
@@ -33,7 +34,9 @@ export function resolveFontFamily(
       : Object.hasOwn(tokens.fonts, value.token)
         ? tokens.fonts[value.token]
         : undefined;
-  return name ? `${name}, ${generic}` : generic;
+  if (!name) return generic;
+  const fallback = getFontFallback(name);
+  return `${name}, ${fallback}`;
 }
 
 /** Plain text preview of a text element; bindings appear as `{key}`. */

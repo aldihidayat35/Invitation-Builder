@@ -152,11 +152,17 @@ export function TextField({
   );
 }
 
+export interface SelectOption<T extends string | number> {
+  readonly value: T;
+  readonly label: string;
+  readonly group?: string;
+}
+
 export interface SelectFieldProps<T extends string | number> {
   readonly id: string;
   readonly label: string;
   readonly value: T;
-  readonly options: readonly { value: T; label: string }[];
+  readonly options: readonly SelectOption<T>[];
   readonly onChange: (value: T) => void;
   readonly disabled?: boolean;
 }
@@ -169,6 +175,8 @@ export function SelectField<T extends string | number>({
   onChange,
   disabled,
 }: SelectFieldProps<T>) {
+  const hasGroups = options.some((o) => o.group);
+
   return (
     <FieldRow label={label} htmlFor={id}>
       <select
@@ -181,11 +189,31 @@ export function SelectField<T extends string | number>({
           if (picked) onChange(picked.value);
         }}
       >
-        {options.map((o) => (
-          <option key={String(o.value)} value={String(o.value)}>
-            {o.label}
-          </option>
-        ))}
+        {hasGroups
+          ? Array.from(new Set(options.map((o) => o.group || ""))).map((groupName) => {
+              const groupOptions = options.filter((o) => (o.group || "") === groupName);
+              if (!groupName) {
+                return groupOptions.map((o) => (
+                  <option key={String(o.value)} value={String(o.value)}>
+                    {o.label}
+                  </option>
+                ));
+              }
+              return (
+                <optgroup key={groupName} label={groupName}>
+                  {groupOptions.map((o) => (
+                    <option key={String(o.value)} value={String(o.value)}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })
+          : options.map((o) => (
+              <option key={String(o.value)} value={String(o.value)}>
+                {o.label}
+              </option>
+            ))}
       </select>
     </FieldRow>
   );

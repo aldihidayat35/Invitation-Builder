@@ -9,7 +9,7 @@
  * document is touched once, at pointer end (`commitFrames`). Nothing here is
  * serialized or posted while the pointer moves.
  */
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Ellipse, Group, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
@@ -26,6 +26,7 @@ import { findElement } from "../core/ops";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { useEditor, useEditorStore } from "./EditorProvider";
 import { replayKonvaNode } from "@/features/animations";
+import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
 
 const ACCENT = "#e85d8f";
 const MIN_BOX = 8;
@@ -36,6 +37,7 @@ interface ElementNodeProps {
   readonly draggable: boolean;
   readonly selected: boolean;
   readonly handlers: ElementHandlers;
+  readonly fontRev: number;
 }
 
 interface ElementHandlers {
@@ -51,13 +53,22 @@ function styleOpacity(element: Element): number {
   return opacity ?? 1;
 }
 
-function Visual({ element, tokens }: { element: Element; tokens: ThemeTokens }) {
+function Visual({
+  element,
+  tokens,
+  fontRev,
+}: {
+  element: Element;
+  tokens: ThemeTokens;
+  fontRev: number;
+}) {
   const { w, h } = element.frame;
   switch (element.type) {
     case "text": {
       const s = element.style;
       return (
         <Text
+          key={`txt-${element.id}-${fontRev}`}
           width={w}
           height={h}
           text={textPreview(element)}
@@ -125,6 +136,7 @@ const ElementNode = memo(function ElementNode({
   draggable,
   selected,
   handlers,
+  fontRev,
 }: ElementNodeProps) {
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
@@ -153,7 +165,7 @@ const ElementNode = memo(function ElementNode({
     >
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
-      <Visual element={element} tokens={tokens} />
+      <Visual element={element} tokens={tokens} fontRev={fontRev} />
       {selected && element.locked ? (
         <Rect
           width={w}
@@ -195,6 +207,35 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   const elements = section?.elements;
   const baseHeight = section?.baseHeight ?? 0;
+
+  const [fontRev, setFontRev] = useState(0);
+
+  // Re-draw when web fonts finish loading so text metrics and font glyphs update immediately.
+  useEffect(() => {
+    const unsubscribe = onFontLoaded(() => {
+      setFontRev((r) => r + 1);
+      stageRef.current?.batchDraw();
+    });
+    return unsubscribe;
+  }, []);
+
+  // Ensure all fonts used by text elements in this section are loaded.
+  useEffect(() => {
+    if (!elements) return;
+    for (const el of elements) {
+      if (el.type === "text") {
+        const family =
+          typeof el.style.fontFamily === "string"
+            ? el.style.fontFamily
+            : typeof el.style.fontFamily === "object"
+              ? tokens.fonts[el.style.fontFamily.token]
+              : undefined;
+        if (family) {
+          void ensureFontLoaded(family);
+        }
+      }
+    }
+  }, [elements, tokens]);
 
   const selectedHere = useMemo(
     () => selectedIds.filter((id) => elements?.some((e) => e.id === id)),
@@ -439,6 +480,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               draggable={!el.locked && !readOnly && !panMode}
               selected={selectedHere.includes(el.id)}
               handlers={handlers}
+              fontRev={fontRev}
             />
           ))}
         <Transformer

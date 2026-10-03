@@ -1143,3 +1143,39 @@ textarea.input {
   max-height: 140px;
   object-fit: contain;
 }
+
+/* --------------------------------------------------------------- font preview */
+.fontPreviewBadge {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-sunken);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.fontPreviewBadge:hover {
+  border-color: var(--dash-accent);
+}
+
+.fontPreviewName {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dash-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.fontPreviewSample {
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--dash-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -62,6 +62,7 @@ test.describe("editor core (Fase 4)", () => {
     const last = sections(page).last();
     const canvas = last.locator("[data-testid^='canvas-']");
     await canvas.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(150);
     const box = (await canvas.boundingBox())!;
     const cx = box.x + 40 + 60;
     const cy = box.y + 60 + 40;

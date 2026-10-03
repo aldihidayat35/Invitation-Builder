@@ -10,6 +10,7 @@ import type {
   ResolvedTextElement,
 } from "@/lib/engine";
 import type { RuntimeMode } from "../types";
+import { buildGoogleFontsUrl, collectDocumentFonts, getFontFallback } from "@/lib/fonts";
 import { AnimatedElement } from "./AnimatedElement";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
@@ -32,8 +33,9 @@ function cssColor(value: ColorInput | undefined, tokens: Tokens): string | undef
 function cssFont(value: ColorInput | undefined, tokens: Tokens): string | undefined {
   if (value === undefined) return undefined;
   const name = typeof value === "string" ? value : tokens.fonts[value.token];
-  // Font names are restricted by the schema (letters, digits, space, _ and -).
-  return name ? `'${name}', sans-serif` : undefined;
+  if (!name) return undefined;
+  const fallback = getFontFallback(name);
+  return `'${name}', ${fallback}`;
 }
 
 /**
@@ -245,8 +247,12 @@ function SectionView({
  * as React text nodes (always escaped), never as markup.
  */
 export function DocumentRenderer({ document, runtimeMode }: DocumentRendererProps) {
+  const fonts = collectDocumentFonts(document);
+  const googleFontsUrl = buildGoogleFontsUrl(fonts);
+
   return (
     <RendererViewport runtimeMode={runtimeMode}>
+      {googleFontsUrl ? <link rel="stylesheet" href={googleFontsUrl} /> : null}
       <div className={styles.document} data-renderer-document="">
         {document.sections.map((section, index) => (
           <SectionView

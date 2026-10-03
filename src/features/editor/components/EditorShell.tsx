@@ -12,6 +12,7 @@ import { Inspector } from "./Inspector";
 import { LeftPanel } from "./LeftPanel";
 import { PanelResizer } from "./PanelResizer";
 import { TopBar } from "./TopBar";
+import { getAllCuratedGoogleFontsUrl, preloadEditorFonts } from "@/lib/fonts";
 import styles from "./editor.module.css";
 
 export interface EditorShellProps {
@@ -47,6 +48,11 @@ export function EditorShell(props: EditorShellProps) {
   );
 
   useEffect(() => () => autosaver?.dispose(), [autosaver]);
+
+  // Preload curated invitation fonts in the background
+  useEffect(() => {
+    preloadEditorFonts();
+  }, []);
 
   return (
     <EditorProvider store={store} autosaver={autosaver} workspaceId={props.workspaceId}>
@@ -153,6 +159,7 @@ function EditorFrame({
 
   return (
     <div className={styles.shell}>
+      <link rel="stylesheet" href={getAllCuratedGoogleFontsUrl()} />
       <TopBar
         templateId={templateId}
         templateName={templateName}
