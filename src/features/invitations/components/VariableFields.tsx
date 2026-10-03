@@ -9,6 +9,8 @@ export interface VariableFieldsProps {
   readonly namePrefix?: string;
   /** Validation message per variable key. */
   readonly errors?: Readonly<Record<string, string>>;
+  /** Ready image assets to pick from; without it the image field falls back to an Asset ID input. */
+  readonly imageOptions?: readonly { readonly id: string; readonly label: string }[];
 }
 
 const INPUT_TYPE: Partial<Record<FormField["control"], string>> = {
@@ -22,20 +24,21 @@ const INPUT_TYPE: Partial<Record<FormField["control"], string>> = {
 
 const HINT: Partial<Record<FormField["control"], string>> = {
   coordinate: "lat, lng - contoh: -7.8, 110.36",
-  image: "Asset ID (UUID) - upload hadir di Fase 5",
-  collection: "JSON array - UI daftar hadir di Fase 8",
+  image: "Pilih gambar dari Asset Library (atau isi Asset ID)",
+  collection: "JSON array - mis. [{\"title\":\"Akad\"}]",
   richtext: "Teks polos (rich text terbatas)",
 };
 
 /**
  * Generic form fields generated from VariableDefinition (FR-INV-002). Pure
- * presentational primitives - the final Data Mode screen is built in Fase 8.
+ * presentational primitives, reused by the Data Mode screen (Fase 8).
  */
 export function VariableFields({
   groups,
   values,
   namePrefix = "",
   errors = {},
+  imageOptions,
 }: VariableFieldsProps) {
   return (
     <div className={styles.groups}>
@@ -64,7 +67,7 @@ export function VariableFields({
                     </span>
                   ) : null}
                 </label>
-                {field.control === "select" ? (
+                {field.control === "select" || (field.control === "image" && imageOptions) ? (
                   <select
                     id={id}
                     name={name}
@@ -74,11 +77,17 @@ export function VariableFields({
                     aria-describedby={describedBy}
                   >
                     <option value="">-</option>
-                    {field.options?.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
+                    {field.control === "image"
+                      ? imageOptions?.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.label}
+                          </option>
+                        ))
+                      : field.options?.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
                   </select>
                 ) : field.control === "textarea" ? (
                   <textarea

@@ -7,7 +7,6 @@ const UPCOMING = [
   { label: "Editor", phase: "F4" },
   { label: "Assets", phase: "F5" },
   { label: "Widgets", phase: "F6" },
-  { label: "Invitations", phase: "F8" },
   { label: "Publishing", phase: "F9" },
 ] as const;
 
@@ -33,6 +32,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
             </li>
             <li>
               <NavLink href="/dashboard/templates">Template Library</NavLink>
+            </li>
+            <li>
+              <NavLink href="/dashboard/invitations">Undangan</NavLink>
             </li>
             {process.env.NODE_ENV !== "production" ? (
               <li>

@@ -5,7 +5,8 @@ import { playAnimation } from "@/features/animations";
 import type { Element } from "@/lib/schema";
 
 export interface AnimatedElementProps {
-  readonly element: Element;
+  /** Canonical or resolved element: only `id` and `animations` are read. */
+  readonly element: Element | { readonly id: string; readonly animations?: Element["animations"] };
   readonly children: ReactNode;
   readonly className?: string;
   readonly style?: CSSProperties;

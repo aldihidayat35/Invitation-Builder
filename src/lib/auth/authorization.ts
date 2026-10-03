@@ -15,14 +15,24 @@ export const CAPABILITIES = [
   "template:archive",
   "asset:read",
   "asset:write",
+  "invitation:read",
+  "invitation:write",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 const ROLE_CAPABILITIES: Readonly<Record<WorkspaceRole, readonly Capability[]>> = {
   owner: CAPABILITIES,
   admin: CAPABILITIES,
-  designer: ["template:read", "template:write", "template:publish", "asset:read", "asset:write"],
-  operator: ["template:read", "asset:read"],
+  designer: [
+    "template:read",
+    "template:write",
+    "template:publish",
+    "asset:read",
+    "asset:write",
+    "invitation:read",
+    "invitation:write",
+  ],
+  operator: ["template:read", "asset:read", "invitation:read", "invitation:write"],
 };
 
 export function roleCan(role: WorkspaceRole, capability: Capability): boolean {

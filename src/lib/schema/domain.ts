@@ -40,5 +40,10 @@ export const AUDIT_ACTIONS = [
   "template.archive",
   "template.publish",
   "asset.upload",
+  "invitation.create",
+  "invitation.rename",
+  "invitation.archive",
+  "guest.create",
+  "guest.archive",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

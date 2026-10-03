@@ -65,13 +65,13 @@ export const ROADMAP_PHASES: readonly RoadmapPhase[] = [
     id: "F8",
     title: "Invitation Data Mode, Guest Context & Preview",
     prdTargets: ["FR-INV-001", "FR-GST-002", "FR-PRV-001"],
-    status: "in-progress",
+    status: "done",
   },
   {
     id: "F9",
     title: "HTML Public Renderer & Publishing",
     prdTargets: ["FR-INV-004", "FR-PUB-001", "AC-10", "AC-12"],
-    status: "planned",
+    status: "in-progress",
   },
   {
     id: "F10",

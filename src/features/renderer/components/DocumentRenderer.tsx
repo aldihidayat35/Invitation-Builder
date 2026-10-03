@@ -1,0 +1,256 @@
+import type { CSSProperties, ReactElement } from "react";
+import { AccessibleAnimatedText } from "@/features/animations/text-splitter";
+import { WidgetRuntime } from "@/features/widgets/runtime";
+import type {
+  ResolvedDocument,
+  ResolvedElement,
+  ResolvedSection,
+  ResolvedShapeElement,
+  ResolvedTextElement,
+} from "@/lib/engine";
+import type { RuntimeMode } from "../types";
+import { AnimatedElement } from "./AnimatedElement";
+import { PublicImage } from "./PublicImage";
+import { RendererViewport } from "./RendererViewport";
+import styles from "./DocumentRenderer.module.css";
+
+export interface DocumentRendererProps {
+  readonly document: ResolvedDocument;
+  readonly runtimeMode: RuntimeMode;
+}
+
+type ColorInput = string | { readonly token: string };
+type Tokens = ResolvedDocument["tokens"];
+
+/** Resolves a hex literal or theme-token reference to a CSS color (undefined when unknown). */
+function cssColor(value: ColorInput | undefined, tokens: Tokens): string | undefined {
+  if (value === undefined) return undefined;
+  return typeof value === "string" ? value : tokens.colors[value.token];
+}
+
+function cssFont(value: ColorInput | undefined, tokens: Tokens): string | undefined {
+  if (value === undefined) return undefined;
+  const name = typeof value === "string" ? value : tokens.fonts[value.token];
+  // Font names are restricted by the schema (letters, digits, space, _ and -).
+  return name ? `'${name}', sans-serif` : undefined;
+}
+
+/** Frame = absolute box in 390px artboard coordinates; pivot = center (ADR 0005). */
+function frameStyle(element: ResolvedElement): CSSProperties {
+  const { x, y, w, h, rotation } = element.frame;
+  return {
+    position: "absolute",
+    left: x,
+    top: y,
+    width: w,
+    height: h,
+    transformOrigin: "center center",
+    ...(rotation !== 0 && { transform: `rotate(${rotation}deg)` }),
+  };
+}
+
+function TextBody({ element, tokens }: { element: ResolvedTextElement; tokens: Tokens }) {
+  const { style } = element;
+  const css: CSSProperties = {
+    display: "block",
+    width: "100%",
+    margin: 0,
+    fontFamily: cssFont(style.fontFamily, tokens),
+    fontSize: style.fontSize,
+    fontWeight: style.fontWeight,
+    lineHeight: style.lineHeight,
+    letterSpacing: style.letterSpacing,
+    textAlign: style.textAlign,
+    color: cssColor(style.color, tokens),
+    opacity: style.opacity,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+  };
+  const staggerUnit = element.animations?.enter?.staggerUnit ?? "none";
+  return (
+    <p style={css} data-element-text="">
+      <AccessibleAnimatedText text={element.text} staggerUnit={staggerUnit} />
+    </p>
+  );
+}
+
+function ShapeBody({ element, tokens }: { element: ResolvedShapeElement; tokens: Tokens }) {
+  const { style, shapeType } = element;
+  const stroke = style.stroke;
+  const strokeColor = stroke ? cssColor(stroke.color, tokens) : undefined;
+  if (shapeType === "line") {
+    return (
+      <div
+        data-shape="line"
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "50%",
+          height: stroke?.width ?? 1,
+          transform: "translateY(-50%)",
+          background: strokeColor,
+          opacity: style.opacity,
+        }}
+      />
+    );
+  }
+  return (
+    <div
+      data-shape={shapeType}
+      style={{
+        width: "100%",
+        height: "100%",
+        boxSizing: "border-box",
+        background: cssColor(style.fill, tokens),
+        border: stroke && strokeColor ? `${stroke.width}px solid ${strokeColor}` : undefined,
+        borderRadius: shapeType === "circle" ? "50%" : style.radius,
+        opacity: style.opacity,
+      }}
+    />
+  );
+}
+
+function ElementView({
+  element,
+  tokens,
+  runtimeMode,
+  priority,
+}: {
+  element: ResolvedElement;
+  tokens: Tokens;
+  runtimeMode: RuntimeMode;
+  priority: boolean;
+}): ReactElement | null {
+  if (element.hidden) return null;
+
+  let body: ReactElement | null;
+  switch (element.type) {
+    case "text":
+      body = <TextBody element={element} tokens={tokens} />;
+      break;
+    case "image":
+      body = element.image ? (
+        <PublicImage
+          assetId={element.image.assetId}
+          alt={element.alt ?? ""}
+          width={element.frame.w}
+          height={element.frame.h}
+          fit={element.style.fit}
+          focal={element.style.focal}
+          radius={element.style.radius}
+          opacity={element.style.opacity}
+          priority={priority}
+        />
+      ) : null;
+      break;
+    case "shape":
+      body = <ShapeBody element={element} tokens={tokens} />;
+      break;
+    case "widget": {
+      const color = cssColor(element.style.color, tokens);
+      const background = cssColor(element.style.background, tokens);
+      body = (
+        <WidgetRuntime
+          widgetType={element.widgetType}
+          props={element.props}
+          showFallback={runtimeMode === "preview"}
+          style={{
+            ...(color !== undefined && { color }),
+            ...(background !== undefined && { background }),
+            ...(element.style.radius !== undefined && { radius: element.style.radius }),
+            ...(element.style.opacity !== undefined && { opacity: element.style.opacity }),
+          }}
+        />
+      );
+      break;
+    }
+  }
+
+  return (
+    <AnimatedElement
+      element={element}
+      style={frameStyle(element)}
+      data-testid={`element-${element.id}`}
+    >
+      {body}
+    </AnimatedElement>
+  );
+}
+
+function SectionView({
+  section,
+  tokens,
+  baseWidth,
+  runtimeMode,
+  first,
+}: {
+  section: ResolvedSection;
+  tokens: Tokens;
+  baseWidth: number;
+  runtimeMode: RuntimeMode;
+  first: boolean;
+}) {
+  if (section.hidden) return null;
+  const background = cssColor(section.background.color, tokens);
+  return (
+    <section
+      className={styles.section}
+      data-section-id={section.id}
+      aria-label={section.name}
+      style={{
+        width: baseWidth,
+        height: section.baseHeight,
+        overflow: section.overflow,
+        background,
+      }}
+    >
+      {section.background.image ? (
+        <div className={styles.sectionBackground} aria-hidden="true">
+          <PublicImage
+            assetId={section.background.image.assetId}
+            alt=""
+            width={baseWidth}
+            height={section.baseHeight}
+            fit={section.background.fit}
+            priority={first}
+          />
+        </div>
+      ) : null}
+      {section.elements.map((element, index) => (
+        <ElementView
+          key={element.id}
+          element={element}
+          tokens={tokens}
+          runtimeMode={runtimeMode}
+          priority={first && index === 0}
+        />
+      ))}
+    </section>
+  );
+}
+
+/**
+ * HTML renderer for a resolved document (P-04, FR-PRV-001). Shared by dashboard
+ * preview and - from Fase 9 - the public invitation page. DOM only: it never
+ * renders a canvas and never imports Konva or editor modules. Text is rendered
+ * as React text nodes (always escaped), never as markup.
+ */
+export function DocumentRenderer({ document, runtimeMode }: DocumentRendererProps) {
+  return (
+    <RendererViewport runtimeMode={runtimeMode}>
+      <div className={styles.document} data-renderer-document="">
+        {document.sections.map((section, index) => (
+          <SectionView
+            key={section.id}
+            section={section}
+            tokens={document.tokens}
+            baseWidth={document.baseWidth}
+            runtimeMode={runtimeMode}
+            first={index === 0}
+          />
+        ))}
+      </div>
+    </RendererViewport>
+  );
+}

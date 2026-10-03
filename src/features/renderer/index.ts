@@ -10,3 +10,5 @@ export { PublicImage } from "./components/PublicImage";
 export type { PublicImageProps } from "./components/PublicImage";
 export { AnimatedElement } from "./components/AnimatedElement";
 export type { AnimatedElementProps } from "./components/AnimatedElement";
+export { DocumentRenderer } from "./components/DocumentRenderer";
+export type { DocumentRendererProps } from "./components/DocumentRenderer";

@@ -77,8 +77,16 @@ describe("role capability matrix (PRD §4)", () => {
   const expected: Record<(typeof WORKSPACE_ROLES)[number], readonly string[]> = {
     owner: [...CAPABILITIES],
     admin: [...CAPABILITIES],
-    designer: ["template:read", "template:write", "template:publish", "asset:read", "asset:write"],
-    operator: ["template:read", "asset:read"],
+    designer: [
+      "template:read",
+      "template:write",
+      "template:publish",
+      "asset:read",
+      "asset:write",
+      "invitation:read",
+      "invitation:write",
+    ],
+    operator: ["template:read", "asset:read", "invitation:read", "invitation:write"],
   };
 
   it.each(WORKSPACE_ROLES)("%s has exactly the expected capabilities", (role) => {
