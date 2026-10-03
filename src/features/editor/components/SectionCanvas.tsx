@@ -25,7 +25,7 @@ import { frameFromNodeAttrs, nodeAttrsFromFrame, snapToSection } from "../core/g
 import { findElement } from "../core/ops";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { useEditor, useEditorStore } from "./EditorProvider";
-import { replayKonvaNode } from "@/features/animations";
+import { replayKonvaNode, startKonvaLoopAnimation } from "@/features/animations";
 import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
 
 const ACCENT = "#e85d8f";
@@ -126,7 +126,7 @@ function Visual({
     case "image":
       return <ImageVisual element={element} />;
     case "widget":
-      return <WidgetVisual element={element} />;
+      return <WidgetVisual element={element} tokens={tokens} />;
   }
 }
 
@@ -140,6 +140,19 @@ const ElementNode = memo(function ElementNode({
 }: ElementNodeProps) {
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
+  const innerRef = useRef<Konva.Group | null>(null);
+
+  // Continuous live loop animation in the canvas editor (float, pulse, sway, etc.)
+  const loopTrack =
+    element.animations?.attention ??
+    (element.animations?.enter?.repeat === -1 ? element.animations.enter : undefined);
+
+  useEffect(() => {
+    if (!loopTrack || !innerRef.current) return;
+    const cleanup = startKonvaLoopAnimation(innerRef.current, loopTrack);
+    return cleanup;
+  }, [loopTrack]);
+
   return (
     <Group
       id={element.id}
@@ -165,7 +178,9 @@ const ElementNode = memo(function ElementNode({
     >
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
-      <Visual element={element} tokens={tokens} fontRev={fontRev} />
+      <Group ref={innerRef} x={w / 2} y={h / 2} offsetX={w / 2} offsetY={h / 2}>
+        <Visual element={element} tokens={tokens} fontRev={fontRev} />
+      </Group>
       {selected && element.locked ? (
         <Rect
           width={w}
