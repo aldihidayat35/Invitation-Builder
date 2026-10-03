@@ -6,8 +6,11 @@ import type { AssetSummary } from "@/features/assets/api";
 import { assetUrl } from "@/features/assets/urls";
 import { AssetLibrary } from "./AssetLibrary";
 import { BindingControl } from "./BindingControl";
-import { useEditorStore } from "./EditorProvider";
+import { useEditorStore, useWorkspaceId } from "./EditorProvider";
+import { ImageCropModal } from "./ImageCropModal";
+import { RemoveBgModal } from "./RemoveBgModal";
 import { NumberField, SelectField, TextField } from "./fields";
+import { IconCrop, IconWand } from "./icons";
 import styles from "./editor.module.css";
 
 type ImageElement = Extract<Element, { type: "image" }>;
@@ -20,7 +23,10 @@ const FIT_OPTIONS = [
 /** Inspector section for an image element (FR-EDT-008): source, replace, fit, focal, radius, alt, binding. */
 export function ImagePanel({ element, readOnly }: { element: ImageElement; readOnly: boolean }) {
   const store = useEditorStore();
+  const workspaceId = useWorkspaceId();
   const [picking, setPicking] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [removeBgOpen, setRemoveBgOpen] = useState(false);
   const id = element.id;
   const disabled = readOnly || element.locked;
   const { style } = element;
@@ -56,7 +62,34 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
       >
         {picking ? "Tutup pilihan" : assetId ? "Ganti gambar" : "Pakai aset statis"}
       </button>
+      {assetId ? (
+        <div className={styles.imageActionGrid}>
+          <button
+            type="button"
+            className={styles.imageToolBtn}
+            disabled={disabled}
+            data-testid="image-crop-btn"
+            title="Potong & atur rasio gambar"
+            onClick={() => setCropOpen(true)}
+          >
+            <IconCrop size={14} />
+            <span>Potong (Crop)</span>
+          </button>
+          <button
+            type="button"
+            className={styles.imageToolBtn}
+            disabled={disabled}
+            data-testid="image-remove-bg-btn"
+            title="Hapus latar belakang menjadi transparan"
+            onClick={() => setRemoveBgOpen(true)}
+          >
+            <IconWand size={14} />
+            <span>Hapus BG</span>
+          </button>
+        </div>
+      ) : null}
       {picking ? <AssetLibrary idPrefix="pick" pickLabel="Pakai gambar" onPick={pick} /> : null}
+
 
       <BindingControl
         id="insp-image-bind"
@@ -127,6 +160,41 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
           )
         }
       />
+
+      {cropOpen && assetId ? (
+        <ImageCropModal
+          assetId={assetId}
+          filename={element.alt || "gambar"}
+          workspaceId={workspaceId}
+          onClose={() => setCropOpen(false)}
+          onCropped={(asset, ratio) => {
+            setSource({ assetId: asset.id });
+            if (ratio > 0) {
+              const currentW = element.frame.w;
+              const newH = Math.max(20, Math.round(currentW / ratio));
+              store.getState().patchElement(
+                id,
+                (el) => ({ ...el, frame: { ...el.frame, h: newH } }),
+                "crop-resize",
+              );
+            }
+          }}
+
+        />
+      ) : null}
+
+      {removeBgOpen && assetId ? (
+        <RemoveBgModal
+          assetId={assetId}
+          filename={element.alt || "gambar"}
+          workspaceId={workspaceId}
+          onClose={() => setRemoveBgOpen(false)}
+          onProcessed={(asset) => {
+            setSource({ assetId: asset.id });
+          }}
+        />
+      ) : null}
     </div>
   );
 }
+

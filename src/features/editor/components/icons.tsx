@@ -209,6 +209,59 @@ export const IconOpacity = (p: IconProps) => (
     <circle cx="15" cy="12" r="6" />
   </Svg>
 );
+export const IconCrop = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 2v14a2 2 0 0 0 2 2h14" />
+    <path d="M18 22V8a2 2 0 0 0-2-2H2" />
+  </Svg>
+);
+export const IconWand = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m15 4 5 5L7 22l-5-5L15 4Z" />
+    <path d="m12.5 6.5 3 3" />
+    <path d="M9 2v2M19 12h2M18 3l-1.5 1.5M4 17l-1.5 1.5" />
+  </Svg>
+);
+export const IconRotateRight = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.8 1 6.5 2.7L21 8" />
+    <path d="M21 3v5h-5" />
+  </Svg>
+);
+export const IconRotateLeft = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M3 12a9 9 0 1 0 9-9c-2.5 0-4.8 1-6.5 2.7L3 8" />
+    <path d="M3 3v5h5" />
+  </Svg>
+);
+export const IconFlipH = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 2v20M8 5 3 12l5 7V5ZM16 5l5 7-5 7V5Z" />
+  </Svg>
+);
+export const IconFlipV = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2 12h20M5 8l7-5 7 5H5ZM5 16l7 5 7-5H5Z" />
+  </Svg>
+);
+export const IconCheck = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 6 9 17l-5-5" />
+  </Svg>
+);
+export const IconClose = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </Svg>
+);
+export const IconDropper = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m14 4 6 6-9 9-4.5.5.5-4.5 7-7Z" />
+    <path d="m17 7-3 3" />
+    <path d="m4.5 19.5-2.5 2.5" />
+  </Svg>
+);
+
 
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,

@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  finalizeUploadAction,
-  initUploadAction,
-  listAssetsAction,
-} from "@/features/assets/actions";
+import { listAssetsAction } from "@/features/assets/actions";
 import type { AssetSummary } from "@/features/assets/api";
+import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
 import { useEditor, useWorkspaceId } from "./EditorProvider";
+import { ImageCropModal } from "./ImageCropModal";
+import { RemoveBgModal } from "./RemoveBgModal";
+import { IconCrop, IconWand } from "./icons";
 import styles from "./editor.module.css";
 
 export interface AssetLibraryProps {
@@ -21,41 +21,6 @@ export interface AssetLibraryProps {
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
 
-async function uploadOne(
-  workspaceId: string,
-  file: File,
-): Promise<{ ok: true; asset: AssetSummary } | { ok: false; error: string }> {
-  const init = await initUploadAction(workspaceId, {
-    filename: file.name,
-    mimeType: file.type,
-    bytes: file.size,
-  });
-  if (!init.ok) return init;
-
-  let response: Response;
-  try {
-    response = await fetch(init.data.upload.url, {
-      method: init.data.upload.method,
-      headers: init.data.upload.headers,
-      body: file,
-    });
-  } catch {
-    return { ok: false, error: "Upload gagal. Periksa koneksi." };
-  }
-  if (!response.ok) {
-    let message = "Upload ditolak server.";
-    try {
-      const body = (await response.json()) as { error?: unknown };
-      if (typeof body.error === "string") message = body.error;
-    } catch {
-      /* non-JSON error body: keep the generic message */
-    }
-    return { ok: false, error: message };
-  }
-
-  const done = await finalizeUploadAction(init.data.assetId);
-  return done.ok ? { ok: true, asset: done.data } : done;
-}
 
 export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLibraryProps) {
   const workspaceId = useWorkspaceId();
@@ -64,6 +29,8 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [croppingAsset, setCroppingAsset] = useState<AssetSummary | null>(null);
+  const [removeBgAsset, setRemoveBgAsset] = useState<AssetSummary | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(
@@ -89,7 +56,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
     setBusy(true);
     setError(null);
     for (const file of Array.from(files)) {
-      const result = await uploadOne(workspaceId, file);
+      const result = await uploadAssetFile(workspaceId, file);
       if (result.ok) setAssets((current) => [result.asset, ...current]);
       else setError(`${file.name}: ${result.error}`);
     }
@@ -132,7 +99,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
       ) : (
         <ul className={styles.assetGrid} data-testid={`${idPrefix}-list`}>
           {assets.map((asset) => (
-            <li key={asset.id}>
+            <li key={asset.id} className={styles.assetItemCard}>
               <button
                 type="button"
                 className={styles.assetItem}
@@ -152,10 +119,63 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
                 />
                 <span className={styles.assetName}>{asset.filename}</span>
               </button>
+              <div className={styles.assetQuickActions}>
+                <button
+                  type="button"
+                  className={styles.assetQuickBtn}
+                  title="Potong gambar ini"
+                  aria-label="Potong gambar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCroppingAsset(asset);
+                  }}
+                >
+                  <IconCrop size={11} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.assetQuickBtn}
+                  title="Hapus background gambar ini"
+                  aria-label="Hapus background"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRemoveBgAsset(asset);
+                  }}
+                >
+                  <IconWand size={11} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
+
+      {croppingAsset ? (
+        <ImageCropModal
+          assetId={croppingAsset.id}
+          filename={croppingAsset.filename}
+          workspaceId={workspaceId}
+          onClose={() => setCroppingAsset(null)}
+          onCropped={(newAsset) => {
+            setAssets((current) => [newAsset, ...current]);
+            setCroppingAsset(null);
+          }}
+        />
+      ) : null}
+
+      {removeBgAsset ? (
+        <RemoveBgModal
+          assetId={removeBgAsset.id}
+          filename={removeBgAsset.filename}
+          workspaceId={workspaceId}
+          onClose={() => setRemoveBgAsset(null)}
+          onProcessed={(newAsset) => {
+            setAssets((current) => [newAsset, ...current]);
+            setRemoveBgAsset(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
+

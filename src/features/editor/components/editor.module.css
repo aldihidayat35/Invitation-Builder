@@ -1513,3 +1513,753 @@ textarea.input {
   border: 1px dashed var(--dash-border);
   line-height: 1.45;
 }
+
+/* ------------------------------------------------------------- image tools & modals */
+
+.imageActionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.imageToolBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+  color: var(--dash-text);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.imageToolBtn:hover:not(:disabled) {
+  background: var(--dash-accent-soft);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+
+.imageToolBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.15s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.35);
+  max-width: 860px;
+  width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalZoomIn 0.18s ease-out;
+}
+
+@keyframes modalZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+}
+
+.modalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalTitleIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.modalSubtitle {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--dash-muted);
+}
+
+.modalCloseBtn {
+  border: none;
+  background: transparent;
+  color: var(--dash-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.modalCloseBtn:hover {
+  background: var(--dash-surface-sunken);
+  color: var(--dash-text);
+}
+
+.modalContent {
+  padding: 16px 20px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+}
+
+.cropToolbarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.cropBarLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+.ratioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ratioBtn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.ratioBtn:hover {
+  border-color: var(--dash-border-strong);
+  background: var(--dash-surface-strong);
+}
+
+.ratioBtnActive {
+  border-color: var(--dash-accent) !important;
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  font-weight: 600;
+}
+
+.transformButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconGhostBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.iconGhostBtn:hover {
+  color: var(--dash-text);
+  border-color: var(--dash-border-strong);
+}
+
+.iconGhostBtnActive {
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  border-color: var(--dash-accent) !important;
+}
+
+.cropStage {
+  position: relative;
+  background: #0f172a;
+  border-radius: 10px;
+  padding: 20px;
+  min-height: 380px;
+  max-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+.cropImageWrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.cropImageTarget {
+  max-width: 100%;
+  max-height: 420px;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.cropBox {
+  position: absolute;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.72);
+  cursor: move;
+  touch-action: none;
+}
+
+.cropGrid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  pointer-events: none;
+  border-collapse: collapse;
+}
+
+.cropGrid > div {
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+}
+
+.cropHandle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border: 1.5px solid #0f172a;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.handleNW {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.handleN {
+  top: -5px;
+  left: calc(50% - 5px);
+  cursor: ns-resize;
+}
+.handleNE {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+.handleE {
+  top: calc(50% - 5px);
+  right: -5px;
+  cursor: ew-resize;
+}
+.handleSE {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
+.handleS {
+  bottom: -5px;
+  left: calc(50% - 5px);
+  cursor: ns-resize;
+}
+.handleSW {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+.handleW {
+  top: calc(50% - 5px);
+  left: -5px;
+  cursor: ew-resize;
+}
+
+.cropInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cropDimBadge {
+  font-size: 11px;
+  background: var(--dash-surface-strong);
+  border: 1px solid var(--dash-border);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--dash-text);
+}
+
+.cropDimBadgeMuted {
+  font-size: 11px;
+  color: var(--dash-muted);
+}
+
+/* ------------------------------------------------------------- Remove BG styles */
+
+.removeBgGrid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  min-height: 380px;
+}
+
+@media (max-width: 680px) {
+  .removeBgGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.removeBgPreviewCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.removeBgStageBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.backdropSelector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stageBarLabel {
+  font-size: 11px;
+  color: var(--dash-muted);
+  margin-right: 2px;
+}
+
+.backdropBtn {
+  padding: 3px 8px;
+  font-size: 10.5px;
+  border-radius: 4px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.backdropBtn:hover {
+  color: var(--dash-text);
+  border-color: var(--dash-border-strong);
+}
+
+.backdropBtnActive {
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  border-color: var(--dash-accent) !important;
+  font-weight: 500;
+}
+
+.removeBgStage {
+  position: relative;
+  border-radius: 10px;
+  border: 1px solid var(--dash-border);
+  min-height: 340px;
+  max-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.checkerboardPattern {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
+
+.stageDark {
+  background: #0f172a;
+}
+
+.stageLight {
+  background: #ffffff;
+}
+
+.stageGreen {
+  background: #047857;
+}
+
+.stageDropperActive {
+  cursor: crosshair;
+}
+
+.removeBgCanvas {
+  max-width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+}
+
+.removeBgOriginalImg {
+  max-width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+}
+
+.stageOverlayProcessing {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.dropperBanner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #ffffff;
+  font-size: 11px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.removeBgControlsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settingCard {
+  background: var(--dash-surface-strong);
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settingLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.colorSwatchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.colorSwatchBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.colorHexText {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--dash-muted);
+}
+
+.buttonActionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sliderControl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sliderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sliderValBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dash-accent);
+}
+
+.rangeInput {
+  width: 100%;
+  accent-color: var(--dash-accent);
+  cursor: pointer;
+}
+
+.sliderHint {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--dash-muted);
+  line-height: 1.35;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxInput {
+  margin-top: 3px;
+  accent-color: var(--dash-accent);
+}
+
+.checkboxTitle {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.checkboxDesc {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  color: var(--dash-muted);
+  line-height: 1.35;
+}
+
+.errorNotice {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  border: 1px solid var(--dash-danger);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11.5px;
+}
+
+.loadingArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--dash-muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--dash-border);
+  border-top-color: var(--dash-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ghostBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ghostBtn:hover:not(:disabled) {
+  background: var(--dash-surface-strong);
+  border-color: var(--dash-border-strong);
+}
+
+.ghostBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ghostBtnActive {
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  border-color: var(--dash-accent) !important;
+}
+
+.primaryActionBtn {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background: var(--dash-accent);
+  color: var(--dash-on-accent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms ease;
+}
+
+.primaryActionBtn:hover:not(:disabled) {
+  background: var(--dash-accent-hover);
+}
+
+.primaryActionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assetItemCard {
+  position: relative;
+}
+
+.assetQuickActions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.assetItemCard:hover .assetQuickActions {
+  opacity: 1;
+}
+
+.assetQuickBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--dash-shadow-sm);
+  transition: all 120ms ease;
+}
+
+.assetQuickBtn:hover {
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  border-color: var(--dash-accent);
+}
+
