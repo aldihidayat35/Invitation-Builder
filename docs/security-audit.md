@@ -4,14 +4,14 @@ Referensi PRD: NFR-SEC-001, NFR-SEC-002, Â§13 (keamanan), P-04.
 
 ## 1. Authorization (workspace isolation)
 
-| Area                        | Kontrol                                                         | Bukti tes                                                            |
-| --------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Dashboard & server actions  | Sesi wajib; redirect ke login jika tidak ada                    | `tests/unit/auth/auth.test.ts`, `tests/e2e/templates.spec.ts`        |
+| Area                        | Kontrol                                                           | Bukti tes                                                            |
+| --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Dashboard & server actions  | Sesi wajib; redirect ke login jika tidak ada                      | `tests/unit/auth/auth.test.ts`, `tests/e2e/templates.spec.ts`        |
 | Template/version            | Semua query difilter `workspaceId`; lintas workspace â†’ NotFound | integration template tests                                           |
-| Invitation/guest/publish    | Idem; publish & rollback hanya milik workspace                  | `tests/integration/invitation-service.test.ts`, `publishing.test.ts` |
-| RSVP list/import/export CSV | Dibatasi workspace pemilik invitation                           | `tests/integration/rsvp-import.test.ts`                              |
-| Asset                       | Upload & daftar per workspace                                   | asset integration tests                                              |
-| Endpoint publik             | Hanya `/i/[slug]`, `/api/public/rsvp`, `/api/health`, file asset       | `tests/e2e/golden-path.spec.ts`                                      |
+| Invitation/guest/publish    | Idem; publish & rollback hanya milik workspace                    | `tests/integration/invitation-service.test.ts`, `publishing.test.ts` |
+| RSVP list/import/export CSV | Dibatasi workspace pemilik invitation                             | `tests/integration/rsvp-import.test.ts`                              |
+| Asset                       | Upload & daftar per workspace                                     | asset integration tests                                              |
+| Endpoint publik             | Hanya `/i/[slug]`, `/api/public/rsvp`, `/api/health`, file asset  | `tests/e2e/golden-path.spec.ts`                                      |
 
 ## 2. Input, URL, escaping, MIME, widget props
 
@@ -35,9 +35,9 @@ Pemindaian file ter-track (pola AWS key, private key, `sk_live`, `ghp_`, kredens
 
 | Item                                                    | Status                                                      |
 | ------------------------------------------------------- | ----------------------------------------------------------- |
-| CSP ketat (butuh nonce) belum diaktifkan                | Utang â€” tindak lanjut                                       |
-| Deadline RSVP hanya divalidasi di klien                 | Utang â€” validasi server                                     |
+| CSP ketat (butuh nonce) belum diaktifkan                | Utang â€” tindak lanjut                                     |
+| Deadline RSVP hanya divalidasi di klien                 | Utang â€” validasi server                                   |
 | Rate limiter in-memory per proses (tidak terdistribusi) | Diterima untuk MVP; ganti store bersama saat multi-instance |
-| `/api/assets/[id]/file` publik tanpa rate limit         | Utang â€” pasang CDN/limit                                    |
+| `/api/assets/[id]/file` publik tanpa rate limit         | Utang â€” pasang CDN/limit                                  |
 
 Tidak ada blocker keamanan terbuka yang belum diterima secara tertulis.
