@@ -532,14 +532,23 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr): long filenames must never widen the columns. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  max-height: 260px;
+  max-height: 320px;
+  overflow-x: hidden;
   overflow-y: auto;
+  color-scheme: dark;
+}
+
+.assetGrid > li {
+  min-width: 0;
 }
 
 .assetItem {
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -557,14 +566,21 @@
 }
 
 .assetThumb {
+  display: block;
   width: 100%;
-  aspect-ratio: 1;
+  height: auto;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 6px;
   background: hsl(232 20% 14%);
 }
 
 .assetName {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
   font-size: 11px;
   color: var(--dash-muted);
   overflow: hidden;
