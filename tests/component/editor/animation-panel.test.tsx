@@ -40,7 +40,7 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
     return { ...utils, store };
   }
 
-  it("renders the animation inspector heading and preset select", () => {
+  it("renders the animation inspector with 3 tabs and preset boxes", () => {
     const textElement: Element = {
       id: "el_text_1",
       type: "text",
@@ -61,10 +61,14 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
 
     renderWithStore(textElement, "sec_1");
     expect(screen.getByTestId("animation-inspector")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Preset" })).toBeInTheDocument();
+    expect(screen.getByTestId("anim-tab-enter")).toBeInTheDocument();
+    expect(screen.getByTestId("anim-tab-exit")).toBeInTheDocument();
+    expect(screen.getByTestId("anim-tab-attention")).toBeInTheDocument();
+    expect(screen.getByTestId("preset-box-none")).toBeInTheDocument();
+    expect(screen.getByTestId("preset-box-fadeIn")).toBeInTheDocument();
   });
 
-  it("updates store when a preset is chosen", () => {
+  it("updates store when a preset box is chosen", () => {
     const textElement: Element = {
       id: "title_1",
       type: "text",
@@ -84,9 +88,9 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
     };
 
     const { store } = renderWithStore(textElement, "sec_1");
-    const presetSelect = screen.getByRole("combobox", { name: "Preset" });
+    const charRiseBox = screen.getByTestId("preset-box-charRise");
 
-    fireEvent.change(presetSelect, { target: { value: "charRise" } });
+    fireEvent.click(charRiseBox);
 
     const presentDoc = store.getState().history.present;
     const updatedEl = presentDoc.sections
@@ -95,6 +99,50 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
 
     expect(updatedEl?.animations?.enter?.presetId).toBe("charRise");
     expect(updatedEl?.animations?.enter?.staggerUnit).toBe("char");
+  });
+
+  it("switches tabs to exit and attention to configure respective tracks", () => {
+    const textElement: Element = {
+      id: "title_1",
+      type: "text",
+      frame: { x: 10, y: 10, w: 200, h: 40, rotation: 0 },
+      visible: true,
+      locked: false,
+      content: { segments: [{ text: "Wedding" }] },
+      style: {
+        fontSize: 16,
+        fontWeight: 400,
+        lineHeight: 1.4,
+        letterSpacing: 0,
+        textAlign: "left",
+        color: "#000000",
+        opacity: 1,
+      },
+    };
+
+    const { store } = renderWithStore(textElement, "sec_1");
+
+    // Switch to Exit tab
+    fireEvent.click(screen.getByTestId("anim-tab-exit"));
+    expect(screen.getByTestId("preset-box-fadeOut")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("preset-box-fadeOut"));
+
+    let updatedEl = store
+      .getState()
+      .history.present.sections.flatMap((s) => s.elements)
+      .find((e) => e.id === "title_1");
+    expect(updatedEl?.animations?.exit?.presetId).toBe("fadeOut");
+
+    // Switch to Attention / Lain-lain tab
+    fireEvent.click(screen.getByTestId("anim-tab-attention"));
+    expect(screen.getByTestId("preset-box-pulseSoft")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("preset-box-pulseSoft"));
+
+    updatedEl = store
+      .getState()
+      .history.present.sections.flatMap((s) => s.elements)
+      .find((e) => e.id === "title_1");
+    expect(updatedEl?.animations?.attention?.presetId).toBe("pulseSoft");
   });
 
   it("dispatches replay event when replay button is clicked", () => {
@@ -139,13 +187,13 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
     expect(dispatchSpy).toHaveBeenCalled();
     const event = dispatchSpy.mock.calls[0]?.[0] as CustomEvent;
     expect(event.type).toBe("dib:replay-animation");
-    expect(event.detail).toEqual({ elementId: "title_1", sectionId: "sec_1" });
+    expect(event.detail).toEqual({ elementId: "title_1", sectionId: "sec_1", trackType: "enter" });
 
     const replaySectionBtn = screen.getByTestId("replay-section-btn");
     fireEvent.click(replaySectionBtn);
 
     const sectionEvent = dispatchSpy.mock.calls[1]?.[0] as CustomEvent;
     expect(sectionEvent.type).toBe("dib:replay-animation");
-    expect(sectionEvent.detail).toEqual({ sectionId: "sec_1" });
+    expect(sectionEvent.detail).toEqual({ sectionId: "sec_1", trackType: "enter" });
   });
 });

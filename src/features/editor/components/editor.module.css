@@ -1350,3 +1350,166 @@ textarea.input {
   border-color: var(--dash-accent);
   font-weight: 600;
 }
+
+/* ==========================================================================
+   Animation Inspector Controls (Enter, Out, Lain-lain Widget Boxes)
+   ========================================================================== */
+
+.animTabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--dash-surface-sunken);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--dash-border);
+}
+
+.animTab {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--dash-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.animTab:hover:not(:disabled) {
+  color: var(--dash-text);
+  background: var(--dash-surface-hover);
+}
+
+.animTabActive {
+  background: var(--dash-surface) !important;
+  color: var(--dash-text) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.animTabDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  flex-shrink: 0;
+}
+
+.animTabDesc {
+  font-size: 11px;
+  color: var(--dash-muted);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.animGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.animBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  cursor: pointer;
+  text-align: center;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.12s ease;
+  min-height: 72px;
+  user-select: none;
+}
+
+.animBox:hover:not(:disabled) {
+  border-color: var(--dash-border-strong);
+  background: var(--dash-surface-hover);
+  transform: translateY(-1px);
+}
+
+.animBox:focus-visible {
+  outline: 2px solid var(--dash-accent);
+  outline-offset: 1px;
+}
+
+.animBoxActive {
+  border-color: var(--dash-accent) !important;
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  box-shadow: 0 0 0 1px var(--dash-accent);
+}
+
+.animBoxIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: currentColor;
+  transition: transform 0.18s ease;
+}
+
+.animBox:hover:not(:disabled) .animBoxIcon {
+  transform: scale(1.12);
+}
+
+.animBoxLabel {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: inherit;
+  font-weight: 500;
+  max-width: 100%;
+  padding: 0 2px;
+  word-break: break-word;
+}
+
+.animBoxCheck {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animConfigSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dash-border);
+}
+
+.animEmptyNotice {
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--dash-muted);
+  background: var(--dash-surface-sunken);
+  border-radius: 8px;
+  border: 1px dashed var(--dash-border);
+  line-height: 1.45;
+}

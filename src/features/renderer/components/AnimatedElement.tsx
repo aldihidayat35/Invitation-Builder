@@ -25,13 +25,40 @@ export function AnimatedElement({
   "data-testid": testId,
 }: AnimatedElementProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
-  const track = element.animations?.enter;
+  const enterTrack = element.animations?.enter;
+  const attentionTrack = element.animations?.attention;
+  const exitTrack = element.animations?.exit;
 
   useEffect(() => {
-    if (!track || !rootRef.current) return;
-    const cleanup = playAnimation(rootRef.current, track);
-    return cleanup;
-  }, [track]);
+    if (!rootRef.current) return;
+    const el = rootRef.current;
+
+    let cleanupEnter: (() => void) | null = null;
+    let cleanupAttention: (() => void) | null = null;
+    let cleanupExit: (() => void) | null = null;
+
+    if (enterTrack) {
+      cleanupEnter = playAnimation(el, enterTrack, {
+        onComplete: () => {
+          if (attentionTrack && rootRef.current) {
+            cleanupAttention = playAnimation(rootRef.current, attentionTrack);
+          }
+        },
+      });
+    } else if (attentionTrack) {
+      cleanupAttention = playAnimation(el, attentionTrack);
+    }
+
+    if (exitTrack) {
+      cleanupExit = playAnimation(el, exitTrack);
+    }
+
+    return () => {
+      cleanupEnter?.();
+      cleanupAttention?.();
+      cleanupExit?.();
+    };
+  }, [enterTrack, attentionTrack, exitTrack]);
 
   return (
     <div
@@ -39,7 +66,9 @@ export function AnimatedElement({
       className={className}
       style={style}
       data-element-id={element.id}
-      data-animation-preset={track?.presetId}
+      data-animation-preset={
+        enterTrack?.presetId ?? attentionTrack?.presetId ?? exitTrack?.presetId
+      }
       data-testid={testId}
     >
       {children}

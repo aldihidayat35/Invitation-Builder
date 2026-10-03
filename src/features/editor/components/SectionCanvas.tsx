@@ -410,22 +410,34 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   useEffect(() => {
     const handleReplay = (e: Event) => {
-      const custom = e as CustomEvent<{ elementId?: string; sectionId?: string }>;
+      const custom = e as CustomEvent<{
+        elementId?: string;
+        sectionId?: string;
+        trackType?: "enter" | "exit" | "attention";
+      }>;
       if (custom.detail?.sectionId && custom.detail.sectionId !== sectionId) return;
       const stage = stageRef.current;
       if (!stage || !section) return;
 
+      const trackType = custom.detail?.trackType;
+
       if (custom.detail?.elementId) {
         const node = stage.findOne(`#${custom.detail.elementId}`);
         const el = section.elements.find((x) => x.id === custom.detail.elementId);
-        if (node && el?.animations?.enter) {
-          replayKonvaNode(node, el.animations.enter);
+        const anims = el?.animations;
+        const track =
+          (trackType && anims?.[trackType]) || anims?.enter || anims?.attention || anims?.exit;
+        if (node && track) {
+          replayKonvaNode(node, track);
         }
       } else if (custom.detail?.sectionId === sectionId) {
         for (const el of section.elements) {
-          if (el.animations?.enter) {
+          const anims = el.animations;
+          const track =
+            (trackType && anims?.[trackType]) || anims?.enter || anims?.attention || anims?.exit;
+          if (track) {
             const node = stage.findOne(`#${el.id}`);
-            if (node) replayKonvaNode(node, el.animations.enter);
+            if (node) replayKonvaNode(node, track);
           }
         }
       }
