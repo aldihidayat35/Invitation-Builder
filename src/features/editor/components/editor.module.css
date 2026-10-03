@@ -1179,3 +1179,174 @@ textarea.input {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ------------------------------------------------------------- opacity control */
+.opacityControl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.opacityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.opacityLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dash-text);
+}
+
+.opacityValueWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opacitySwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background-color: #ffffff;
+  background-image: repeating-conic-gradient(rgba(0, 0, 0, 0.08) 0% 25%, transparent 0% 50%);
+  background-position: 50%;
+  background-size: 8px 8px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.opacitySwatchFill {
+  width: 100%;
+  height: 100%;
+  background: var(--dash-accent, #e85d8f);
+  transition: opacity 0.08s ease;
+}
+
+.opacityInputWrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 64px;
+}
+
+.opacityNumberInput {
+  width: 100%;
+  height: 28px;
+  padding: 0 18px 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-sunken);
+  color: var(--dash-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.opacityNumberInput:focus {
+  border-color: var(--dash-accent);
+}
+
+.opacityUnit {
+  position: absolute;
+  right: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dash-muted);
+  pointer-events: none;
+}
+
+.opacitySliderTrack {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.opacitySlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dash-border);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.opacitySlider:hover:not(:disabled) {
+  background: var(--dash-border-strong, #cbd5e1);
+}
+
+.opacitySlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.opacitySlider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.opacitySlider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.opacityPresets {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.opacityPresetBtn {
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+  color: var(--dash-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.opacityPresetBtn:hover:not(:disabled) {
+  border-color: var(--dash-accent);
+  color: var(--dash-text);
+  background: var(--dash-accent-soft);
+}
+
+.opacityPresetBtn[aria-pressed="true"] {
+  background: var(--dash-accent);
+  color: #ffffff;
+  border-color: var(--dash-accent);
+  font-weight: 600;
+}

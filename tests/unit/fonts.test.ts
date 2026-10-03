@@ -79,10 +79,9 @@ describe("Font Loader & Document Collection", () => {
         {
           id: "s1",
           name: "Cover",
-          order: 0,
           visible: true,
           baseHeight: 800,
-          background: { color: "#ffffff" },
+          background: { color: "#ffffff", fit: "cover" },
           overflow: "visible",
           elements: [
             {
@@ -97,6 +96,9 @@ describe("Font Loader & Document Collection", () => {
                 fontSize: 24,
                 fontWeight: 400,
                 lineHeight: 1.2,
+                letterSpacing: 0,
+                textAlign: "left",
+                opacity: 1,
                 color: "#000000",
                 fontFamily: "Great Vibes",
               },
@@ -104,12 +106,12 @@ describe("Font Loader & Document Collection", () => {
             {
               id: "shp1",
               type: "shape",
-              shapeType: "rect",
+              shapeType: "rectangle",
               name: "Box",
               visible: true,
               locked: false,
               frame: { x: 0, y: 0, w: 100, h: 100, rotation: 0 },
-              style: {},
+              style: { radius: 0, opacity: 1 },
             },
           ],
         },

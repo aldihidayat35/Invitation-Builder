@@ -203,6 +203,12 @@ export const IconSection = (p: IconProps) => (
     <rect x="4" y="13.5" width="16" height="7" rx="1.5" />
   </Svg>
 );
+export const IconOpacity = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="9" cy="12" r="6" />
+    <circle cx="15" cy="12" r="6" />
+  </Svg>
+);
 
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,

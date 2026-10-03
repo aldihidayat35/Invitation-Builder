@@ -9,6 +9,7 @@ import {
   ColorField,
   FieldRow,
   NumberField,
+  OpacityField,
   SelectField,
   TextField,
   type ColorValue,
@@ -23,6 +24,7 @@ import {
   IconForward,
   IconLayers,
   IconLock,
+  IconOpacity,
   IconPlus,
   IconReplay,
   IconSection,
@@ -313,15 +315,16 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
         title={`${ids.length} elemen dipilih`}
       />
       <ElementActions ids={ids} readOnly={readOnly} />
-      <PanelSection id="insp-multi-look" title="Tampilan">
-        <NumberField
+      <PanelSection
+        id="insp-multi-opacity-section"
+        title="Transparansi & Opasitas"
+        icon={<IconOpacity size={14} />}
+      >
+        <OpacityField
           id="insp-multi-opacity"
-          label="Opacity (%)"
-          value={100}
-          min={0}
-          max={100}
+          value={1}
           disabled={readOnly}
-          onCommit={(percent) => store.getState().patchStyle(ids, { opacity: percent / 100 })}
+          onChange={(percent) => store.getState().patchStyle(ids, { opacity: percent })}
         />
       </PanelSection>
       <p className={styles.footHint}>Geser atau ubah ukuran langsung di artboard.</p>
@@ -422,16 +425,25 @@ function ElementPanel({
             disabled={disabled}
             onCommit={(rotation) => act().patchFrame(id, { rotation })}
           />
-          <NumberField
-            id="insp-opacity"
-            label="Opacity (%)"
-            value={Math.round(opacity * 100)}
-            min={0}
-            max={100}
-            disabled={readOnly}
-            onCommit={(p) => act().patchStyle([id], { opacity: p / 100 })}
-          />
         </div>
+      </PanelSection>
+
+      <PanelSection
+        id="insp-opacity-section"
+        title="Transparansi & Opasitas"
+        icon={<IconOpacity size={14} />}
+        actions={
+          Math.round(opacity * 100) < 100 ? (
+            <span className={styles.badge}>{Math.round(opacity * 100)}%</span>
+          ) : null
+        }
+      >
+        <OpacityField
+          id="insp-opacity"
+          value={opacity}
+          disabled={disabled}
+          onChange={(newOpacity) => act().patchStyle([id], { opacity: newOpacity })}
+        />
       </PanelSection>
 
       {element.type === "text" ? (

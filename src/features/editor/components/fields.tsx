@@ -290,3 +290,91 @@ export function ColorField({
     </FieldRow>
   );
 }
+
+export interface OpacityFieldProps {
+  readonly id: string;
+  readonly value: number; // 0 to 1
+  readonly onChange: (opacity: number) => void;
+  readonly disabled?: boolean;
+  readonly label?: string;
+}
+
+const OPACITY_PRESETS = [100, 75, 50, 25, 0] as const;
+
+export function OpacityField({
+  id,
+  value,
+  onChange,
+  disabled,
+  label = "Tingkat Opasitas",
+}: OpacityFieldProps) {
+  const percent = Math.min(100, Math.max(0, Math.round(value * 100)));
+
+  return (
+    <div className={styles.opacityControl} data-testid={`${id}-wrapper`}>
+      <div className={styles.opacityHeader}>
+        <span className={styles.opacityLabel}>{label}</span>
+        <div className={styles.opacityValueWrap}>
+          <div
+            className={styles.opacitySwatch}
+            title={`Pratinjau transparansi: ${percent}%`}
+            aria-hidden="true"
+          >
+            <div className={styles.opacitySwatchFill} style={{ opacity: percent / 100 }} />
+          </div>
+          <div className={styles.opacityInputWrap}>
+            <input
+              id={id}
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={percent}
+              disabled={disabled}
+              className={styles.opacityNumberInput}
+              aria-label={label}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (Number.isFinite(val)) {
+                  onChange(Math.min(100, Math.max(0, val)) / 100);
+                }
+              }}
+            />
+            <span className={styles.opacityUnit}>%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.opacitySliderTrack}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={percent}
+          disabled={disabled}
+          className={styles.opacitySlider}
+          aria-label={`${label} slider`}
+          onChange={(e) => {
+            onChange(Number(e.target.value) / 100);
+          }}
+        />
+      </div>
+
+      <div className={styles.opacityPresets} role="group" aria-label="Preset opasitas">
+        {OPACITY_PRESETS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            className={styles.opacityPresetBtn}
+            aria-pressed={percent === p}
+            disabled={disabled}
+            onClick={() => onChange(p / 100)}
+          >
+            {p}%
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
