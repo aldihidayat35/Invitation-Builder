@@ -1,19 +1,43 @@
 /* Dashboard-only global styles. Scoped to the (dashboard) root layout so they
  * never reach the public runtime (PRD §5.1 — renderer CSS must not leak). */
 
+/* Light, flat, neutral theme: one solid accent, no gradients or glows. */
 :root {
-  --dash-bg: hsl(232 28% 7%);
-  --dash-surface: hsl(232 24% 11% / 0.72);
-  --dash-surface-strong: hsl(232 22% 14%);
-  --dash-border: hsl(232 20% 24% / 0.6);
-  --dash-text: hsl(230 30% 96%);
-  --dash-muted: hsl(230 14% 66%);
-  --dash-accent: hsl(338 82% 66%);
-  --dash-accent-2: hsl(268 84% 70%);
-  --dash-gold: hsl(40 88% 68%);
-  --dash-radius: 18px;
+  color-scheme: light;
+
+  --dash-bg: #f4f5f7;
+  --dash-surface: #ffffff;
+  --dash-surface-strong: #f7f8fa;
+  --dash-surface-sunken: #eef0f3;
+  --dash-border: #e2e5ea;
+  --dash-border-strong: #cbd1da;
+  --dash-text: #171a1f;
+  --dash-muted: #5f6774;
+  --dash-subtle: #8a919c;
+
+  --dash-accent: #2453b8;
+  --dash-accent-hover: #1c4499;
+  --dash-accent-soft: #ebf0fb;
+  /* Legacy alias: anything still referencing accent-2 renders as the solid accent. */
+  --dash-accent-2: var(--dash-accent);
+  --dash-on-accent: #ffffff;
+
+  --dash-success: #17784a;
+  --dash-success-soft: #e7f5ee;
+  --dash-warning: #9a5b00;
+  --dash-warning-soft: #fdf4e3;
+  --dash-danger: #b42318;
+  --dash-danger-soft: #fdeceb;
+  /* Legacy alias used for "attention" text. */
+  --dash-gold: var(--dash-warning);
+
+  --dash-radius: 10px;
+  --dash-radius-sm: 6px;
+  --dash-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --dash-shadow-md: 0 4px 14px rgb(16 24 40 / 0.08);
   --dash-font:
-    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
 }
 
 *,
@@ -30,12 +54,11 @@ body {
 
 body {
   min-height: 100dvh;
-  background:
-    radial-gradient(1200px 600px at 10% -10%, hsl(338 82% 40% / 0.22), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, hsl(268 84% 45% / 0.2), transparent 60%),
-    var(--dash-bg);
+  background: var(--dash-bg);
   color: var(--dash-text);
   font-family: var(--dash-font);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -44,6 +67,6 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--dash-gold);
-  outline-offset: 3px;
+  outline: 2px solid var(--dash-accent);
+  outline-offset: 2px;
 }

@@ -45,10 +45,42 @@ export default async function InvitationsPage({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>{active.workspace.name}</p>
+        <div className={styles.headerText}>
+          <p className={styles.eyebrow}>Workspace · {active.workspace.name}</p>
           <h1 className={styles.title}>Undangan</h1>
+          <p className={styles.lead}>
+            Undangan adalah salinan template untuk satu acara klien. Di sini Anda mengisi data
+            acara, mengelola daftar tamu, lalu mempublish link yang dibagikan ke tamu.
+          </p>
         </div>
+      </header>
+
+      {!archivedView ? (
+        <ol className={styles.steps} aria-label="Alur membuat undangan">
+          <li className={styles.step}>
+            <strong>Pilih template</strong>
+            <span>Gunakan template yang sudah dipublish.</span>
+          </li>
+          <li className={styles.step}>
+            <strong>Isi data &amp; tamu</strong>
+            <span>Nama mempelai, tanggal, lokasi, dan daftar tamu.</span>
+          </li>
+          <li className={styles.step}>
+            <strong>Publish &amp; bagikan</strong>
+            <span>Kirim link undangan dan pantau RSVP.</span>
+          </li>
+        </ol>
+      ) : null}
+
+      {permissions.write && !archivedView ? (
+        <CreateInvitationForm
+          workspaceId={workspaceId}
+          templates={published}
+          action={createInvitationAction}
+        />
+      ) : null}
+
+      <div className={styles.toolbar}>
         <nav className={styles.row} aria-label="Filter undangan">
           <Link
             href="/dashboard/invitations"
@@ -65,15 +97,8 @@ export default async function InvitationsPage({
             Diarsipkan
           </Link>
         </nav>
-      </header>
-
-      {permissions.write && !archivedView ? (
-        <CreateInvitationForm
-          workspaceId={workspaceId}
-          templates={published}
-          action={createInvitationAction}
-        />
-      ) : null}
+        <span className={styles.count}>{invitations.length} undangan</span>
+      </div>
 
       <InvitationList
         invitations={invitations}

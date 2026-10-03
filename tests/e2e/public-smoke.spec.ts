@@ -53,7 +53,7 @@ test.describe("dashboard entry (protected since Fase 2)", () => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
     await login(page);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Digital Invitation Builder");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ringkasan");
     await page.locator("#open-renderer-smoke").click();
     await expect(page).toHaveURL(/\/smoke\/renderer$/);
   });

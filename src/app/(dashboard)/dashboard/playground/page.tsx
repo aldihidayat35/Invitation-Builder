@@ -94,32 +94,44 @@ export default async function PlaygroundPage({ searchParams }: PageProps<"/dashb
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <p className={styles.eyebrow}>Fase 3 - hanya development</p>
+        <p className={styles.eyebrow}>Alat pengembang · hanya tampil di mode development</p>
         <h1 className={styles.title}>Engine playground</h1>
         <p className={styles.lead}>
-          Satu template, banyak dataset. Template tidak pernah diubah; hanya model hasil resolve
-          yang berbeda (P-02).
+          Halaman uji untuk melihat bagaimana data undangan (nama mempelai, tanggal, lokasi, nama
+          tamu) mengisi sebuah template contoh. Template-nya tidak pernah diubah — hanya hasil
+          pengisiannya yang berbeda. Halaman ini tidak memengaruhi template atau undangan Anda.
         </p>
+        <ol className={styles.howto}>
+          <li>Pilih dataset contoh, atau ubah isian pada form di kiri.</li>
+          <li>
+            Klik <strong>Terapkan</strong> untuk melihat hasilnya di panel kanan.
+          </li>
+          <li>Bandingkan dua dataset di bagian bawah untuk memastikan template tetap sama.</li>
+        </ol>
       </header>
 
-      <nav className={styles.tabs} aria-label="Dataset contoh">
-        {SAMPLE_DATASETS.map((d) => (
-          <Link
-            key={d.id}
-            href={`/dashboard/playground?set=${d.id}`}
-            className={styles.tab}
-            aria-current={!fromForm && d.id === presetId ? "page" : undefined}
-          >
-            {d.label}
-          </Link>
-        ))}
-      </nav>
+      <div className={styles.datasetBar}>
+        <span className={styles.datasetLabel}>Dataset contoh</span>
+        <nav className={styles.tabs} aria-label="Dataset contoh">
+          {SAMPLE_DATASETS.map((d) => (
+            <Link
+              key={d.id}
+              href={`/dashboard/playground?set=${d.id}`}
+              className={styles.tab}
+              aria-current={!fromForm && d.id === presetId ? "page" : undefined}
+            >
+              {d.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       <div className={styles.grid}>
         <section className={styles.panel} aria-labelledby="form-heading">
           <h2 id="form-heading" className={styles.panelTitle}>
-            Form dari variable schema
+            1. Isi data undangan
           </h2>
+          <p className={styles.panelLead}>Form ini dibuat otomatis dari variabel template.</p>
           <form method="get" action="/dashboard/playground" id="playground-form">
             <VariableFields
               groups={groups}
@@ -144,8 +156,9 @@ export default async function PlaygroundPage({ searchParams }: PageProps<"/dashb
 
         <section className={styles.panel} aria-labelledby="resolved-heading">
           <h2 id="resolved-heading" className={styles.panelTitle}>
-            Hasil resolve {fromForm ? "(form)" : `(${preset.label})`}
+            2. Hasil pengisian {fromForm ? "(dari form)" : `(${preset.label})`}
           </h2>
+          <p className={styles.panelLead}>Teks setiap elemen setelah variabel diganti data.</p>
           <p className={resolved.ok ? styles.ok : styles.bad} id="resolve-status">
             {resolved.ok ? "Siap dirender" : `${resolved.issues.length} masalah`}
           </p>
@@ -170,7 +183,7 @@ export default async function PlaygroundPage({ searchParams }: PageProps<"/dashb
             </ul>
           ) : null}
           <details className={styles.json}>
-            <summary>Resolved JSON</summary>
+            <summary>Lihat data mentah (JSON)</summary>
             <pre>{JSON.stringify(resolved, null, 2)}</pre>
           </details>
         </section>
@@ -178,8 +191,11 @@ export default async function PlaygroundPage({ searchParams }: PageProps<"/dashb
 
       <section className={styles.panel} aria-labelledby="compare-heading">
         <h2 id="compare-heading" className={styles.panelTitle}>
-          Template yang sama, dua dataset
+          3. Perbandingan: template sama, dua dataset
         </h2>
+        <p className={styles.panelLead}>
+          Kedua kolom memakai template yang identik; perbedaan hanya berasal dari data.
+        </p>
         <div className={styles.compare} id="compare">
           {compare.map(({ dataset, resolved: r }) => (
             <div key={dataset.id} data-testid={`compare-${dataset.id}`}>

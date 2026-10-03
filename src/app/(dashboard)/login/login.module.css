@@ -6,54 +6,47 @@
 }
 
 .card {
-  width: min(420px, 100%);
-  padding: 36px 32px;
-  border-radius: calc(var(--dash-radius) + 6px);
+  width: min(400px, 100%);
+  padding: 32px 28px;
+  border-radius: var(--dash-radius);
   border: 1px solid var(--dash-border);
-  background:
-    linear-gradient(135deg, hsl(338 82% 60% / 0.12), hsl(268 84% 60% / 0.08) 50%, transparent),
-    var(--dash-surface);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 30px 80px hsl(232 40% 3% / 0.6);
-  animation: rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  background: var(--dash-surface);
+  box-shadow: var(--dash-shadow-md);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
 }
 
 .brand strong {
-  background: linear-gradient(90deg, var(--dash-accent), var(--dash-gold));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--dash-text);
 }
 
 .mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: conic-gradient(
-    from 210deg,
-    var(--dash-accent),
-    var(--dash-accent-2),
-    var(--dash-gold),
-    var(--dash-accent)
-  );
-  box-shadow: 0 0 24px hsl(338 82% 60% / 0.45);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--dash-accent);
+  color: var(--dash-on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .title {
   margin: 0 0 6px;
-  font-size: 1.6rem;
-  letter-spacing: -0.02em;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .lead {
-  margin: 0 0 24px;
+  margin: 0 0 22px;
   color: var(--dash-muted);
   line-height: 1.5;
 }
@@ -66,61 +59,58 @@
 .field {
   display: grid;
   gap: 6px;
-  font-size: 0.85rem;
-  color: var(--dash-muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--dash-text);
 }
 
 .field input {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--dash-border);
-  background: hsl(232 22% 9% / 0.9);
+  padding: 10px 12px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border-strong);
+  background: var(--dash-surface);
   color: var(--dash-text);
   font: inherit;
+  font-weight: 400;
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .field input:focus {
   outline: none;
   border-color: var(--dash-accent);
-  box-shadow: 0 0 0 3px hsl(338 82% 66% / 0.25);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
 }
 
 .field input[aria-invalid="true"] {
-  border-color: hsl(0 80% 62%);
+  border-color: var(--dash-danger);
 }
 
 .error {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  color: hsl(0 90% 80%);
-  background: hsl(0 70% 40% / 0.2);
-  border: 1px solid hsl(0 70% 55% / 0.5);
+  border-radius: var(--dash-radius-sm);
+  font-size: 0.86rem;
+  color: var(--dash-danger);
+  background: var(--dash-danger-soft);
+  border: 1px solid var(--dash-danger);
 }
 
 .submit {
-  padding: 13px 18px;
+  padding: 11px 18px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--dash-radius-sm);
   font: inherit;
   font-weight: 600;
-  color: white;
+  color: var(--dash-on-accent);
   cursor: pointer;
-  background: linear-gradient(90deg, var(--dash-accent), var(--dash-accent-2));
-  box-shadow: 0 10px 30px hsl(338 82% 50% / 0.35);
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    opacity 160ms ease;
+  background: var(--dash-accent);
+  transition: background 120ms ease;
 }
 
 .submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 36px hsl(338 82% 50% / 0.45);
+  background: var(--dash-accent-hover);
 }
 
 .submit:disabled {
@@ -128,21 +118,8 @@
   cursor: progress;
 }
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .card {
-    animation: none;
-  }
+  .field input,
   .submit {
     transition: none;
   }

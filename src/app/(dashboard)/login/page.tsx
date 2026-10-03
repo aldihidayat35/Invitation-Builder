@@ -18,15 +18,15 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="login-title">
         <div className={styles.brand}>
-          <span className={styles.mark} aria-hidden="true" />
-          <span>
-            Invitation<strong>Studio</strong>
+          <span className={styles.mark} aria-hidden="true">
+            IS
           </span>
+          <strong>Invitation Studio</strong>
         </div>
         <h1 id="login-title" className={styles.title}>
           Masuk ke dashboard
         </h1>
-        <p className={styles.lead}>Kelola template undangan digital workspace Anda.</p>
+        <p className={styles.lead}>Desain template dan kelola undangan digital workspace Anda.</p>
         <LoginForm next={next} />
       </section>
     </main>

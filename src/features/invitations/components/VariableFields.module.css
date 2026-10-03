@@ -7,18 +7,17 @@
   margin: 0;
   padding: 14px 16px 16px;
   border: 1px solid var(--dash-border);
-  border-radius: 14px;
+  border-radius: var(--dash-radius);
   background: var(--dash-surface);
   display: grid;
   gap: 12px;
 }
 
 .legend {
-  padding: 0 8px;
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dash-gold);
+  padding: 0 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--dash-text);
 }
 
 .field {
@@ -28,31 +27,33 @@
 
 .label {
   font-size: 0.82rem;
-  color: var(--dash-muted);
+  font-weight: 500;
+  color: var(--dash-text);
 }
 
 .required {
-  color: var(--dash-accent);
+  color: var(--dash-danger);
 }
 
 .input {
   width: 100%;
-  padding: 9px 11px;
-  border-radius: 9px;
-  border: 1px solid var(--dash-border);
-  background: hsl(232 24% 12%);
+  padding: 9px 12px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border-strong);
+  background: var(--dash-surface);
   color: var(--dash-text);
   font: inherit;
   font-size: 0.9rem;
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--dash-accent);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
 }
 
 .field[data-invalid="true"] .input {
-  border-color: hsl(0 80% 62%);
+  border-color: var(--dash-danger);
 }
 
 .hint {
@@ -64,5 +65,5 @@
 .error {
   margin: 0;
   font-size: 0.78rem;
-  color: hsl(0 85% 72%);
+  color: var(--dash-danger);
 }

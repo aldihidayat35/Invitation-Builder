@@ -8,6 +8,12 @@ const dateFormat = new Intl.DateTimeFormat("id-ID", {
   timeZone: "Asia/Jakarta",
 });
 
+const STATUS_LABEL: Record<InvitationSummary["status"], string> = {
+  draft: "Draft",
+  published: "Dipublish",
+  archived: "Diarsipkan",
+};
+
 export function InvitationList({
   invitations,
   emptyMessage,
@@ -26,20 +32,22 @@ export function InvitationList({
     <ul className={styles.list} aria-label="Daftar undangan">
       {invitations.map((invitation) => (
         <li key={invitation.id} className={styles.card} data-testid="invitation-card">
-          <span className={styles.meta}>
-            {invitation.status} · Diubah {dateFormat.format(invitation.updatedAt)}
+          <span className={styles.badge} data-status={invitation.status}>
+            {STATUS_LABEL[invitation.status]}
           </span>
           <h3 className={styles.cardName}>
             <Link href={`/dashboard/invitations/${invitation.id}`} data-testid="open-invitation">
               {invitation.title}
             </Link>
           </h3>
-          <div className={styles.row}>
+          <span className={styles.slug}>/i/{invitation.slug}</span>
+          <span className={styles.meta}>Diubah {dateFormat.format(invitation.updatedAt)}</span>
+          <div className={styles.cardActions}>
             <Link
               href={`/dashboard/invitations/${invitation.id}`}
               className={`${styles.secondary} ${styles.small}`}
             >
-              Isi data
+              Isi data &amp; tamu
             </Link>
             <Link
               href={`/dashboard/invitations/${invitation.id}/preview`}

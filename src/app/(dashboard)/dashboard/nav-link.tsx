@@ -8,10 +8,15 @@ import styles from "./shell.module.css";
 export function NavLink({
   href,
   exact = false,
+  icon,
+  hint,
   children,
 }: {
   href: string;
   exact?: boolean;
+  icon?: ReactNode;
+  /** One-line explanation shown under the label. */
+  hint?: string;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -23,7 +28,11 @@ export function NavLink({
       aria-current={active ? "page" : undefined}
       data-active={active || undefined}
     >
-      {children}
+      {icon ? <span className={styles.navIcon}>{icon}</span> : null}
+      <span className={styles.navText}>
+        <span className={styles.navLabel}>{children}</span>
+        {hint ? <span className={styles.navHint}>{hint}</span> : null}
+      </span>
     </Link>
   );
 }

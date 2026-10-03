@@ -158,16 +158,21 @@
 }
 
 .saveStatus[data-status="saved"] {
-  color: hsl(150 60% 65%);
+  color: var(--dash-success);
+  background: var(--dash-success-soft);
+  border-color: transparent;
 }
 .saveStatus[data-status="saving"],
 .saveStatus[data-status="dirty"] {
-  color: var(--dash-gold);
+  color: var(--dash-warning);
+  background: var(--dash-warning-soft);
+  border-color: transparent;
 }
 .saveStatus[data-status="error"],
 .saveStatus[data-status="conflict"] {
-  color: hsl(0 85% 70%);
-  border-color: hsl(0 70% 50% / 0.6);
+  color: var(--dash-danger);
+  background: var(--dash-danger-soft);
+  border-color: var(--dash-danger);
 }
 
 .banner {
@@ -176,9 +181,10 @@
   gap: 10px;
   align-items: center;
   padding: 8px 12px;
-  border-radius: 10px;
-  background: hsl(0 60% 30% / 0.35);
-  border: 1px solid hsl(0 70% 50% / 0.5);
+  border-radius: var(--dash-radius-sm);
+  color: var(--dash-danger);
+  background: var(--dash-danger-soft);
+  border: 1px solid var(--dash-danger);
   font-size: 13px;
 }
 
@@ -192,7 +198,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 .sideHeader {
@@ -262,7 +268,7 @@
 }
 
 .pSectionToggle:hover {
-  color: #fff;
+  color: var(--dash-accent);
 }
 
 .pSectionToggle:focus-visible {
@@ -348,8 +354,7 @@
 
 .tile:hover:not(:disabled) {
   border-color: var(--dash-accent);
-  background: hsl(338 82% 66% / 0.08);
-  transform: translateY(-1px);
+  background: var(--dash-accent-soft);
 }
 
 .tile:focus-visible {
@@ -404,7 +409,7 @@
 .ghostButton:hover:not(:disabled) {
   border-color: var(--dash-accent);
   border-style: solid;
-  background: hsl(338 82% 66% / 0.08);
+  background: var(--dash-accent-soft);
 }
 
 .ghostButton:disabled {
@@ -451,8 +456,8 @@
 }
 
 .layerRow[data-selected="true"] {
-  border-color: hsl(338 82% 66% / 0.6);
-  background: hsl(338 82% 66% / 0.12);
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
 }
 
 .layerRow[data-hidden="true"] .layerText {
@@ -523,13 +528,13 @@
 
 .layerToggle:hover:not(:disabled) {
   color: var(--dash-text);
-  background: hsl(0 0% 100% / 0.06);
+  background: var(--dash-surface-sunken);
 }
 
 /* ----------------------------------------------------------------- artboard */
 .artboardScroll {
   overflow: auto;
-  background: hsl(232 28% 5%);
+  background: #e6e8ec;
   padding: 24px;
   min-height: 0;
 }
@@ -562,7 +567,8 @@
 }
 
 .sectionHead[data-active="true"] {
-  color: var(--dash-gold);
+  color: var(--dash-accent);
+  font-weight: 600;
 }
 
 .sectionTitle {
@@ -578,7 +584,7 @@
 
 .canvasFrame {
   background: #fff;
-  box-shadow: 0 6px 30px hsl(0 0% 0% / 0.5);
+  box-shadow: 0 1px 3px rgb(16 24 40 / 0.12);
   outline: 2px solid transparent;
 }
 
@@ -587,7 +593,7 @@
 }
 
 .canvasPlaceholder {
-  background: hsl(232 20% 14%);
+  background: var(--dash-surface-sunken);
 }
 
 .empty {
@@ -604,7 +610,7 @@
   overflow-x: hidden;
   min-width: 0;
   min-height: 0;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 .inspector {
@@ -637,8 +643,8 @@
   height: 34px;
   border-radius: 10px;
   color: var(--dash-accent);
-  background: hsl(338 82% 66% / 0.12);
-  border: 1px solid hsl(338 82% 66% / 0.3);
+  background: var(--dash-accent-soft);
+  border: 1px solid transparent;
 }
 
 .inspHeaderText {
@@ -709,17 +715,18 @@
 
 .actionTile:hover:not(:disabled) {
   border-color: var(--dash-accent);
-  background: hsl(338 82% 66% / 0.08);
+  background: var(--dash-accent-soft);
 }
 
 .actionTile[aria-pressed="true"] {
-  color: var(--dash-gold);
-  border-color: hsl(43 80% 60% / 0.5);
+  color: var(--dash-warning);
+  background: var(--dash-warning-soft);
+  border-color: var(--dash-warning);
 }
 
 .actionTile.danger:hover:not(:disabled) {
-  border-color: hsl(0 70% 60%);
-  background: hsl(0 70% 50% / 0.12);
+  border-color: var(--dash-danger);
+  background: var(--dash-danger-soft);
 }
 
 .actionTile:disabled,
@@ -767,8 +774,8 @@
 }
 
 .iconButton:hover:not(:disabled) {
-  background: hsl(338 82% 66% / 0.15);
-  color: #fff;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
 }
 
 .iconButton:focus-visible {
@@ -793,8 +800,8 @@
   height: 48px;
   border-radius: 14px;
   color: var(--dash-accent);
-  background: hsl(338 82% 66% / 0.1);
-  border: 1px dashed hsl(338 82% 66% / 0.4);
+  background: var(--dash-accent-soft);
+  border: 1px dashed var(--dash-accent);
 }
 
 .emptyStateTitle {
@@ -865,25 +872,25 @@
   min-height: 32px;
   padding: 5px 9px;
   border-radius: 8px;
-  border: 1px solid var(--dash-border);
-  background: var(--dash-surface-strong);
+  border: 1px solid var(--dash-border-strong);
+  background: var(--dash-surface);
   color: var(--dash-text);
   font: inherit;
   font-size: 13px;
-  color-scheme: dark;
+  color-scheme: light;
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease;
 }
 
 .input:hover:not(:disabled) {
-  border-color: hsl(0 0% 100% / 0.22);
+  border-color: var(--dash-subtle);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--dash-accent);
-  box-shadow: 0 0 0 3px hsl(338 82% 66% / 0.18);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
 }
 
 textarea.input {
@@ -949,7 +956,7 @@ textarea.input {
 }
 
 .danger {
-  color: hsl(0 85% 72%);
+  color: var(--dash-danger);
 }
 
 .badge {
@@ -983,8 +990,9 @@ textarea.input {
   gap: 6px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: hsl(268 84% 70% / 0.18);
-  border: 1px solid hsl(268 84% 70% / 0.5);
+  color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+  border: 1px solid var(--dash-accent);
   font-size: 12px;
 }
 
@@ -1024,8 +1032,13 @@ textarea.input {
   cursor: pointer;
 }
 
+.segmentedButton + .segmentedButton {
+  border-left: 1px solid var(--dash-border);
+}
+
 .segmentedButton[aria-pressed="true"] {
-  background: linear-gradient(90deg, var(--dash-accent), var(--dash-accent-2));
+  color: var(--dash-on-accent);
+  background: var(--dash-accent);
 }
 
 /* ------------------------------------------------------------------- assets */
@@ -1042,7 +1055,7 @@ textarea.input {
 }
 
 .uploadButton:hover {
-  background: hsl(338 82% 66% / 0.1);
+  background: var(--dash-accent-soft);
 }
 
 .uploadButton[aria-disabled="true"] {
@@ -1053,7 +1066,7 @@ textarea.input {
 .errorText {
   margin: 0;
   font-size: 12px;
-  color: hsl(0 85% 72%);
+  color: var(--dash-danger);
 }
 
 .assetGrid {
@@ -1067,7 +1080,7 @@ textarea.input {
   max-height: 320px;
   overflow-x: hidden;
   overflow-y: auto;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 .assetGrid > li {
@@ -1102,7 +1115,7 @@ textarea.input {
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 6px;
-  background: hsl(232 20% 14%);
+  background: var(--dash-surface-sunken);
 }
 
 .assetName {
@@ -1120,7 +1133,7 @@ textarea.input {
 .imagePreview {
   border-radius: 8px;
   border: 1px solid var(--dash-border);
-  background: hsl(232 20% 14%);
+  background: var(--dash-surface-sunken);
   padding: 4px;
 }
 

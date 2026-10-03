@@ -11,7 +11,7 @@ import {
   renameTemplateAction,
 } from "./actions";
 
-export const metadata: Metadata = { title: "Template Library" };
+export const metadata: Metadata = { title: "Template" };
 
 export default async function TemplateLibraryPage({
   searchParams,
@@ -23,7 +23,7 @@ export default async function TemplateLibraryPage({
   if (!active) {
     return (
       <main className={styles.page}>
-        <h1 className={styles.title}>Template Library</h1>
+        <h1 className={styles.title}>Template</h1>
         <div className={styles.empty} data-testid="no-workspace">
           <p>Akun Anda belum tergabung di workspace mana pun. Hubungi admin untuk diundang.</p>
         </div>
@@ -40,9 +40,13 @@ export default async function TemplateLibraryPage({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>{active.workspace.name}</p>
-          <h1 className={styles.title}>Template Library</h1>
+        <div className={styles.headerText}>
+          <p className={styles.eyebrow}>Workspace · {active.workspace.name}</p>
+          <h1 className={styles.title}>Template</h1>
+          <p className={styles.lead}>
+            Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu
+            publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan.
+          </p>
         </div>
       </header>
 
@@ -50,22 +54,25 @@ export default async function TemplateLibraryPage({
         <CreateTemplateForm workspaceId={workspaceId} action={createTemplateAction} />
       ) : null}
 
-      <nav className={styles.tabs} aria-label="Filter template">
-        <Link
-          href="/dashboard/templates"
-          className={styles.tab}
-          aria-current={archivedView ? undefined : "page"}
-        >
-          Aktif
-        </Link>
-        <Link
-          href="/dashboard/templates?view=archived"
-          className={styles.tab}
-          aria-current={archivedView ? "page" : undefined}
-        >
-          Diarsipkan
-        </Link>
-      </nav>
+      <div className={styles.toolbar}>
+        <nav className={styles.tabs} aria-label="Filter template">
+          <Link
+            href="/dashboard/templates"
+            className={styles.tab}
+            aria-current={archivedView ? undefined : "page"}
+          >
+            Aktif
+          </Link>
+          <Link
+            href="/dashboard/templates?view=archived"
+            className={styles.tab}
+            aria-current={archivedView ? "page" : undefined}
+          >
+            Diarsipkan
+          </Link>
+        </nav>
+        <span className={styles.count}>{templates.length} template</span>
+      </div>
 
       <TemplateList
         templates={templates}
