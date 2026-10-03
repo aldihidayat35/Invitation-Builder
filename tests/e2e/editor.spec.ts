@@ -70,9 +70,14 @@ test.describe("editor core (Fase 4)", () => {
     await page.mouse.move(cx + 20, cy + 10, { steps: 4 });
     await page.mouse.move(cx + 50, cy + 30, { steps: 4 });
     await page.mouse.up();
-    // Snapping may nudge by a few px, so compare approximately.
-    expect(Math.abs((await num(page, "insp-x")) - 90)).toBeLessThanOrEqual(8);
-    expect(Math.abs((await num(page, "insp-y")) - 90)).toBeLessThanOrEqual(8);
+    // Snapping may nudge by a few px, so compare approximately. Poll: the inspector
+    // re-renders after the drag commits, which can lag the pointer-up under load.
+    await expect
+      .poll(async () => Math.abs((await num(page, "insp-x")) - 90), { timeout: 5_000 })
+      .toBeLessThanOrEqual(8);
+    await expect
+      .poll(async () => Math.abs((await num(page, "insp-y")) - 90), { timeout: 5_000 })
+      .toBeLessThanOrEqual(8);
 
     // --- one drag = one undo step
     await page.getByTestId("undo").click();
@@ -148,5 +153,41 @@ test.describe("editor core (Fase 4)", () => {
     await page.getByTestId("zoom-out").click();
     await expect(page.getByTestId("zoom-label")).toHaveText("100%");
     expect(await num(page, "insp-x")).toBe(33);
+  });
+});
+
+test.describe("editor panels", () => {
+  test("side panels can be resized by drag/keyboard and the width persists", async ({ page }) => {
+    await openNewEditor(page);
+    const left = page.getByTestId("resizer-left");
+    const right = page.getByTestId("resizer-right");
+    const start = Number(await left.getAttribute("aria-valuenow"));
+
+    const box = (await left.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + 200);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 80, box.y + 200, { steps: 5 });
+    await page.mouse.up();
+    await expect
+      .poll(async () => Number(await left.getAttribute("aria-valuenow")))
+      .toBeGreaterThan(start + 60);
+    const aside = page.getByRole("complementary", { name: "Panel kiri" });
+    expect((await aside.boundingBox())!.width).toBeGreaterThan(start + 60);
+
+    // Keyboard: ArrowLeft on the right splitter widens the inspector.
+    const rightStart = Number(await right.getAttribute("aria-valuenow"));
+    await right.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(right).toHaveAttribute("aria-valuenow", String(rightStart + 16));
+
+    const widened = await left.getAttribute("aria-valuenow");
+    await page.reload();
+    await expect(page.getByTestId("resizer-left")).toHaveAttribute("aria-valuenow", widened!);
+
+    // Double-click resets to the default width (the track is 0px wide; its hit area is a
+    // pseudo-element, so click by coordinates).
+    const handle = (await page.getByTestId("resizer-left").boundingBox())!;
+    await page.mouse.dblclick(handle.x + 2, handle.y + 200);
+    await expect(page.getByTestId("resizer-left")).toHaveAttribute("aria-valuenow", "272");
   });
 });

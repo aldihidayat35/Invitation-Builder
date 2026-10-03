@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { animationPresetRegistry, buildDefaultTrack } from "@/features/animations";
 import { ANIMATION_EASINGS, type AnimationTrack, type Element } from "@/lib/schema";
 import { useEditorStore } from "./EditorProvider";
-import { FieldRow, NumberField, SelectField } from "./fields";
+import { NumberField, SelectField } from "./fields";
+import { IconPlay, IconReplay } from "./icons";
 import styles from "./editor.module.css";
 
 export interface AnimationPanelProps {
@@ -41,7 +42,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
 
   const presetOptions = useMemo(() => {
     return [
-      { value: "", label: "— Tidak ada animasi —" },
+      { value: "", label: "Tanpa animasi" },
       ...availablePresets.map((p) => ({
         value: p.id,
         label: `${p.label} [${p.category}]`,
@@ -114,9 +115,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
   };
 
   return (
-    <div className={styles.subStack} data-testid="animation-inspector">
-      <h3 className={styles.subHeading}>Animasi Masuk (Enter Animation)</h3>
-
+    <div className={styles.panelStack} data-testid="animation-inspector">
       <SelectField
         id="insp-anim-preset"
         label="Preset"
@@ -192,7 +191,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
             </div>
           ) : null}
 
-          <FieldRow label="Hanya Sekali (Once)" htmlFor="insp-anim-once">
+          <label className={styles.checkRow}>
             <input
               id="insp-anim-once"
               type="checkbox"
@@ -200,26 +199,29 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
               disabled={readOnly}
               onChange={(e) => patchTrack({ once: e.target.checked })}
             />
-          </FieldRow>
+            Putar sekali saja
+          </label>
 
-          <div className={styles.toolGroup} style={{ marginTop: 8 }}>
+          <div className={styles.buttonRow2}>
             <button
               type="button"
-              className={styles.toolButton}
+              className={styles.ghostButton}
               onClick={handleReplayElement}
               title="Putar ulang animasi elemen ini di artboard"
               data-testid="replay-element-btn"
             >
-              ▶ Replay Animasi
+              <IconPlay size={13} />
+              Putar elemen
             </button>
             <button
               type="button"
-              className={styles.toolButton}
+              className={styles.ghostButton}
               onClick={handleReplaySection}
               title="Putar ulang semua animasi di section ini"
               data-testid="replay-section-btn"
             >
-              ⟳ Replay Section
+              <IconReplay size={13} />
+              Putar section
             </button>
           </div>
         </>

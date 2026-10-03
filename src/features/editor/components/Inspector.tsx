@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
@@ -11,7 +12,26 @@ import {
   TextField,
   type ColorValue,
 } from "./fields";
+import {
+  ElementIcon,
+  IconBackward,
+  IconBringFront,
+  IconCopy,
+  IconCursor,
+  IconEyeOff,
+  IconForward,
+  IconLayers,
+  IconLock,
+  IconPlus,
+  IconReplay,
+  IconSection,
+  IconSendBack,
+  IconSparkle,
+  IconTrash,
+  IconUnlock,
+} from "./icons";
 import { ImagePanel } from "./ImagePanel";
+import { PanelSection } from "./PanelSection";
 import { WidgetPanel } from "./WidgetPanel";
 import { AnimationPanel } from "./AnimationPanel";
 import styles from "./editor.module.css";
@@ -49,13 +69,47 @@ export function Inspector() {
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
     body = <SectionPanel sectionId={activeSectionId} readOnly={readOnly} />;
   } else {
-    body = <p className={styles.muted}>Pilih section atau elemen untuk mengatur propertinya.</p>;
+    body = (
+      <div className={styles.emptyState}>
+        <span className={styles.emptyStateIcon}>
+          <IconCursor size={22} />
+        </span>
+        <p className={styles.emptyStateTitle}>Belum ada yang dipilih</p>
+        <p className={styles.muted}>Pilih section atau elemen untuk mengatur propertinya.</p>
+      </div>
+    );
   }
 
   return (
     <aside className={styles.inspector} aria-label="Inspector" data-testid="inspector">
       {body}
     </aside>
+  );
+}
+
+/** Title card at the top of the inspector. */
+function InspectorHeader({
+  icon,
+  eyebrow,
+  title,
+  badge,
+}: {
+  icon: ReactNode;
+  eyebrow: string;
+  title: string;
+  badge?: ReactNode;
+}) {
+  return (
+    <header className={styles.inspHeader}>
+      <span className={styles.inspHeaderIcon}>{icon}</span>
+      <div className={styles.inspHeaderText}>
+        <span className={styles.inspEyebrow}>{eyebrow}</span>
+        <h2 className={styles.inspTitle} title={title}>
+          {title}
+        </h2>
+      </div>
+      {badge}
+    </header>
   );
 }
 
@@ -70,60 +124,72 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
   const act = () => store.getState();
 
   return (
-    <div className={styles.panelStack} data-testid="section-inspector">
-      <h2 className={styles.panelHeading}>Section</h2>
-      <TextField
-        id="insp-section-name"
-        label="Nama"
-        value={section.name ?? ""}
-        disabled={readOnly}
-        maxLength={120}
-        onCommit={(name) => act().patchSection(sectionId, { name })}
+    <div className={styles.inspStack} data-testid="section-inspector">
+      <InspectorHeader
+        icon={<IconSection size={18} />}
+        eyebrow="Section"
+        title={section.name || "Tanpa nama"}
+        badge={section.visible ? null : <span className={styles.badge}>Disembunyikan</span>}
       />
-      <NumberField
-        id="insp-section-height"
-        label="Tinggi (px)"
-        value={section.baseHeight}
-        min={100}
-        max={4000}
-        disabled={readOnly}
-        onCommit={(baseHeight) => act().patchSection(sectionId, { baseHeight })}
-      />
-      <ColorField
-        id="insp-section-bg"
-        label="Latar"
-        value={section.background.color}
-        resolvedHex={resolveColor(section.background.color, tokens, "#ffffff")}
-        tokens={tokens.colors}
-        allowNone
-        disabled={readOnly}
-        onChange={(color) => act().patchSection(sectionId, { background: { color } })}
-      />
-      <SelectField
-        id="insp-section-overflow"
-        label="Overflow"
-        value={section.overflow}
-        disabled={readOnly}
-        options={[
-          { value: "hidden", label: "Dipotong (hidden)" },
-          { value: "visible", label: "Terlihat (visible)" },
-        ]}
-        onChange={(overflow) => act().patchSection(sectionId, { overflow })}
-      />
-      <label className={styles.checkRow}>
-        <input
-          id="insp-section-visible"
-          type="checkbox"
-          checked={section.visible}
+
+      <PanelSection id="insp-section-general" title="Umum">
+        <TextField
+          id="insp-section-name"
+          label="Nama"
+          value={section.name ?? ""}
           disabled={readOnly}
-          onChange={(e) => act().patchSection(sectionId, { visible: e.target.checked })}
+          maxLength={120}
+          onCommit={(name) => act().patchSection(sectionId, { name })}
         />
-        Tampilkan section saat publish
-      </label>
-      <div className={styles.toolGroup} style={{ marginTop: 8 }}>
+        <label className={styles.checkRow}>
+          <input
+            id="insp-section-visible"
+            type="checkbox"
+            checked={section.visible}
+            disabled={readOnly}
+            onChange={(e) => act().patchSection(sectionId, { visible: e.target.checked })}
+          />
+          Tampilkan section saat publish
+        </label>
+      </PanelSection>
+
+      <PanelSection id="insp-section-layout" title="Ukuran & latar">
+        <NumberField
+          id="insp-section-height"
+          label="Tinggi (px)"
+          value={section.baseHeight}
+          min={100}
+          max={4000}
+          disabled={readOnly}
+          onCommit={(baseHeight) => act().patchSection(sectionId, { baseHeight })}
+        />
+        <ColorField
+          id="insp-section-bg"
+          label="Warna latar"
+          value={section.background.color}
+          resolvedHex={resolveColor(section.background.color, tokens, "#ffffff")}
+          tokens={tokens.colors}
+          allowNone
+          disabled={readOnly}
+          onChange={(color) => act().patchSection(sectionId, { background: { color } })}
+        />
+        <SelectField
+          id="insp-section-overflow"
+          label="Konten di luar batas"
+          value={section.overflow}
+          disabled={readOnly}
+          options={[
+            { value: "hidden", label: "Dipotong (hidden)" },
+            { value: "visible", label: "Terlihat (visible)" },
+          ]}
+          onChange={(overflow) => act().patchSection(sectionId, { overflow })}
+        />
+      </PanelSection>
+
+      <PanelSection id="insp-section-anim" title="Animasi">
         <button
           type="button"
-          className={styles.toolButton}
+          className={styles.ghostButton}
           onClick={() => {
             if (typeof window !== "undefined") {
               window.dispatchEvent(
@@ -134,10 +200,15 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
           title="Putar ulang semua animasi di section ini"
           data-testid="replay-section-btn"
         >
-          ⟳ Replay Animasi Section
+          <IconReplay size={13} />
+          Putar ulang animasi section
         </button>
-      </div>
-      <p className={styles.muted}>Urutan section = urutan scroll publik. Lebar kanonik 390 px.</p>
+        <p className={styles.muted}>Preview diputar langsung di artboard.</p>
+      </PanelSection>
+
+      <p className={styles.footHint}>
+        Urutan section = urutan scroll publik. Lebar kanonik 390 px.
+      </p>
     </div>
   );
 }
@@ -152,62 +223,81 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
     .filter((e): e is Element => e !== undefined);
   const allLocked = elements.length > 0 && elements.every((e) => e.locked);
   const act = () => store.getState();
-  const reorder = (mode: ReorderMode, label: string, testId: string) => (
+  const reorder = (mode: ReorderMode, label: string, testId: string, icon: ReactNode) => (
     <button
       type="button"
-      className={styles.smallButton}
+      className={styles.iconButton}
       disabled={readOnly}
       data-testid={testId}
+      aria-label={label}
+      title={label}
       onClick={() => act().reorder(mode, ids)}
     >
-      {label}
+      {icon}
     </button>
   );
 
   return (
-    <div className={styles.actions}>
-      <button
-        type="button"
-        className={styles.smallButton}
-        disabled={readOnly}
-        aria-pressed={allLocked}
-        data-testid="action-lock"
-        onClick={() => act().setLocked(ids, !allLocked)}
-      >
-        {allLocked ? "Buka kunci" : "Kunci"}
-      </button>
-      <button
-        type="button"
-        className={styles.smallButton}
-        disabled={readOnly}
-        data-testid="action-hide"
-        onClick={() => act().setVisible(ids, false)}
-      >
-        Sembunyikan
-      </button>
-      <button
-        type="button"
-        className={styles.smallButton}
-        disabled={readOnly}
-        data-testid="action-duplicate"
-        onClick={() => act().duplicateSelected()}
-      >
-        Duplikat
-      </button>
-      <button
-        type="button"
-        className={`${styles.smallButton} ${styles.danger}`}
-        disabled={readOnly}
-        data-testid="action-delete"
-        onClick={() => act().deleteSelected()}
-      >
-        Hapus
-      </button>
-      <div className={styles.zorder} role="group" aria-label="Urutan layer">
-        {reorder("front", "Ke depan", "action-front")}
-        {reorder("forward", "Maju", "action-forward")}
-        {reorder("backward", "Mundur", "action-backward")}
-        {reorder("back", "Ke belakang", "action-back")}
+    <div className={styles.actionsCard}>
+      <div className={styles.actionGrid}>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly}
+          data-testid="action-duplicate"
+          title="Duplikat (Ctrl+D)"
+          onClick={() => act().duplicateSelected()}
+        >
+          <IconCopy size={15} />
+          <span>Duplikat</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly}
+          aria-pressed={allLocked}
+          data-testid="action-lock"
+          title={allLocked ? "Buka kunci" : "Kunci"}
+          onClick={() => act().setLocked(ids, !allLocked)}
+        >
+          {allLocked ? <IconUnlock size={15} /> : <IconLock size={15} />}
+          <span>{allLocked ? "Buka kunci" : "Kunci"}</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly}
+          data-testid="action-hide"
+          title="Sembunyikan"
+          aria-label="Sembunyikan"
+          onClick={() => act().setVisible(ids, false)}
+        >
+          <IconEyeOff size={15} />
+          <span>Sembunyi</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.actionTile} ${styles.danger}`}
+          disabled={readOnly}
+          data-testid="action-delete"
+          title="Hapus (Delete)"
+          onClick={() => act().deleteSelected()}
+        >
+          <IconTrash size={15} />
+          <span>Hapus</span>
+        </button>
+      </div>
+      <div className={styles.orderRow}>
+        <span className={styles.orderLabel}>
+          <IconLayers size={13} />
+          Urutan layer
+        </span>
+        <div className={styles.iconGroup} role="group" aria-label="Urutan layer">
+          {reorder("front", "Paling depan", "action-front", <IconBringFront size={15} />)}
+          {reorder("forward", "Maju satu", "action-forward", <IconForward size={15} />)}
+          {reorder("backward", "Mundur satu", "action-backward", <IconBackward size={15} />)}
+          {reorder("back", "Paling belakang", "action-back", <IconSendBack size={15} />)}
+        </div>
       </div>
     </div>
   );
@@ -216,19 +306,25 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
 function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boolean }) {
   const store = useEditorStore();
   return (
-    <div className={styles.panelStack} data-testid="multi-inspector">
-      <h2 className={styles.panelHeading}>{ids.length} elemen dipilih</h2>
-      <NumberField
-        id="insp-multi-opacity"
-        label="Opacity (%)"
-        value={100}
-        min={0}
-        max={100}
-        disabled={readOnly}
-        onCommit={(percent) => store.getState().patchStyle(ids, { opacity: percent / 100 })}
+    <div className={styles.inspStack} data-testid="multi-inspector">
+      <InspectorHeader
+        icon={<IconLayers size={18} />}
+        eyebrow="Pilihan ganda"
+        title={`${ids.length} elemen dipilih`}
       />
       <ElementActions ids={ids} readOnly={readOnly} />
-      <p className={styles.muted}>Geser atau ubah ukuran langsung di artboard.</p>
+      <PanelSection id="insp-multi-look" title="Tampilan">
+        <NumberField
+          id="insp-multi-opacity"
+          label="Opacity (%)"
+          value={100}
+          min={0}
+          max={100}
+          disabled={readOnly}
+          onCommit={(percent) => store.getState().patchStyle(ids, { opacity: percent / 100 })}
+        />
+      </PanelSection>
+      <p className={styles.footHint}>Geser atau ubah ukuran langsung di artboard.</p>
     </div>
   );
 }
@@ -253,89 +349,120 @@ function ElementPanel({
   const frame = element.frame;
   const opacity = (element.style as { opacity?: number }).opacity ?? 1;
   const id = element.id;
+  const typeLabel = elementTypeLabel(element);
 
   return (
-    <div className={styles.panelStack} data-testid="element-inspector" data-element-id={id}>
-      <h2 className={styles.panelHeading}>
-        {elementTypeLabel(element)}
-        {locked ? <span className={styles.badge}>Terkunci</span> : null}
-      </h2>
-      <TextField
-        id="insp-name"
-        label="Nama layer"
-        value={element.name ?? ""}
-        disabled={readOnly}
-        maxLength={120}
-        onCommit={(name) => act().renameElement(id, name)}
+    <div className={styles.inspStack} data-testid="element-inspector" data-element-id={id}>
+      <InspectorHeader
+        icon={<ElementIcon element={element} size={18} />}
+        eyebrow={typeLabel}
+        title={elementLabel(element)}
+        badge={
+          locked ? (
+            <span className={styles.badge}>
+              <IconLock size={11} /> Terkunci
+            </span>
+          ) : null
+        }
       />
 
-      <h3 className={styles.subHeading}>Transform</h3>
-      <div className={styles.grid2}>
-        <NumberField
-          id="insp-x"
-          label="X"
-          value={frame.x}
-          disabled={disabled}
-          step={1}
-          onCommit={(x) => act().patchFrame(id, { x })}
-        />
-        <NumberField
-          id="insp-y"
-          label="Y"
-          value={frame.y}
-          disabled={disabled}
-          step={1}
-          onCommit={(y) => act().patchFrame(id, { y })}
-        />
-        <NumberField
-          id="insp-w"
-          label="Lebar"
-          value={frame.w}
-          min={1}
-          disabled={disabled}
-          onCommit={(w) => act().patchFrame(id, { w })}
-        />
-        <NumberField
-          id="insp-h"
-          label="Tinggi"
-          value={frame.h}
-          min={1}
-          disabled={disabled}
-          onCommit={(h) => act().patchFrame(id, { h })}
-        />
-        <NumberField
-          id="insp-rotation"
-          label="Rotasi (deg)"
-          value={frame.rotation}
-          min={-360}
-          max={360}
-          disabled={disabled}
-          onCommit={(rotation) => act().patchFrame(id, { rotation })}
-        />
-        <NumberField
-          id="insp-opacity"
-          label="Opacity (%)"
-          value={Math.round(opacity * 100)}
-          min={0}
-          max={100}
+      <ElementActions ids={[id]} readOnly={readOnly} />
+
+      <PanelSection id="insp-general" title="Umum">
+        <TextField
+          id="insp-name"
+          label="Nama layer"
+          value={element.name ?? ""}
           disabled={readOnly}
-          onCommit={(p) => act().patchStyle([id], { opacity: p / 100 })}
+          maxLength={120}
+          onCommit={(name) => act().renameElement(id, name)}
         />
-      </div>
+      </PanelSection>
+
+      <PanelSection id="insp-transform" title="Posisi & ukuran">
+        <div className={styles.grid2}>
+          <NumberField
+            id="insp-x"
+            label="X"
+            value={frame.x}
+            disabled={disabled}
+            step={1}
+            onCommit={(x) => act().patchFrame(id, { x })}
+          />
+          <NumberField
+            id="insp-y"
+            label="Y"
+            value={frame.y}
+            disabled={disabled}
+            step={1}
+            onCommit={(y) => act().patchFrame(id, { y })}
+          />
+          <NumberField
+            id="insp-w"
+            label="Lebar"
+            value={frame.w}
+            min={1}
+            disabled={disabled}
+            onCommit={(w) => act().patchFrame(id, { w })}
+          />
+          <NumberField
+            id="insp-h"
+            label="Tinggi"
+            value={frame.h}
+            min={1}
+            disabled={disabled}
+            onCommit={(h) => act().patchFrame(id, { h })}
+          />
+          <NumberField
+            id="insp-rotation"
+            label="Rotasi (°)"
+            value={frame.rotation}
+            min={-360}
+            max={360}
+            disabled={disabled}
+            onCommit={(rotation) => act().patchFrame(id, { rotation })}
+          />
+          <NumberField
+            id="insp-opacity"
+            label="Opacity (%)"
+            value={Math.round(opacity * 100)}
+            min={0}
+            max={100}
+            disabled={readOnly}
+            onCommit={(p) => act().patchStyle([id], { opacity: p / 100 })}
+          />
+        </div>
+      </PanelSection>
 
       {element.type === "text" ? (
-        <TextPanel element={element} readOnly={readOnly} tokens={tokens} />
+        <PanelSection id="insp-text" title="Teks & tipografi">
+          <TextPanel element={element} readOnly={readOnly} tokens={tokens} />
+        </PanelSection>
       ) : null}
       {element.type === "shape" ? (
-        <ShapePanel element={element} readOnly={readOnly} tokens={tokens} />
+        <PanelSection id="insp-shape" title="Bentuk">
+          <ShapePanel element={element} readOnly={readOnly} tokens={tokens} />
+        </PanelSection>
       ) : null}
-      {element.type === "image" ? <ImagePanel element={element} readOnly={readOnly} /> : null}
-      {element.type === "widget" ? <WidgetPanel element={element} readOnly={readOnly} /> : null}
+      {element.type === "image" ? (
+        <PanelSection id="insp-image" title="Gambar">
+          <ImagePanel element={element} readOnly={readOnly} />
+        </PanelSection>
+      ) : null}
+      {element.type === "widget" ? (
+        <PanelSection id="insp-widget" title={`Pengaturan ${typeLabel.toLowerCase()}`}>
+          <WidgetPanel element={element} readOnly={readOnly} />
+        </PanelSection>
+      ) : null}
 
-      <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
-
-      <ElementActions ids={[id]} readOnly={readOnly} />
-      <p className={styles.muted}>Layer: {elementLabel(element)}</p>
+      <PanelSection
+        id="insp-animation"
+        title="Animasi"
+        icon={<IconSparkle size={13} />}
+        count={element.animations?.enter ? 1 : undefined}
+      >
+        <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
+      </PanelSection>
     </div>
   );
 }
@@ -375,7 +502,6 @@ function TextPanel({
 
   return (
     <>
-      <h3 className={styles.subHeading}>Teks</h3>
       {segments.map((segment, index) =>
         "bind" in segment ? (
           <div key={index} className={styles.bindingChip} data-testid="binding-chip">
@@ -420,13 +546,15 @@ function TextPanel({
       )}
       <button
         type="button"
-        className={styles.smallButton}
+        className={styles.ghostButton}
         disabled={readOnly || segments.length >= 50}
         onClick={() => setSegments([...segments, { text: " " }])}
       >
-        + Segmen teks
+        <IconPlus size={13} />
+        Segmen teks
       </button>
 
+      <p className={styles.groupLabel}>Tipografi</p>
       <SelectField
         id="insp-font"
         label="Font"
@@ -526,7 +654,6 @@ function ShapePanel({
 
   return (
     <>
-      <h3 className={styles.subHeading}>Bentuk</h3>
       {!isLine ? (
         <ColorField
           id="insp-fill"
@@ -553,31 +680,33 @@ function ShapePanel({
           })
         }
       />
-      {s.stroke ? (
-        <NumberField
-          id="insp-stroke-width"
-          label="Tebal garis"
-          value={s.stroke.width}
-          min={isLine ? 0.5 : 0}
-          max={200}
-          step={0.5}
-          disabled={readOnly}
-          onCommit={(width) =>
-            act().patchStyle([id], { stroke: { color: s.stroke!.color, width } })
-          }
-        />
-      ) : null}
-      {element.shapeType === "rectangle" ? (
-        <NumberField
-          id="insp-radius"
-          label="Radius sudut"
-          value={s.radius}
-          min={0}
-          max={1000}
-          disabled={readOnly}
-          onCommit={(radius) => act().patchStyle([id], { radius })}
-        />
-      ) : null}
+      <div className={styles.grid2}>
+        {s.stroke ? (
+          <NumberField
+            id="insp-stroke-width"
+            label="Tebal garis"
+            value={s.stroke.width}
+            min={isLine ? 0.5 : 0}
+            max={200}
+            step={0.5}
+            disabled={readOnly}
+            onCommit={(width) =>
+              act().patchStyle([id], { stroke: { color: s.stroke!.color, width } })
+            }
+          />
+        ) : null}
+        {element.shapeType === "rectangle" ? (
+          <NumberField
+            id="insp-radius"
+            label="Radius sudut"
+            value={s.radius}
+            min={0}
+            max={1000}
+            disabled={readOnly}
+            onCommit={(radius) => act().patchStyle([id], { radius })}
+          />
+        ) : null}
+      </div>
     </>
   );
 }

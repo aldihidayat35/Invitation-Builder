@@ -39,7 +39,6 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
 
   return (
     <div className={styles.panelStack} data-testid="image-inspector">
-      <h3 className={styles.subHeading}>Gambar</h3>
       {assetId ? (
         <div className={styles.imagePreview}>
           {/* eslint-disable-next-line @next/next/no-img-element -- editor preview of a same-origin asset */}
@@ -50,7 +49,7 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
       )}
       <button
         type="button"
-        className={styles.smallButton}
+        className={styles.ghostButton}
         disabled={disabled}
         data-testid="image-replace"
         onClick={() => setPicking((open) => !open)}

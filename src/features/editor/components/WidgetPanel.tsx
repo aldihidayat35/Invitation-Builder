@@ -43,7 +43,6 @@ export function WidgetPanel({ element, readOnly }: { element: WidgetElement; rea
   if (resolved.kind === "unknown") {
     return (
       <div className={styles.panelStack} data-testid="widget-inspector">
-        <h3 className={styles.subHeading}>Widget</h3>
         <p className={styles.muted} data-testid="widget-unknown">
           {resolved.fallback.label}: &ldquo;{element.widgetType}&rdquo; tidak terdaftar di versi
           aplikasi ini. Elemen dipertahankan apa adanya.
@@ -68,7 +67,6 @@ export function WidgetPanel({ element, readOnly }: { element: WidgetElement; rea
 
   return (
     <div className={styles.panelStack} data-testid="widget-inspector">
-      <h3 className={styles.subHeading}>{definition.label}</h3>
       {Object.entries(definition.props).map(([name, spec]) => {
         const value = element.props[name];
         const bound = isBinding(value);

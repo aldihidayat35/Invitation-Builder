@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type CSSProperties } from "react";
 import type { CanonicalDocument } from "@/lib/schema";
 import { createAutosaver, type SaveResult } from "../core/autosave";
+import { panelLayoutStore } from "../core/panel-layout";
 import { createEditorStore } from "../core/store";
 import { isEditableTarget, isPanKey, resolveShortcut } from "../core/shortcuts";
 import { Artboard } from "./Artboard";
 import { EditorProvider, useAutosaver, useEditorStore } from "./EditorProvider";
 import { Inspector } from "./Inspector";
 import { LeftPanel } from "./LeftPanel";
+import { PanelResizer } from "./PanelResizer";
 import { TopBar } from "./TopBar";
 import styles from "./editor.module.css";
 
@@ -68,6 +70,15 @@ function EditorFrame({
 }) {
   const store = useEditorStore();
   const autosaver = useAutosaver();
+  const widths = useSyncExternalStore(
+    panelLayoutStore.subscribe,
+    panelLayoutStore.getSnapshot,
+    panelLayoutStore.getServerSnapshot,
+  );
+  const bodyStyle = {
+    "--left-w": `${widths.left}px`,
+    "--right-w": `${widths.right}px`,
+  } as CSSProperties;
 
   // Keyboard shortcuts (PRD Lampiran A).
   useEffect(() => {
@@ -148,9 +159,11 @@ function EditorFrame({
         currentRevision={currentRevision}
       />
       <p className={styles.mobileNote}>Editor dioptimalkan untuk layar lebar. Gunakan desktop.</p>
-      <div className={styles.body}>
+      <div className={styles.body} style={bodyStyle}>
         <LeftPanel />
+        <PanelResizer side="left" width={widths.left} />
         <Artboard />
+        <PanelResizer side="right" width={widths.right} />
         <div className={styles.inspectorWrap}>
           <Inspector />
         </div>

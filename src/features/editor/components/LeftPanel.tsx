@@ -1,18 +1,37 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { defaultWidgetRegistry } from "@/features/widgets";
-import { elementLabel } from "../core/display";
+import { elementLabel, elementTypeLabel } from "../core/display";
 import { findSection, type ElementKind } from "../core/ops";
 import { AssetLibrary } from "./AssetLibrary";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
+import {
+  ElementIcon,
+  IconCircle,
+  IconEye,
+  IconEyeOff,
+  IconImages,
+  IconLayers,
+  IconLine,
+  IconLock,
+  IconPlus,
+  IconSection,
+  IconSparkle,
+  IconSquare,
+  IconText,
+  IconUnlock,
+  WidgetIcon,
+} from "./icons";
+import { PanelSection } from "./PanelSection";
 import styles from "./editor.module.css";
 
-const PALETTE: ReadonlyArray<{ kind: ElementKind; label: string }> = [
-  { kind: "text", label: "Teks" },
-  { kind: "rectangle", label: "Persegi" },
-  { kind: "circle", label: "Lingkaran" },
-  { kind: "line", label: "Garis" },
-  { kind: "decoration", label: "Dekorasi" },
+const PALETTE: ReadonlyArray<{ kind: ElementKind; label: string; icon: ReactNode }> = [
+  { kind: "text", label: "Teks", icon: <IconText /> },
+  { kind: "rectangle", label: "Persegi", icon: <IconSquare /> },
+  { kind: "circle", label: "Lingkaran", icon: <IconCircle /> },
+  { kind: "line", label: "Garis", icon: <IconLine /> },
+  { kind: "decoration", label: "Dekorasi", icon: <IconSparkle /> },
 ];
 
 export function LeftPanel() {
@@ -25,56 +44,68 @@ export function LeftPanel() {
   const section = activeSectionId ? findSection(doc, activeSectionId) : undefined;
   // Layers are listed top-first: the last element in the array is rendered on top.
   const layers = section ? [...section.elements].reverse() : [];
+  const noSection = !section;
 
   return (
     <aside className={styles.side} aria-label="Panel kiri">
-      <div className={styles.panelStack}>
-        <h2 className={styles.panelHeading}>Tambah elemen</h2>
-        <div className={styles.palette}>
-          {PALETTE.map(({ kind, label }) => (
+      <div className={styles.sideHeader}>
+        <span className={styles.sideHeaderTitle}>Komponen</span>
+        <span className={styles.sideHeaderHint}>
+          {section ? `Ke: ${section.name || "Section aktif"}` : "Pilih section dulu"}
+        </span>
+      </div>
+
+      <PanelSection id="left-elements" title="Tambah elemen" icon={<IconPlus size={14} />}>
+        <div className={styles.tileGrid}>
+          {PALETTE.map(({ kind, label, icon }) => (
             <button
               key={kind}
               type="button"
-              className={styles.paletteButton}
+              className={styles.tile}
               data-testid={`add-${kind}`}
-              disabled={readOnly || !section}
+              disabled={readOnly || noSection}
+              title={`Tambah ${label.toLowerCase()}`}
               onClick={() => store.getState().addElement(kind)}
             >
-              {label}
+              <span className={styles.tileIcon}>{icon}</span>
+              <span className={styles.tileLabel}>{label}</span>
             </button>
           ))}
         </div>
         <button
           type="button"
-          className={styles.smallButton}
+          className={styles.ghostButton}
           data-testid="add-section"
           disabled={readOnly}
           onClick={() => store.getState().addSection()}
         >
-          + Section baru
+          <IconSection size={14} />
+          Section baru
         </button>
-      </div>
+      </PanelSection>
 
-      <div className={styles.panelStack}>
-        <h2 className={styles.panelHeading}>Widget</h2>
-        <div className={styles.palette}>
+      <PanelSection id="left-widgets" title="Widget" icon={<IconSparkle size={14} />}>
+        <div className={styles.tileGrid}>
           {defaultWidgetRegistry.list().map((widget) => (
             <button
               key={widget.type}
               type="button"
-              className={styles.paletteButton}
+              className={styles.tile}
               data-testid={`add-widget-${widget.type}`}
-              disabled={readOnly || !section}
+              disabled={readOnly || noSection}
+              title={`Tambah widget ${widget.label}`}
               onClick={() => store.getState().addWidget(widget)}
             >
-              {widget.label}
+              <span className={styles.tileIcon}>
+                <WidgetIcon type={widget.type} />
+              </span>
+              <span className={styles.tileLabel}>{widget.label}</span>
             </button>
           ))}
         </div>
-      </div>
+      </PanelSection>
 
-      <div className={styles.panelStack}>
-        <h2 className={styles.panelHeading}>Gambar</h2>
+      <PanelSection id="left-media" title="Media" icon={<IconImages size={14} />}>
         <AssetLibrary
           pickLabel="Tambah ke artboard"
           onPick={(asset) => {
@@ -87,13 +118,18 @@ export function LeftPanel() {
             });
           }}
         />
-      </div>
-      <div className={styles.panelStack}>
-        <h2 className={styles.panelHeading}>Layer</h2>
+      </PanelSection>
+
+      <PanelSection
+        id="left-layers"
+        title="Layer"
+        icon={<IconLayers size={14} />}
+        count={section ? layers.length : undefined}
+      >
         {!section ? (
-          <p className={styles.muted}>Pilih section.</p>
+          <p className={styles.emptyHint}>Klik section di artboard untuk melihat layernya.</p>
         ) : layers.length === 0 ? (
-          <p className={styles.muted}>Section ini belum punya elemen.</p>
+          <p className={styles.emptyHint}>Section ini belum punya elemen.</p>
         ) : (
           <ul className={styles.layerList} data-testid="layer-list">
             {layers.map((element) => {
@@ -105,11 +141,13 @@ export function LeftPanel() {
                   data-testid={`layer-${element.id}`}
                   data-selected={selected}
                   data-hidden={!element.visible}
+                  data-locked={element.locked}
                 >
                   <button
                     type="button"
                     className={styles.layerName}
                     aria-pressed={selected}
+                    title={`${elementTypeLabel(element)}: ${elementLabel(element)}`}
                     onClick={(event) => {
                       if (event.shiftKey || event.ctrlKey || event.metaKey) {
                         store.getState().toggleElement(element.id);
@@ -118,7 +156,10 @@ export function LeftPanel() {
                       }
                     }}
                   >
-                    {elementLabel(element)}
+                    <span className={styles.layerIcon}>
+                      <ElementIcon element={element} size={14} />
+                    </span>
+                    <span className={styles.layerText}>{elementLabel(element)}</span>
                   </button>
                   <button
                     type="button"
@@ -130,7 +171,7 @@ export function LeftPanel() {
                     data-testid={`layer-visible-${element.id}`}
                     onClick={() => store.getState().setVisible([element.id], !element.visible)}
                   >
-                    {element.visible ? "👁" : "⊘"}
+                    {element.visible ? <IconEye size={14} /> : <IconEyeOff size={14} />}
                   </button>
                   <button
                     type="button"
@@ -142,14 +183,14 @@ export function LeftPanel() {
                     data-testid={`layer-lock-${element.id}`}
                     onClick={() => store.getState().setLocked([element.id], !element.locked)}
                   >
-                    {element.locked ? "🔒" : "🔓"}
+                    {element.locked ? <IconLock size={14} /> : <IconUnlock size={14} />}
                   </button>
                 </li>
               );
             })}
           </ul>
         )}
-      </div>
+      </PanelSection>
     </aside>
   );
 }
