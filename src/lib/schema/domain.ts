@@ -45,5 +45,8 @@ export const AUDIT_ACTIONS = [
   "invitation.archive",
   "guest.create",
   "guest.archive",
+  "invitation.publish",
+  "invitation.rollback",
+  "guest.import",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

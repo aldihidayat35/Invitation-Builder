@@ -1,11 +1,13 @@
-import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import {
   guests,
   invitations,
+  publishedSnapshots,
   templates,
   templateVersions,
   type GuestRow,
   type InvitationRow,
+  type PublishedSnapshotRow,
   type TemplateVersionRow,
 } from "../schema";
 import type { Database } from "../types";
@@ -187,6 +189,99 @@ export async function archiveGuestRow(
     .where(
       and(eq(guests.invitationId, invitationId), eq(guests.id, guestId), ne(guests.status, "archived")),
     )
+    .returning();
+  return row;
+}
+
+/* --------------------------------------------------------- published snapshots */
+
+export async function nextRevisionNo(db: Database, invitationId: string): Promise<number> {
+  const [row] = await db
+    .select({ max: sql<number | null>`max(${publishedSnapshots.revisionNo})` })
+    .from(publishedSnapshots)
+    .where(eq(publishedSnapshots.invitationId, invitationId));
+  return (row?.max ?? 0) + 1;
+}
+
+/** Insert-only: DB triggers reject UPDATE/DELETE of published snapshots (P-06). */
+export async function insertPublishedSnapshot(
+  db: Database,
+  input: {
+    invitationId: string;
+    revisionNo: number;
+    schemaVersion: number;
+    document: unknown;
+    data: Record<string, unknown>;
+    createdBy?: string;
+  },
+): Promise<PublishedSnapshotRow> {
+  const [row] = await db.insert(publishedSnapshots).values(input).returning();
+  if (!row) throw new Error("insertPublishedSnapshot returned no row");
+  return row;
+}
+
+export async function findSnapshotById(
+  db: Database,
+  snapshotId: string,
+): Promise<PublishedSnapshotRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(publishedSnapshots)
+    .where(eq(publishedSnapshots.id, snapshotId))
+    .limit(1);
+  return row;
+}
+
+export async function findSnapshotByRevision(
+  db: Database,
+  invitationId: string,
+  revisionNo: number,
+): Promise<PublishedSnapshotRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(publishedSnapshots)
+    .where(
+      and(
+        eq(publishedSnapshots.invitationId, invitationId),
+        eq(publishedSnapshots.revisionNo, revisionNo),
+      ),
+    )
+    .limit(1);
+  return row;
+}
+
+export type SnapshotSummaryRow = Pick<
+  PublishedSnapshotRow,
+  "id" | "revisionNo" | "schemaVersion" | "createdBy" | "createdAt"
+>;
+
+export async function listSnapshotSummaries(
+  db: Database,
+  invitationId: string,
+): Promise<SnapshotSummaryRow[]> {
+  return db
+    .select({
+      id: publishedSnapshots.id,
+      revisionNo: publishedSnapshots.revisionNo,
+      schemaVersion: publishedSnapshots.schemaVersion,
+      createdBy: publishedSnapshots.createdBy,
+      createdAt: publishedSnapshots.createdAt,
+    })
+    .from(publishedSnapshots)
+    .where(eq(publishedSnapshots.invitationId, invitationId))
+    .orderBy(desc(publishedSnapshots.revisionNo));
+}
+
+/** Points the live page at a snapshot (publish or rollback). */
+export async function setActiveSnapshot(
+  db: Database,
+  invitationId: string,
+  snapshotId: string,
+): Promise<InvitationRow | undefined> {
+  const [row] = await db
+    .update(invitations)
+    .set({ status: "published", activePublishedSnapshotId: snapshotId, updatedAt: new Date() })
+    .where(and(eq(invitations.id, invitationId), ne(invitations.status, "archived")))
     .returning();
   return row;
 }

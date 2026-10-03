@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from "react";
 import { AccessibleAnimatedText } from "@/features/animations/text-splitter";
 import { WidgetRuntime } from "@/features/widgets/runtime";
+import { WidgetErrorBoundary } from "@/features/widgets/runtime/WidgetErrorBoundary";
 import type {
   ResolvedDocument,
   ResolvedElement,
@@ -35,40 +36,40 @@ function cssFont(value: ColorInput | undefined, tokens: Tokens): string | undefi
   return name ? `'${name}', sans-serif` : undefined;
 }
 
-/** Frame = absolute box in 390px artboard coordinates; pivot = center (ADR 0005). */
+/**
+ * Frame = absolute box in 390px artboard coordinates; pivot = center (ADR 0005).
+ * Geometry is exposed as unitless custom properties and multiplied by the
+ * section scale unit `--u` (= container width / baseWidth) in CSS, so one
+ * artboard scales proportionally to any viewport 320-430px (ADR 0009).
+ */
 function frameStyle(element: ResolvedElement): CSSProperties {
   const { x, y, w, h, rotation } = element.frame;
   return {
     position: "absolute",
-    left: x,
-    top: y,
-    width: w,
-    height: h,
+    "--x": x,
+    "--y": y,
+    "--w": w,
+    "--h": h,
     transformOrigin: "center center",
     ...(rotation !== 0 && { transform: `rotate(${rotation}deg)` }),
-  };
+  } as CSSProperties;
 }
 
 function TextBody({ element, tokens }: { element: ResolvedTextElement; tokens: Tokens }) {
   const { style } = element;
-  const css: CSSProperties = {
-    display: "block",
-    width: "100%",
-    margin: 0,
+  const css = {
+    "--fs": style.fontSize,
+    "--ls": style.letterSpacing ?? 0,
     fontFamily: cssFont(style.fontFamily, tokens),
-    fontSize: style.fontSize,
     fontWeight: style.fontWeight,
     lineHeight: style.lineHeight,
-    letterSpacing: style.letterSpacing,
     textAlign: style.textAlign,
     color: cssColor(style.color, tokens),
     opacity: style.opacity,
-    whiteSpace: "pre-wrap",
-    overflowWrap: "anywhere",
-  };
+  } as CSSProperties;
   const staggerUnit = element.animations?.enter?.staggerUnit ?? "none";
   return (
-    <p style={css} data-element-text="">
+    <p className={styles.text} style={css} data-element-text="">
       <AccessibleAnimatedText text={element.text} staggerUnit={staggerUnit} />
     </p>
   );
@@ -81,32 +82,32 @@ function ShapeBody({ element, tokens }: { element: ResolvedShapeElement; tokens:
   if (shapeType === "line") {
     return (
       <div
+        className={styles.line}
         data-shape="line"
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: "50%",
-          height: stroke?.width ?? 1,
-          transform: "translateY(-50%)",
-          background: strokeColor,
-          opacity: style.opacity,
-        }}
+        style={
+          {
+            "--bw": stroke?.width ?? 1,
+            background: strokeColor,
+            opacity: style.opacity,
+          } as CSSProperties
+        }
       />
     );
   }
   return (
     <div
+      className={styles.shape}
       data-shape={shapeType}
-      style={{
-        width: "100%",
-        height: "100%",
-        boxSizing: "border-box",
-        background: cssColor(style.fill, tokens),
-        border: stroke && strokeColor ? `${stroke.width}px solid ${strokeColor}` : undefined,
-        borderRadius: shapeType === "circle" ? "50%" : style.radius,
-        opacity: style.opacity,
-      }}
+      style={
+        {
+          "--bw": stroke && strokeColor ? stroke.width : 0,
+          "--r": style.radius ?? 0,
+          background: cssColor(style.fill, tokens),
+          ...(stroke && strokeColor && { borderColor: strokeColor }),
+          ...(shapeType === "circle" && { borderRadius: "50%" }),
+          opacity: style.opacity,
+        } as CSSProperties
+      }
     />
   );
 }
@@ -151,17 +152,19 @@ function ElementView({
       const color = cssColor(element.style.color, tokens);
       const background = cssColor(element.style.background, tokens);
       body = (
-        <WidgetRuntime
-          widgetType={element.widgetType}
-          props={element.props}
-          showFallback={runtimeMode === "preview"}
-          style={{
-            ...(color !== undefined && { color }),
-            ...(background !== undefined && { background }),
-            ...(element.style.radius !== undefined && { radius: element.style.radius }),
-            ...(element.style.opacity !== undefined && { opacity: element.style.opacity }),
-          }}
-        />
+        <WidgetErrorBoundary widgetType={element.widgetType}>
+          <WidgetRuntime
+            widgetType={element.widgetType}
+            props={element.props}
+            showFallback={runtimeMode === "preview"}
+            style={{
+              ...(color !== undefined && { color }),
+              ...(background !== undefined && { background }),
+              ...(element.style.radius !== undefined && { radius: element.style.radius }),
+              ...(element.style.opacity !== undefined && { opacity: element.style.opacity }),
+            }}
+          />
+        </WidgetErrorBoundary>
       );
       break;
     }
@@ -170,6 +173,7 @@ function ElementView({
   return (
     <AnimatedElement
       element={element}
+      className={styles.frame}
       style={frameStyle(element)}
       data-testid={`element-${element.id}`}
     >
@@ -199,12 +203,15 @@ function SectionView({
       data-section-id={section.id}
       aria-label={section.name}
       style={{
-        width: baseWidth,
-        height: section.baseHeight,
+        aspectRatio: `${baseWidth} / ${section.baseHeight}`,
         overflow: section.overflow,
         background,
       }}
     >
+      <div
+        className={styles.sectionInner}
+        style={{ "--u": `calc(100cqw / ${baseWidth})` } as CSSProperties}
+      >
       {section.background.image ? (
         <div className={styles.sectionBackground} aria-hidden="true">
           <PublicImage
@@ -226,6 +233,7 @@ function SectionView({
           priority={first && index === 0}
         />
       ))}
+      </div>
     </section>
   );
 }

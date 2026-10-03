@@ -8,12 +8,20 @@ import {
   open,
   permissionsFor,
   readiness,
+  snapshots as listSnapshots,
 } from "@/features/invitations/api";
 import { DataModeForm } from "@/features/invitations/components/DataModeForm";
 import { GuestPanel } from "@/features/invitations/components/GuestPanel";
+import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
-import { addGuestAction, archiveGuestAction, saveInvitationDataAction } from "../actions";
+import {
+  addGuestAction,
+  archiveGuestAction,
+  publishInvitationAction,
+  rollbackInvitationAction,
+  saveInvitationDataAction,
+} from "../actions";
 
 export const metadata: Metadata = { title: "Data undangan" };
 
@@ -31,11 +39,12 @@ export default async function InvitationDataPage({
     throw error;
   }
 
-  const [permissions, guests, report, assets] = await Promise.all([
+  const [permissions, guests, report, assets, snapshots] = await Promise.all([
     permissionsFor(invitation.workspaceId),
     listGuests(invitation.id),
     readiness(invitation.id),
     searchAssets(invitation.workspaceId).catch(() => []),
+    listSnapshots(invitation.id),
   ]);
 
   const fields = buildFormFields(invitation.document.variables);
@@ -111,6 +120,16 @@ export default async function InvitationDataPage({
               </ul>
             )}
           </section>
+          <PublishPanel
+            invitationId={invitation.id}
+            slug={invitation.slug}
+            status={invitation.status}
+            ready={report.ready}
+            canWrite={permissions.write}
+            snapshots={snapshots}
+            publish={publishInvitationAction}
+            rollback={rollbackInvitationAction}
+          />
           <GuestPanel
             invitationId={invitation.id}
             guests={guests}

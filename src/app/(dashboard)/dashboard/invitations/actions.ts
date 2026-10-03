@@ -8,6 +8,8 @@ import {
   archiveGuest,
   create,
   describeInvitationError,
+  publish,
+  rollback,
   saveData,
 } from "@/features/invitations/api";
 import type {
@@ -105,4 +107,36 @@ export async function archiveGuestAction(
   }
   revalidatePath(`${LIST}/${invitationId.data}`);
   return { ok: true, message: "Tamu dihapus." };
+}
+
+export async function publishInvitationAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(field(formData, "invitationId"));
+  if (!id.success) return { error: "Undangan tidak valid." };
+  let revisionNo: number;
+  try {
+    revisionNo = (await publish(id.data)).revisionNo;
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath(`${LIST}/${id.data}`);
+  return { ok: true, message: `Revisi ${revisionNo} dipublish.` };
+}
+
+export async function rollbackInvitationAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(field(formData, "invitationId"));
+  const revisionNo = Number(field(formData, "revisionNo"));
+  if (!id.success || !Number.isInteger(revisionNo)) return { error: "Permintaan tidak valid." };
+  try {
+    await rollback(id.data, revisionNo);
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath(`${LIST}/${id.data}`);
+  return { ok: true, message: `Revisi ${revisionNo} diaktifkan.` };
 }

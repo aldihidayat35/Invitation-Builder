@@ -71,13 +71,13 @@ export const ROADMAP_PHASES: readonly RoadmapPhase[] = [
     id: "F9",
     title: "HTML Public Renderer & Publishing",
     prdTargets: ["FR-INV-004", "FR-PUB-001", "AC-10", "AC-12"],
-    status: "in-progress",
+    status: "done",
   },
   {
     id: "F10",
     title: "P1 Widgets: RSVP, Gallery, Music, Gift",
     prdTargets: ["FR-WDG-005", "FR-WDG-008", "FR-GST-001"],
-    status: "planned",
+    status: "in-progress",
   },
   {
     id: "F11",

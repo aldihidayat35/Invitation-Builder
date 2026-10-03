@@ -98,11 +98,36 @@ export async function preview(invitationId: string, guest?: PreviewGuestSelectio
   return service.buildPreview(db, actor, { invitationId, ...(guest && { guest }) });
 }
 
+export async function publish(invitationId: string) {
+  const { db, actor } = await context();
+  return service.publishInvitation(db, actor, invitationId);
+}
+
+export async function rollback(invitationId: string, revisionNo: number) {
+  const { db, actor } = await context();
+  return service.rollbackInvitation(db, actor, { invitationId, revisionNo });
+}
+
+export async function snapshots(invitationId: string) {
+  const { db, actor } = await context();
+  return service.listInvitationSnapshots(db, actor, invitationId);
+}
+
+/** Unauthenticated: used by the public `/i/[slug]` route only. */
+export async function getPublic(slug: string, guestToken?: string) {
+  return service.getPublicInvitation(await getDb(), {
+    slug,
+    ...(guestToken !== undefined && { guestToken }),
+  });
+}
+
 export {
   GuestNotFoundError,
   InvitationArchivedError,
   InvitationInputError,
   InvitationNotFoundError,
+  PublishBlockedError,
+  RevisionNotFoundError,
   SAMPLE_GUEST_NAME,
   TemplateNotPublishedError,
 } from "./service";
@@ -114,6 +139,8 @@ export function describeInvitationError(error: unknown): string {
     error instanceof service.InvitationInputError ||
     error instanceof service.InvitationArchivedError ||
     error instanceof service.TemplateNotPublishedError ||
+    error instanceof service.PublishBlockedError ||
+    error instanceof service.RevisionNotFoundError ||
     error instanceof ForbiddenError
   ) {
     return error.message;

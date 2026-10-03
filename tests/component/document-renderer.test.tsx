@@ -78,10 +78,17 @@ describe("DocumentRenderer (FR-PRV-001)", () => {
     const title = container.querySelector<HTMLElement>('[data-element-id="el_title"]');
     expect(title).not.toBeNull();
     expect(title?.style.position).toBe("absolute");
-    expect(title?.style.left).toBe("32px");
-    expect(title?.style.top).toBe("460px");
-    expect(title?.style.width).toBe("326px");
+    expect(title?.style.getPropertyValue("--x")).toBe("32");
+    expect(title?.style.getPropertyValue("--y")).toBe("460");
+    expect(title?.style.getPropertyValue("--w")).toBe("326");
     expect(title?.style.transformOrigin).toBe("center center");
+  });
+
+  it("scales sections proportionally to the viewport with no fixed pixel width (AC-11)", () => {
+    const { container } = renderPreview(DATA_A);
+    const section = container.querySelector<HTMLElement>("section[data-section-id]");
+    expect(section?.style.width).toBe("");
+    expect(section?.style.aspectRatio).toContain("390");
   });
 
   it("skips hidden elements and images without an asset", () => {

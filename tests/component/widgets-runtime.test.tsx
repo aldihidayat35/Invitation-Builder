@@ -137,7 +137,7 @@ describe("PublicImage (FR-AST-002)", () => {
     expect(img).toHaveAttribute("decoding", "async");
     expect(img.style.objectFit).toBe("cover");
     expect(img.style.objectPosition).toBe("25% 75%");
-    expect(img.style.borderRadius).toBe("12px");
+    expect(img.style.borderRadius).toBe("calc(var(--u, 1px) * 12)");
     expect(img.style.opacity).toBe("0.5");
   });
 

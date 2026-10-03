@@ -37,7 +37,7 @@ export function PublicImage({
     height: "100%",
     objectFit: fit,
     objectPosition: focalToObjectPosition(focal),
-    borderRadius: radius,
+    borderRadius: radius > 0 ? `calc(var(--u, 1px) * ${radius})` : 0,
     opacity,
   };
   return (

@@ -26,13 +26,20 @@ import {
   archiveGuestRow,
   archiveInvitationRow,
   findGuest,
+  findGuestByToken,
   findInvitationById,
   findInvitationBySlug,
+  findSnapshotById,
+  findSnapshotByRevision,
   findTemplateVersionWithWorkspace,
   insertGuest,
   insertInvitation,
+  insertPublishedSnapshot,
   listGuests as listGuestRows,
   listInvitations as listInvitationRows,
+  listSnapshotSummaries,
+  nextRevisionNo,
+  setActiveSnapshot,
   updateGuestRow,
   updateInvitationData,
   updateInvitationTitle,
@@ -62,9 +69,29 @@ import type {
   GuestSummary,
   InvitationDetail,
   InvitationSummary,
+  PublicInvitationModel,
   ReadinessReport,
   SaveDataResult,
+  SnapshotSummary,
 } from "./types";
+
+export class PublishBlockedError extends Error {
+  constructor(readonly missing: readonly string[]) {
+    super(
+      `Undangan belum bisa dipublish. Lengkapi data: ${missing.slice(0, 5).join(", ")}${
+        missing.length > 5 ? ", ..." : ""
+      }.`,
+    );
+    this.name = "PublishBlockedError";
+  }
+}
+
+export class RevisionNotFoundError extends Error {
+  constructor(revisionNo: number) {
+    super(`Revisi ${revisionNo} tidak ditemukan.`);
+    this.name = "RevisionNotFoundError";
+  }
+}
 
 export class InvitationNotFoundError extends Error {
   constructor(id: string) {
@@ -513,5 +540,138 @@ export async function buildPreview(
     resolved: resolveDocument(document, row.data, guest),
     guest,
     guestLabel,
+  };
+}
+
+/* --------------------------------------------------------------- publishing */
+
+/**
+ * Publishes the CURRENT draft as a new immutable PublishedSnapshot and points
+ * the live URL at it (FR-INV-004, FR-PUB-001..002, P-06). The snapshot freezes
+ * the pinned template document + invitation data, so later draft edits never
+ * change the live page until the next publish. Blocked while required data is
+ * missing or invalid.
+ */
+export async function publishInvitation(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<SnapshotSummary> {
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  assertWritable(row);
+  const { document } = await loadPinnedDocument(db, row);
+  const issues = validateInvitationData(createVariableRegistry(document.variables), row.data).filter(
+    (issue) => issue.code !== "unknown_key",
+  );
+  if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
+
+  return db.transaction(async (tx) => {
+    const revisionNo = await nextRevisionNo(tx, row.id);
+    const snapshot = await insertPublishedSnapshot(tx, {
+      invitationId: row.id,
+      revisionNo,
+      schemaVersion: document.schemaVersion,
+      document,
+      data: { ...row.data },
+      createdBy: actor.userId,
+    });
+    const updated = await setActiveSnapshot(tx, row.id, snapshot.id);
+    if (!updated) throw new InvitationArchivedError();
+    await insertAuditLog(tx, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "invitation.publish",
+      entityType: "invitation",
+      entityId: row.id,
+      metadata: { revisionNo },
+    });
+    return {
+      revisionNo,
+      schemaVersion: snapshot.schemaVersion,
+      createdAt: snapshot.createdAt,
+      active: true,
+    };
+  });
+}
+
+/** Re-points the live URL to an older snapshot without altering any snapshot (FR-PUB-003). */
+export async function rollbackInvitation(
+  db: Database,
+  actor: Actor,
+  input: { invitationId: string; revisionNo: number },
+): Promise<SnapshotSummary> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  assertWritable(row);
+  const snapshot = Number.isInteger(input.revisionNo)
+    ? await findSnapshotByRevision(db, row.id, input.revisionNo)
+    : undefined;
+  if (!snapshot) throw new RevisionNotFoundError(input.revisionNo);
+  return db.transaction(async (tx) => {
+    const updated = await setActiveSnapshot(tx, row.id, snapshot.id);
+    if (!updated) throw new InvitationArchivedError();
+    await insertAuditLog(tx, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "invitation.rollback",
+      entityType: "invitation",
+      entityId: row.id,
+      metadata: { revisionNo: snapshot.revisionNo, previous: row.activePublishedSnapshotId },
+    });
+    return {
+      revisionNo: snapshot.revisionNo,
+      schemaVersion: snapshot.schemaVersion,
+      createdAt: snapshot.createdAt,
+      active: true,
+    };
+  });
+}
+
+export async function listInvitationSnapshots(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<SnapshotSummary[]> {
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:read");
+  const rows = await listSnapshotSummaries(db, row.id);
+  return rows.map((snap) => ({
+    revisionNo: snap.revisionNo,
+    schemaVersion: snap.schemaVersion,
+    createdAt: snap.createdAt,
+    active: snap.id === row.activePublishedSnapshotId,
+  }));
+}
+
+/**
+ * Public, unauthenticated read model for `/i/[slug]` (FR-PUB-001). It reads
+ * ONLY the active published snapshot - never `invitations.data` or the draft.
+ * Returns `null` for unknown, unpublished or archived invitations. A guest
+ * token is honored only for guests of THIS invitation; unknown/archived tokens
+ * silently fall back to the generic context.
+ */
+export async function getPublicInvitation(
+  db: Database,
+  input: { slug: string; guestToken?: string },
+): Promise<PublicInvitationModel | null> {
+  if (input.slug.length === 0 || input.slug.length > 120) return null;
+  const row = await findInvitationBySlug(db, input.slug);
+  if (!row || row.status !== "published" || !row.activePublishedSnapshotId) return null;
+  const snapshot = await findSnapshotById(db, row.activePublishedSnapshotId);
+  if (!snapshot || snapshot.invitationId !== row.id) return null;
+
+  let guest: GuestData = {};
+  if (input.guestToken) {
+    const found = await findGuestByToken(db, input.guestToken);
+    if (found && found.invitationId === row.id && found.status !== "archived") {
+      guest = { name: found.name };
+    }
+  }
+  const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
+  return {
+    title: row.title,
+    slug: row.slug,
+    revisionNo: snapshot.revisionNo,
+    resolved: resolveDocument(document, snapshot.data, guest),
+    ...(guest.name !== undefined && { guestName: guest.name }),
+    hasGuest: guest.name !== undefined,
   };
 }
