@@ -13,6 +13,7 @@ import {
 } from "./fields";
 import { ImagePanel } from "./ImagePanel";
 import { WidgetPanel } from "./WidgetPanel";
+import { AnimationPanel } from "./AnimationPanel";
 import styles from "./editor.module.css";
 import type { Element } from "@/lib/schema";
 
@@ -40,7 +41,9 @@ export function Inspector() {
   let body;
   if (selectedIds.length === 1) {
     const loc = findElement(doc, selectedIds[0]!);
-    body = loc ? <ElementPanel element={loc.element} readOnly={readOnly} /> : null;
+    body = loc ? (
+      <ElementPanel element={loc.element} readOnly={readOnly} sectionId={loc.section.id} />
+    ) : null;
   } else if (selectedIds.length > 1) {
     body = <MultiPanel ids={selectedIds} readOnly={readOnly} />;
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
@@ -117,6 +120,23 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
         />
         Tampilkan section saat publish
       </label>
+      <div className={styles.toolGroup} style={{ marginTop: 8 }}>
+        <button
+          type="button"
+          className={styles.toolButton}
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("dib:replay-animation", { detail: { sectionId } }),
+              );
+            }
+          }}
+          title="Putar ulang semua animasi di section ini"
+          data-testid="replay-section-btn"
+        >
+          ⟳ Replay Animasi Section
+        </button>
+      </div>
       <p className={styles.muted}>Urutan section = urutan scroll publik. Lebar kanonik 390 px.</p>
     </div>
   );
@@ -215,7 +235,15 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
 
 // ------------------------------------------------------------------ element
 
-function ElementPanel({ element, readOnly }: { element: Element; readOnly: boolean }) {
+function ElementPanel({
+  element,
+  readOnly,
+  sectionId,
+}: {
+  element: Element;
+  readOnly: boolean;
+  sectionId: string;
+}) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const tokens = doc.design.tokens;
@@ -303,6 +331,8 @@ function ElementPanel({ element, readOnly }: { element: Element; readOnly: boole
       ) : null}
       {element.type === "image" ? <ImagePanel element={element} readOnly={readOnly} /> : null}
       {element.type === "widget" ? <WidgetPanel element={element} readOnly={readOnly} /> : null}
+
+      <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
 
       <ElementActions ids={[id]} readOnly={readOnly} />
       <p className={styles.muted}>Layer: {elementLabel(element)}</p>

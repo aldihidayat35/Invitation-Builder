@@ -8,3 +8,5 @@ export type { RendererViewportProps } from "./components/RendererViewport";
 export type { RuntimeMode } from "./types";
 export { PublicImage } from "./components/PublicImage";
 export type { PublicImageProps } from "./components/PublicImage";
+export { AnimatedElement } from "./components/AnimatedElement";
+export type { AnimatedElementProps } from "./components/AnimatedElement";

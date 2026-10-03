@@ -13,6 +13,7 @@ const REQUIRED_DIRS = [
   "src/features/templates",
   "src/features/invitations",
   "src/features/widgets",
+  "src/features/animations",
   "src/features/renderer",
   "src/lib/schema",
   "src/lib/db",

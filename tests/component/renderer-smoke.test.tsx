@@ -22,4 +22,20 @@ describe("public renderer smoke (P-04)", () => {
     const { container } = render(<RendererSmokePage />);
     expect(container.querySelector("canvas")).toBeNull();
   });
+
+  it("renders animated text with accessible role and char spans (FR-ANM-004, AC-07)", () => {
+    const { container } = render(<RendererSmokePage />);
+
+    // Accessible text is intact for screen readers
+    const coupleText = screen.getByRole("text", { name: "Romeo & Juliet" });
+    expect(coupleText).toBeInTheDocument();
+
+    // Characters are staggered across individual visual spans
+    const chars = container.querySelectorAll("[data-anim-char]");
+    expect(chars).toHaveLength(12);
+
+    // Parent animated wrapper holds element metadata
+    const animatedWrapper = screen.getByTestId("smoke-animated-text");
+    expect(animatedWrapper).toHaveAttribute("data-animation-preset", "charRise");
+  });
 });

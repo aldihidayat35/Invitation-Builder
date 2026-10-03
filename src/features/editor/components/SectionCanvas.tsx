@@ -25,6 +25,7 @@ import { frameFromNodeAttrs, nodeAttrsFromFrame, snapToSection } from "../core/g
 import { findElement } from "../core/ops";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { useEditor, useEditorStore } from "./EditorProvider";
+import { replayKonvaNode } from "@/features/animations";
 
 const ACCENT = "#e85d8f";
 const MIN_BOX = 8;
@@ -365,6 +366,33 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     }),
     [store, section, hideGuides, showGuides, commitNodes],
   );
+
+  useEffect(() => {
+    const handleReplay = (e: Event) => {
+      const custom = e as CustomEvent<{ elementId?: string; sectionId?: string }>;
+      if (custom.detail?.sectionId && custom.detail.sectionId !== sectionId) return;
+      const stage = stageRef.current;
+      if (!stage || !section) return;
+
+      if (custom.detail?.elementId) {
+        const node = stage.findOne(`#${custom.detail.elementId}`);
+        const el = section.elements.find((x) => x.id === custom.detail.elementId);
+        if (node && el?.animations?.enter) {
+          replayKonvaNode(node, el.animations.enter);
+        }
+      } else if (custom.detail?.sectionId === sectionId) {
+        for (const el of section.elements) {
+          if (el.animations?.enter) {
+            const node = stage.findOne(`#${el.id}`);
+            if (node) replayKonvaNode(node, el.animations.enter);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("dib:replay-animation", handleReplay);
+    return () => window.removeEventListener("dib:replay-animation", handleReplay);
+  }, [section, sectionId]);
 
   if (!section) return null;
 

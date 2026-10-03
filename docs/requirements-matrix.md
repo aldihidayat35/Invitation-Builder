@@ -21,8 +21,8 @@ Fase target mengacu pada `Prompt_Implementasi_Bertahap_Digital_Invitation_Builde
 | P-05           | Reusable widgets: tema hanya menyimpan widget type + props + style overrides        | F6, F10     | U, C        | Done (F5/F6)                                   |
 | P-06           | Immutable publish: setiap publish menciptakan snapshot tak berubah                  | F2, F9      | I, E        | In progress (template version=F2, snapshot=F9) |
 | P-07           | Mobile-first: canonical artboard 390 px; target 320�430 px                          | F0, F4, F9  | U, V        | Foundation                                     |
-| P-08           | Progressive enhancement: fitur non-esensial tidak memblokir konten utama            | F7, F9, F10 | E, P        | Not started                                    |
-| P-09           | Safe extensibility via registry/schema, bukan conditional tersebar                  | F0, F6, F7  | U, D        | Done (F5/F6)                                   |
+| P-08           | Progressive enhancement: fitur non-esensial tidak memblokir konten utama            | F7, F9, F10 | E, P        | In progress (F7 non-blocking)                  |
+| P-09           | Safe extensibility via registry/schema, bukan conditional tersebar                  | F0, F6, F7  | U, D        | Done (F5/F6/F7)                                |
 
 ## 2. Baseline non-ID (PRD �5.1, �25)
 
@@ -64,12 +64,12 @@ Fase target mengacu pada `Prompt_Implementasi_Bertahap_Digital_Invitation_Builde
 | FR-WDG-006     | Gallery grid/slider; lazy loading & optimization                                                               | P1        | F10                                    | C, P        | Not started                                                        |
 | FR-WDG-007     | Music play/pause; autoplay mengikuti kebijakan browser; gagal tidak memblokir                                  | P1        | F10                                    | C, E        | Not started                                                        |
 | FR-WDG-008     | Gift: rekening/e-wallet dari variables + copy action & feedback                                                | P1        | F10                                    | C           | Not started                                                        |
-| FR-ANM-001     | Enter animation: fade, slide, zoom, rotate-soft                                                                | P0        | F7                                     | U, C        | Not started                                                        |
-| FR-ANM-002     | Attention/loop animation; tidak memblokir scroll; reduced-motion                                               | P1        | F7                                     | U, C        | Not started                                                        |
-| FR-ANM-003     | Exit animation dengan trigger terdefinisi                                                                      | P1        | F7                                     | U, C        | Not started                                                        |
-| FR-ANM-004     | Text stagger per character/word; tetap terbaca screen reader                                                   | P0        | F7                                     | C           | Not started                                                        |
-| FR-ANM-005     | Atur duration, delay, easing, stagger amount, trigger                                                          | P0        | F7                                     | U           | Not started                                                        |
-| FR-ANM-006     | Trigger onLoad, onEnterViewport, onClick; deterministik & dapat dipreview                                      | P0        | F7                                     | C, E        | Not started                                                        |
+| FR-ANM-001     | Enter animation: fade, slide, zoom, rotate-soft                                                                | P0        | F7                                     | U, C        | Done (F7)                                                          |
+| FR-ANM-002     | Attention/loop animation; tidak memblokir scroll; reduced-motion                                               | P1        | F7                                     | U, C        | Done (F7)                                                          |
+| FR-ANM-003     | Exit animation dengan trigger terdefinisi                                                                      | P1        | F7                                     | U, C        | Done (F7)                                                          |
+| FR-ANM-004     | Text stagger per character/word; tetap terbaca screen reader                                                   | P0        | F7                                     | C           | Done (F7)                                                          |
+| FR-ANM-005     | Atur duration, delay, easing, stagger amount, trigger                                                          | P0        | F7                                     | U           | Done (F7)                                                          |
+| FR-ANM-006     | Trigger onLoad, onEnterViewport, onClick; deterministik & dapat dipreview                                      | P0        | F7                                     | C, E        | Done (F7)                                                          |
 | FR-GST-001     | Guest CRUD + bulk import CSV dengan validasi duplikat & summary                                                | P1        | F8 (CRUD minimum), F10 (CSV)           | I, E        | Not started                                                        |
 | FR-GST-002     | Token/slug guest opaque, tidak sequential id                                                                   | P0        | F8                                     | U, S        | Not started                                                        |
 | FR-GST-003     | Guest context tersedia ke variables/widget (guest.name)                                                        | P0        | F8                                     | U, E        | Not started                                                        |
@@ -97,7 +97,7 @@ Fase target mengacu pada `Prompt_Implementasi_Bertahap_Digital_Invitation_Builde
 | NFR-REL-002    | Kegagalan satu widget tidak membuat page blank                             | P0        | F6, F9      | C           | Not started  |
 | NFR-SEC-001    | Tidak ada arbitrary script/HTML dari data user                             | P0        | F1, F11     | U, S        | In progress  |
 | NFR-SEC-002    | Upload divalidasi server; URL akses mengikuti storage policy               | P0        | F5, F11     | I, S        | Done (F5/F6) |
-| NFR-A11Y-001   | Semantic text, tombol keyboard accessible, alt text, reduced motion        | P1        | F7, F11     | C, E        | Not started  |
+| NFR-A11Y-001   | Semantic text, tombol keyboard accessible, alt text, reduced motion        | P1        | F7, F11     | C, E        | In progress (text & reduced-motion F7) |
 | NFR-COMP-001   | Chrome Android, Safari iOS, Chromium modern                                | P0        | F11         | E           | Not started  |
 | NFR-OBS-001    | requestId + structured logging untuk error penting                         | P1        | F11, F12    | I           | Not started  |
 | NFR-BACKUP-001 | Strategi backup & restore terdokumentasi sebelum production                | P1        | F12         | D           | Not started  |
@@ -112,13 +112,13 @@ Fase target mengacu pada `Prompt_Implementasi_Bertahap_Digital_Invitation_Builde
 | AC-04          | Map widget membuka Google Maps ke koordinat yang benar                                     | F6                  | C, E        | Done (F5/F6)        |
 | AC-05          | Countdown sesuai timezone terpilih                                                         | F6                  | U, C        | Done (F5/F6)        |
 | AC-06          | Guest link A dan B menampilkan nama tamu berbeda                                           | F6, F8              | E           | Done (F5/F6)        |
-| AC-07          | Text animasi masuk per huruf + replay di preview                                           | F7                  | C, E        | Not started         |
+| AC-07          | Text animasi masuk per huruf + replay di preview                                           | F7                  | C, E        | Done (F7)           |
 | AC-08          | Dekorasi drag, resize, rotate, reorder, lock, hide di editor                               | F4                  | E           | Done                |
 | AC-09          | Publish ? URL publik tanpa login                                                           | F9                  | E           | Not started         |
 | AC-10          | Edit draft setelah publish tidak mengubah live sampai republish                            | F9                  | E           | Not started         |
 | AC-11          | Public page HTML/DOM; text bukan bitmap/canvas                                             | F0 (smoke), F9      | E           | In progress (smoke) |
 | AC-12          | Tanpa overflow horizontal di 320/375/390/414/430                                           | F0 (smoke), F9, F11 | E, V        | In progress (smoke) |
-| AC-13          | prefers-reduced-motion: konten tetap terlihat & usable                                     | F7, F11             | E           | Not started         |
+| AC-13          | prefers-reduced-motion: konten tetap terlihat & usable                                     | F7, F11             | E           | In progress (runtime F7) |
 | AC-14          | Document JSON invalid ditolak server dengan error per field/element                        | F1, F2, F11         | U, I        | In progress         |
 | AC-15          | E2E golden path berjalan di CI sebelum release                                             | F11, F12            | E (CI)      | Not started         |
 
@@ -132,3 +132,4 @@ Fase target mengacu pada `Prompt_Implementasi_Bertahap_Digital_Invitation_Builde
 | 2026-10-03 | F3    | Engine resolver/formatter/registry/form + playground: FR-VAR-001, FR-VAR-003 Done; FR-VAR-002, FR-INV-002, P-02 In progress (preview=F7, Data Mode UI=F8)                                          |
 | 2026-10-03 | F4    | Editor core (sections, elemen, undo/redo, autosave, shortcut): FR-EDT-001..004, 009, AC-08 Done; FR-EDT-005 (snap tepi/tengah), 006 (tanpa image/icon), 007 In progress                            |
 | 2026-10-03 | F5/F6 | Asset pipeline + P0 widgets (map, countdown, guestGreeting): FR-EDT-008, FR-AST-001/002, NFR-SEC-002, FR-WDG-001..004, AC-04..06, P-05, P-09 -> Done. AC-06 e2e dengan link tamu nyata menunggu F8 |
+| 2026-10-03 | F7    | Sistem animasi: FR-ANM-001..006, AC-07, P-09 Done; AC-13 & NFR-A11Y-001 partial (runtime reduced-motion & accessible text); P-08 in-progress (non-blocking animation)                  |
