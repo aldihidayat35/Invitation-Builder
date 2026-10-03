@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import { defaultWidgetRegistry } from "../default-registry";
 import type { WidgetRegistry } from "../registry";
 import { CountdownWidget } from "./CountdownWidget";
+import { GalleryWidget } from "./GalleryWidget";
+import { GiftWidget } from "./GiftWidget";
 import { GuestGreetingWidget } from "./GuestGreetingWidget";
 import { MapWidget } from "./MapWidget";
+import { MusicWidget } from "./MusicWidget";
+import { RsvpWidget } from "./RsvpWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -41,6 +45,23 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       style={style}
     />
   ),
+  rsvp: (p, style) => (
+    <RsvpWidget
+      title={p.title}
+      enablePartySize={p.enablePartySize}
+      enableMessage={p.enableMessage}
+      maxParty={p.maxParty}
+      deadline={p.deadline}
+      style={style}
+    />
+  ),
+  gallery: (p, style) => (
+    <GalleryWidget title={p.title} layout={p.layout} items={p.items} style={style} />
+  ),
+  music: (p, style) => (
+    <MusicWidget src={p.src} title={p.title} autoplay={p.autoplay} style={style} />
+  ),
+  gift: (p, style) => <GiftWidget title={p.title} accounts={p.accounts} style={style} />,
 };
 
 /**

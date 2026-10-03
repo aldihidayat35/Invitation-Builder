@@ -8,12 +8,14 @@ import {
   archiveGuest,
   create,
   describeInvitationError,
+  importGuestsCsv,
   publish,
   rollback,
   saveData,
 } from "@/features/invitations/api";
 import type {
   ActionState,
+  ImportState,
   SaveDataState,
 } from "@/features/invitations/components/action-state";
 
@@ -139,4 +141,23 @@ export async function rollbackInvitationAction(
   }
   revalidatePath(`${LIST}/${id.data}`);
   return { ok: true, message: `Revisi ${revisionNo} diaktifkan.` };
+}
+
+/** Guest CSV import: `intent=preview` validates only, `intent=import` commits valid rows. */
+export async function importGuestsAction(
+  _prev: ImportState,
+  formData: FormData,
+): Promise<ImportState> {
+  const id = idSchema.safeParse(field(formData, "invitationId"));
+  if (!id.success) return { error: "Undangan tidak valid." };
+  const csv = field(formData, "csv");
+  if (csv.trim() === "") return { error: "Tempel atau pilih file CSV terlebih dahulu." };
+  const commit = field(formData, "intent") === "import";
+  try {
+    const { plan, created } = await importGuestsCsv(id.data, csv, !commit);
+    if (commit) revalidatePath(`${LIST}/${id.data}`);
+    return { plan, ...(commit && { created }) };
+  } catch (error) {
+    return { error: failure(error).error ?? "Gagal mengimpor." };
+  }
 }

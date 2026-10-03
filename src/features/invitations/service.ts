@@ -675,3 +675,20 @@ export async function getPublicInvitation(
     hasGuest: guest.name !== undefined,
   };
 }
+
+/**
+ * Authorization seam for sibling feature services (RSVP dashboard, CSV import):
+ * same not-found-for-non-members + capability rules as every invitation call.
+ */
+export async function requireInvitationAccess(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+  capability: "invitation:read" | "invitation:write",
+): Promise<InvitationRow> {
+  return loadAuthorized(db, actor, invitationId, capability);
+}
+
+export function assertInvitationWritable(row: InvitationRow): void {
+  assertWritable(row);
+}

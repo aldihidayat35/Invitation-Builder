@@ -104,3 +104,119 @@
   font-size: 12px;
   opacity: 0.7;
 }
+
+/* ---- P1 widgets (F10) ---- */
+.rsvp,
+.gallery,
+.gift {
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.formField input,
+.formField textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  min-height: 40px;
+}
+
+.choices {
+  display: flex;
+  gap: 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.choices legend {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.formError {
+  margin: 0;
+  font-size: 13px;
+  color: #b3261e;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.75;
+  min-height: 1em;
+}
+
+.galleryGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.galleryGrid img,
+.slider img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.slider {
+  width: 100%;
+  outline-offset: 2px;
+}
+
+.sliderNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.sliderNav .button {
+  min-width: 44px;
+  padding: 0 12px;
+}
+
+.giftList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.giftItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}

@@ -11,6 +11,7 @@ import {
   snapshots as listSnapshots,
 } from "@/features/invitations/api";
 import { DataModeForm } from "@/features/invitations/components/DataModeForm";
+import { GuestImport } from "@/features/invitations/components/GuestImport";
 import { GuestPanel } from "@/features/invitations/components/GuestPanel";
 import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
@@ -18,6 +19,7 @@ import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine"
 import {
   addGuestAction,
   archiveGuestAction,
+  importGuestsAction,
   publishInvitationAction,
   rollbackInvitationAction,
   saveInvitationDataAction,
@@ -76,13 +78,22 @@ export default async function InvitationDataPage({
             {invitation.title}
           </h1>
         </div>
-        <Link
-          href={`/dashboard/invitations/${invitation.id}/preview`}
-          className={styles.primary}
-          id="open-preview"
-        >
-          Preview
-        </Link>
+        <div className={styles.row}>
+          <Link
+            href={`/dashboard/invitations/${invitation.id}/rsvp`}
+            className={styles.secondary}
+            id="open-rsvp"
+          >
+            RSVP
+          </Link>
+          <Link
+            href={`/dashboard/invitations/${invitation.id}/preview`}
+            className={styles.primary}
+            id="open-preview"
+          >
+            Preview
+          </Link>
+        </div>
       </header>
 
       <div className={styles.layout}>
@@ -137,6 +148,9 @@ export default async function InvitationDataPage({
             add={addGuestAction}
             archive={archiveGuestAction}
           />
+          {permissions.write && !archived ? (
+            <GuestImport invitationId={invitation.id} action={importGuestsAction} />
+          ) : null}
         </aside>
       </div>
     </main>

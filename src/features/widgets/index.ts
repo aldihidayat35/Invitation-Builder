@@ -33,3 +33,14 @@ export {
   type CountdownState,
   type CountdownUnit,
 } from "./logic";
+export {
+  GALLERY_WIDGET_TYPE,
+  GIFT_WIDGET_TYPE,
+  MUSIC_WIDGET_TYPE,
+  P1_WIDGETS,
+  RSVP_WIDGET_TYPE,
+  galleryWidget,
+  giftWidget,
+  musicWidget,
+  rsvpWidget,
+} from "./definitions-p1";

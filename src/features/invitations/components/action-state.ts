@@ -1,3 +1,5 @@
+import type { ImportPlan } from "../csv";
+
 /** Result shape returned by invitation server actions to `useActionState`. */
 export interface ActionState {
   ok?: boolean;
@@ -19,3 +21,13 @@ export type SaveDataAction = (
   invitationId: string,
   values: Record<string, string>,
 ) => Promise<SaveDataState>;
+
+/** Result of the guest CSV import preview/commit (FR-GST-001). */
+export interface ImportState {
+  readonly error?: string;
+  readonly plan?: ImportPlan;
+  /** Guests created by the last commit (undefined for previews). */
+  readonly created?: number;
+}
+
+export type ImportAction = (prev: ImportState, formData: FormData) => Promise<ImportState>;

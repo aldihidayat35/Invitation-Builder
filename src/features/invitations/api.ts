@@ -10,6 +10,7 @@ import { getDb } from "@/lib/db/client";
 import type { Actor } from "@/lib/auth/authorization";
 import type { Database } from "@/lib/db/types";
 import * as service from "./service";
+import { importGuests } from "./guest-import";
 import type { PreviewGuestSelection } from "./service";
 
 async function context(): Promise<{ db: Database; actor: Actor }> {
@@ -148,4 +149,9 @@ export function describeInvitationError(error: unknown): string {
   if (error instanceof service.InvitationNotFoundError) return "Undangan tidak ditemukan.";
   if (error instanceof service.GuestNotFoundError) return "Tamu tidak ditemukan.";
   return "Terjadi kesalahan. Silakan coba lagi.";
+}
+
+export async function importGuestsCsv(invitationId: string, csv: string, dryRun: boolean) {
+  const { db, actor } = await context();
+  return importGuests(db, actor, { invitationId, csv, dryRun });
 }

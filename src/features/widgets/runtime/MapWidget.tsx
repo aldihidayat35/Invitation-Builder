@@ -1,3 +1,6 @@
+"use client";
+
+import { track } from "@/features/analytics/track";
 import { mapUrl } from "../logic";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
@@ -25,6 +28,7 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
           target="_blank"
           rel="noopener noreferrer"
           data-testid="map-link"
+          onClick={() => track("map_clicked")}
         >
           {text(buttonText, "Buka Google Maps")}
         </a>

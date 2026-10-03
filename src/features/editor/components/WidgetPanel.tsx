@@ -24,6 +24,9 @@ function controlOf(spec: WidgetPropDefinition): NonNullable<WidgetPropDefinition
   if (spec.control) return spec.control;
   if (spec.slot === "coordinate") return "coordinate";
   if (spec.slot === "datetime") return "datetime";
+  if (spec.slot === "boolean") return "boolean";
+  if (spec.slot === "number") return "number";
+  if (spec.slot === "collection") return "binding";
   return "text";
 }
 
@@ -219,6 +222,39 @@ function StaticControl({
         </div>
       );
     }
+    case "boolean":
+      return (
+        <label className={styles.fieldLabel}>
+          <input
+            id={id}
+            type="checkbox"
+            checked={value === true}
+            disabled={disabled}
+            onChange={(event) => onChange(event.target.checked)}
+          />{" "}
+          {spec.label}
+        </label>
+      );
+    case "number":
+      return (
+        <NumberField
+          id={id}
+          label={spec.label}
+          value={typeof value === "number" ? value : 1}
+          min={1}
+          max={20}
+          step={1}
+          decimals={0}
+          disabled={disabled}
+          onCommit={onChange}
+        />
+      );
+    case "binding":
+      return (
+        <p className={styles.muted}>
+          Hubungkan ke variabel koleksi di atas; isi data lewat Data Mode undangan.
+        </p>
+      );
     default:
       return (
         <TextField

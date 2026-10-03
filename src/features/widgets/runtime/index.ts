@@ -4,3 +4,8 @@ export { MapWidget } from "./MapWidget";
 export { CountdownWidget } from "./CountdownWidget";
 export { GuestGreetingWidget } from "./GuestGreetingWidget";
 export type { WidgetStyleProps } from "./WidgetFrame";
+export { RsvpWidget } from "./RsvpWidget";
+export { GalleryWidget, parseGalleryItems } from "./GalleryWidget";
+export { MusicWidget } from "./MusicWidget";
+export { GiftWidget, parseGiftAccounts } from "./GiftWidget";
+export { PublicContextProvider, usePublicContext, type PublicContextValue } from "./PublicContext";

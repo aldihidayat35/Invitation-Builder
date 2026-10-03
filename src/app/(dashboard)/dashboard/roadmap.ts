@@ -77,13 +77,13 @@ export const ROADMAP_PHASES: readonly RoadmapPhase[] = [
     id: "F10",
     title: "P1 Widgets: RSVP, Gallery, Music, Gift",
     prdTargets: ["FR-WDG-005", "FR-WDG-008", "FR-GST-001"],
-    status: "in-progress",
+    status: "done",
   },
   {
     id: "F11",
     title: "Hardening, Performance, Security & QA",
     prdTargets: ["NFR-PERF-002", "NFR-A11Y-001", "AC-15"],
-    status: "planned",
+    status: "in-progress",
   },
   {
     id: "F12",

@@ -79,13 +79,13 @@ describe("greetingParts (FR-WDG-004 / AC-06)", () => {
 });
 
 describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
-  it("registers the three P0 widgets once each", () => {
+  it("registers the P0 and P1 widgets once each", () => {
     expect(
       defaultWidgetRegistry
         .list()
         .map((w) => w.type)
         .sort(),
-    ).toEqual(["countdown", "guestGreeting", "map"]);
+    ).toEqual(["countdown", "gallery", "gift", "guestGreeting", "map", "music", "rsvp"]);
     expect(P0_WIDGETS).toHaveLength(3);
   });
 
@@ -114,7 +114,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
     for (const doc of [make(), make()]) {
       expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);
       const widgets = doc.sections.flatMap((s) => s.elements).filter((e) => e.type === "widget");
-      expect(widgets).toHaveLength(3);
+      expect(widgets).toHaveLength(7);
     }
   });
 

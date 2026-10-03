@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublic } from "@/features/invitations/api";
 import { DocumentRenderer } from "@/features/renderer";
+import { PublicContextProvider } from "@/features/widgets/runtime";
 
 /** Live data: always read the active snapshot at request time (FR-PUB-001). */
 export const dynamic = "force-dynamic";
@@ -34,7 +35,15 @@ export default async function PublicInvitationPage({
   return (
     <main data-testid="public-invitation" lang="id">
       <h1 className="dib-visually-hidden">{invitation.title}</h1>
-      <DocumentRenderer document={invitation.resolved} runtimeMode="public" />
+      <PublicContextProvider
+        value={{
+          slug: invitation.slug,
+          ...(invitation.hasGuest && token && { guestToken: token }),
+          ...(invitation.guestName !== undefined && { guestName: invitation.guestName }),
+        }}
+      >
+        <DocumentRenderer document={invitation.resolved} runtimeMode="public" />
+      </PublicContextProvider>
     </main>
   );
 }
