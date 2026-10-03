@@ -19,6 +19,13 @@ export interface ScriptDb {
 
 /** DATABASE_URL = postgres://... (server) or pglite://<dir> (embedded, local dev). */
 export function connectFromEnv(): ScriptDb {
+  if (!process.env.DATABASE_URL && typeof process.loadEnvFile === "function") {
+    try {
+      process.loadEnvFile();
+    } catch {
+      // ignore if .env is missing
+    }
+  }
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is required (postgres://... or pglite://./.data/dev)");
   if (url.startsWith("pglite://")) {

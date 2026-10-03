@@ -5,9 +5,13 @@ async function main(): Promise<void> {
   const conn = connectFromEnv();
   try {
     await conn.migrate();
+    const rawPassword = process.env.SEED_DEV_PASSWORD?.trim();
     const password =
-      process.env.SEED_DEV_PASSWORD ??
-      (process.env.NODE_ENV === "production" ? undefined : "dev-password-change-me");
+      rawPassword && rawPassword.length > 0
+        ? rawPassword
+        : process.env.NODE_ENV === "production"
+          ? undefined
+          : "dev-password-change-me";
     const result = await seedDev(conn.db, { password });
     console.log("Seed OK:", result);
     if (password)
