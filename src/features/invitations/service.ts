@@ -401,9 +401,10 @@ export async function getInvitationReadiness(
 ): Promise<ReadinessReport> {
   const row = await loadAuthorized(db, actor, invitationId, "invitation:read");
   const { document } = await loadPinnedDocument(db, row);
-  const issues = validateInvitationData(createVariableRegistry(document.variables), row.data).filter(
-    (issue) => issue.code !== "unknown_key",
-  );
+  const issues = validateInvitationData(
+    createVariableRegistry(document.variables),
+    row.data,
+  ).filter((issue) => issue.code !== "unknown_key");
   return { ready: issues.length === 0, issues };
 }
 
@@ -560,9 +561,10 @@ export async function publishInvitation(
   const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
   assertWritable(row);
   const { document } = await loadPinnedDocument(db, row);
-  const issues = validateInvitationData(createVariableRegistry(document.variables), row.data).filter(
-    (issue) => issue.code !== "unknown_key",
-  );
+  const issues = validateInvitationData(
+    createVariableRegistry(document.variables),
+    row.data,
+  ).filter((issue) => issue.code !== "unknown_key");
   if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
 
   return db.transaction(async (tx) => {

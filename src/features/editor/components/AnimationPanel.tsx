@@ -1,15 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  animationPresetRegistry,
-  buildDefaultTrack,
-} from "@/features/animations";
-import {
-  ANIMATION_EASINGS,
-  type AnimationTrack,
-  type Element,
-} from "@/lib/schema";
+import { animationPresetRegistry, buildDefaultTrack } from "@/features/animations";
+import { ANIMATION_EASINGS, type AnimationTrack, type Element } from "@/lib/schema";
 import { useEditorStore } from "./EditorProvider";
 import { FieldRow, NumberField, SelectField } from "./fields";
 import styles from "./editor.module.css";

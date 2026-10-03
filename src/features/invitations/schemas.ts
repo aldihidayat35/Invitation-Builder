@@ -11,7 +11,10 @@ export const invitationTitleSchema = z
       .string()
       .min(1, "Judul undangan wajib diisi.")
       .max(120, "Judul undangan maksimal 120 karakter.")
-      .refine((v) => !/[\u0000-\u001F\u007F]/.test(v), "Judul undangan mengandung karakter tidak valid."),
+      .refine(
+        (v) => !/[\u0000-\u001F\u007F]/.test(v),
+        "Judul undangan mengandung karakter tidak valid.",
+      ),
   );
 
 export const guestNameSchema = z
@@ -22,7 +25,10 @@ export const guestNameSchema = z
       .string()
       .min(1, "Nama tamu wajib diisi.")
       .max(120, "Nama tamu maksimal 120 karakter.")
-      .refine((v) => !/[\u0000-\u001F\u007F]/.test(v), "Nama tamu mengandung karakter tidak valid."),
+      .refine(
+        (v) => !/[\u0000-\u001F\u007F]/.test(v),
+        "Nama tamu mengandung karakter tidak valid.",
+      ),
   );
 
 export const maxPartySchema = z.coerce

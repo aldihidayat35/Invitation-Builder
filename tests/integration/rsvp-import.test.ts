@@ -153,9 +153,7 @@ describe("submitRsvp policy", () => {
     await expect(
       submitRsvp(db(), { slug: "x", name: "", response: "attending" }),
     ).rejects.toThrow();
-    await expect(
-      submitRsvp(db(), { slug: "x", name: "X", response: "maybe" }),
-    ).rejects.toThrow();
+    await expect(submitRsvp(db(), { slug: "x", name: "X", response: "maybe" })).rejects.toThrow();
     await expect(
       submitRsvp(db(), { slug: "x", name: "X", response: "attending", extra: 1 }),
     ).rejects.toThrow();
@@ -192,6 +190,9 @@ describe("public endpoint handler", () => {
       { db: db(), limiter },
     );
     expect(missing.status).toBe(404);
+    expect(missing.headers.get("X-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
+    const missingBody = (await missing.clone().json()) as { requestId: string };
+    expect(missingBody.requestId).toBe(missing.headers.get("X-Request-Id"));
     expect(JSON.stringify(await missing.json())).not.toMatch(/select|drizzle|stack|uuid/i);
 
     const invalid = await handleRsvpRequest(post("{not json"), { db: db(), limiter });

@@ -134,7 +134,10 @@ export function planGuestImport(
     override ??
     (hasHeader
       ? { nameColumn: nameIdx, ...(partyIdx >= 0 && { maxPartyColumn: partyIdx }) }
-      : { nameColumn: 0, ...(first.length > 1 && /^\d+$/.test(first[1]!.trim()) && { maxPartyColumn: 1 }) });
+      : {
+          nameColumn: 0,
+          ...(first.length > 1 && /^\d+$/.test(first[1]!.trim()) && { maxPartyColumn: 1 }),
+        });
 
   const dataRows = hasHeader ? table.slice(1) : table;
   if (dataRows.length === 0) return fatalPlan("Tidak ada baris data.");
@@ -151,7 +154,13 @@ export function planGuestImport(
       mapping.maxPartyColumn === undefined ? "" : (cells[mapping.maxPartyColumn] ?? "").trim();
     if (name === "") return { line, name, maxParty: 1, status: "invalid", reason: "Nama kosong." };
     if (name.length > GUEST_NAME_MAX) {
-      return { line, name, maxParty: 1, status: "invalid", reason: `Nama lebih dari ${GUEST_NAME_MAX} karakter.` };
+      return {
+        line,
+        name,
+        maxParty: 1,
+        status: "invalid",
+        reason: `Nama lebih dari ${GUEST_NAME_MAX} karakter.`,
+      };
     }
     let maxParty = 1;
     if (partyRaw !== "") {

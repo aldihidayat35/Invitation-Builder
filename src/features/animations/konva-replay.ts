@@ -22,7 +22,8 @@ export function replayKonvaNode(
   const origScaleX = node.scaleX();
   const origScaleY = node.scaleY();
 
-  const preset = animationPresetRegistry.get(track.presetId) ?? animationPresetRegistry.get("fadeIn")!;
+  const preset =
+    animationPresetRegistry.get(track.presetId) ?? animationPresetRegistry.get("fadeIn")!;
   const fromProps = preset.keyframes.from;
 
   // Apply initial relative offsets from keyframes

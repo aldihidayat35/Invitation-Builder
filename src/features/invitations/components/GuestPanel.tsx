@@ -86,7 +86,12 @@ export function GuestPanel({
         Daftar tamu ({guests.length})
       </h2>
       {canWrite ? (
-        <form ref={formRef} action={formAction} className={styles.guestForm} aria-label="Tambah tamu">
+        <form
+          ref={formRef}
+          action={formAction}
+          className={styles.guestForm}
+          aria-label="Tambah tamu"
+        >
           <input type="hidden" name="invitationId" value={invitationId} />
           <label className={styles.field}>
             <span>Nama tamu</span>
@@ -104,12 +109,7 @@ export function GuestPanel({
               required
             />
           </label>
-          <button
-            id="add-guest-submit"
-            type="submit"
-            className={styles.primary}
-            disabled={pending}
-          >
+          <button id="add-guest-submit" type="submit" className={styles.primary} disabled={pending}>
             {pending ? "Menambah…" : "Tambah tamu"}
           </button>
           {state.error ? (
@@ -120,7 +120,9 @@ export function GuestPanel({
         </form>
       ) : null}
       {guests.length === 0 ? (
-        <p className={styles.muted}>Belum ada tamu. Tambahkan tamu untuk melihat preview personal.</p>
+        <p className={styles.muted}>
+          Belum ada tamu. Tambahkan tamu untuk melihat preview personal.
+        </p>
       ) : (
         <ul className={styles.guestList} aria-label="Daftar tamu">
           {guests.map((guest) => (

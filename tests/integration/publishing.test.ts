@@ -113,9 +113,9 @@ describe("publish gate (FR-INV-004)", () => {
     );
     await publishInvitation(db(), world.operatorA, invitation.id);
     const logs = await listAuditLogs(db(), world.wsA.id);
-    expect(logs.some((l) => l.action === "invitation.publish" && l.entityId === invitation.id)).toBe(
-      true,
-    );
+    expect(
+      logs.some((l) => l.action === "invitation.publish" && l.entityId === invitation.id),
+    ).toBe(true);
   });
 });
 
@@ -173,9 +173,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
   it("published snapshots are immutable at the database level (P-06)", async () => {
     const invitation = await readyInvitation("Immutable");
     await publishInvitation(db(), world.operatorA, invitation.id);
-    await expect(
-      db().update(publishedSnapshots).set({ data: {} }),
-    ).rejects.toThrow();
+    await expect(db().update(publishedSnapshots).set({ data: {} })).rejects.toThrow();
   });
 });
 

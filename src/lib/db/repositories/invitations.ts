@@ -37,7 +37,11 @@ export async function findInvitationById(
   db: Database,
   invitationId: string,
 ): Promise<InvitationRow | undefined> {
-  const [row] = await db.select().from(invitations).where(eq(invitations.id, invitationId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(invitations)
+    .where(eq(invitations.id, invitationId))
+    .limit(1);
   return row;
 }
 
@@ -172,7 +176,11 @@ export async function updateGuestRow(
       updatedAt: new Date(),
     })
     .where(
-      and(eq(guests.invitationId, invitationId), eq(guests.id, guestId), ne(guests.status, "archived")),
+      and(
+        eq(guests.invitationId, invitationId),
+        eq(guests.id, guestId),
+        ne(guests.status, "archived"),
+      ),
     )
     .returning();
   return row;
@@ -187,7 +195,11 @@ export async function archiveGuestRow(
     .update(guests)
     .set({ status: "archived", updatedAt: new Date() })
     .where(
-      and(eq(guests.invitationId, invitationId), eq(guests.id, guestId), ne(guests.status, "archived")),
+      and(
+        eq(guests.invitationId, invitationId),
+        eq(guests.id, guestId),
+        ne(guests.status, "archived"),
+      ),
     )
     .returning();
   return row;

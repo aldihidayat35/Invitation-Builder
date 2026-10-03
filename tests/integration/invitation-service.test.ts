@@ -273,7 +273,11 @@ describe("two invitations from one template (AC-03, P-02)", () => {
     const b = await newInvitation("Undangan B");
     await saveInvitationData(db(), world.operatorA, {
       invitationId: a.id,
-      values: { ...REQUIRED_VALUES, "couple.bride.nickname": "Anin", "couple.groom.nickname": "Raka" },
+      values: {
+        ...REQUIRED_VALUES,
+        "couple.bride.nickname": "Anin",
+        "couple.groom.nickname": "Raka",
+      },
     });
     await saveInvitationData(db(), world.operatorA, {
       invitationId: b.id,
@@ -358,9 +362,9 @@ describe("guests (FR-GST-002) and preview context (FR-GST-003, AC-06)", () => {
     expect(list.map((g) => g.name)).toEqual(["Budi Santoso", "Siti Aminah"]);
 
     await archiveGuest(db(), world.operatorA, { invitationId: invitation.id, guestId: budi.id });
-    expect((await listInvitationGuests(db(), world.operatorA, invitation.id)).map((g) => g.id)).toEqual([
-      siti.id,
-    ]);
+    expect(
+      (await listInvitationGuests(db(), world.operatorA, invitation.id)).map((g) => g.id),
+    ).toEqual([siti.id]);
     await expect(
       archiveGuest(db(), world.operatorA, { invitationId: invitation.id, guestId: budi.id }),
     ).rejects.toBeInstanceOf(GuestNotFoundError);
@@ -379,7 +383,10 @@ describe("guests (FR-GST-002) and preview context (FR-GST-003, AC-06)", () => {
       addGuest(db(), world.ownerB, { invitationId: one.id, name: "Penyusup" }),
     ).rejects.toBeInstanceOf(InvitationNotFoundError);
 
-    const guest = await addGuest(db(), world.operatorA, { invitationId: one.id, name: "Tamu Satu" });
+    const guest = await addGuest(db(), world.operatorA, {
+      invitationId: one.id,
+      name: "Tamu Satu",
+    });
     // a guest of invitation one cannot be touched through invitation two
     await expect(
       updateGuest(db(), world.operatorA, { invitationId: two.id, guestId: guest.id, name: "X" }),
@@ -398,8 +405,14 @@ describe("guests (FR-GST-002) and preview context (FR-GST-003, AC-06)", () => {
       invitationId: invitation.id,
       values: REQUIRED_VALUES,
     });
-    const guestA = await addGuest(db(), world.operatorA, { invitationId: invitation.id, name: "Ani" });
-    const guestB = await addGuest(db(), world.operatorA, { invitationId: invitation.id, name: "Budi" });
+    const guestA = await addGuest(db(), world.operatorA, {
+      invitationId: invitation.id,
+      name: "Ani",
+    });
+    const guestB = await addGuest(db(), world.operatorA, {
+      invitationId: invitation.id,
+      name: "Budi",
+    });
 
     const forA = await buildPreview(db(), world.operatorA, {
       invitationId: invitation.id,
@@ -443,7 +456,10 @@ describe("guests (FR-GST-002) and preview context (FR-GST-003, AC-06)", () => {
 describe("audit trail (FR-AUD-001)", () => {
   it("records invitation and guest lifecycle events", async () => {
     const invitation = await newInvitation("Audit");
-    const guest = await addGuest(db(), world.operatorA, { invitationId: invitation.id, name: "Dewi" });
+    const guest = await addGuest(db(), world.operatorA, {
+      invitationId: invitation.id,
+      name: "Dewi",
+    });
     await archiveGuest(db(), world.operatorA, { invitationId: invitation.id, guestId: guest.id });
     await archiveInvitation(db(), world.ownerA, invitation.id);
 

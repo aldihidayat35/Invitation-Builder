@@ -1,10 +1,7 @@
 /**
  * Unit tests: prefers-reduced-motion decision logic (NFR-A11Y-001, AC-13).
  */
-import {
-  isPrefersReducedMotion,
-  resolveReducedMotionBehavior,
-} from "@/features/animations";
+import { isPrefersReducedMotion, resolveReducedMotionBehavior } from "@/features/animations";
 import type { AnimationTrack } from "@/lib/schema";
 
 describe("Reduced Motion Adaptation (NFR-A11Y-001, AC-13)", () => {

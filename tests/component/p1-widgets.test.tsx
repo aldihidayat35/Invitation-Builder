@@ -54,7 +54,9 @@ describe("RsvpWidget", () => {
   it("shows a generic error from the API without leaking internals", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(Response.json({ error: "Undangan tidak tersedia." }, { status: 404 })),
+      vi
+        .fn()
+        .mockResolvedValue(Response.json({ error: "Undangan tidak tersedia." }, { status: 404 })),
     );
     render(
       <PublicContextProvider value={{ slug: "x" }}>
@@ -123,7 +125,9 @@ describe("MusicWidget", () => {
     const { events, stop } = collectEvents();
     render(<MusicWidget src="https://example.com/a.mp3" />);
     fireEvent.click(screen.getByTestId("music-toggle"));
-    await waitFor(() => expect(screen.getByTestId("music-toggle")).toHaveAttribute("aria-pressed", "true"));
+    await waitFor(() =>
+      expect(screen.getByTestId("music-toggle")).toHaveAttribute("aria-pressed", "true"),
+    );
     expect(events.map((e) => e.event)).toEqual(["music_played"]);
     fireEvent.click(screen.getByTestId("music-toggle"));
     expect(screen.getByTestId("music-toggle")).toHaveAttribute("aria-pressed", "false");

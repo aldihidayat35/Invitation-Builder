@@ -38,7 +38,10 @@ export class AnimationPresetRegistry {
     return all.filter((p) => p.category === category);
   }
 
-  listForElement(elementType: Element["type"], category?: AnimationCategory): readonly AnimationPreset[] {
+  listForElement(
+    elementType: Element["type"],
+    category?: AnimationCategory,
+  ): readonly AnimationPreset[] {
     const list = this.list(category);
     return list.filter((p) => p.applicableElements.includes(elementType));
   }

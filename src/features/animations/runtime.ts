@@ -43,7 +43,8 @@ export function playAnimation(
   const reducedMotion = !options.forcePlay && isPrefersReducedMotion();
   const track = resolveReducedMotionBehavior(rawTrack, reducedMotion);
 
-  const preset = animationPresetRegistry.get(track.presetId) ?? animationPresetRegistry.get("fadeIn")!;
+  const preset =
+    animationPresetRegistry.get(track.presetId) ?? animationPresetRegistry.get("fadeIn")!;
 
   // Resolve target elements (either child chars/words or the element itself)
   const charElements = element.querySelectorAll<HTMLElement>("[data-anim-char]");

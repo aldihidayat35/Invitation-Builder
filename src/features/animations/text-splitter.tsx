@@ -53,11 +53,7 @@ export function AccessibleAnimatedText({
 
           if (staggerUnit === "word") {
             return (
-              <span
-                key={`w-${tokenIdx}`}
-                data-anim-word
-                className={styles.word}
-              >
+              <span key={`w-${tokenIdx}`} data-anim-word className={styles.word}>
                 {token}
               </span>
             );
@@ -67,11 +63,7 @@ export function AccessibleAnimatedText({
           return (
             <span key={`wb-${tokenIdx}`} className={styles.wordBlock}>
               {Array.from(token).map((char, charIdx) => (
-                <span
-                  key={`c-${tokenIdx}-${charIdx}`}
-                  data-anim-char
-                  className={styles.char}
-                >
+                <span key={`c-${tokenIdx}-${charIdx}`} data-anim-char className={styles.char}>
                   {char}
                 </span>
               ))}

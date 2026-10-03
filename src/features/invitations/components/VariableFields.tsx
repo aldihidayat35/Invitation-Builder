@@ -25,7 +25,7 @@ const INPUT_TYPE: Partial<Record<FormField["control"], string>> = {
 const HINT: Partial<Record<FormField["control"], string>> = {
   coordinate: "lat, lng - contoh: -7.8, 110.36",
   image: "Pilih gambar dari Asset Library (atau isi Asset ID)",
-  collection: "JSON array - mis. [{\"title\":\"Akad\"}]",
+  collection: 'JSON array - mis. [{"title":"Akad"}]',
   richtext: "Teks polos (rich text terbatas)",
 };
 

@@ -62,7 +62,12 @@ export function CreateInvitationForm({
           aria-describedby={state.error ? "create-invitation-error" : undefined}
         />
       </label>
-      <button id="create-invitation-submit" type="submit" className={styles.primary} disabled={pending}>
+      <button
+        id="create-invitation-submit"
+        type="submit"
+        className={styles.primary}
+        disabled={pending}
+      >
         {pending ? "Membuat…" : "Buat undangan"}
       </button>
       {state.error ? (

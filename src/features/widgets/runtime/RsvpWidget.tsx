@@ -37,7 +37,8 @@ export function RsvpWidget({
   const ctx = usePublicContext();
   const withParty = enablePartySize !== false;
   const withMessage = enableMessage !== false;
-  const max = typeof maxParty === "number" && maxParty >= 1 ? Math.min(20, Math.floor(maxParty)) : 5;
+  const max =
+    typeof maxParty === "number" && maxParty >= 1 ? Math.min(20, Math.floor(maxParty)) : 5;
 
   const [name, setName] = useState(ctx?.guestName ?? "");
   const [response, setResponse] = useState<"attending" | "not_attending">("attending");
@@ -76,7 +77,10 @@ export function RsvpWidget({
       if (!res.ok) {
         const body: unknown = await res.json().catch(() => null);
         const msg =
-          typeof body === "object" && body !== null && "error" in body && typeof body.error === "string"
+          typeof body === "object" &&
+          body !== null &&
+          "error" in body &&
+          typeof body.error === "string"
             ? body.error
             : "Gagal mengirim. Silakan coba lagi.";
         setError(msg);

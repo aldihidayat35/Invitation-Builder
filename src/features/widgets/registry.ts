@@ -26,14 +26,7 @@ import {
 ecord need options / ields.
  */
 export type WidgetPropControl =
-  | "text"
-  | "select"
-  | "coordinate"
-  | "datetime"
-  | "record"
-  | "boolean"
-  | "number"
-  | "binding";
+  "text" | "select" | "coordinate" | "datetime" | "record" | "boolean" | "number" | "binding";
 
 export interface WidgetPropDefinition<S extends z.ZodType = z.ZodType> extends WidgetPropSpec {
   readonly label: string;

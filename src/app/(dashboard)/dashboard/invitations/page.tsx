@@ -10,7 +10,9 @@ import { createInvitationAction } from "./actions";
 
 export const metadata: Metadata = { title: "Undangan" };
 
-export default async function InvitationsPage({ searchParams }: PageProps<"/dashboard/invitations">) {
+export default async function InvitationsPage({
+  searchParams,
+}: PageProps<"/dashboard/invitations">) {
   const params = await searchParams;
   const archivedView = params.view === "archived";
   const { active } = await getWorkspaceContext();

@@ -27,24 +27,16 @@ export interface CreateTrackOptions {
 export function buildDefaultTrack(options: CreateTrackOptions): AnimationTrack {
   const preset = animationPresetRegistry.get(options.presetId);
 
-  const durationMs =
-    options.durationMs ?? preset?.defaultDurationMs ?? 600;
-  const delayMs =
-    options.delayMs ?? preset?.defaultDelayMs ?? 0;
-  const easing =
-    options.easing ?? preset?.defaultEasing ?? "power2.out";
-  const staggerUnit =
-    options.staggerUnit ?? preset?.defaultStaggerUnit ?? "none";
-  const staggerAmountMs =
-    options.staggerAmountMs ?? preset?.defaultStaggerAmountMs ?? 0;
-  const repeat =
-    options.repeat ?? (preset?.loop ? -1 : 0);
-  const yoyo =
-    options.yoyo ?? preset?.yoyo ?? false;
+  const durationMs = options.durationMs ?? preset?.defaultDurationMs ?? 600;
+  const delayMs = options.delayMs ?? preset?.defaultDelayMs ?? 0;
+  const easing = options.easing ?? preset?.defaultEasing ?? "power2.out";
+  const staggerUnit = options.staggerUnit ?? preset?.defaultStaggerUnit ?? "none";
+  const staggerAmountMs = options.staggerAmountMs ?? preset?.defaultStaggerAmountMs ?? 0;
+  const repeat = options.repeat ?? (preset?.loop ? -1 : 0);
+  const yoyo = options.yoyo ?? preset?.yoyo ?? false;
   const trigger =
     options.trigger ?? (preset?.category === "exit" ? "onExitViewport" : "onEnterViewport");
-  const once =
-    options.once ?? (repeat === 0);
+  const once = options.once ?? repeat === 0;
 
   const candidate = {
     presetId: options.presetId,
@@ -69,7 +61,10 @@ export function normalizeAnimationTrack(input: unknown): AnimationTrack {
   }
   // If parsing fails, extract presetId or fallback to fadeIn
   const presetId =
-    typeof input === "object" && input !== null && "presetId" in input && typeof input.presetId === "string"
+    typeof input === "object" &&
+    input !== null &&
+    "presetId" in input &&
+    typeof input.presetId === "string"
       ? input.presetId
       : "fadeIn";
 

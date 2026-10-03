@@ -2,7 +2,7 @@
   "name": "digital-invitation-builder",
   "version": "0.1.0",
   "private": true,
-  "description": "Digital Invitation Builder — reusable invitation editor with mobile-first HTML output (PRD v1.0)",
+  "description": "Digital Invitation Builder â€” reusable invitation editor with mobile-first HTML output (PRD v1.0)",
   "engines": {
     "node": ">=20.9.0"
   },
@@ -23,7 +23,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
-    "e2e:prepare": "tsx scripts/e2e-prepare.ts"
+    "e2e:prepare": "tsx scripts/e2e-prepare.ts",
+    "smoke:prod": "node scripts/smoke-production.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",

@@ -97,7 +97,11 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
         onTouchEnd={onTouchEnd}
         data-testid="gallery-slider"
       >
-        <div role="group" aria-roledescription="slide" aria-label={`${index + 1} dari ${images.length}`}>
+        <div
+          role="group"
+          aria-roledescription="slide"
+          aria-label={`${index + 1} dari ${images.length}`}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- own asset route */}
           <img src={current.src} alt={current.alt} loading="lazy" decoding="async" />
         </div>

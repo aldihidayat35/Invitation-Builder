@@ -17,7 +17,7 @@
    skema Zod strict, rate limit in-memory 10/menit per (IP + slug) → 429 + `Retry-After`,
    pesan error generik (tanpa stack/SQL/id). Hanya undangan `published` yang menerima RSVP.
 4. **Kebijakan idempotensi.** Token tamu valid (undangan yang sama, tidak diarsipkan) → tepat satu
-   RSVP per tamu; kirim ulang = *update*; nama tersimpan = nama tamu (bukan input klien);
+   RSVP per tamu; kirim ulang = _update_; nama tersimpan = nama tamu (bukan input klien);
    `partySize` ≤ `guest.maxParty`; tamu ditandai `responded`. Tanpa token → dedupe per nama
    (case-insensitive). Token tak dikenal/asing diperlakukan sebagai tanpa token. Tidak ada migrasi DB.
 5. **Konteks publik di widget.** `PublicContextProvider` (slug, token, nama tamu) hanya dipasang

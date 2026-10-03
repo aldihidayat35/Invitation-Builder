@@ -212,27 +212,27 @@ function SectionView({
         className={styles.sectionInner}
         style={{ "--u": `calc(100cqw / ${baseWidth})` } as CSSProperties}
       >
-      {section.background.image ? (
-        <div className={styles.sectionBackground} aria-hidden="true">
-          <PublicImage
-            assetId={section.background.image.assetId}
-            alt=""
-            width={baseWidth}
-            height={section.baseHeight}
-            fit={section.background.fit}
-            priority={first}
+        {section.background.image ? (
+          <div className={styles.sectionBackground} aria-hidden="true">
+            <PublicImage
+              assetId={section.background.image.assetId}
+              alt=""
+              width={baseWidth}
+              height={section.baseHeight}
+              fit={section.background.fit}
+              priority={first}
+            />
+          </div>
+        ) : null}
+        {section.elements.map((element, index) => (
+          <ElementView
+            key={element.id}
+            element={element}
+            tokens={tokens}
+            runtimeMode={runtimeMode}
+            priority={first && index === 0}
           />
-        </div>
-      ) : null}
-      {section.elements.map((element, index) => (
-        <ElementView
-          key={element.id}
-          element={element}
-          tokens={tokens}
-          runtimeMode={runtimeMode}
-          priority={first && index === 0}
-        />
-      ))}
+        ))}
       </div>
     </section>
   );

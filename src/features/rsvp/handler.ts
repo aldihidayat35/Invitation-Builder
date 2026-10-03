@@ -3,11 +3,16 @@ import { getDb } from "@/lib/db/client";
 import { RSVP_MAX_BODY_BYTES } from "./schemas";
 import { RsvpInvalidError, RsvpUnavailableError, submitRsvp } from "./service";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { log, logError, requestIdFrom } from "@/lib/logger";
 
 /** 10 submissions / minute / (client IP + invitation). */
 const limiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 
-function json(status: number, body: Record<string, unknown>, headers: HeadersInit = {}): Response {
+function baseJson(
+  status: number,
+  body: Record<string, unknown>,
+  headers: HeadersInit = {},
+): Response {
   return Response.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
 }
 
@@ -24,6 +29,20 @@ export async function handleRsvpRequest(
   request: Request,
   deps: { db?: Awaited<ReturnType<typeof getDb>>; limiter?: typeof limiter } = {},
 ): Promise<Response> {
+  const requestId = requestIdFrom(request);
+  const response = await handle(request, deps, requestId);
+  response.headers.set("X-Request-Id", requestId);
+  return response;
+}
+
+async function handle(
+  request: Request,
+  deps: { db?: Awaited<ReturnType<typeof getDb>>; limiter?: typeof limiter },
+  requestId: string,
+): Promise<Response> {
+  // Error bodies carry the requestId so users can quote it to support.
+  const json = (status: number, body: Record<string, unknown>, headers: HeadersInit = {}) =>
+    baseJson(status, "error" in body ? { ...body, requestId } : body, headers);
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().startsWith("application/json")) {
     return json(415, { error: "Format permintaan tidak didukung." });
@@ -54,6 +73,7 @@ export async function handleRsvpRequest(
 
   const gate = (deps.limiter ?? limiter).check(clientKey(request, slugHint));
   if (!gate.allowed) {
+    log("warn", "rsvp rate limited", { requestId, route: "/api/public/rsvp" });
     return json(
       429,
       { error: "Terlalu banyak percobaan. Coba lagi sebentar lagi." },
@@ -67,7 +87,7 @@ export async function handleRsvpRequest(
   } catch (error) {
     if (error instanceof RsvpInvalidError) return json(400, { error: error.message });
     if (error instanceof RsvpUnavailableError) return json(404, { error: error.message });
-    console.error("rsvp submit failed", error);
+    logError("rsvp submit failed", error, { requestId, route: "/api/public/rsvp" });
     return json(500, { error: "Terjadi kesalahan. Silakan coba lagi." });
   }
 }

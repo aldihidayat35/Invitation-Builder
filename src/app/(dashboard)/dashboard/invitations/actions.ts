@@ -79,10 +79,7 @@ export async function saveInvitationDataAction(
   }
 }
 
-export async function addGuestAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function addGuestAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const id = idSchema.safeParse(field(formData, "invitationId"));
   if (!id.success) return { error: "Undangan tidak valid." };
   const party = Number(field(formData, "maxParty") || "1");

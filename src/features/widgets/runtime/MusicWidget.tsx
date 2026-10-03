@@ -69,7 +69,9 @@ export function MusicWidget({ src, title, autoplay, style }: MusicWidgetProps) {
 
   return (
     <WidgetFrame type="music" style={style}>
-      {url ? <audio ref={audioRef} src={url} preload="none" loop onError={() => setFailed(true)} /> : null}
+      {url ? (
+        <audio ref={audioRef} src={url} preload="none" loop onError={() => setFailed(true)} />
+      ) : null}
       <button
         type="button"
         className={styles.button}

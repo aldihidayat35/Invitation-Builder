@@ -90,9 +90,14 @@ export const giftWidget: WidgetDefinition = {
   defaultProps: { title: "Kirim Hadiah", accounts: [] },
   props: {
     title: defineProp("text", "Judul", z.string().max(80)),
-    accounts: defineProp("collection", "Rekening/e-wallet (bank, accountNumber, accountName)", collectionSchema, {
-      control: "binding",
-    }),
+    accounts: defineProp(
+      "collection",
+      "Rekening/e-wallet (bank, accountNumber, accountName)",
+      collectionSchema,
+      {
+        control: "binding",
+      },
+    ),
   },
   placeholder: (props) => ({
     title: describeProp(props.title) ?? "Hadiah",

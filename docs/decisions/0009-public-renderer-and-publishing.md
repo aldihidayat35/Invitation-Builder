@@ -5,14 +5,14 @@
 
 ## Keputusan
 
-1. **Skala viewport 100% CSS.** Setiap `<section>` adalah *size container*
+1. **Skala viewport 100% CSS.** Setiap `<section>` adalah _size container_
    (`container-type: inline-size`, `width: 100%`, `aspect-ratio: baseWidth / baseHeight`).
    Anak absolut menetapkan `--u: calc(100cqw / baseWidth)`; semua panjang artboard (posisi, ukuran,
    font, letter-spacing, stroke, radius) dinyatakan sebagai `calc(var(--u) * <angka px>)` lewat
    custom property tanpa satuan (`--x/--y/--w/--h/--fs/--ls/--bw/--r`). Hasil: artboard 390 px
    diskalakan proporsional untuk 320–430 px tanpa JavaScript dan tanpa overflow horizontal
    (viewport dibatasi `TARGET_VIEWPORT_MAX` = 430 px). Rotasi tetap `rotate()` pivot tengah.
-2. **Snapshot immutable.** `publishInvitation` membekukan *dokumen template yang di-pin* (sudah
+2. **Snapshot immutable.** `publishInvitation` membekukan _dokumen template yang di-pin_ (sudah
    dimigrasi) + `invitations.data` ke `published_snapshots` (insert-only; trigger DB menolak
    UPDATE/DELETE). `revisionNo` naik per undangan; tidak ada kolom baru → tanpa migrasi DB.
 3. **Gate publish.** Publish ditolak (`PublishBlockedError`) selama ada variabel wajib kosong /

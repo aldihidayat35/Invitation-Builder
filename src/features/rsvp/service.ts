@@ -54,7 +54,9 @@ export async function submitRsvp(db: Database, raw: unknown): Promise<RsvpResult
 
   const found = input.guestToken ? await findGuestByToken(db, input.guestToken) : undefined;
   const guest =
-    found && found.invitationId === invitation.id && found.status !== "archived" ? found : undefined;
+    found && found.invitationId === invitation.id && found.status !== "archived"
+      ? found
+      : undefined;
 
   const attending = input.response === "attending";
   const cap = guest?.maxParty ?? 20;

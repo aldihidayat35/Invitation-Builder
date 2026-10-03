@@ -18,9 +18,7 @@ describe("AccessibleAnimatedText (FR-ANM-004, AC-07, NFR-A11Y-001)", () => {
 
   it("splits text into individual character spans while preserving accessibility", () => {
     const text = "Romeo & Juliet";
-    const { container } = render(
-      <AccessibleAnimatedText text={text} staggerUnit="char" />,
-    );
+    const { container } = render(<AccessibleAnimatedText text={text} staggerUnit="char" />);
 
     // 1. Accessibility: Assistive technology reads the full text through role="text" / aria-label
     const accessibleEl = screen.getByRole("text", { name: text });
@@ -37,15 +35,15 @@ describe("AccessibleAnimatedText (FR-ANM-004, AC-07, NFR-A11Y-001)", () => {
     expect(chars).toHaveLength(12);
 
     // Characters match order
-    const extractedChars = Array.from(chars).map((c) => c.textContent).join("");
+    const extractedChars = Array.from(chars)
+      .map((c) => c.textContent)
+      .join("");
     expect(extractedChars).toBe("Romeo&Juliet");
   });
 
   it("splits text into individual word spans while preserving accessibility", () => {
     const text = "The Wedding Celebration";
-    const { container } = render(
-      <AccessibleAnimatedText text={text} staggerUnit="word" />,
-    );
+    const { container } = render(<AccessibleAnimatedText text={text} staggerUnit="word" />);
 
     const accessibleEl = screen.getByRole("text", { name: text });
     expect(accessibleEl).toBeInTheDocument();
@@ -59,9 +57,7 @@ describe("AccessibleAnimatedText (FR-ANM-004, AC-07, NFR-A11Y-001)", () => {
 
   it("handles whitespace and special punctuation cleanly", () => {
     const text = "A & B, Together!";
-    const { container } = render(
-      <AccessibleAnimatedText text={text} staggerUnit="char" />,
-    );
+    const { container } = render(<AccessibleAnimatedText text={text} staggerUnit="char" />);
 
     expect(screen.getByRole("text", { name: text })).toBeInTheDocument();
     expect(container.querySelectorAll("[data-anim-char]").length).toBeGreaterThan(0);

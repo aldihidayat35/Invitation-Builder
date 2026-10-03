@@ -46,7 +46,9 @@ export default async function InvitationPreviewPage({
   }
   const guests = await listGuests(id);
   const current =
-    selection.kind === "guest" && model.guest.name !== undefined ? selection.guestId : selection.kind;
+    selection.kind === "guest" && model.guest.name !== undefined
+      ? selection.guestId
+      : selection.kind;
 
   return (
     <main className={styles.page}>
