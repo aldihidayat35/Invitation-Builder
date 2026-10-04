@@ -1293,8 +1293,6 @@ function GalleryWidgetVisual({
 }) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
-  const title =
-    typeof props.title === "string" && props.title.trim() !== "" ? props.title.trim() : "Galeri";
   const layout = props.layout === "slider" ? "slider" : "grid";
   const images = parseGalleryItems(props.items);
 
@@ -1306,9 +1304,42 @@ function GalleryWidgetVisual({
 
   const padX = 14;
   const contentW = w - padX * 2;
-  const headingH = 22;
+  const top = 10;
 
   const isSlider = layout === "slider" || variant.startsWith("slider-");
+
+  if (images.length === 0) {
+    return (
+      <Group listening={false}>
+        {background !== "transparent" && (
+          <Rect width={w} height={h} cornerRadius={radius} fill={background} />
+        )}
+        <Rect
+          x={padX}
+          y={top}
+          width={contentW}
+          height={h - top * 2}
+          cornerRadius={radius || 6}
+          stroke={color}
+          strokeWidth={1.5}
+          dash={[4, 4]}
+          opacity={0.35}
+          fill={color}
+          fillOpacity={0.06}
+        />
+        <Text
+          x={padX}
+          y={h / 2 - 8}
+          width={contentW}
+          text="Belum ada foto galeri"
+          fontSize={11}
+          fill={color}
+          opacity={0.45}
+          align="center"
+        />
+      </Group>
+    );
+  }
 
   return (
     <Group listening={false}>
@@ -1316,23 +1347,11 @@ function GalleryWidgetVisual({
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
 
-      {/* Heading */}
-      <Text
-        x={padX}
-        y={10}
-        width={contentW}
-        text={title}
-        fontSize={15}
-        fontStyle="600"
-        fill={color}
-        align="center"
-      />
-
       {isSlider ? (
         /* Slider preview */
-        <Group y={10 + headingH + 6}>
+        <Group y={top}>
           {(() => {
-            const availH = Math.max(40, h - (10 + headingH + 6) - 48);
+            const availH = Math.max(40, h - top - 48);
             const sliderW = Math.min(contentW, availH);
             const sliderX = (w - sliderW) / 2;
             const navY = availH + 8;
@@ -1407,13 +1426,13 @@ function GalleryWidgetVisual({
         </Group>
       ) : (
         /* 3-Column Grid preview matching .galleryGrid */
-        <Group y={10 + headingH + 6}>
+        <Group y={top}>
           {(() => {
             const gap = 6;
-            const cols = 3;
+            const cols = images.length <= 2 ? images.length : 3;
             const tileW = (contentW - gap * (cols - 1)) / cols;
-            const tileH = tileW; // aspect ratio 1:1
-            const count = Math.max(3, Math.min(6, images.length || 3));
+            const tileH = tileW;
+            const count = Math.min(6, images.length);
             const isCircle = variant === "circle";
             const isBorder = variant === "grid-border";
 
@@ -1422,7 +1441,7 @@ function GalleryWidgetVisual({
               const row = Math.floor(idx / cols);
               const x = padX + col * (tileW + gap);
               const y = row * (tileH + gap);
-              if (10 + headingH + 6 + y + tileH > h) return null;
+              if (top + y + tileH > h) return null;
 
               return (
                 <CanvasGalleryPhoto
