@@ -102,6 +102,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
         .sort(),
     ).toEqual([
       "countdown",
+      "coupleProfile",
       "gallery",
       "gift",
       "guestGreeting",
@@ -140,7 +141,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
     for (const doc of [make(), make()]) {
       expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);
       const widgets = doc.sections.flatMap((s) => s.elements).filter((e) => e.type === "widget");
-      expect(widgets).toHaveLength(10);
+      expect(widgets).toHaveLength(11);
       for (const widget of widgets) {
         expect(widget.style.variant).toBeTruthy();
         const resolved = defaultWidgetRegistry.resolve(widget.widgetType);

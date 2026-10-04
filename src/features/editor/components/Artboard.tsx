@@ -102,6 +102,8 @@ export function Artboard() {
 
   const last = doc.sections.length - 1;
 
+  const [artboardMode, setArtboardMode] = useState<"cards" | "seamless">("cards");
+
   return (
     <div
       ref={scrollRef}
@@ -110,7 +112,44 @@ export function Artboard() {
       data-testid="artboard"
       data-zoom={zoom}
     >
-      <div className={styles.artboardInner}>
+      {/* Artboard Floating Toolbar: View mode switch & canvas info */}
+      {doc.sections.length > 0 ? (
+        <div className={styles.artboardToolbar}>
+          <div className={styles.artboardMeta}>
+            <span>📱 {doc.sections.length} Section</span>
+            <span>·</span>
+            <span>{CANONICAL_BASE_WIDTH}px Canvas</span>
+          </div>
+          <div className={styles.modeSwitch} role="group" aria-label="Mode Tampilan Artboard">
+            <button
+              type="button"
+              className={styles.modeBtn}
+              data-active={artboardMode === "cards"}
+              onClick={() => setArtboardMode("cards")}
+              title="Tampilan kartu terpisah dengan kontrol rapi"
+            >
+              <span>📑</span>
+              <span>Terpisah</span>
+            </button>
+            <button
+              type="button"
+              className={styles.modeBtn}
+              data-active={artboardMode === "seamless"}
+              onClick={() => setArtboardMode("seamless")}
+              title="Tampilan alur ponsel mulus bersambung seperti di pratinjau"
+            >
+              <span>📱</span>
+              <span>Alur Ponsel</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={styles.artboardInner}
+        data-mode={artboardMode}
+        style={artboardMode === "seamless" ? { width: CANONICAL_BASE_WIDTH * zoom } : undefined}
+      >
         {doc.sections.length === 0 ? (
           <div className={styles.empty} data-testid="artboard-empty">
             <p>Belum ada section.</p>
@@ -128,102 +167,133 @@ export function Artboard() {
 
         {doc.sections.map((section, index) => {
           const active = section.id === activeSectionId;
+          const sectionWidth = CANONICAL_BASE_WIDTH * zoom;
           return (
-            <section
-              key={section.id}
-              className={styles.sectionCard}
-              data-testid={`section-${section.id}`}
-              data-active={active}
-              aria-label={sectionLabel(doc, section.id)}
-            >
-              <div className={styles.sectionHead} data-active={active}>
-                <button
-                  type="button"
-                  className={styles.sectionTitle}
-                  onClick={() => store.getState().setActiveSection(section.id)}
-                >
-                  {sectionLabel(doc, section.id)} · {CANONICAL_BASE_WIDTH}×{section.baseHeight}
-                </button>
-                {section.transition?.type && section.transition.type !== "none" ? (
-                  <span
-                    className={styles.sectionTransBadge}
-                    title={`Transisi: ${getSectionTransitionMeta(section.transition.type).label}`}
-                    data-testid={`section-trans-badge-${section.id}`}
-                  >
-                    ⚡ {getSectionTransitionMeta(section.transition.type).label}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  className={styles.layerToggle}
-                  aria-label="Pindah section ke atas"
-                  title="Naik"
-                  disabled={readOnly || index === 0}
-                  data-testid={`section-up-${section.id}`}
-                  onClick={() => store.getState().moveSection(section.id, -1)}
-                >
-                  ▲
-                </button>
-                <button
-                  type="button"
-                  className={styles.layerToggle}
-                  aria-label="Pindah section ke bawah"
-                  title="Turun"
-                  disabled={readOnly || index === last}
-                  data-testid={`section-down-${section.id}`}
-                  onClick={() => store.getState().moveSection(section.id, 1)}
-                >
-                  ▼
-                </button>
-                <button
-                  type="button"
-                  className={styles.layerToggle}
-                  aria-label="Duplikasi section"
-                  title="Duplikasi"
-                  disabled={readOnly}
-                  data-testid={`section-duplicate-${section.id}`}
-                  onClick={() => store.getState().duplicateSection(section.id)}
-                >
-                  ⧉
-                </button>
-                <button
-                  type="button"
-                  className={styles.layerToggle}
-                  aria-label="Hapus section"
-                  title="Hapus"
-                  disabled={readOnly || doc.sections.length <= 1}
-                  data-testid={`section-delete-${section.id}`}
-                  onClick={() => store.getState().deleteSection(section.id)}
-                >
-                  ✕
-                </button>
-                <button
-                  type="button"
-                  className={styles.layerToggle}
-                  aria-label="Tambah section di bawah"
-                  title="Tambah di bawah"
-                  disabled={readOnly}
-                  data-testid={`section-add-${section.id}`}
-                  onClick={() => store.getState().addSection(section.id)}
-                >
-                  ＋
-                </button>
-              </div>
-              <div
-                className={styles.canvasFrame}
+            <div key={section.id} style={{ display: "contents" }}>
+              <section
+                className={styles.sectionCard}
+                data-testid={`section-${section.id}`}
                 data-active={active}
-                data-testid={`canvas-${section.id}`}
-                style={{
-                  width: CANONICAL_BASE_WIDTH * zoom,
-                  height: section.baseHeight * zoom,
-                  ...(previewState?.sectionId === section.id
-                    ? getSectionTransitionStyles(section.transition, previewState.visible)
-                    : {}),
-                }}
+                aria-label={sectionLabel(doc, section.id)}
+                style={{ width: sectionWidth }}
               >
-                <SectionCanvasLazy sectionId={section.id} />
-              </div>
-            </section>
+                <div className={styles.sectionHead} data-active={active}>
+                  <div className={styles.sectionHeadLeft}>
+                    <span className={styles.sectionIndexBadge}>#{index + 1}</span>
+                    <button
+                      type="button"
+                      className={styles.sectionTitle}
+                      onClick={() => store.getState().setActiveSection(section.id)}
+                      title={sectionLabel(doc, section.id)}
+                    >
+                      {section.name || `Section ${index + 1}`}
+                    </button>
+                    <span className={styles.sectionDimBadge}>
+                      {section.baseHeight}px
+                    </span>
+                    {section.transition?.type && section.transition.type !== "none" ? (
+                      <span
+                        className={styles.sectionTransBadge}
+                        title={`Transisi: ${getSectionTransitionMeta(section.transition.type).label}`}
+                        data-testid={`section-trans-badge-${section.id}`}
+                      >
+                        ⚡ {getSectionTransitionMeta(section.transition.type).label}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className={styles.sectionActions}>
+                    <button
+                      type="button"
+                      className={`${styles.layerToggle} ${styles.secActionBtn}`}
+                      aria-label="Pindah section ke atas"
+                      title="Naik"
+                      disabled={readOnly || index === 0}
+                      data-testid={`section-up-${section.id}`}
+                      onClick={() => store.getState().moveSection(section.id, -1)}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.layerToggle} ${styles.secActionBtn}`}
+                      aria-label="Pindah section ke bawah"
+                      title="Turun"
+                      disabled={readOnly || index === last}
+                      data-testid={`section-down-${section.id}`}
+                      onClick={() => store.getState().moveSection(section.id, 1)}
+                    >
+                      ▼
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.layerToggle} ${styles.secActionBtn}`}
+                      aria-label="Duplikasi section"
+                      title="Duplikasi"
+                      disabled={readOnly}
+                      data-testid={`section-duplicate-${section.id}`}
+                      onClick={() => store.getState().duplicateSection(section.id)}
+                    >
+                      ⧉
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.layerToggle} ${styles.secActionBtn}`}
+                      data-danger="true"
+                      aria-label="Hapus section"
+                      title="Hapus"
+                      disabled={readOnly || doc.sections.length <= 1}
+                      data-testid={`section-delete-${section.id}`}
+                      onClick={() => store.getState().deleteSection(section.id)}
+                    >
+                      ✕
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.layerToggle} ${styles.secActionBtn}`}
+                      aria-label="Tambah section di bawah"
+                      title="Tambah di bawah"
+                      disabled={readOnly}
+                      data-testid={`section-add-${section.id}`}
+                      onClick={() => store.getState().addSection(section.id)}
+                    >
+                      ＋
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className={styles.canvasFrame}
+                  data-active={active}
+                  data-testid={`canvas-${section.id}`}
+                  style={{
+                    width: sectionWidth,
+                    height: section.baseHeight * zoom,
+                    ...(previewState?.sectionId === section.id
+                      ? getSectionTransitionStyles(section.transition, previewState.visible)
+                      : {}),
+                  }}
+                >
+                  <SectionCanvasLazy sectionId={section.id} />
+                </div>
+              </section>
+
+              {artboardMode === "cards" && index < last ? (
+                <div className={styles.interSectionDivider} title="Sisipkan section di sini">
+                  <div className={styles.interLine} />
+                  <button
+                    type="button"
+                    className={styles.interAddBtn}
+                    disabled={readOnly}
+                    onClick={() => store.getState().addSection(section.id)}
+                    title="Tambah section di sini"
+                  >
+                    <span>＋</span> Sisipkan Section
+                  </button>
+                  <div className={styles.interLine} />
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>

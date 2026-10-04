@@ -430,6 +430,38 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 6,
     },
   ],
+  coupleProfile: [
+    {
+      id: "side-by-side",
+      label: "Dua Kolom Sejajar",
+      description: "Foto pria dan wanita bersandingan simetris dengan nama di bawahnya.",
+      defaultRadius: 12,
+    },
+    {
+      id: "stacked-cards",
+      label: "Kartu Bertumpuk",
+      description: "Kartu mempelai pria dan wanita tersusun vertikal dengan pemisah konektor elegan.",
+      defaultRadius: 16,
+    },
+    {
+      id: "circular-medallion",
+      label: "Liontin Lingkaran",
+      description: "Foto berbingkai lingkaran ganda ala medali dengan ornamen floral di sekelilingnya.",
+      defaultRadius: 999,
+    },
+    {
+      id: "arch-window",
+      label: "Kubah Arch",
+      description: "Bingkai foto melengkung kubah anggun bergaya arsitektur kubah klasik.",
+      defaultRadius: 16,
+    },
+    {
+      id: "luxury-gold",
+      label: "Kemewahan Klasik",
+      description: "Sentuhan aksen emas mewah dengan border ganda halus dan tipografi serif berkelas.",
+      defaultRadius: 6,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -443,6 +475,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   photoFrame: legacy(["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"]),
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
   wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
+  coupleProfile: legacy(["side-by-side", "stacked-cards", "circular-medallion", "arch-window", "luxury-gold"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(

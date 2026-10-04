@@ -244,6 +244,62 @@ export const wishesWidget: WidgetDefinition = {
   }),
 };
 
+export const COUPLE_PROFILE_WIDGET_TYPE = "coupleProfile";
+
+export const coupleProfileWidget: WidgetDefinition = {
+  type: COUPLE_PROFILE_WIDGET_TYPE,
+  version: 1,
+  label: "Profil Mempelai",
+  defaultFrame: { w: 340, h: 480 },
+  defaultStyle: getDefaultWidgetStyle(COUPLE_PROFILE_WIDGET_TYPE),
+  defaultProps: {
+    connector: "&",
+    groom: {
+      name: "Rama",
+      fullName: "Rama Pratama, S.T.",
+      parents: "Putra pertama dari Bpk. Bambang & Ibu Sri Wahyuni",
+      instagram: "ramapratama",
+      photo: "",
+    },
+    bride: {
+      name: "Alya",
+      fullName: "Alya Putri Saraswati, S.Ked.",
+      parents: "Putri kedua dari Bpk. Dr. Hendra & Ibu Ratna Dewi",
+      instagram: "alyasaraswati",
+      photo: "",
+    },
+  },
+  props: {
+    connector: defineProp("text", "Konektor / Simbol Pemisah", z.string().max(20).default("&")),
+    groom: defineProp(
+      "collection",
+      "Data Mempelai Pria (name, fullName, parents, photo, instagram)",
+      collectionSchema,
+      {
+        control: "binding",
+      },
+    ),
+    bride: defineProp(
+      "collection",
+      "Data Mempelai Wanita (name, fullName, parents, photo, instagram)",
+      collectionSchema,
+      {
+        control: "binding",
+      },
+    ),
+  },
+  placeholder: (props) => {
+    const groomRec = typeof props.groom === "object" && props.groom !== null ? (props.groom as Record<string, unknown>) : undefined;
+    const brideRec = typeof props.bride === "object" && props.bride !== null ? (props.bride as Record<string, unknown>) : undefined;
+    const groomName = typeof groomRec?.name === "string" ? groomRec.name : "Rama";
+    const brideName = typeof brideRec?.name === "string" ? brideRec.name : "Alya";
+    return {
+      title: `${groomName} & ${brideName}`,
+      subtitle: "Profil Pasangan Mempelai",
+    };
+  },
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
@@ -252,6 +308,8 @@ export const P1_WIDGETS: readonly WidgetDefinition[] = [
   photoFrameWidget,
   timelineWidget,
   wishesWidget,
+  coupleProfileWidget,
 ];
+
 
 

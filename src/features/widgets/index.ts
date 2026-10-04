@@ -43,6 +43,8 @@ export {
   RSVP_WIDGET_TYPE,
   TIMELINE_WIDGET_TYPE,
   WISHES_WIDGET_TYPE,
+  COUPLE_PROFILE_WIDGET_TYPE,
+  coupleProfileWidget,
   galleryWidget,
   giftWidget,
   musicWidget,
