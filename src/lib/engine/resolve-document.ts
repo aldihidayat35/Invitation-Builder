@@ -114,7 +114,7 @@ function imageFromBinding(resolved: ResolvedBinding): { assetId: string } | null
 
 export function resolveDocument(
   document: CanonicalDocument,
-  data: InvitationData,
+  data: InvitationData = {},
   guest: GuestData = {},
   options: ResolverOptions = {},
 ): ResolvedDocument {

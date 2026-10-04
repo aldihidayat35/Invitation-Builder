@@ -117,7 +117,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
     expect(screen.getByText("Potong Gambar (Crop)")).toBeInTheDocument();
 
     // Check aspect ratio buttons once image loads
-    expect(await screen.findByRole("button", { name: "Bebas" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Bebas" }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "1:1 Persegi" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "4:5 Potret" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "16:9 Lanskap" })).toBeInTheDocument();

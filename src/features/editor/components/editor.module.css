@@ -175,6 +175,40 @@
   border-color: var(--dash-danger);
 }
 
+.previewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.previewButton:hover:not(:disabled) {
+  background: var(--dash-surface-hover);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.05);
+}
+
+.previewButton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.previewButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .banner {
   flex-basis: 100%;
   display: flex;

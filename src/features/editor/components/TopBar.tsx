@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
+import { IconEye } from "./icons";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -129,6 +130,32 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
       >
         {STATUS_LABEL[status]}
       </span>
+
+      <button
+        type="button"
+        className={styles.previewButton}
+        data-testid="editor-preview-btn"
+        id="editor-preview-btn"
+        onClick={() => {
+          try {
+            const currentDoc = store.getState().history.present;
+            localStorage.setItem(`dib_preview_doc_${templateId}`, JSON.stringify(currentDoc));
+            localStorage.setItem(`dib_preview_time_${templateId}`, String(Date.now()));
+          } catch {
+            // ignore storage quota errors
+          }
+
+          if (status === "dirty") {
+            void autosaver?.flush();
+          }
+
+          window.open(`/editor/${templateId}/preview`, "_blank");
+        }}
+        title="Buka pratinjau real template di tab baru"
+      >
+        <IconEye size={15} />
+        <span>Preview</span>
+      </button>
 
       {status === "error" ? (
         <div className={styles.banner} role="alert">
