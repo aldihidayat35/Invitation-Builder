@@ -74,7 +74,12 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
     );
   }
 
-  if (presentation !== "slider" && presentation !== "legacy-slider") {
+  const isSlider =
+    presentation === "slider" ||
+    presentation === "legacy-slider" ||
+    presentation === "glass-carousel";
+
+  if (!isSlider) {
     return (
       <WidgetFrame type="gallery" style={style} className={styles.gallery}>
         <div className={styles.galleryHeading}>

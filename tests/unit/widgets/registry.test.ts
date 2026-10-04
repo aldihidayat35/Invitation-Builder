@@ -92,7 +92,8 @@ describe("widget registry", () => {
     for (const definition of defaultWidgetRegistry.list()) {
       const variants = getWidgetStyleVariants(definition.type);
       const ids = variants.map((variant) => variant.id);
-      const expectedCount = definition.type === "gift" ? 10 : 5;
+      const expectedCount =
+        definition.type === "gift" || definition.type === "gallery" ? 10 : 5;
       expect(variants).toHaveLength(expectedCount);
       expect(new Set(ids).size).toBe(expectedCount);
       expect(ids).toContain(getDefaultWidgetStyle(definition.type).variant);

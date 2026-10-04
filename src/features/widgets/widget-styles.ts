@@ -28,7 +28,17 @@ export type WidgetVariantResolution =
       readonly variant: WidgetStyleVariant;
     };
 
-export type GalleryPresentation = "collage" | "mosaic" | "filmstrip" | "slider" | "polaroid-stack";
+export type GalleryPresentation =
+  | "collage"
+  | "mosaic"
+  | "filmstrip"
+  | "slider"
+  | "polaroid-stack"
+  | "arch-window"
+  | "masonry-cascade"
+  | "heritage-frame"
+  | "glass-carousel"
+  | "circular-bubbles";
 
 export const QUICK_COLOR_PALETTES: readonly QuickColorPalette[] = [
   { name: "Gold Mewah", color: "#9a6b16", background: "#fffaf0" },
@@ -293,6 +303,36 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       description: "Foto tersusun seperti cetakan polaroid dengan rotasi bergantian.",
       defaultRadius: 3,
     },
+    {
+      id: "arch-window",
+      label: "Arch Window",
+      description: "Koleksi foto berbingkai kubah lengkung (arch top) bernuansa anggun & artistik.",
+      defaultRadius: 16,
+    },
+    {
+      id: "masonry-cascade",
+      label: "Masonry Cascade",
+      description: "Susunan foto vertikal bertingkat yang mengalir dinamis dengan variasi tinggi.",
+      defaultRadius: 8,
+    },
+    {
+      id: "heritage-frame",
+      label: "Heritage Frame",
+      description: "Galeri foto berbingkai ganda klasik dengan aksen sudut dan ornamen formal.",
+      defaultRadius: 6,
+    },
+    {
+      id: "glass-carousel",
+      label: "Glass Carousel",
+      description: "Slider modern dengan panel kartu kaca frosted transparan dan kontrol mengambang.",
+      defaultRadius: 16,
+    },
+    {
+      id: "circular-bubbles",
+      label: "Circular Lockets",
+      description: "Kompilasi foto bentuk lingkaran dan oval locket dengan ring border yang artistik.",
+      defaultRadius: 999,
+    },
   ],
 };
 
@@ -377,6 +417,11 @@ export function getGalleryPresentation(
     case "mosaic":
     case "filmstrip":
     case "polaroid-stack":
+    case "arch-window":
+    case "masonry-cascade":
+    case "heritage-frame":
+    case "glass-carousel":
+    case "circular-bubbles":
       return resolution.variant.id;
     case "spotlight-slider":
       return "slider";

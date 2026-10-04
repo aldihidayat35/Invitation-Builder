@@ -88,6 +88,8 @@ describe("current widget style variants", () => {
   it("lets current gallery variants control presentation while legacy styles honor layout", () => {
     expect(getGalleryPresentation("editorial-collage", "slider")).toBe("collage");
     expect(getGalleryPresentation("spotlight-slider", "grid")).toBe("slider");
+    expect(getGalleryPresentation("arch-window", "grid")).toBe("arch-window");
+    expect(getGalleryPresentation("glass-carousel", "grid")).toBe("glass-carousel");
     expect(getGalleryPresentation("slider-pill", "grid")).toBe("legacy-grid");
     expect(getGalleryPresentation("grid-rounded", "slider")).toBe("legacy-slider");
 

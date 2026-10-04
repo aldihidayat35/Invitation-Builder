@@ -283,7 +283,7 @@ describe("Canvas Widget Visuals", () => {
 
     for (const type of widgetTypes) {
       const variants = getWidgetStyleVariants(type);
-      expect(variants).toHaveLength(type === "gift" ? 10 : 5);
+      expect(variants).toHaveLength(type === "gift" || type === "gallery" ? 10 : 5);
       for (const v of variants) {
         expect(v.id).toBeTruthy();
         expect(v.label).toBeTruthy();

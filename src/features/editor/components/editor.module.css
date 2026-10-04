@@ -2889,6 +2889,82 @@ textarea.input {
   opacity: 0.5;
 }
 
+/* Arch Window Thumbnail */
+.widgetVariantPreview[data-preview-variant="arch-window"] .widgetVariantPreviewPrimary {
+  inset: 4px 52% 4px 6px;
+  border-radius: 12px 12px 2px 2px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="arch-window"] .widgetVariantPreviewSecondary {
+  inset: 4px 6px 4px 52%;
+  border-radius: 12px 12px 2px 2px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* Masonry Cascade Thumbnail */
+.widgetVariantPreview[data-preview-variant="masonry-cascade"] .widgetVariantPreviewPrimary {
+  inset: 4px 52% 16px 6px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.widgetVariantPreview[data-preview-variant="masonry-cascade"] .widgetVariantPreviewSecondary {
+  inset: 4px 6px 22px 52%;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="masonry-cascade"] .widgetVariantPreviewTertiary {
+  inset: 18px 52% 4px 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+/* Glass Carousel Thumbnail */
+.widgetVariantPreview[data-preview-variant="glass-carousel"] {
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, color-mix(in srgb, currentColor 12%, transparent), transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="glass-carousel"] .widgetVariantPreviewPrimary {
+  inset: 4px 4px 10px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="glass-carousel"] .widgetVariantPreviewAction {
+  right: 30%;
+  left: 30%;
+  bottom: 3px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* Circular Bubbles Thumbnail */
+.widgetVariantPreview[data-preview-variant="circular-bubbles"] .widgetVariantPreviewPrimary {
+  inset: 5px auto auto 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="circular-bubbles"] .widgetVariantPreviewSecondary {
+  inset: 8px 8px auto auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
 .widgetLegacyNotice,
 .widgetVariantWarning,
 .widgetLayoutNotice {
