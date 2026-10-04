@@ -3094,42 +3094,41 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 10px 8px;
+  padding: 18px 14px;
   background: var(--widget-bg, transparent);
   color: var(--widget-color, inherit);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .coupleHeader {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
 
 .coupleHeading {
   margin: 0;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--widget-color, currentColor);
-  line-height: 1.25;
 }
 
 .coupleSubheading {
-  margin: 3px 0 0 0;
-  font-size: 10.5px;
+  margin: 4px 0 0 0;
+  font-size: 11.5px;
   opacity: 0.75;
   color: var(--widget-color, currentColor);
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
-/* Default layout is 2-Column Dual Grid (Side by Side) */
 .couplePersonsWrapper {
   position: relative;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   align-items: stretch;
 }
 
@@ -3139,26 +3138,22 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 5px;
+  gap: 8px;
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
 }
 
 .couplePhotoViewport {
   position: relative;
-  width: 100%;
-  max-width: 130px;
-  height: auto;
-  aspect-ratio: 0.95;
+  width: 104px;
+  height: 104px;
   border-radius: var(--widget-radius, 12px);
   overflow: hidden;
-  background: color-mix(in srgb, currentColor 8%, #f8fafc);
+  background: color-mix(in srgb, currentColor 6%, #f8fafc);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
 }
 
 .couplePhotoImg {
@@ -3178,8 +3173,6 @@
   justify-content: center;
   background: color-mix(in srgb, currentColor 8%, #f8fafc);
   color: var(--widget-color, currentColor);
-  padding: 6px;
-  box-sizing: border-box;
 }
 
 .coupleMonogramLetter {
@@ -3190,85 +3183,67 @@
 }
 
 .coupleMonogramSubtext {
-  font-size: 7.5px;
+  font-size: 8px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.7;
   margin-top: 4px;
-  text-align: center;
-  white-space: nowrap;
 }
 
 .couplePersonInfo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
-  min-width: 0;
 }
 
 .couplePersonRole {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: color-mix(in srgb, currentColor 75%, transparent);
-  line-height: 1.2;
 }
 
 .couplePersonName {
   margin: 0;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--widget-color, currentColor);
   letter-spacing: -0.01em;
-  line-height: 1.2;
-  word-break: break-word;
 }
 
 .couplePersonFullName {
   margin: 0;
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 600;
   opacity: 0.9;
   color: var(--widget-color, currentColor);
-  line-height: 1.25;
-  word-break: break-word;
 }
 
 .couplePersonParents {
   margin: 2px 0 0 0;
-  font-size: 9px;
+  font-size: 11px;
   opacity: 0.72;
-  line-height: 1.3;
-  width: 100%;
-  word-break: break-word;
+  line-height: 1.35;
+  max-width: 240px;
 }
 
 .coupleInstagramBtn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 3px;
-  padding: 3px 8px;
-  max-width: 95%;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   text-decoration: none;
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   background: color-mix(in srgb, currentColor 5%, transparent);
   color: var(--widget-color, currentColor);
   transition: all 0.15s ease;
-  box-sizing: border-box;
-}
-
-.coupleInstagramBtn span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .coupleInstagramBtn:hover {
@@ -3277,23 +3252,19 @@
 }
 
 .coupleConnectorBadge {
-  position: absolute;
-  left: 50%;
-  top: 52px;
-  transform: translate(-50%, -50%);
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  margin: 2px auto;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--widget-bg, #ffffff);
+  background: var(--widget-bg, #fff);
   border: 1.5px solid color-mix(in srgb, currentColor 25%, transparent);
   color: var(--widget-color, currentColor);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   font-family: serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -3304,52 +3275,44 @@
 }
 
 /* --- 1. Side By Side (Dua Kolom Simetris) --- */
-.widget[data-widget="coupleProfile"][data-variant="side-by-side"] .couplePersonCard {
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-  border-radius: var(--widget-radius, 14px);
-  padding: 7px 6px 10px;
-  background: color-mix(in srgb, var(--widget-bg, #fff) 85%, transparent);
+.widget[data-widget="coupleProfile"][data-variant="side-by-side"] .couplePersonsWrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.widget[data-widget="coupleProfile"][data-variant="side-by-side"] .coupleConnectorBadge {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="side-by-side"] .couplePhotoViewport {
-  width: 100%;
-  aspect-ratio: 0.95;
-  border-radius: calc(var(--widget-radius, 14px) - 3px);
+  width: 95%;
+  max-width: 125px;
+  height: auto;
+  aspect-ratio: 0.88;
+  border-radius: var(--widget-radius, 12px);
 }
 
 /* --- 2. Stacked Cards (Kartu Bertumpuk) --- */
-.widget[data-widget="coupleProfile"][data-variant="stacked-cards"] .couplePersonsWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.widget[data-widget="coupleProfile"][data-variant="stacked-cards"] .coupleConnectorBadge {
-  position: static;
-  transform: none;
-  margin: 0 auto;
-}
-
 .widget[data-widget="coupleProfile"][data-variant="stacked-cards"] .couplePersonCard {
   flex-direction: row;
   text-align: left;
-  background: color-mix(in srgb, var(--widget-bg, #fff) 90%, transparent);
+  background: var(--widget-bg, #fff);
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
   border-radius: var(--widget-radius, 14px);
-  padding: 10px 12px;
+  padding: 12px 14px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-  gap: 12px;
-  align-items: center;
+  gap: 14px;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="stacked-cards"] .couplePhotoViewport {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  aspect-ratio: 1;
-}
-
-.widget[data-widget="coupleProfile"][data-variant="stacked-cards"] .couplePhotoImg {
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
 }
 
@@ -3363,47 +3326,70 @@
 }
 
 /* --- 3. Circular Medallion (Liontin Lingkaran) --- */
+.widget[data-widget="coupleProfile"][data-variant="circular-medallion"] .couplePersonsWrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.widget[data-widget="coupleProfile"][data-variant="circular-medallion"] .coupleConnectorBadge {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
 .widget[data-widget="coupleProfile"][data-variant="circular-medallion"] .couplePhotoViewport {
-  width: 88px;
-  height: 88px;
-  aspect-ratio: 1;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   border: 3px double color-mix(in srgb, currentColor 55%, #c59b27);
-  padding: 2px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  padding: 3px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
 }
 
 .widget[data-widget="coupleProfile"][data-variant="circular-medallion"] .couplePhotoImg {
   border-radius: 50%;
 }
 
-.widget[data-widget="coupleProfile"][data-variant="circular-medallion"] .coupleConnectorBadge {
-  top: 46px;
+/* --- 4. Arch Window (Kubah Arch) --- */
+.widget[data-widget="coupleProfile"][data-variant="arch-window"] .couplePersonsWrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
 }
 
-/* --- 4. Arch Window (Kubah Arch) --- */
+.widget[data-widget="coupleProfile"][data-variant="arch-window"] .coupleConnectorBadge {
+  position: absolute;
+  left: 50%;
+  top: 55px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
 .widget[data-widget="coupleProfile"][data-variant="arch-window"] .couplePhotoViewport {
-  width: 100%;
-  aspect-ratio: 0.82;
-  border-radius: 55px 55px var(--widget-radius, 10px) var(--widget-radius, 10px);
+  width: 95%;
+  max-width: 125px;
+  height: auto;
+  aspect-ratio: 0.75;
+  border-radius: 65px 65px var(--widget-radius, 10px) var(--widget-radius, 10px);
   border: 1.5px solid color-mix(in srgb, currentColor 28%, transparent);
-  padding: 2px;
+  padding: 3px;
   background: color-mix(in srgb, currentColor 4%, var(--widget-bg, #fff));
 }
 
 .widget[data-widget="coupleProfile"][data-variant="arch-window"] .couplePhotoImg {
-  border-radius: 53px 53px calc(var(--widget-radius, 10px) - 2px) calc(var(--widget-radius, 10px) - 2px);
-}
-
-.widget[data-widget="coupleProfile"][data-variant="arch-window"] .coupleConnectorBadge {
-  top: 54px;
+  border-radius: 61px 61px calc(var(--widget-radius, 10px) - 2px) calc(var(--widget-radius, 10px) - 2px);
 }
 
 /* --- 5. Luxury Gold (Kemewahan Klasik) --- */
 .widget[data-widget="coupleProfile"][data-variant="luxury-gold"] {
   border: 2px solid color-mix(in srgb, currentColor 40%, #b45309);
   border-radius: var(--widget-radius, 6px);
-  padding: 12px 8px;
+  padding: 18px 12px;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="luxury-gold"] .coupleHeading,
@@ -3415,50 +3401,34 @@
 .widget[data-widget="coupleProfile"][data-variant="luxury-gold"] .couplePhotoViewport {
   border: 2px double color-mix(in srgb, currentColor 40%, #b45309);
   border-radius: 4px;
-  aspect-ratio: 0.92;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="luxury-gold"] .coupleConnectorBadge {
   border: 1.5px solid #b45309;
-  transform: translate(-50%, -50%) rotate(45deg);
-  width: 26px;
-  height: 26px;
+  transform: rotate(45deg);
+  width: 28px;
+  height: 28px;
   border-radius: 2px;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="luxury-gold"] .coupleConnectorSymbol {
   transform: rotate(-45deg);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* --- 6. Minimalist Editorial --- */
-.widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .couplePersonsWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .coupleConnectorBadge {
-  position: static;
-  transform: none;
-  margin: 0 auto;
-}
-
 .widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .couplePersonCard {
-  flex-direction: row;
   border-left: 2.5px solid currentColor;
-  padding: 8px 10px;
-  align-items: center;
+  padding-left: 12px;
+  align-items: flex-start;
   text-align: left;
-  gap: 12px;
-  background: color-mix(in srgb, var(--widget-bg, #fff) 70%, transparent);
 }
 
 .widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .couplePhotoViewport {
   border-radius: 0;
-  width: 76px;
-  height: 90px;
-  aspect-ratio: 0.84;
+  width: 95px;
+  height: 120px;
+  aspect-ratio: 0.8;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .couplePersonInfo {
@@ -3468,7 +3438,7 @@
 
 .widget[data-widget="coupleProfile"][data-variant="minimalist-editorial"] .couplePersonName {
   font-family: serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 400;
   font-style: italic;
 }
@@ -3479,25 +3449,36 @@
 
 /* --- 7. Polaroid Duo --- */
 .widget[data-widget="coupleProfile"][data-variant="polaroid-duo"] .couplePersonsWrapper {
-  padding-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.widget[data-widget="coupleProfile"][data-variant="polaroid-duo"] .coupleConnectorBadge {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="polaroid-duo"] .couplePersonCard[data-person="groom"] {
   transform: rotate(-3deg);
   background: #ffffff;
-  padding: 5px 5px 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  padding: 6px 6px 14px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
   border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .widget[data-widget="coupleProfile"][data-variant="polaroid-duo"] .couplePersonCard[data-person="bride"] {
   transform: rotate(3deg);
   background: #ffffff;
-  padding: 5px 5px 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  padding: 6px 6px 14px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
   border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .widget[data-widget="coupleProfile"][data-variant="polaroid-duo"] .couplePhotoViewport {
@@ -3513,29 +3494,17 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-  border-radius: var(--widget-radius, 14px);
-  padding: 7px 6px 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-}
-
-.widget[data-widget="coupleProfile"][data-variant="glass-morphism"] .couplePhotoViewport {
-  width: 100%;
-  aspect-ratio: 0.95;
-  border-radius: calc(var(--widget-radius, 14px) - 3px);
+  border-radius: var(--widget-radius, 16px);
+  padding: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 /* --- 9. Heritage Ornament --- */
 .widget[data-widget="coupleProfile"][data-variant="heritage-ornament"] .couplePersonCard {
-  border: 1.5px solid #c59b27;
+  border: 2px double color-mix(in srgb, currentColor 40%, #c59b27);
   border-radius: var(--widget-radius, 8px);
-  padding: 7px 6px 10px;
+  padding: 14px;
   background: color-mix(in srgb, currentColor 2%, var(--widget-bg, #fff));
-}
-
-.widget[data-widget="coupleProfile"][data-variant="heritage-ornament"] .couplePhotoViewport {
-  width: 100%;
-  aspect-ratio: 0.95;
-  border-radius: calc(var(--widget-radius, 8px) - 2px);
 }
 
 .widget[data-widget="coupleProfile"][data-variant="heritage-ornament"] .coupleHeader::after {
@@ -3544,19 +3513,18 @@
   font-size: 9px;
   letter-spacing: 0.2em;
   color: color-mix(in srgb, currentColor 60%, #c59b27);
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
 /* --- 10. Heart Romance --- */
 .widget[data-widget="coupleProfile"][data-variant="heart-romance"] .couplePhotoViewport {
   border-radius: 50% 50% 40% 40%;
   border: 2px solid color-mix(in srgb, currentColor 45%, #e11d48);
-  padding: 2px;
-  aspect-ratio: 0.95;
+  padding: 3px;
 }
 
 .widget[data-widget="coupleProfile"][data-variant="heart-romance"] .coupleConnectorBadge {
-  background: #ffffff;
+  background: color-mix(in srgb, currentColor 10%, #fff);
   border-color: #e11d48;
   color: #e11d48;
 }

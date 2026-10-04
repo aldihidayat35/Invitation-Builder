@@ -3491,7 +3491,6 @@ function CoupleProfileVisual({
 
   // 2. Dual Column Layout
   const colW = (w - 32) / 2;
-  const isSideBySide = variant === "side-by-side" || variant === "default";
   const isCircle = variant === "circular-medallion";
   const isArch = variant === "arch-window";
   const isLuxury = variant === "luxury-gold";
@@ -3534,23 +3533,11 @@ function CoupleProfileVisual({
             y={top - 4}
             width={colW}
             height={h - top - 8}
-            cornerRadius={8}
+            cornerRadius={6}
             fill="#ffffff"
             opacity={0.8}
             stroke="#c59b27"
             strokeWidth={1.2}
-          />
-        ) : isSideBySide ? (
-          <Rect
-            x={colX}
-            y={top - 4}
-            width={colW}
-            height={h - top - 8}
-            cornerRadius={14}
-            fill="#ffffff"
-            opacity={0.85}
-            stroke={color}
-            strokeWidth={0.8}
           />
         ) : null}
 
