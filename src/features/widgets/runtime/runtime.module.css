@@ -220,3 +220,197 @@
   font-size: 14px;
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   Widget Style Variations (5 Styles per Widget)
+   ========================================================================== */
+
+/* --- 1. Countdown Variations --- */
+.widget[data-widget="countdown"][data-variant="cards"] .unit {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid currentColor;
+  border-radius: var(--widget-radius, 8px);
+  padding: 6px 4px;
+}
+
+.widget[data-widget="countdown"][data-variant="pill"] {
+  border: 1.5px solid currentColor;
+  border-radius: var(--widget-radius, 999px);
+  padding: 8px 18px;
+}
+
+.widget[data-widget="countdown"][data-variant="circle"] .unit {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  justify-content: center;
+  padding: 4px;
+}
+
+.widget[data-widget="countdown"][data-variant="luxury"] {
+  border: 3px double currentColor;
+  border-radius: var(--widget-radius, 10px);
+  padding: 12px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* --- 2. Map Variations --- */
+.widget[data-widget="map"][data-variant="solid"] .button {
+  background: currentColor;
+  color: var(--widget-bg, #ffffff);
+  border: none;
+}
+
+.widget[data-widget="map"][data-variant="card"] {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--widget-radius, 12px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+}
+
+.widget[data-widget="map"][data-variant="minimal"] .button {
+  border: none;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0;
+  min-height: 32px;
+  padding: 0 4px;
+}
+
+.widget[data-widget="map"][data-variant="luxury"] {
+  border: 3px double currentColor;
+  border-radius: var(--widget-radius, 12px);
+  padding: 14px 20px;
+}
+
+/* --- 3. Guest Greeting Variations --- */
+.widget[data-widget="guestGreeting"][data-variant="ornament"] .greeting {
+  position: relative;
+  padding: 0 16px;
+}
+.widget[data-widget="guestGreeting"][data-variant="ornament"] .greeting::before,
+.widget[data-widget="guestGreeting"][data-variant="ornament"] .greeting::after {
+  content: "— ❖ —";
+  font-size: 11px;
+  opacity: 0.6;
+  letter-spacing: 0.2em;
+}
+
+.widget[data-widget="guestGreeting"][data-variant="card"] {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--widget-radius, 12px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  padding: 14px;
+}
+
+.widget[data-widget="guestGreeting"][data-variant="pill"] {
+  border: 1.5px solid currentColor;
+  border-radius: var(--widget-radius, 999px);
+  padding: 8px 24px;
+}
+
+.widget[data-widget="guestGreeting"][data-variant="frame"] {
+  border: 1.5px solid currentColor;
+  border-radius: var(--widget-radius, 8px);
+  padding: 12px 20px;
+}
+
+/* --- 4. RSVP Variations --- */
+.widget[data-widget="rsvp"][data-variant="card"] {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--widget-radius, 14px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  padding: 18px;
+}
+
+.widget[data-widget="rsvp"][data-variant="pills"] .choices label {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 4px 14px;
+  cursor: pointer;
+}
+
+.widget[data-widget="rsvp"][data-variant="minimal"] .formField input,
+.widget[data-widget="rsvp"][data-variant="minimal"] .formField textarea {
+  border: none;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0;
+}
+
+.widget[data-widget="rsvp"][data-variant="luxury"] {
+  border: 3px double currentColor;
+  border-radius: var(--widget-radius, 14px);
+  padding: 16px;
+}
+
+/* --- 5. Gift Variations --- */
+.widget[data-widget="gift"][data-variant="cards"] .giftItem {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--widget-radius, 10px);
+  padding: 10px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.widget[data-widget="gift"][data-variant="pill"] .giftItem {
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 8px 18px;
+}
+
+.widget[data-widget="gift"][data-variant="luxury"] {
+  border: 3px double currentColor;
+  border-radius: var(--widget-radius, 14px);
+  padding: 16px;
+}
+
+.widget[data-widget="gift"][data-variant="compact"] .giftItem {
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+/* --- 6. Music Variations --- */
+.widget[data-widget="music"][data-variant="solid"] .button {
+  background: currentColor;
+  color: var(--widget-bg, #ffffff);
+  border: none;
+}
+
+.widget[data-widget="music"][data-variant="disc"] .button {
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.widget[data-widget="music"][data-variant="minimal"] .button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-height: 32px;
+}
+
+.widget[data-widget="music"][data-variant="bar"] {
+  border: 1.5px solid currentColor;
+  border-radius: var(--widget-radius, 12px);
+  padding: 10px 18px;
+}
+
+/* --- 7. Gallery Variations --- */
+.widget[data-widget="gallery"][data-variant="grid-border"] .galleryGrid img {
+  border: 2px solid currentColor;
+  padding: 3px;
+  border-radius: var(--widget-radius, 4px);
+}
+
+.widget[data-widget="gallery"][data-variant="circle"] .galleryGrid img {
+  border-radius: 50%;
+}
+
+.widget[data-widget="gallery"][data-variant="slider-pill"] .sliderNav .button {
+  border-radius: 999px;
+  background: currentColor;
+  color: var(--widget-bg, #ffffff);
+  border: none;
+}
+

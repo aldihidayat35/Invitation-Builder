@@ -475,7 +475,7 @@ function ElementPanel({
       ) : null}
       {element.type === "widget" ? (
         <PanelSection id="insp-widget" title={`Pengaturan ${typeLabel.toLowerCase()}`}>
-          <WidgetPanel element={element} readOnly={readOnly} />
+          <WidgetPanel element={element} readOnly={readOnly} tokens={tokens} />
         </PanelSection>
       ) : null}
 

@@ -2378,3 +2378,123 @@ textarea.input {
   border-color: var(--dash-accent);
 }
 
+/* ==========================================================================
+   Widget Style Variations & Color Selector in Inspector
+   ========================================================================== */
+
+.widgetSectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dash-muted);
+  margin-top: 10px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.widgetVariantGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.widgetVariantCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.widgetVariantCard:hover:not(:disabled) {
+  border-color: var(--dash-border-strong);
+  background: var(--dash-surface-hover);
+  transform: translateY(-1px);
+}
+
+.widgetVariantCardActive {
+  border-color: var(--dash-accent) !important;
+  background: var(--dash-accent-soft) !important;
+  box-shadow: 0 0 0 1px var(--dash-accent);
+}
+
+.widgetVariantLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--dash-text);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.widgetVariantCardActive .widgetVariantLabel {
+  color: var(--dash-accent);
+}
+
+.widgetVariantDesc {
+  font-size: 9.5px;
+  color: var(--dash-muted);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.widgetPaletteBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 6px;
+  background: var(--dash-surface-sunken);
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+}
+
+.paletteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.paletteChip:hover {
+  border-color: var(--dash-accent);
+  background: var(--dash-surface-hover);
+}
+
+.paletteChipActive {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  font-weight: 600;
+}
+
+.paletteDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+

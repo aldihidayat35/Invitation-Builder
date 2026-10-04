@@ -116,6 +116,7 @@ export const widgetStyleSchema = z.strictObject({
   background: colorValueSchema.optional(),
   radius: z.number().min(0).max(10_000).optional(),
   opacity: opacitySchema.optional(),
+  variant: z.string().optional(),
 });
 
 /**

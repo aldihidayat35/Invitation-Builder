@@ -44,3 +44,11 @@ export {
   musicWidget,
   rsvpWidget,
 } from "./definitions-p1";
+export {
+  QUICK_COLOR_PALETTES,
+  WIDGET_STYLE_VARIANTS,
+  getWidgetStyleVariants,
+  type QuickColorPalette,
+  type WidgetStyleVariant,
+} from "./widget-styles";
+

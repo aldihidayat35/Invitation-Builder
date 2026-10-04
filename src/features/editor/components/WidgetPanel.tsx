@@ -1,10 +1,16 @@
 "use client";
 
-import type { Element } from "@/lib/schema";
-import { defaultWidgetRegistry, type WidgetPropDefinition } from "@/features/widgets";
+import type { Element, ThemeTokens } from "@/lib/schema";
+import {
+  defaultWidgetRegistry,
+  getWidgetStyleVariants,
+  QUICK_COLOR_PALETTES,
+  type WidgetPropDefinition,
+} from "@/features/widgets";
 import { BindingControl } from "./BindingControl";
 import { useEditorStore } from "./EditorProvider";
-import { FieldRow, NumberField, SelectField, TextField } from "./fields";
+import { ColorField, FieldRow, NumberField, SelectField, TextField, type ColorValue } from "./fields";
+import { resolveColor } from "../core/display";
 import styles from "./editor.module.css";
 
 type WidgetElement = Extract<Element, { type: "widget" }>;
@@ -31,14 +37,23 @@ function controlOf(spec: WidgetPropDefinition): NonNullable<WidgetPropDefinition
 }
 
 /**
- * Inspector for a widget, generated entirely from the registry's props schema
- * metadata (FR-WDG-001): adding a widget needs no inspector code. Bindings are
- * offered only for type-compatible variables.
+ * Inspector for a widget: 5 style variations, color & theme customization,
+ * and dynamic props schema bindings (FR-WDG-001).
  */
-export function WidgetPanel({ element, readOnly }: { element: WidgetElement; readOnly: boolean }) {
+export function WidgetPanel({
+  element,
+  readOnly,
+  tokens,
+}: {
+  element: WidgetElement;
+  readOnly: boolean;
+  tokens?: ThemeTokens;
+}) {
   const store = useEditorStore();
   const resolved = defaultWidgetRegistry.resolve(element.widgetType);
   const disabled = readOnly || element.locked;
+  const variants = getWidgetStyleVariants(element.widgetType);
+  const currentVariant = element.style.variant ?? variants[0]?.id ?? "default";
 
   if (resolved.kind === "unknown") {
     return (
@@ -65,40 +80,141 @@ export function WidgetPanel({ element, readOnly }: { element: WidgetElement; rea
       `prop:${name}`,
     );
 
+  const setStyle = (patch: Partial<WidgetElement["style"]>) =>
+    store.getState().patchStyle([element.id], patch);
+
+  const colors = tokens?.colors ?? {};
+
   return (
     <div className={styles.panelStack} data-testid="widget-inspector">
-      {Object.entries(definition.props).map(([name, spec]) => {
-        const value = element.props[name];
-        const bound = isBinding(value);
-        const control = controlOf(spec);
-        const fieldId = `insp-widget-${name}`;
-        return (
-          <div key={name} className={styles.panelStack} data-testid={`widget-prop-${name}`}>
-            <p className={styles.fieldLabel}>
-              {spec.label}
-              {spec.required ? <span className={styles.badge}>Wajib</span> : null}
-            </p>
-            <BindingControl
-              id={`${fieldId}-bind`}
-              slot={spec.slot}
-              boundKey={bound ? value.bind : undefined}
-              disabled={disabled}
-              onBind={(key) => setProp(name, { bind: key })}
-              onUnbind={() => setProp(name, definition.defaultProps[name])}
-            />
-            {bound ? null : (
-              <StaticControl
-                id={fieldId}
-                control={control}
-                spec={spec}
-                value={value}
+      {/* 1. 5 Style Variations */}
+      <div className={styles.panelStack}>
+        <p className={styles.widgetSectionTitle}>Pilihan Gaya (5 Variasi)</p>
+        <div className={styles.widgetVariantGrid} data-testid="widget-variants">
+          {variants.map((v) => {
+            const active = currentVariant === v.id;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                className={[styles.widgetVariantCard, active && styles.widgetVariantCardActive]
+                  .filter(Boolean)
+                  .join(" ")}
+                data-testid={`widget-variant-${v.id}`}
+                aria-pressed={active}
                 disabled={disabled}
-                onChange={(next) => setProp(name, next)}
+                onClick={() =>
+                  setStyle({
+                    variant: v.id,
+                    radius: v.defaultRadius !== undefined ? v.defaultRadius : element.style.radius,
+                  })
+                }
+              >
+                <span className={styles.widgetVariantLabel}>
+                  {active ? "✓ " : ""}
+                  {v.label}
+                </span>
+                <span className={styles.widgetVariantDesc}>{v.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Color Selection & Theme Customization */}
+      <div className={styles.panelStack}>
+        <p className={styles.widgetSectionTitle}>Warna &amp; Tema Widget</p>
+
+        {/* Quick Palette Swatches */}
+        <div className={styles.widgetPaletteBar} data-testid="widget-palettes">
+          {QUICK_COLOR_PALETTES.map((pal) => (
+            <button
+              key={pal.name}
+              type="button"
+              className={styles.paletteChip}
+              disabled={disabled}
+              title={`Terapkan tema ${pal.name}`}
+              onClick={() => setStyle({ color: pal.color, background: pal.background })}
+            >
+              <span className={styles.paletteDot} style={{ background: pal.color }} />
+              <span>{pal.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <ColorField
+          id={`insp-widget-color-${element.id}`}
+          label="Warna Teks & Aksen"
+          value={element.style.color as ColorValue}
+          resolvedHex={resolveColor(element.style.color, tokens ?? { colors: {} }, "#2b2118")}
+          tokens={colors}
+          disabled={disabled}
+          onChange={(color) => color !== undefined && setStyle({ color })}
+        />
+
+        <ColorField
+          id={`insp-widget-bg-${element.id}`}
+          label="Warna Latar Belakang"
+          value={element.style.background as ColorValue | undefined}
+          resolvedHex={resolveColor(
+            element.style.background,
+            tokens ?? { colors: {} },
+            "transparent",
+          )}
+          tokens={colors}
+          allowNone
+          disabled={disabled}
+          onChange={(background) => setStyle({ background })}
+        />
+
+        <NumberField
+          id={`insp-widget-radius-${element.id}`}
+          label="Radius Sudut (px)"
+          value={element.style.radius ?? 0}
+          min={0}
+          max={999}
+          step={1}
+          disabled={disabled}
+          onCommit={(radius) => setStyle({ radius })}
+        />
+      </div>
+
+      {/* 3. Content Properties */}
+      <div className={styles.panelStack}>
+        <p className={styles.widgetSectionTitle}>Konten &amp; Properti</p>
+        {Object.entries(definition.props).map(([name, spec]) => {
+          const value = element.props[name];
+          const bound = isBinding(value);
+          const control = controlOf(spec);
+          const fieldId = `insp-widget-${name}`;
+          return (
+            <div key={name} className={styles.panelStack} data-testid={`widget-prop-${name}`}>
+              <p className={styles.fieldLabel}>
+                {spec.label}
+                {spec.required ? <span className={styles.badge}>Wajib</span> : null}
+              </p>
+              <BindingControl
+                id={`${fieldId}-bind`}
+                slot={spec.slot}
+                boundKey={bound ? value.bind : undefined}
+                disabled={disabled}
+                onBind={(key) => setProp(name, { bind: key })}
+                onUnbind={() => setProp(name, definition.defaultProps[name])}
               />
-            )}
-          </div>
-        );
-      })}
+              {bound ? null : (
+                <StaticControl
+                  id={fieldId}
+                  control={control}
+                  spec={spec}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(next) => setProp(name, next)}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

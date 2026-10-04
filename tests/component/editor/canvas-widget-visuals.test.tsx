@@ -5,6 +5,7 @@ import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Stage, Layer } from "react-konva";
 import { WidgetVisual } from "@/features/editor/components/canvas-visuals";
+import { getWidgetStyleVariants, QUICK_COLOR_PALETTES } from "@/features/widgets";
 import type { Element, ThemeTokens } from "@/lib/schema";
 
 beforeEach(() => {
@@ -219,4 +220,46 @@ describe("Canvas Widget Visuals", () => {
     const { container: c2 } = renderKonvaWidget(elSlider);
     expect(c2.querySelector("canvas")).toBeInTheDocument();
   });
+
+  it("provides exactly 5 style variants for each of the 7 widget types", () => {
+    const widgetTypes = ["countdown", "map", "guestGreeting", "rsvp", "gift", "music", "gallery"] as const;
+
+    for (const type of widgetTypes) {
+      const variants = getWidgetStyleVariants(type);
+      expect(variants).toHaveLength(5);
+      for (const v of variants) {
+        expect(v.id).toBeTruthy();
+        expect(v.label).toBeTruthy();
+        expect(v.description).toBeTruthy();
+      }
+    }
+
+    expect(QUICK_COLOR_PALETTES.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("renders widgets on canvas with custom variant, color, and background", () => {
+    const elWithStyle: WidgetElement = {
+      id: "w_custom_style",
+      type: "widget",
+      name: "Custom Styled Countdown",
+      frame: { x: 0, y: 0, w: 320, h: 100, rotation: 0 },
+      locked: false,
+      visible: true,
+      style: {
+        variant: "luxury",
+        color: "#be185d",
+        background: "#fdf2f8",
+        radius: 14,
+      },
+      widgetType: "countdown",
+      widgetVersion: 1,
+      props: {
+        targetDate: "2026-12-31T23:59:59Z",
+      },
+    };
+
+    const { container } = renderKonvaWidget(elWithStyle);
+    expect(container.querySelector("canvas")).toBeInTheDocument();
+  });
 });
+

@@ -184,6 +184,7 @@ function CountdownWidgetVisual({
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "minimal";
 
   // Real-time ticking clock
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -226,6 +227,34 @@ function CountdownWidgetVisual({
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
 
+      {/* Luxury double frame */}
+      {variant === "luxury" && (
+        <Group>
+          <Rect width={w} height={h} cornerRadius={radius || 10} stroke={color} strokeWidth={1} />
+          <Rect
+            x={3}
+            y={3}
+            width={w - 6}
+            height={h - 6}
+            cornerRadius={Math.max(0, (radius || 10) - 2)}
+            stroke={color}
+            strokeWidth={1.5}
+          />
+        </Group>
+      )}
+
+      {/* Pill outline container */}
+      {variant === "pill" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={h / 2}
+          stroke={color}
+          strokeWidth={1.5}
+          fill={background}
+        />
+      )}
+
       {isElapsed && props.afterState !== "hide" ? (
         <Text
           x={padX}
@@ -251,6 +280,44 @@ function CountdownWidgetVisual({
 
           return (
             <Group key={u.key}>
+              {/* Cards variant: individual rounded box tile */}
+              {variant === "cards" && (
+                <Rect
+                  x={colX + 3}
+                  y={padY}
+                  width={colW - 6}
+                  height={innerH}
+                  cornerRadius={radius || 8}
+                  stroke={color}
+                  strokeWidth={1}
+                  fill={color}
+                  opacity={0.06}
+                />
+              )}
+
+              {/* Circle variant: circular background ring */}
+              {variant === "circle" && (
+                <Circle
+                  x={colX + colW / 2}
+                  y={padY + innerH / 2}
+                  radius={Math.min(colW - 6, innerH) / 2}
+                  stroke={color}
+                  strokeWidth={1.5}
+                  fill={color}
+                  opacity={0.05}
+                />
+              )}
+
+              {/* Pill variant: subtle dividers */}
+              {variant === "pill" && i < 3 && (
+                <Line
+                  points={[colX + colW, padY + 8, colX + colW, padY + innerH - 8]}
+                  stroke={color}
+                  strokeWidth={1}
+                  opacity={0.2}
+                />
+              )}
+
               <Text
                 x={colX}
                 y={numY}
@@ -295,6 +362,7 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "outlined";
 
   const btnH = Math.min(44, Math.max(30, h * 0.44));
   const btnW = Math.min(w - 28, Math.max(140, w * 0.75));
@@ -303,13 +371,44 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
   const gap = 8;
   const totalH = labelH + gap + btnH;
   const startY = Math.max(6, (h - totalH) / 2);
+  const btnY = startY + labelH + gap;
 
   return (
     <Group listening={false}>
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
-      {/* Label matching .label in MapWidget.tsx */}
+
+      {/* Card container */}
+      {variant === "card" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={radius || 12}
+          stroke={color}
+          strokeWidth={1}
+          fill={color}
+          opacity={0.05}
+        />
+      )}
+
+      {/* Luxury double frame */}
+      {variant === "luxury" && (
+        <Group>
+          <Rect width={w} height={h} cornerRadius={radius || 12} stroke={color} strokeWidth={1} />
+          <Rect
+            x={3}
+            y={3}
+            width={w - 6}
+            height={h - 6}
+            cornerRadius={Math.max(0, (radius || 12) - 2)}
+            stroke={color}
+            strokeWidth={1.5}
+          />
+        </Group>
+      )}
+
+      {/* Label */}
       <Text
         x={14}
         y={startY}
@@ -321,28 +420,68 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
         align="center"
         ellipsis
       />
-      {/* Outlined Pill Button matching .button in MapWidget.tsx */}
-      <Rect
-        x={btnX}
-        y={startY + labelH + gap}
-        width={btnW}
-        height={btnH}
-        cornerRadius={btnH / 2}
-        stroke={color}
-        strokeWidth={1.5}
-        fill="transparent"
-      />
-      <Text
-        x={btnX + 8}
-        y={startY + labelH + gap + (btnH - 14) / 2}
-        width={btnW - 16}
-        text={buttonText}
-        fontSize={14}
-        fontStyle="600"
-        fill={color}
-        align="center"
-        ellipsis
-      />
+
+      {/* Button per variant */}
+      {variant === "solid" ? (
+        <Group>
+          <Rect x={btnX} y={btnY} width={btnW} height={btnH} cornerRadius={btnH / 2} fill={color} />
+          <Text
+            x={btnX + 8}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW - 16}
+            text={buttonText}
+            fontSize={14}
+            fontStyle="600"
+            fill="#ffffff"
+            align="center"
+            ellipsis
+          />
+        </Group>
+      ) : variant === "minimal" ? (
+        <Group>
+          <Text
+            x={btnX}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW}
+            text={`📍 ${buttonText} ↗`}
+            fontSize={14}
+            fontStyle="600"
+            fill={color}
+            align="center"
+            ellipsis
+          />
+          <Line
+            points={[btnX + 16, btnY + btnH - 6, btnX + btnW - 16, btnY + btnH - 6]}
+            stroke={color}
+            strokeWidth={1.5}
+          />
+        </Group>
+      ) : (
+        /* outlined, card, luxury */
+        <Group>
+          <Rect
+            x={btnX}
+            y={btnY}
+            width={btnW}
+            height={btnH}
+            cornerRadius={btnH / 2}
+            stroke={color}
+            strokeWidth={1.5}
+            fill="transparent"
+          />
+          <Text
+            x={btnX + 8}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW - 16}
+            text={buttonText}
+            fontSize={14}
+            fontStyle="600"
+            fill={color}
+            align="center"
+            ellipsis
+          />
+        </Group>
+      )}
     </Group>
   );
 }
@@ -360,10 +499,11 @@ function GuestGreetingWidgetVisual({
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "elegant";
 
   const prefixSize = 13;
   const nameSize = 22;
-  const totalH = prefixSize + nameSize + 4;
+  const totalH = prefixSize + nameSize + 6;
   const startY = Math.max(6, (h - totalH) / 2);
 
   return (
@@ -371,6 +511,39 @@ function GuestGreetingWidgetVisual({
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
+
+      {variant === "card" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={radius || 12}
+          stroke={color}
+          strokeWidth={1}
+          fill={color}
+          opacity={0.05}
+        />
+      )}
+      {variant === "pill" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={h / 2}
+          stroke={color}
+          strokeWidth={1.5}
+          fill={background}
+        />
+      )}
+      {variant === "frame" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={radius || 8}
+          stroke={color}
+          strokeWidth={1.5}
+          fill={background}
+        />
+      )}
+
       <Text
         x={14}
         y={startY}
@@ -381,9 +554,32 @@ function GuestGreetingWidgetVisual({
         opacity={0.8}
         align="center"
       />
+
+      {variant === "ornament" && (
+        <Group>
+          <Line
+            points={[24, startY + prefixSize + 16, Math.max(30, w * 0.22), startY + prefixSize + 16]}
+            stroke={color}
+            strokeWidth={1}
+            opacity={0.4}
+          />
+          <Line
+            points={[
+              w - Math.max(30, w * 0.22),
+              startY + prefixSize + 16,
+              w - 24,
+              startY + prefixSize + 16,
+            ]}
+            stroke={color}
+            strokeWidth={1}
+            opacity={0.4}
+          />
+        </Group>
+      )}
+
       <Text
         x={14}
-        y={startY + prefixSize + 4}
+        y={startY + prefixSize + 6}
         width={w - 28}
         text={parts.name}
         fontSize={nameSize}
@@ -408,6 +604,7 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "standard";
 
   const padX = 14;
   const fieldW = w - padX * 2;
@@ -417,6 +614,32 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
     <Group listening={false}>
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
+      )}
+
+      {variant === "card" && (
+        <Rect
+          width={w}
+          height={h}
+          cornerRadius={radius || 14}
+          stroke={color}
+          strokeWidth={1}
+          fill={color}
+          opacity={0.04}
+        />
+      )}
+      {variant === "luxury" && (
+        <Group>
+          <Rect width={w} height={h} cornerRadius={radius || 14} stroke={color} strokeWidth={1} />
+          <Rect
+            x={3}
+            y={3}
+            width={w - 6}
+            height={h - 6}
+            cornerRadius={Math.max(0, (radius || 14) - 2)}
+            stroke={color}
+            strokeWidth={1.5}
+          />
+        </Group>
       )}
 
       {/* Title */}
@@ -435,16 +658,20 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
       {h >= 115 && (
         <Group y={36}>
           <Text x={padX} text="Nama" fontSize={13} fill={color} />
-          <Rect
-            x={padX}
-            y={18}
-            width={fieldW}
-            height={32}
-            cornerRadius={8}
-            stroke={color}
-            strokeWidth={1}
-            fill="transparent"
-          />
+          {variant === "minimal" ? (
+            <Line points={[padX, 50, w - padX, 50]} stroke={color} strokeWidth={1.2} />
+          ) : (
+            <Rect
+              x={padX}
+              y={18}
+              width={fieldW}
+              height={32}
+              cornerRadius={8}
+              stroke={color}
+              strokeWidth={1}
+              fill="transparent"
+            />
+          )}
           <Text
             x={padX + 10}
             y={27}
@@ -456,18 +683,73 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
         </Group>
       )}
 
-      {/* Field: Kehadiran Radio Options */}
+      {/* Field: Kehadiran Radio / Pills */}
       {h >= 185 && (
         <Group y={94}>
           <Text x={padX} text="Kehadiran" fontSize={13} fill={color} />
-          {/* Radio 1: Hadir (Checked) */}
-          <Circle x={padX + 8} y={24} radius={6} stroke={color} strokeWidth={1.5} fill="transparent" />
-          <Circle x={padX + 8} y={24} radius={3.5} fill={color} />
-          <Text x={padX + 20} y={18} text="Hadir" fontSize={13} fill={color} />
+          {variant === "pills" ? (
+            <Group y={18}>
+              <Rect x={padX} width={80} height={26} cornerRadius={13} fill={color} />
+              <Text
+                x={padX}
+                y={6}
+                width={80}
+                text="✓ Hadir"
+                fontSize={12}
+                fontStyle="bold"
+                fill="#ffffff"
+                align="center"
+              />
+              <Rect
+                x={padX + 88}
+                width={96}
+                height={26}
+                cornerRadius={13}
+                stroke={color}
+                strokeWidth={1}
+                fill="transparent"
+              />
+              <Text
+                x={padX + 88}
+                y={6}
+                width={96}
+                text="Tidak hadir"
+                fontSize={12}
+                fill={color}
+                align="center"
+              />
+            </Group>
+          ) : (
+            <Group y={18}>
+              <Circle
+                x={padX + 8}
+                y={6}
+                radius={6}
+                stroke={color}
+                strokeWidth={1.5}
+                fill="transparent"
+              />
+              <Circle x={padX + 8} y={6} radius={3.5} fill={color} />
+              <Text x={padX + 20} y={0} text="Hadir" fontSize={13} fill={color} />
 
-          {/* Radio 2: Tidak Hadir */}
-          <Circle x={padX + 90} y={24} radius={6} stroke={color} strokeWidth={1.5} fill="transparent" />
-          <Text x={padX + 102} y={18} text="Tidak hadir" fontSize={13} fill={color} opacity={0.8} />
+              <Circle
+                x={padX + 90}
+                y={6}
+                radius={6}
+                stroke={color}
+                strokeWidth={1.5}
+                fill="transparent"
+              />
+              <Text
+                x={padX + 102}
+                y={0}
+                text="Tidak hadir"
+                fontSize={13}
+                fill={color}
+                opacity={0.8}
+              />
+            </Group>
+          )}
         </Group>
       )}
 
@@ -489,7 +771,7 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
         </Group>
       )}
 
-      {/* Submit Button (Pill with border 1.5px solid currentColor) */}
+      {/* Submit Button */}
       <Rect
         x={padX}
         y={Math.max(40, h - submitBtnH - 10)}
@@ -498,7 +780,7 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
         cornerRadius={submitBtnH / 2}
         stroke={color}
         strokeWidth={1.5}
-        fill="transparent"
+        fill={variant === "luxury" ? color : "transparent"}
       />
       <Text
         x={padX}
@@ -507,7 +789,7 @@ function RsvpWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
         text="Kirim Konfirmasi"
         fontSize={14}
         fontStyle="600"
-        fill={color}
+        fill={variant === "luxury" ? "#ffffff" : color}
         align="center"
       />
     </Group>
@@ -526,6 +808,7 @@ function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "cards";
 
   const padX = 14;
   const contentW = w - padX * 2;
@@ -534,6 +817,21 @@ function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
     <Group listening={false}>
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
+      )}
+
+      {variant === "luxury" && (
+        <Group>
+          <Rect width={w} height={h} cornerRadius={radius || 14} stroke={color} strokeWidth={1} />
+          <Rect
+            x={3}
+            y={3}
+            width={w - 6}
+            height={h - 6}
+            cornerRadius={Math.max(0, (radius || 14) - 2)}
+            stroke={color}
+            strokeWidth={1.5}
+          />
+        </Group>
       )}
 
       {/* Title */}
@@ -562,49 +860,78 @@ function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
       ) : (
         /* List accounts */
         accounts.slice(0, 3).map((acc, i) => {
-          const itemY = 38 + i * 56;
-          if (itemY + 44 > h) return null;
+          const itemH = variant === "compact" ? 42 : 56;
+          const itemY = 38 + i * itemH;
+          if (itemY + 36 > h) return null;
           const copyBtnW = 68;
-          const copyBtnH = 32;
+          const copyBtnH = 30;
           const copyBtnX = w - padX - copyBtnW;
           const copyBtnY = itemY + 4;
 
           return (
             <Group key={`${acc.accountNumber}-${i}`}>
+              {/* Account Card Background if variant is cards or pill */}
+              {variant === "cards" && (
+                <Rect
+                  x={padX}
+                  y={itemY - 2}
+                  width={contentW}
+                  height={itemH - 4}
+                  cornerRadius={radius || 10}
+                  stroke={color}
+                  strokeWidth={1}
+                  fill={color}
+                  opacity={0.04}
+                />
+              )}
+              {variant === "pill" && (
+                <Rect
+                  x={padX}
+                  y={itemY - 2}
+                  width={contentW}
+                  height={itemH - 4}
+                  cornerRadius={(itemH - 4) / 2}
+                  stroke={color}
+                  strokeWidth={1.5}
+                />
+              )}
+
               {/* Account details */}
               <Text
-                x={padX}
+                x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
                 y={itemY}
-                width={copyBtnX - padX - 8}
+                width={copyBtnX - padX - 16}
                 text={acc.bank}
-                fontSize={14}
+                fontSize={13.5}
                 fontStyle="bold"
                 fill={color}
               />
               <Text
-                x={padX}
+                x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
                 y={itemY + 16}
-                width={copyBtnX - padX - 8}
+                width={copyBtnX - padX - 16}
                 text={acc.accountNumber}
-                fontSize={13.5}
+                fontSize={13}
                 fontStyle="bold"
                 fill={color}
                 letterSpacing={0.5}
               />
-              <Text
-                x={padX}
-                y={itemY + 32}
-                width={copyBtnX - padX - 8}
-                text={`a.n. ${acc.accountName}`}
-                fontSize={12}
-                fill={color}
-                opacity={0.8}
-                ellipsis
-              />
+              {variant !== "compact" && (
+                <Text
+                  x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
+                  y={itemY + 32}
+                  width={copyBtnX - padX - 16}
+                  text={`a.n. ${acc.accountName}`}
+                  fontSize={11.5}
+                  fill={color}
+                  opacity={0.8}
+                  ellipsis
+                />
+              )}
 
               {/* Salin button */}
               <Rect
-                x={copyBtnX}
+                x={copyBtnX - (variant === "cards" || variant === "pill" ? 8 : 0)}
                 y={copyBtnY}
                 width={copyBtnW}
                 height={copyBtnH}
@@ -614,23 +941,24 @@ function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
                 fill="transparent"
               />
               <Text
-                x={copyBtnX}
+                x={copyBtnX - (variant === "cards" || variant === "pill" ? 8 : 0)}
                 y={copyBtnY + (copyBtnH - 13) / 2}
                 width={copyBtnW}
                 text="Salin"
-                fontSize={13}
+                fontSize={12.5}
                 fontStyle="600"
                 fill={color}
                 align="center"
               />
 
-              {/* Divider if not last */}
-              {i < accounts.length - 1 && (
+              {/* Divider if minimal and not last */}
+              {variant === "minimal" && i < accounts.length - 1 && (
                 <Line
-                  points={[padX, itemY + 50, w - padX, itemY + 50]}
+                  points={[padX, itemY + 48, w - padX, itemY + 48]}
                   stroke={color}
                   strokeWidth={0.8}
-                  opacity={0.15}
+                  dash={[3, 3]}
+                  opacity={0.25}
                 />
               )}
             </Group>
@@ -652,6 +980,7 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant = element.style.variant ?? "pill";
 
   const btnH = Math.min(44, Math.max(32, h * 0.7));
   const btnW = Math.min(w - 28, Math.max(140, w * 0.8));
@@ -663,28 +992,103 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
-      {/* Pill button matching .button in MusicWidget.tsx */}
-      <Rect
-        x={btnX}
-        y={btnY}
-        width={btnW}
-        height={btnH}
-        cornerRadius={btnH / 2}
-        stroke={color}
-        strokeWidth={1.5}
-        fill="transparent"
-      />
-      <Text
-        x={btnX + 10}
-        y={btnY + (btnH - 14) / 2}
-        width={btnW - 20}
-        text={`🎵 ${title}`}
-        fontSize={14}
-        fontStyle="600"
-        fill={color}
-        align="center"
-        ellipsis
-      />
+
+      {variant === "solid" ? (
+        <Group>
+          <Rect x={btnX} y={btnY} width={btnW} height={btnH} cornerRadius={btnH / 2} fill={color} />
+          <Text
+            x={btnX + 10}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW - 20}
+            text={`🎵 ${title}`}
+            fontSize={14}
+            fontStyle="600"
+            fill="#ffffff"
+            align="center"
+            ellipsis
+          />
+        </Group>
+      ) : variant === "disc" ? (
+        <Group x={w / 2} y={h / 2}>
+          <Circle radius={btnH / 2} fill={color} opacity={0.1} />
+          <Circle radius={btnH / 2} stroke={color} strokeWidth={2} />
+          <Circle radius={btnH * 0.3} stroke={color} strokeWidth={1} opacity={0.6} />
+          <Circle radius={btnH * 0.12} fill={color} />
+          <Text
+            x={-btnH / 2}
+            y={btnH / 2 + 4}
+            width={btnH}
+            text="▶"
+            fontSize={11}
+            fill={color}
+            align="center"
+          />
+        </Group>
+      ) : variant === "minimal" ? (
+        <Group>
+          <Text
+            x={btnX}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW}
+            text={`🎵 ${title}`}
+            fontSize={14}
+            fontStyle="600"
+            fill={color}
+            align="center"
+            ellipsis
+          />
+        </Group>
+      ) : variant === "bar" ? (
+        <Group>
+          <Rect
+            x={btnX}
+            y={btnY}
+            width={btnW}
+            height={btnH}
+            cornerRadius={radius || 10}
+            stroke={color}
+            strokeWidth={1.5}
+            fill={background}
+          />
+          <Circle x={btnX + 22} y={btnY + btnH / 2} radius={11} fill={color} />
+          <Text x={btnX + 17} y={btnY + btnH / 2 - 6} text="▶" fontSize={9} fill="#ffffff" />
+          <Text
+            x={btnX + 40}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW - 48}
+            text={title}
+            fontSize={13}
+            fontStyle="600"
+            fill={color}
+            ellipsis
+          />
+        </Group>
+      ) : (
+        /* default pill */
+        <Group>
+          <Rect
+            x={btnX}
+            y={btnY}
+            width={btnW}
+            height={btnH}
+            cornerRadius={btnH / 2}
+            stroke={color}
+            strokeWidth={1.5}
+            fill="transparent"
+          />
+          <Text
+            x={btnX + 10}
+            y={btnY + (btnH - 14) / 2}
+            width={btnW - 20}
+            text={`🎵 ${title}`}
+            fontSize={14}
+            fontStyle="600"
+            fill={color}
+            align="center"
+            ellipsis
+          />
+        </Group>
+      )}
     </Group>
   );
 }
@@ -706,10 +1110,14 @@ function GalleryWidgetVisual({
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
   const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
+  const variant =
+    element.style.variant ?? (layout === "slider" ? "slider-classic" : "grid-rounded");
 
   const padX = 14;
   const contentW = w - padX * 2;
   const headingH = 22;
+
+  const isSlider = layout === "slider" || variant.startsWith("slider-");
 
   return (
     <Group listening={false}>
@@ -729,7 +1137,7 @@ function GalleryWidgetVisual({
         align="center"
       />
 
-      {layout === "slider" ? (
+      {isSlider ? (
         /* Slider preview */
         <Group y={10 + headingH + 6}>
           {(() => {
@@ -766,10 +1174,10 @@ function GalleryWidgetVisual({
                     x={sliderX}
                     width={40}
                     height={28}
-                    cornerRadius={14}
+                    cornerRadius={variant === "slider-pill" ? 14 : 6}
                     stroke={color}
                     strokeWidth={1.5}
-                    fill="transparent"
+                    fill={variant === "slider-pill" ? color : "transparent"}
                   />
                   <Text
                     x={sliderX}
@@ -778,7 +1186,7 @@ function GalleryWidgetVisual({
                     text="‹"
                     fontSize={16}
                     fontStyle="bold"
-                    fill={color}
+                    fill={variant === "slider-pill" ? "#ffffff" : color}
                     align="center"
                   />
 
@@ -796,10 +1204,10 @@ function GalleryWidgetVisual({
                     x={sliderX + sliderW - 40}
                     width={40}
                     height={28}
-                    cornerRadius={14}
+                    cornerRadius={variant === "slider-pill" ? 14 : 6}
                     stroke={color}
                     strokeWidth={1.5}
-                    fill="transparent"
+                    fill={variant === "slider-pill" ? color : "transparent"}
                   />
                   <Text
                     x={sliderX + sliderW - 40}
@@ -808,7 +1216,7 @@ function GalleryWidgetVisual({
                     text="›"
                     fontSize={16}
                     fontStyle="bold"
-                    fill={color}
+                    fill={variant === "slider-pill" ? "#ffffff" : color}
                     align="center"
                   />
                 </Group>
@@ -825,6 +1233,8 @@ function GalleryWidgetVisual({
             const tileW = (contentW - gap * (cols - 1)) / cols;
             const tileH = tileW; // aspect ratio 1:1
             const count = Math.max(3, Math.min(6, images.length || 3));
+            const isCircle = variant === "circle";
+            const isBorder = variant === "grid-border";
 
             return Array.from({ length: count }).map((_, idx) => {
               const col = idx % cols;
@@ -840,9 +1250,9 @@ function GalleryWidgetVisual({
                     y={y}
                     width={tileW}
                     height={tileH}
-                    cornerRadius={6}
+                    cornerRadius={isCircle ? tileW / 2 : radius || 6}
                     stroke={color}
-                    strokeWidth={1}
+                    strokeWidth={isBorder ? 2 : 1}
                     fill={color}
                     opacity={0.08}
                   />

@@ -165,6 +165,7 @@ function ElementView({
               ...(background !== undefined && { background }),
               ...(element.style.radius !== undefined && { radius: element.style.radius }),
               ...(element.style.opacity !== undefined && { opacity: element.style.opacity }),
+              ...(element.style.variant !== undefined && { variant: element.style.variant }),
             }}
           />
         </WidgetErrorBoundary>

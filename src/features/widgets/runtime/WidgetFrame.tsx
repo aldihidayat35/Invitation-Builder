@@ -7,6 +7,7 @@ export interface WidgetStyleProps {
   readonly background?: string;
   readonly radius?: number;
   readonly opacity?: number;
+  readonly variant?: string;
 }
 
 export function WidgetFrame({
@@ -30,6 +31,7 @@ export function WidgetFrame({
       className={[styles.widget, className].filter(Boolean).join(" ")}
       style={vars as CSSProperties}
       data-widget={type}
+      data-variant={style?.variant ?? "default"}
     >
       {children}
     </div>
