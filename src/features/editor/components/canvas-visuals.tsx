@@ -1480,6 +1480,8 @@ export function WidgetVisual({
       return <GiftWidgetVisual element={legacyElement} tokens={tokens} />;
     case "photoFrame":
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+    case "timeline":
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
     default: {
       const { w, h } = element.frame;
       const resolved = defaultWidgetRegistry.resolve(element.widgetType);

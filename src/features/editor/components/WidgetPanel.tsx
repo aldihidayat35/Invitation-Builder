@@ -13,6 +13,7 @@ import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
 import { GiftAccountsControl } from "./GiftAccountsControl";
 import { PhotoFrameImageControl } from "./PhotoFrameImageControl";
+import { TimelineEventsControl } from "./TimelineEventsControl";
 import { useEditorStore } from "./EditorProvider";
 import {
   ColorField,
@@ -264,6 +265,13 @@ export function WidgetPanel({
                   value={value}
                   disabled={disabled}
                   onChange={(img) => setProp(name, img)}
+                />
+              ) : element.widgetType === "timeline" && name === "events" ? (
+                <TimelineEventsControl
+                  elementId={element.id}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(events) => setProp(name, events)}
                 />
               ) : (
                 <StaticControl

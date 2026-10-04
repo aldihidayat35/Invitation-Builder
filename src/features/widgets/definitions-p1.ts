@@ -137,11 +137,65 @@ export const photoFrameWidget: WidgetDefinition = {
   }),
 };
 
+export const TIMELINE_WIDGET_TYPE = "timeline";
+
+export const timelineWidget: WidgetDefinition = {
+  type: TIMELINE_WIDGET_TYPE,
+  version: 1,
+  label: "Rundown Acara",
+  defaultFrame: { w: 326, h: 420 },
+  defaultStyle: getDefaultWidgetStyle(TIMELINE_WIDGET_TYPE),
+  defaultProps: {
+    title: "Rundown Acara",
+    subtitle: "Rangkaian Acara Bahagia",
+    events: [
+      {
+        time: "08:00 - 10:00 WIB",
+        title: "Akad Nikah",
+        description: "Prosesi ijab kabul & doa bersama",
+        location: "Masjid Raya",
+        icon: "ring",
+      },
+      {
+        time: "11:00 - 13:00 WIB",
+        title: "Resepsi Pernikahan",
+        description: "Ramah tamah & santap siang",
+        location: "Grand Ballroom",
+        icon: "glass",
+      },
+      {
+        time: "19:00 - 21:00 WIB",
+        title: "After Party",
+        description: "Perayaan bersama kerabat dekat",
+        location: "Rooftop Garden",
+        icon: "sparkles",
+      },
+    ],
+  },
+  props: {
+    title: defineProp("text", "Judul", z.string().max(80).default("Rundown Acara")),
+    subtitle: defineProp("text", "Subjudul", z.string().max(120).optional()),
+    events: defineProp(
+      "collection",
+      "Daftar Agenda (waktu, judul, lokasi, deskripsi)",
+      collectionSchema,
+      {
+        control: "binding",
+      },
+    ),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.title) ?? "Rundown Acara",
+    subtitle: `${describeProp(props.subtitle) ?? "Rangkaian Acara"} (${Array.isArray(props.events) ? props.events.length : 3} agenda)`,
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
   musicWidget,
   giftWidget,
   photoFrameWidget,
+  timelineWidget,
 ];
 

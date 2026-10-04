@@ -11,6 +11,7 @@ import {
   PhotoFrameWidget,
   PublicContextProvider,
   RsvpWidget,
+  TimelineWidget,
   WidgetRuntime,
 } from "@/features/widgets/runtime";
 
@@ -215,13 +216,65 @@ describe("PhotoFrameWidget", () => {
   });
 });
 
+describe("TimelineWidget", () => {
+  it("renders default rundown events and custom titles", () => {
+    render(
+      <TimelineWidget
+        title="Jadwal Resepsi"
+        subtitle="Mohon hadir tepat waktu"
+      />,
+    );
+    expect(screen.getByText("Jadwal Resepsi")).toBeInTheDocument();
+    expect(screen.getByText("Mohon hadir tepat waktu")).toBeInTheDocument();
+    expect(screen.getByText("Akad Nikah")).toBeInTheDocument();
+    expect(screen.getByText("Resepsi Pernikahan")).toBeInTheDocument();
+    expect(screen.getByText("After Party")).toBeInTheDocument();
+  });
+
+  it("renders custom timeline events with location and description", () => {
+    const customEvents = [
+      {
+        time: "10:00 WIB",
+        title: "Pemberkatan Nikah",
+        location: "Katedral Jakarta",
+        description: "Ibadah kudus sakramen pernikahan",
+        icon: "church",
+      },
+    ];
+    render(<TimelineWidget events={customEvents} />);
+    expect(screen.getByText("Pemberkatan Nikah")).toBeInTheDocument();
+    expect(screen.getByText("10:00 WIB")).toBeInTheDocument();
+    expect(screen.getByText("Katedral Jakarta")).toBeInTheDocument();
+    expect(screen.getByText("Ibadah kudus sakramen pernikahan")).toBeInTheDocument();
+  });
+
+  it("renders all 5 timeline style variants", () => {
+    const variants = [
+      "vertical-left",
+      "vertical-centered",
+      "minimal-cards",
+      "horizontal-steps",
+      "luxury-gold",
+    ] as const;
+
+    for (const variant of variants) {
+      const { container, unmount } = render(
+        <TimelineWidget style={{ variant }} />,
+      );
+      expect(container.querySelector(`[data-variant="${variant}"]`)).not.toBeNull();
+      unmount();
+    }
+  });
+});
+
 describe("registry-driven rendering", () => {
   it("renders every P1 type through WidgetRuntime without template-specific code", () => {
-    for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame"]) {
+    for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame", "timeline"]) {
       const { container, unmount } = render(<WidgetRuntime widgetType={type} props={{}} />);
       expect(container.querySelector(`[data-widget="${type}"]`)).not.toBeNull();
       unmount();
     }
   });
 });
+
 

@@ -3490,4 +3490,223 @@ textarea.input {
   color: var(--dash-text);
 }
 
+/* ==========================================================================
+   Timeline Events Inspector Control
+   ========================================================================== */
+.timelineControlSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.timelinePresetBar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timelinePresetLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dash-muted);
+}
+
+.timelinePresetChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.timelinePresetChip {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timelinePresetChip:hover:not(:disabled) {
+  background: var(--dash-accent-soft);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+
+.timelinePresetChip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--dash-surface);
+}
+
+.timelineEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  text-align: center;
+}
+
+.timelineEmptyIcon {
+  color: var(--dash-muted);
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.timelineEmptyText {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.timelineEmptyHint {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: var(--dash-muted);
+}
+
+.timelineItemRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--dash-bg);
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.timelineItemRow:hover {
+  border-color: var(--dash-border-strong);
+}
+
+.timelineItemRow.activeRow {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+}
+
+.timelineItemBadge {
+  background: var(--dash-surface-strong, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.timelineItemTime {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.timelineItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.timelineItemTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineItemLoc {
+  font-size: 10.5px;
+  color: var(--dash-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineItemActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dangerIconButton {
+  color: var(--dash-danger, #ef4444);
+}
+
+.dangerIconButton:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.timelineAddButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 12px;
+  background: var(--dash-surface);
+  border: 1px dashed var(--dash-border-strong);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timelineAddButton:hover:not(:disabled) {
+  background: var(--dash-accent-soft);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+
+.timelineFormCard {
+  border: 1px solid var(--dash-accent);
+  border-radius: 8px;
+  background: var(--dash-surface);
+  padding: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timelineFormHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--dash-text);
+}
+
+.timelineFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.timelineFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+
 

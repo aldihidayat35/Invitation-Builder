@@ -12,6 +12,8 @@ import {
 import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
+import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
+import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
 import { useCanvasImage } from "./use-canvas-image";
@@ -2304,6 +2306,359 @@ function PhotoFrameVisual({ element, tokens }: { element: WidgetElement; tokens?
   );
 }
 
+export function TimelineVisual({
+  element,
+  tokens,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+}) {
+  const { frame, props, style } = element;
+  const { w, h } = frame;
+  const { color, background } = colors(element, tokens);
+  const variant = resolveWidgetStyleVariant("timeline", style.variant).variant.id;
+  const title = typeof props.title === "string" ? props.title : "Rundown Acara";
+  const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
+  const events = parseTimelineEvents(props.events);
+  const cardRadius = style.radius ?? (variant === "minimal-cards" ? 8 : variant === "luxury-gold" ? 4 : 12);
+
+  const headerH = subtitle ? 48 : 34;
+  const availableH = h - headerH - 16;
+  const maxDisplay = Math.min(events.length, 4);
+  const displayEvents = events.slice(0, maxDisplay);
+  const slotH = maxDisplay > 0 ? Math.floor(availableH / maxDisplay) : 60;
+  const itemH = Math.min(slotH - 8, 70);
+
+  return (
+    <Group width={w} height={h}>
+      <Background element={element} tokens={tokens} />
+
+      {/* Header */}
+      <Text
+        x={12}
+        y={12}
+        width={w - 24}
+        text={title}
+        fontSize={16}
+        fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
+        fill={color}
+        align="center"
+        ellipsis
+      />
+      {subtitle && (
+        <Text
+          x={12}
+          y={32}
+          width={w - 24}
+          text={subtitle}
+          fontSize={11}
+          fill={color}
+          opacity={0.7}
+          align="center"
+          ellipsis
+        />
+      )}
+
+      {/* Variant Rendering */}
+      {variant === "horizontal-steps" ? (
+        (() => {
+          const stepW = Math.max(80, Math.floor((w - 24 - (maxDisplay - 1) * 8) / maxDisplay));
+          return (
+            <Group x={12} y={headerH + 8}>
+              {displayEvents.map((ev, i) => {
+                const stepX = i * (stepW + 8);
+                return (
+                  <Group key={`${ev.time}-${i}`} x={stepX} y={0}>
+                    {/* Step badge */}
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={24}
+                      height={20}
+                      cornerRadius={4}
+                      fill={color}
+                    />
+                    <Text
+                      x={0}
+                      y={4}
+                      width={24}
+                      text={String(i + 1).padStart(2, "0")}
+                      fontSize={10}
+                      fontStyle="bold"
+                      fill={background === "transparent" ? "#ffffff" : background}
+                      align="center"
+                    />
+                    {/* Connecting line */}
+                    {i < maxDisplay - 1 && (
+                      <Line
+                        points={[26, 10, stepW + 6, 10]}
+                        stroke={color}
+                        strokeWidth={1.5}
+                        opacity={0.3}
+                      />
+                    )}
+                    {/* Step Card */}
+                    <Rect
+                      x={0}
+                      y={26}
+                      width={stepW}
+                      height={Math.max(48, availableH - 30)}
+                      cornerRadius={8}
+                      fill="rgba(255, 255, 255, 0.75)"
+                      stroke="rgba(0, 0, 0, 0.08)"
+                      strokeWidth={1}
+                    />
+                    <Text
+                      x={4}
+                      y={30}
+                      width={stepW - 8}
+                      text={ev.time}
+                      fontSize={9}
+                      fontStyle="bold"
+                      fill={color}
+                      ellipsis
+                    />
+                    <Text
+                      x={4}
+                      y={44}
+                      width={stepW - 8}
+                      text={ev.title}
+                      fontSize={11}
+                      fontStyle="bold"
+                      fill={color}
+                      ellipsis
+                    />
+                    {ev.location && (
+                      <Text
+                        x={4}
+                        y={58}
+                        width={stepW - 8}
+                        text={ev.location}
+                        fontSize={9}
+                        fill={color}
+                        opacity={0.8}
+                        ellipsis
+                      />
+                    )}
+                  </Group>
+                );
+              })}
+            </Group>
+          );
+        })()
+      ) : variant === "vertical-centered" ? (
+        (() => {
+          const centerX = w / 2;
+          const cardW = Math.max(90, centerX - 24);
+          return (
+            <Group x={0} y={headerH + 8}>
+              {/* Center Track Line */}
+              <Line
+                points={[centerX, 6, centerX, maxDisplay * slotH - 12]}
+                stroke={color}
+                strokeWidth={2}
+                opacity={0.25}
+              />
+              {displayEvents.map((ev, i) => {
+                const itemY = i * slotH;
+                const isEven = i % 2 === 0;
+                const cardX = isEven ? centerX - cardW - 12 : centerX + 12;
+                return (
+                  <Group key={`${ev.time}-${i}`} y={itemY}>
+                    {/* Center Node */}
+                    <Circle
+                      x={centerX}
+                      y={itemH / 2}
+                      radius={7}
+                      fill={color}
+                    />
+                    {/* Card */}
+                    <Rect
+                      x={cardX}
+                      y={0}
+                      width={cardW}
+                      height={itemH}
+                      cornerRadius={cardRadius}
+                      fill="rgba(255, 255, 255, 0.85)"
+                      stroke="rgba(0, 0, 0, 0.08)"
+                      strokeWidth={1}
+                    />
+                    {/* Card Content */}
+                    <Text
+                      x={cardX + 6}
+                      y={6}
+                      width={cardW - 12}
+                      text={ev.time}
+                      fontSize={9}
+                      fontStyle="bold"
+                      fill={color}
+                      align={isEven ? "right" : "left"}
+                      ellipsis
+                    />
+                    <Text
+                      x={cardX + 6}
+                      y={20}
+                      width={cardW - 12}
+                      text={ev.title}
+                      fontSize={12}
+                      fontStyle="bold"
+                      fill={color}
+                      align={isEven ? "right" : "left"}
+                      ellipsis
+                    />
+                    {ev.location && (
+                      <Text
+                        x={cardX + 6}
+                        y={36}
+                        width={cardW - 12}
+                        text={ev.location}
+                        fontSize={10}
+                        fill={color}
+                        opacity={0.8}
+                        align={isEven ? "right" : "left"}
+                        ellipsis
+                      />
+                    )}
+                  </Group>
+                );
+              })}
+            </Group>
+          );
+        })()
+      ) : (
+        /* Vertical Left (Default) & Minimal Cards & Luxury Gold */
+        (() => {
+          const trackX = variant === "minimal-cards" ? 0 : 24;
+          const cardX = variant === "minimal-cards" ? 14 : 44;
+          const cardW = w - cardX - 14;
+
+          return (
+            <Group x={0} y={headerH + 8}>
+              {/* Left Track Line (if not minimal-cards) */}
+              {variant !== "minimal-cards" && (
+                <Line
+                  points={[trackX, 10, trackX, maxDisplay * slotH - 14]}
+                  stroke={color}
+                  strokeWidth={2}
+                  opacity={0.25}
+                />
+              )}
+
+              {displayEvents.map((ev, i) => {
+                const itemY = i * slotH;
+                return (
+                  <Group key={`${ev.time}-${i}`} y={itemY}>
+                    {/* Node */}
+                    {variant === "luxury-gold" ? (
+                      <Rect
+                        x={trackX}
+                        y={itemH / 2 - 6}
+                        width={12}
+                        height={12}
+                        rotation={45}
+                        fill={color}
+                      />
+                    ) : variant !== "minimal-cards" ? (
+                      <Circle
+                        x={trackX}
+                        y={itemH / 2}
+                        radius={8}
+                        fill={color}
+                      />
+                    ) : null}
+
+                    {/* Card Rect */}
+                    <Rect
+                      x={cardX}
+                      y={0}
+                      width={cardW}
+                      height={itemH}
+                      cornerRadius={cardRadius}
+                      fill="rgba(255, 255, 255, 0.85)"
+                      stroke={
+                        variant === "luxury-gold"
+                          ? color
+                          : "rgba(0, 0, 0, 0.08)"
+                      }
+                      strokeWidth={variant === "luxury-gold" ? 1.5 : 1}
+                    />
+
+                    {/* Left Accent Bar for minimal-cards */}
+                    {variant === "minimal-cards" && (
+                      <Rect
+                        x={cardX}
+                        y={0}
+                        width={4}
+                        height={itemH}
+                        cornerRadius={[cardRadius, 0, 0, cardRadius]}
+                        fill={color}
+                      />
+                    )}
+
+                    {/* Badge Pill for time */}
+                    <Rect
+                      x={cardX + 10}
+                      y={6}
+                      width={Math.min(cardW - 20, 110)}
+                      height={16}
+                      cornerRadius={4}
+                      fill={variant === "minimal-cards" ? "transparent" : color}
+                      stroke={variant === "minimal-cards" ? color : undefined}
+                      strokeWidth={variant === "minimal-cards" ? 1 : 0}
+                    />
+                    <Text
+                      x={cardX + 12}
+                      y={8}
+                      width={Math.min(cardW - 24, 106)}
+                      text={ev.time}
+                      fontSize={9}
+                      fontStyle="bold"
+                      fill={
+                        variant === "minimal-cards"
+                          ? color
+                          : background === "transparent"
+                            ? "#ffffff"
+                            : background
+                      }
+                      ellipsis
+                    />
+
+                    {/* Title */}
+                    <Text
+                      x={cardX + 10}
+                      y={26}
+                      width={cardW - 20}
+                      text={ev.title}
+                      fontSize={13}
+                      fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
+                      fill={color}
+                      ellipsis
+                    />
+
+                    {/* Location or Description */}
+                    {(ev.location || ev.description) && (
+                      <Text
+                        x={cardX + 10}
+                        y={43}
+                        width={cardW - 20}
+                        text={ev.location ? `📍 ${ev.location}` : (ev.description ?? "")}
+                        fontSize={10}
+                        fill={color}
+                        opacity={0.75}
+                        ellipsis
+                      />
+                    )}
+                  </Group>
+                );
+              })}
+            </Group>
+          );
+        })()
+      )}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -2328,6 +2683,8 @@ export function CurrentWidgetVisual({
       return <GalleryVisual element={element} tokens={tokens} />;
     case "photoFrame":
       return <PhotoFrameVisual element={element} tokens={tokens} />;
+    case "timeline":
+      return <TimelineVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

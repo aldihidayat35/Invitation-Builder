@@ -9,5 +9,6 @@ export { GalleryWidget, parseGalleryItems } from "./GalleryWidget";
 export { MusicWidget } from "./MusicWidget";
 export { GiftWidget, parseGiftAccounts } from "./GiftWidget";
 export { PhotoFrameWidget, parseFrameImage } from "./PhotoFrameWidget";
+export { TimelineWidget, parseTimelineEvents, type TimelineEventItem } from "./TimelineWidget";
 export { PublicContextProvider, usePublicContext, type PublicContextValue } from "./PublicContext";
 

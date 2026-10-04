@@ -69,6 +69,14 @@ export const IconClock = (p: IconProps) => (
     <path d="M12 7.5V12l3 2" />
   </Svg>
 );
+export const IconCalendar = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </Svg>
+);
 export const IconUser = (p: IconProps) => (
   <Svg {...p}>
     <circle cx="12" cy="8" r="3.5" />
@@ -279,6 +287,16 @@ export const IconFrame = (p: IconProps) => (
   </Svg>
 );
 
+export const IconTimeline = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="6" cy="6" r="2" />
+    <circle cx="6" cy="12" r="2" />
+    <circle cx="6" cy="18" r="2" />
+    <path d="M6 8v2M6 14v2" />
+    <path d="M12 6h8M12 12h8M12 18h8" />
+  </Svg>
+);
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -288,6 +306,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   music: IconMusic,
   gift: IconGift,
   photoFrame: IconFrame,
+  timeline: IconTimeline,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {

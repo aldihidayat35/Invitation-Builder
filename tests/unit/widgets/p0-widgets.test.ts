@@ -109,6 +109,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
       "music",
       "photoFrame",
       "rsvp",
+      "timeline",
     ]);
     expect(P0_WIDGETS).toHaveLength(3);
   });
@@ -138,7 +139,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
     for (const doc of [make(), make()]) {
       expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);
       const widgets = doc.sections.flatMap((s) => s.elements).filter((e) => e.type === "widget");
-      expect(widgets).toHaveLength(8);
+      expect(widgets).toHaveLength(9);
       for (const widget of widgets) {
         expect(widget.style.variant).toBeTruthy();
         const resolved = defaultWidgetRegistry.resolve(widget.widgetType);

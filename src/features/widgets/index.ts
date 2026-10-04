@@ -41,11 +41,13 @@ export {
   P1_WIDGETS,
   PHOTO_FRAME_WIDGET_TYPE,
   RSVP_WIDGET_TYPE,
+  TIMELINE_WIDGET_TYPE,
   galleryWidget,
   giftWidget,
   musicWidget,
   photoFrameWidget,
   rsvpWidget,
+  timelineWidget,
 } from "./definitions-p1";
 export {
   getDefaultWidgetStyle,

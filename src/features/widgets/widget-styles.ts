@@ -366,6 +366,38 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 0,
     },
   ],
+  timeline: [
+    {
+      id: "vertical-left",
+      label: "Vertikal Kiri",
+      description: "Garis alur di sebelah kiri dengan titik node lingkaran dan kartu agenda di sampingnya.",
+      defaultRadius: 10,
+    },
+    {
+      id: "vertical-centered",
+      label: "Vertikal Zig-Zag",
+      description: "Garis penunjuk di tengah dengan kartu agenda berselang-seling kiri dan kanan.",
+      defaultRadius: 12,
+    },
+    {
+      id: "minimal-cards",
+      label: "Kartu Minimalis",
+      description: "Kartu jadwal bersih mandiri dengan badge waktu tebal dan pemisah halus.",
+      defaultRadius: 8,
+    },
+    {
+      id: "horizontal-steps",
+      label: "Alur Langkah",
+      description: "Tahapan horizontal 01, 02, 03 dengan garis penghubung dan scroll responsif.",
+      defaultRadius: 999,
+    },
+    {
+      id: "luxury-gold",
+      label: "Kemewahan Klasik",
+      description: "Aksen emas berkelas dengan simpul belah ketupat, garis ganda, dan font serif.",
+      defaultRadius: 4,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -377,6 +409,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   music: legacy(["pill", "solid", "disc", "minimal", "bar"]),
   gallery: legacy(["grid-rounded", "grid-border", "slider-classic", "slider-pill", "circle"]),
   photoFrame: legacy(["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"]),
+  timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(

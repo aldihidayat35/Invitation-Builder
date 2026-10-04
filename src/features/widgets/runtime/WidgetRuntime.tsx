@@ -10,6 +10,7 @@ import { MapWidget } from "./MapWidget";
 import { MusicWidget } from "./MusicWidget";
 import { PhotoFrameWidget } from "./PhotoFrameWidget";
 import { RsvpWidget } from "./RsvpWidget";
+import { TimelineWidget } from "./TimelineWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -70,6 +71,14 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       caption={p.caption}
       fit={p.fit}
       alt={p.alt}
+      style={style}
+    />
+  ),
+  timeline: (p, style) => (
+    <TimelineWidget
+      title={p.title}
+      subtitle={p.subtitle}
+      events={p.events}
       style={style}
     />
   ),
