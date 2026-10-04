@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
 import { applyDefaults, createVariableRegistry, resolveDocument } from "@/lib/engine";
 import { DocumentRenderer } from "@/features/renderer";
@@ -14,25 +14,57 @@ export interface TemplateRealPreviewProps {
   readonly initialDocument: CanonicalDocument;
 }
 
-function getInitialDocState(
+interface PreviewSnapshot {
+  readonly raw: string | null;
+  readonly document: CanonicalDocument;
+  readonly isLiveDraft: boolean;
+}
+
+let cachedSnapshot: { key: string; snapshot: PreviewSnapshot } | null = null;
+
+function subscribeStorage(callback: () => void): () => void {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getPreviewSnapshot(
   templateId: string,
-  initialDocument: CanonicalDocument,
-): { document: CanonicalDocument; isLiveDraft: boolean } {
+  fallbackDoc: CanonicalDocument,
+): PreviewSnapshot {
   if (typeof window === "undefined") {
-    return { document: initialDocument, isLiveDraft: false };
+    return { raw: null, document: fallbackDoc, isLiveDraft: false };
   }
   try {
-    const cached = localStorage.getItem(`dib_preview_doc_${templateId}`);
-    if (cached) {
-      const parsed = canonicalDocumentSchema.safeParse(JSON.parse(cached));
+    const raw = localStorage.getItem(`dib_preview_doc_${templateId}`);
+    if (
+      cachedSnapshot &&
+      cachedSnapshot.key === templateId &&
+      cachedSnapshot.snapshot.raw === raw
+    ) {
+      return cachedSnapshot.snapshot;
+    }
+    if (raw) {
+      const parsed = canonicalDocumentSchema.safeParse(JSON.parse(raw));
       if (parsed.success) {
-        return { document: parsed.data, isLiveDraft: true };
+        const snap: PreviewSnapshot = {
+          raw,
+          document: parsed.data,
+          isLiveDraft: true,
+        };
+        cachedSnapshot = { key: templateId, snapshot: snap };
+        return snap;
       }
     }
   } catch {
-    // ignore
+    // ignore storage or parse errors
   }
-  return { document: initialDocument, isLiveDraft: false };
+  const snap: PreviewSnapshot = {
+    raw: null,
+    document: fallbackDoc,
+    isLiveDraft: false,
+  };
+  cachedSnapshot = { key: templateId, snapshot: snap };
+  return snap;
 }
 
 export function TemplateRealPreview({
@@ -40,31 +72,21 @@ export function TemplateRealPreview({
   templateName,
   initialDocument,
 }: TemplateRealPreviewProps) {
-  const [docState, setDocState] = useState(() =>
-    getInitialDocState(templateId, initialDocument),
-  );
   const [viewMode, setViewMode] = useState<"mobile" | "full">("mobile");
 
-  const document = docState.document;
-  const isLiveDraft = docState.isLiveDraft;
+  const serverSnapshot = useMemo<PreviewSnapshot>(
+    () => ({ raw: null, document: initialDocument, isLiveDraft: false }),
+    [initialDocument],
+  );
 
-  // React to cross-tab storage changes from editor saves
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === `dib_preview_doc_${templateId}` && e.newValue) {
-        try {
-          const parsed = canonicalDocumentSchema.safeParse(JSON.parse(e.newValue));
-          if (parsed.success) {
-            setDocState({ document: parsed.data, isLiveDraft: true });
-          }
-        } catch {
-          // ignore storage parse errors
-        }
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [templateId]);
+  const snapshot = useSyncExternalStore(
+    subscribeStorage,
+    () => getPreviewSnapshot(templateId, initialDocument),
+    () => serverSnapshot,
+  );
+
+  const document = snapshot.document;
+  const isLiveDraft = snapshot.isLiveDraft;
 
   const resolved = useMemo(() => {
     const registry = createVariableRegistry(document.variables);
@@ -94,7 +116,11 @@ export function TemplateRealPreview({
           </Link>
           <div className={styles.titleArea}>
             <h1 className={styles.templateName}>{templateName}</h1>
-            <span className={styles.liveBadge}>
+            <span
+              className={styles.liveBadge}
+              suppressHydrationWarning
+              data-testid="preview-live-badge"
+            >
               <span className={styles.pulseDot} />
               {isLiveDraft ? "Pratinjau Live Draft" : "Pratinjau Nyata"}
             </span>
