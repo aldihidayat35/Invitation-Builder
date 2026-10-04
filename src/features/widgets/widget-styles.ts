@@ -334,6 +334,38 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 999,
     },
   ],
+  photoFrame: [
+    {
+      id: "torn-rect",
+      label: "Sobek Persegi",
+      description: "Bingkai kertas sobek persegi dengan serat tepi alami ala kolase scrapbook.",
+      defaultRadius: 0,
+    },
+    {
+      id: "torn-oval",
+      label: "Sobek Oval Koran",
+      description: "Bingkai oval dengan tepian sobekan koran vintage editorial.",
+      defaultRadius: 0,
+    },
+    {
+      id: "torn-circle",
+      label: "Sobek Lingkaran",
+      description: "Bentuk lingkaran artistik dengan serat kertas sobek di sekelilingnya.",
+      defaultRadius: 999,
+    },
+    {
+      id: "torn-heart",
+      label: "Sobek Hati",
+      description: "Siluet hati romantis dengan tepian kertas sobek lembut.",
+      defaultRadius: 0,
+    },
+    {
+      id: "torn-arch",
+      label: "Kubah Arch Koran",
+      description: "Bentuk kubah lengkung (arch) elegan beraksen kertas koran vintage.",
+      defaultRadius: 0,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -344,6 +376,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   gift: legacy(["cards", "minimal", "pill", "luxury", "compact"]),
   music: legacy(["pill", "solid", "disc", "minimal", "bar"]),
   gallery: legacy(["grid-rounded", "grid-border", "slider-classic", "slider-pill", "circle"]),
+  photoFrame: legacy(["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(

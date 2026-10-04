@@ -36,6 +36,7 @@ beforeEach(() => {
     rotate: vi.fn(),
     arc: vi.fn(),
     arcTo: vi.fn(),
+    ellipse: vi.fn(),
     fill: vi.fn(),
     measureText: vi.fn(() => ({ width: 0 })),
     transform: vi.fn(),
@@ -270,7 +271,7 @@ describe("Canvas Widget Visuals", () => {
     await waitFor(() => expect(drawImageMock).toHaveBeenCalled());
   });
 
-  it("provides valid style variants for each of the 7 widget types", () => {
+  it("provides valid style variants for each of the 8 widget types", () => {
     const widgetTypes = [
       "countdown",
       "map",
@@ -279,6 +280,7 @@ describe("Canvas Widget Visuals", () => {
       "gift",
       "music",
       "gallery",
+      "photoFrame",
     ] as const;
 
     for (const type of widgetTypes) {
@@ -351,6 +353,10 @@ describe("Canvas Widget Visuals", () => {
       gallery: {
         frame: { x: 0, y: 0, w: 326, h: 320, rotation: 0 },
         props: { title: "Galeri", layout: "grid", items: [] },
+      },
+      photoFrame: {
+        frame: { x: 0, y: 0, w: 300, h: 360, rotation: 0 },
+        props: { fit: "cover", caption: "Our Memories" },
       },
     };
 

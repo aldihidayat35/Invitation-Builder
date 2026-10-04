@@ -8,4 +8,6 @@ export { RsvpWidget } from "./RsvpWidget";
 export { GalleryWidget, parseGalleryItems } from "./GalleryWidget";
 export { MusicWidget } from "./MusicWidget";
 export { GiftWidget, parseGiftAccounts } from "./GiftWidget";
+export { PhotoFrameWidget, parseFrameImage } from "./PhotoFrameWidget";
 export { PublicContextProvider, usePublicContext, type PublicContextValue } from "./PublicContext";
+

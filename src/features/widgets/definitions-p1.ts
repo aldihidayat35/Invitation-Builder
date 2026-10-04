@@ -110,9 +110,38 @@ export const giftWidget: WidgetDefinition = {
   }),
 };
 
+export const PHOTO_FRAME_WIDGET_TYPE = "photoFrame";
+
+export const photoFrameWidget: WidgetDefinition = {
+  type: PHOTO_FRAME_WIDGET_TYPE,
+  version: 1,
+  label: "Bingkai Foto",
+  defaultFrame: { w: 300, h: 360 },
+  defaultStyle: getDefaultWidgetStyle(PHOTO_FRAME_WIDGET_TYPE),
+  defaultProps: { fit: "cover" },
+  props: {
+    image: defineProp("url", "Foto (asset / URL)", z.union([z.string(), z.record(z.string(), z.unknown())]).optional()),
+    caption: defineProp("text", "Keterangan foto (opsional)", z.string().max(120).optional()),
+    fit: defineProp("text", "Mode tampilan", z.enum(["cover", "contain"]).default("cover"), {
+      control: "select",
+      options: [
+        { value: "cover", label: "Cover (isi penuh)" },
+        { value: "contain", label: "Contain (proporsional)" },
+      ],
+    }),
+    alt: defineProp("text", "Teks alternatif", z.string().max(200).optional()),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.caption) ?? "Bingkai Foto",
+    subtitle: describeProp(props.image) ?? "Foto belum diisi",
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
   musicWidget,
   giftWidget,
+  photoFrameWidget,
 ];
+

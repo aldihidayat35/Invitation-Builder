@@ -11,6 +11,7 @@ import {
 } from "@/features/widgets/logic";
 import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
+import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
 import { useCanvasImage } from "./use-canvas-image";
@@ -2013,6 +2014,296 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
   );
 }
 
+function PhotoFrameVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+  const { w, h } = element.frame;
+  const { color } = colors(element, tokens);
+  const variant = element.style.variant || "torn-rect";
+  const props = element.props as Record<string, unknown>;
+  const caption = typeof props.caption === "string" ? props.caption.trim() : "";
+  const fit = props.fit === "contain" ? "contain" : "cover";
+  const src = parseFrameImage(props.image);
+  const image = useCanvasImage(src);
+
+  const captionH = caption ? 24 : 0;
+  const availH = h - captionH;
+
+  const paperColor =
+    typeof element.style.color === "string" && element.style.color !== "#2b2118"
+      ? element.style.color
+      : variant === "torn-oval" || variant === "torn-arch"
+        ? "#f5efe3"
+        : "#faf8f5";
+
+  let frameX = 4;
+  let frameY = 4;
+  let frameW = w - 8;
+  let frameH = availH - 8;
+  let cutoutX = frameX + 14;
+  let cutoutY = frameY + 14;
+  let cutoutW = frameW - 28;
+  let cutoutH = frameH - 28;
+  let frameRadius = 4;
+
+  if (variant === "torn-oval") {
+    frameRadius = Math.min(frameW, frameH) / 2;
+    cutoutY += 10;
+    cutoutH -= 14;
+  } else if (variant === "torn-circle") {
+    const size = Math.min(frameW, frameH);
+    frameX = (w - size) / 2;
+    frameY = (availH - size) / 2;
+    frameW = size;
+    frameH = size;
+    frameRadius = size / 2;
+    cutoutX = frameX + 14;
+    cutoutY = frameY + 14;
+    cutoutW = size - 28;
+    cutoutH = size - 28;
+  } else if (variant === "torn-arch") {
+    frameRadius = 140;
+    cutoutY += 10;
+    cutoutH -= 14;
+  }
+
+  const renderPlaceholder = (cx: number, cy: number, cw: number, ch: number) => {
+    const cloudX = cx + cw * 0.5;
+    const cloudY = cy + ch * 0.28;
+    return (
+      <Group>
+        <Rect x={cx} y={cy} width={cw} height={ch} fill="#a4cdfc" />
+        <Group>
+          <Circle x={cloudX} y={cloudY} radius={14} fill="#ffffff" />
+          <Circle x={cloudX - 12} y={cloudY + 3} radius={10} fill="#ffffff" />
+          <Circle x={cloudX + 12} y={cloudY + 3} radius={10} fill="#ffffff" />
+          <Rect x={cloudX - 12} y={cloudY + 3} width={24} height={10} fill="#ffffff" />
+        </Group>
+        <Line
+          points={[
+            cx - 10,
+            cy + ch + 10,
+            cx - 10,
+            cy + ch * 0.65,
+            cx + cw * 0.45,
+            cy + ch * 0.58,
+            cx + cw + 10,
+            cy + ch * 0.68,
+            cx + cw + 10,
+            cy + ch + 10,
+          ]}
+          fill="#8ec641"
+          closed
+        />
+        <Line
+          points={[
+            cx - 10,
+            cy + ch + 10,
+            cx - 10,
+            cy + ch * 0.78,
+            cx + cw * 0.55,
+            cy + ch * 0.72,
+            cx + cw + 10,
+            cy + ch * 0.76,
+            cx + cw + 10,
+            cy + ch + 10,
+          ]}
+          fill="#689f38"
+          closed
+        />
+        <Group x={cx + (cw - 80) / 2} y={cy + ch * 0.82}>
+          <Rect width={80} height={18} cornerRadius={9} fill="#ffffff" opacity={0.88} />
+          <Text
+            x={4}
+            y={4}
+            width={72}
+            text="🖼️ Pilih Foto"
+            fontSize={9}
+            fontStyle="bold"
+            fill="#334155"
+            align="center"
+          />
+        </Group>
+      </Group>
+    );
+  };
+
+  return (
+    <Group listening={false}>
+      <Background element={element} tokens={tokens} />
+      <Rect
+        x={frameX}
+        y={frameY}
+        width={frameW}
+        height={frameH}
+        fill={paperColor}
+        cornerRadius={variant === "torn-arch" ? [140, 140, 6, 6] : frameRadius}
+        stroke="rgba(0,0,0,0.08)"
+        strokeWidth={1}
+        shadowColor="#000000"
+        shadowBlur={12}
+        shadowOpacity={0.12}
+        shadowOffset={{ x: 0, y: 4 }}
+      />
+      <Rect
+        x={frameX + 2}
+        y={frameY + 2}
+        width={frameW - 4}
+        height={frameH - 4}
+        cornerRadius={variant === "torn-arch" ? [138, 138, 4, 4] : Math.max(0, frameRadius - 2)}
+        stroke={
+          variant === "torn-oval" || variant === "torn-arch"
+            ? "rgba(90,60,30,0.18)"
+            : "rgba(0,0,0,0.04)"
+        }
+        strokeWidth={1}
+        dash={[4, 3]}
+      />
+      {variant === "torn-oval" && (
+        <Text
+          x={frameX}
+          y={frameY + 6}
+          width={frameW}
+          text="• THE WEDDING GAZETTE •"
+          fontSize={7.5}
+          fontStyle="bold"
+          fill="#6b5138"
+          align="center"
+          opacity={0.8}
+        />
+      )}
+      {variant === "torn-arch" && (
+        <Text
+          x={frameX}
+          y={frameY + 12}
+          width={frameW}
+          text="SWEET MEMORIES • FOREVER"
+          fontSize={7.5}
+          fontStyle="bold"
+          fill="#6b5138"
+          align="center"
+          opacity={0.8}
+        />
+      )}
+
+      <Group
+        clipFunc={(ctx: {
+          arc(x: number, y: number, radius: number, startAngle: number, endAngle: number): void;
+          beginPath(): void;
+          moveTo(x: number, y: number): void;
+          bezierCurveTo(
+            cp1x: number,
+            cp1y: number,
+            cp2x: number,
+            cp2y: number,
+            x: number,
+            y: number,
+          ): void;
+          quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
+          lineTo(x: number, y: number): void;
+          closePath(): void;
+          rect(x: number, y: number, width: number, height: number): void;
+        }) => {
+          if (variant === "torn-circle") {
+            const cr = cutoutW / 2;
+            ctx.arc(cutoutX + cr, cutoutY + cr, cr, 0, Math.PI * 2);
+          } else if (variant === "torn-oval") {
+            const cx = cutoutX + cutoutW / 2;
+            const cy = cutoutY + cutoutH / 2;
+            const rx = cutoutW / 2;
+            const ry = cutoutH / 2;
+            const k = 0.5522847498;
+            ctx.beginPath();
+            ctx.moveTo(cx - rx, cy);
+            ctx.bezierCurveTo(cx - rx, cy - ry * k, cx - rx * k, cy - ry, cx, cy - ry);
+            ctx.bezierCurveTo(cx + rx * k, cy - ry, cx + rx, cy - ry * k, cx + rx, cy);
+            ctx.bezierCurveTo(cx + rx, cy + ry * k, cx + rx * k, cy + ry, cx, cy + ry);
+            ctx.bezierCurveTo(cx - rx * k, cy + ry, cx - rx, cy + ry * k, cx - rx, cy);
+            ctx.closePath();
+          } else if (variant === "torn-heart") {
+            const hx = cutoutX + cutoutW / 2;
+            const hy = cutoutY + cutoutH * 0.35;
+            const topY = cutoutY + cutoutH * 0.08;
+            const botY = cutoutY + cutoutH * 0.94;
+            ctx.beginPath();
+            ctx.moveTo(hx, hy);
+            ctx.bezierCurveTo(hx, topY, cutoutX, topY, cutoutX, hy);
+            ctx.bezierCurveTo(cutoutX, cutoutY + cutoutH * 0.65, hx, botY, hx, botY);
+            ctx.bezierCurveTo(
+              hx,
+              botY,
+              cutoutX + cutoutW,
+              cutoutY + cutoutH * 0.65,
+              cutoutX + cutoutW,
+              hy,
+            );
+            ctx.bezierCurveTo(cutoutX + cutoutW, topY, hx, topY, hx, hy);
+            ctx.closePath();
+          } else if (variant === "torn-arch") {
+            const rx = cutoutW / 2;
+            const ry = Math.min(rx, cutoutH * 0.4);
+            ctx.beginPath();
+            ctx.moveTo(cutoutX, cutoutY + ry);
+            ctx.quadraticCurveTo(cutoutX + rx, cutoutY, cutoutX + cutoutW, cutoutY + ry);
+            ctx.lineTo(cutoutX + cutoutW, cutoutY + cutoutH);
+            ctx.lineTo(cutoutX, cutoutY + cutoutH);
+            ctx.closePath();
+          } else {
+            ctx.rect(cutoutX, cutoutY, cutoutW, cutoutH);
+          }
+        }}
+      >
+        {image ? (
+          (() => {
+            const { crop, dest } = fitImage({
+              boxWidth: cutoutW,
+              boxHeight: cutoutH,
+              imageWidth: image.naturalWidth || cutoutW,
+              imageHeight: image.naturalHeight || cutoutH,
+              fit,
+              focal: { x: 0.5, y: 0.5 },
+            });
+            return (
+              <KonvaImage
+                image={image}
+                crop={crop}
+                x={cutoutX + dest.x}
+                y={cutoutY + dest.y}
+                width={dest.width}
+                height={dest.height}
+              />
+            );
+          })()
+        ) : (
+          renderPlaceholder(cutoutX, cutoutY, cutoutW, cutoutH)
+        )}
+      </Group>
+
+      <Rect
+        x={cutoutX}
+        y={cutoutY}
+        width={cutoutW}
+        height={cutoutH}
+        cornerRadius={variant === "torn-circle" ? cutoutW / 2 : variant === "torn-oval" ? cutoutW / 2 : 2}
+        stroke="rgba(0,0,0,0.12)"
+        strokeWidth={1}
+      />
+
+      {caption && (
+        <Text
+          x={10}
+          y={availH + 4}
+          width={w - 20}
+          text={caption}
+          fontSize={12}
+          fontStyle="500"
+          fill={color}
+          align="center"
+          ellipsis
+        />
+      )}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -2035,6 +2326,8 @@ export function CurrentWidgetVisual({
       return <MusicVisual element={element} tokens={tokens} />;
     case "gallery":
       return <GalleryVisual element={element} tokens={tokens} />;
+    case "photoFrame":
+      return <PhotoFrameVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

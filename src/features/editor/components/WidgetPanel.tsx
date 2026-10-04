@@ -12,6 +12,7 @@ import {
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
 import { GiftAccountsControl } from "./GiftAccountsControl";
+import { PhotoFrameImageControl } from "./PhotoFrameImageControl";
 import { useEditorStore } from "./EditorProvider";
 import {
   ColorField,
@@ -257,6 +258,12 @@ export function WidgetPanel({
                   value={value}
                   disabled={disabled}
                   onChange={(accounts) => setProp(name, accounts)}
+                />
+              ) : element.widgetType === "photoFrame" && name === "image" ? (
+                <PhotoFrameImageControl
+                  value={value}
+                  disabled={disabled}
+                  onChange={(img) => setProp(name, img)}
                 />
               ) : (
                 <StaticControl

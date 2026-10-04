@@ -270,6 +270,15 @@ export const IconExternalLink = (p: IconProps) => (
 );
 
 
+export const IconFrame = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <rect x="6" y="6" width="12" height="12" rx="1" strokeDasharray="2 2" />
+    <circle cx="9" cy="9" r="1" />
+    <path d="M18 16l-3-3-5 5" />
+  </Svg>
+);
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -278,6 +287,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   gallery: IconImages,
   music: IconMusic,
   gift: IconGift,
+  photoFrame: IconFrame,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {

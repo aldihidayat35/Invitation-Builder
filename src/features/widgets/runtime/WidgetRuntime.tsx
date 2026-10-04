@@ -8,6 +8,7 @@ import { GiftWidget } from "./GiftWidget";
 import { GuestGreetingWidget } from "./GuestGreetingWidget";
 import { MapWidget } from "./MapWidget";
 import { MusicWidget } from "./MusicWidget";
+import { PhotoFrameWidget } from "./PhotoFrameWidget";
 import { RsvpWidget } from "./RsvpWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
@@ -63,6 +64,15 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
     <MusicWidget src={p.src} title={p.title} autoplay={p.autoplay} style={style} />
   ),
   gift: (p, style) => <GiftWidget title={p.title} accounts={p.accounts} style={style} />,
+  photoFrame: (p, style) => (
+    <PhotoFrameWidget
+      image={p.image}
+      caption={p.caption}
+      fit={p.fit}
+      alt={p.alt}
+      style={style}
+    />
+  ),
 };
 
 /**

@@ -39,10 +39,12 @@ export {
   GIFT_WIDGET_TYPE,
   MUSIC_WIDGET_TYPE,
   P1_WIDGETS,
+  PHOTO_FRAME_WIDGET_TYPE,
   RSVP_WIDGET_TYPE,
   galleryWidget,
   giftWidget,
   musicWidget,
+  photoFrameWidget,
   rsvpWidget,
 } from "./definitions-p1";
 export {

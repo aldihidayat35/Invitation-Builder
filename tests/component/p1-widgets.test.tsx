@@ -8,6 +8,7 @@ import {
   GiftWidget,
   MapWidget,
   MusicWidget,
+  PhotoFrameWidget,
   PublicContextProvider,
   RsvpWidget,
   WidgetRuntime,
@@ -180,12 +181,47 @@ describe("MapWidget analytics & preview", () => {
   });
 });
 
+describe("PhotoFrameWidget", () => {
+  it("renders Canva landscape placeholder when no photo is provided", () => {
+    render(<PhotoFrameWidget />);
+    expect(screen.getByTestId("canva-placeholder")).toBeInTheDocument();
+    expect(screen.getByText("Pilih Foto")).toBeInTheDocument();
+    expect(screen.queryByTestId("photo-frame-image")).not.toBeInTheDocument();
+  });
+
+  it("renders image and caption when photo is provided", () => {
+    render(
+      <PhotoFrameWidget
+        image="https://example.com/wedding-photo.jpg"
+        caption="Romeo & Juliet"
+      />,
+    );
+    const img = screen.getByTestId("photo-frame-image");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", "https://example.com/wedding-photo.jpg");
+    expect(screen.getByTestId("photo-frame-caption")).toHaveTextContent("Romeo & Juliet");
+  });
+
+  it("renders 5 torn paper variants", () => {
+    const variants = ["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"] as const;
+    for (const variant of variants) {
+      const { container, unmount } = render(
+        <PhotoFrameWidget style={{ variant }} />,
+      );
+      const widget = container.querySelector("[data-frame-variant]");
+      expect(widget).toHaveAttribute("data-frame-variant", variant);
+      unmount();
+    }
+  });
+});
+
 describe("registry-driven rendering", () => {
   it("renders every P1 type through WidgetRuntime without template-specific code", () => {
-    for (const type of ["rsvp", "gallery", "music", "gift"]) {
+    for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame"]) {
       const { container, unmount } = render(<WidgetRuntime widgetType={type} props={{}} />);
       expect(container.querySelector(`[data-widget="${type}"]`)).not.toBeNull();
       unmount();
     }
   });
 });
+
