@@ -1598,11 +1598,10 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
   const { color } = colors(element, tokens);
   const variant = element.style.variant!;
   const props = element.props as Record<string, unknown>;
-  const title = typeof props.title === "string" && props.title.trim() ? props.title : "Galeri";
   const images = parseGalleryItems(props.items);
   const count = Math.max(3, Math.min(7, images.length || 5));
   const radius = element.style.radius ?? 6;
-  const top = 50;
+  const top = 14;
   return (
     <Group listening={false}>
       <Background element={element} tokens={tokens} />
@@ -1636,27 +1635,6 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
           />
         </>
       ) : null}
-      <Text
-        x={14}
-        y={9}
-        width={w - 28}
-        text={variant === "heritage-frame" ? "❖ — OUR MOMENTS — ❖" : "OUR MOMENTS"}
-        fontSize={8}
-        letterSpacing={variant === "heritage-frame" ? 2 : 1.8}
-        fill={color}
-        opacity={0.62}
-        align={variant === "editorial-collage" ? "left" : "center"}
-      />
-      <Text
-        x={14}
-        y={24}
-        width={w - 28}
-        text={title}
-        fontSize={16}
-        fontStyle="bold"
-        fill={color}
-        align={variant === "editorial-collage" ? "left" : "center"}
-      />
       {variant === "editorial-collage" ? (
         <>
           <CanvasGalleryPhoto
@@ -1672,16 +1650,16 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
             x={w * 0.62}
             y={top}
             width={w * 0.32}
-            height={(h - top - 20) / 2}
+            height={(h - top - 22) / 2}
             radius={radius}
             color={color}
             src={images[1]?.src}
           />
           <CanvasGalleryPhoto
             x={w * 0.62}
-            y={top + (h - top) / 2}
+            y={top + (h - top - 22) / 2 + 8}
             width={w * 0.32}
-            height={(h - top - 20) / 2}
+            height={(h - top - 22) / 2}
             radius={radius}
             color={color}
             src={images[2]?.src}
@@ -1713,9 +1691,9 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
             <CanvasGalleryPhoto
               key={index}
               x={12 + index * (tileW + 7)}
-              y={top + 20}
+              y={top + 6}
               width={tileW}
-              height={h - top - 48}
+              height={h - top - 26}
               radius={radius}
               color={color}
               src={images[index]?.src}
@@ -1987,14 +1965,14 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
             <Group
               key={index}
               x={w / 2 - cardW / 2 + (index - 1) * cardW * 0.62}
-              y={top + 22 + Math.abs(index - 1) * 9}
+              y={top + 10 + Math.abs(index - 1) * 8}
               rotation={(index - 1) * 6}
             >
               <Rect
                 x={-5}
                 y={-5}
                 width={cardW + 10}
-                height={h - top - 40}
+                height={h - top - 24}
                 fill="#fff"
                 shadowColor="#000"
                 shadowBlur={8}
@@ -2004,7 +1982,7 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
                 x={0}
                 y={0}
                 width={cardW}
-                height={h - top - 62}
+                height={h - top - 46}
                 radius={radius}
                 color={color}
                 src={images[index]?.src}

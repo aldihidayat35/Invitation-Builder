@@ -47,29 +47,18 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
   const presentation = getGalleryPresentation(style?.variant, layout);
 
   if (images.length === 0) {
-    if (presentation !== "legacy-grid" && presentation !== "legacy-slider") {
-      return (
-        <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-          <div className={styles.galleryHeading}>
-            <span className={styles.eyebrow}>Our Moments</span>
-            <h3 className={styles.label}>{heading}</h3>
-          </div>
-          <div
-            className={styles.galleryEmptyPreview}
-            data-gallery-presentation={presentation}
-            data-testid="gallery-empty-preview"
-            aria-label="Belum ada foto galeri"
-          >
-            <span />
-            <span />
-            <span />
-          </div>
-        </WidgetFrame>
-      );
-    }
     return (
-      <WidgetFrame type="gallery" style={style}>
-        <p className={styles.label}>{heading}</p>
+      <WidgetFrame type="gallery" style={style} className={styles.gallery}>
+        <div
+          className={styles.galleryEmptyPreview}
+          data-gallery-presentation={presentation}
+          data-testid="gallery-empty-preview"
+          aria-label="Belum ada foto galeri"
+        >
+          <span />
+          <span />
+          <span />
+        </div>
       </WidgetFrame>
     );
   }
@@ -82,10 +71,6 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
   if (!isSlider) {
     return (
       <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-        <div className={styles.galleryHeading}>
-          <span className={styles.eyebrow}>Our Moments</span>
-          <h3 className={styles.label}>{heading}</h3>
-        </div>
         <ul
           className={styles.galleryGrid}
           aria-label={heading}
@@ -120,10 +105,6 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
 
   return (
     <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-      <div className={styles.galleryHeading}>
-        <span className={styles.eyebrow}>Our Moments</span>
-        <h3 className={styles.label}>{heading}</h3>
-      </div>
       <div
         className={styles.slider}
         role="group"
