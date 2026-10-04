@@ -582,6 +582,21 @@
   padding: 2px 0;
 }
 
+.sectionTransBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--dash-accent-soft, #f5f3ff);
+  color: var(--dash-accent, #7c3aed);
+  border: 1px solid var(--dash-border, #e5e7eb);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
 .canvasFrame {
   background: #fff;
   box-shadow: 0 1px 3px rgb(16 24 40 / 0.12);
@@ -1512,6 +1527,72 @@ textarea.input {
   border-radius: 8px;
   border: 1px dashed var(--dash-border);
   line-height: 1.45;
+}
+
+/* ------------------------------------------------------------- section transitions */
+
+.sectionTransitionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.animCategoryTabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.animCategoryTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.animTabBtn {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.animTabBtn:hover {
+  background: var(--dash-surface-hover);
+  color: var(--dash-text);
+}
+
+.animTabBtnActive {
+  border-color: var(--dash-accent) !important;
+  background: var(--dash-accent-soft) !important;
+  color: var(--dash-accent) !important;
+  font-weight: 600;
+}
+
+.animBoxGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.transDescBanner {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dash-muted);
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.transDescBanner strong {
+  color: var(--dash-text);
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------- image tools & modals */

@@ -207,6 +207,7 @@ export interface SectionPatch {
   readonly overflow?: Section["overflow"];
   readonly visible?: boolean;
   readonly background?: Partial<Section["background"]>;
+  readonly transition?: Section["transition"];
 }
 
 /** Applies a patch only if the resulting section is schema-valid. */
@@ -225,11 +226,13 @@ export function updateSection(
       ...(patch.background !== undefined && {
         background: { ...section.background, ...patch.background },
       }),
+      ...(patch.transition !== undefined && { transition: patch.transition }),
     };
     const parsed = sectionSchema.safeParse(candidate);
     return parsed.success ? parsed.data : section;
   });
 }
+
 
 // ------------------------------------------------------------------- elements
 

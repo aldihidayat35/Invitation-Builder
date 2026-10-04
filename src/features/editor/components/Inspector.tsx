@@ -37,7 +37,9 @@ import { ImagePanel } from "./ImagePanel";
 import { PanelSection } from "./PanelSection";
 import { WidgetPanel } from "./WidgetPanel";
 import { AnimationPanel } from "./AnimationPanel";
+import { SectionTransitionControl } from "./SectionTransitionControl";
 import styles from "./editor.module.css";
+
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 
 const WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900].map((w) => ({
@@ -188,7 +190,16 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
         />
       </PanelSection>
 
-      <PanelSection id="insp-section-anim" title="Animasi">
+      <PanelSection
+        id="insp-section-transition"
+        title="Transisi scroll section"
+        icon={<IconSparkle size={13} />}
+        count={section.transition && section.transition.type !== "none" ? 1 : undefined}
+      >
+        <SectionTransitionControl section={section} readOnly={readOnly} />
+      </PanelSection>
+
+      <PanelSection id="insp-section-anim" title="Animasi elemen section">
         <button
           type="button"
           className={styles.ghostButton}
@@ -203,9 +214,9 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
           data-testid="replay-section-btn"
         >
           <IconReplay size={13} />
-          Putar ulang animasi section
+          Putar ulang animasi elemen
         </button>
-        <p className={styles.muted}>Preview diputar langsung di artboard.</p>
+        <p className={styles.muted}>Preview animasi elemen diputar langsung di artboard.</p>
       </PanelSection>
 
       <p className={styles.footHint}>
@@ -214,6 +225,7 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
     </div>
   );
 }
+
 
 // ------------------------------------------------------------------ actions
 

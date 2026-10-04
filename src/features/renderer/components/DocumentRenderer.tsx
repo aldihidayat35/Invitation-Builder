@@ -12,6 +12,7 @@ import type {
 import type { RuntimeMode } from "../types";
 import { buildGoogleFontsUrl, collectDocumentFonts, getFontFallback } from "@/lib/fonts";
 import { AnimatedElement } from "./AnimatedElement";
+import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
 import styles from "./DocumentRenderer.module.css";
@@ -200,10 +201,10 @@ function SectionView({
   if (section.hidden) return null;
   const background = cssColor(section.background.color, tokens);
   return (
-    <section
+    <AnimatedSection
+      section={section}
       className={styles.section}
-      data-section-id={section.id}
-      aria-label={section.name}
+      first={first}
       style={{
         aspectRatio: `${baseWidth} / ${section.baseHeight}`,
         overflow: section.overflow,
@@ -236,9 +237,10 @@ function SectionView({
           />
         ))}
       </div>
-    </section>
+    </AnimatedSection>
   );
 }
+
 
 /**
  * HTML renderer for a resolved document (P-04, FR-PRV-001). Shared by dashboard

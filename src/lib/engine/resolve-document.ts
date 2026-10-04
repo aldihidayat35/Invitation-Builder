@@ -15,8 +15,10 @@ import {
   type CanonicalDocument,
   type Element,
   type Frame,
+  type SectionTransition,
   type ThemeTokens,
 } from "@/lib/schema";
+
 import { createResolver, type ResolvedBinding, type ResolverOptions } from "./resolver";
 import {
   BLOCKING_RESOLVE_CODES,
@@ -86,8 +88,10 @@ export interface ResolvedSection {
     readonly image: { readonly assetId: string } | null;
     readonly fit: "cover" | "contain";
   };
+  readonly transition?: SectionTransition;
   readonly elements: readonly ResolvedElement[];
 }
+
 
 export interface ResolvedDocument {
   readonly schemaVersion: number;
@@ -238,9 +242,11 @@ export function resolveDocument(
         image: backgroundImage,
         fit: section.background.fit,
       },
+      transition: section.transition ? structuredClone(section.transition) : undefined,
       elements,
     };
   });
+
 
   return {
     schemaVersion: document.schemaVersion,

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CANONICAL_BASE_WIDTH } from "@/lib/schema";
+import { getSectionTransitionMeta, getSectionTransitionStyles } from "@/features/animations/section-transitions";
 import { sectionLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { SectionCanvasLazy } from "./SectionCanvasLazy";
@@ -15,6 +16,44 @@ export function Artboard() {
   const readOnly = useEditor((s) => s.readOnly);
   const activeSectionId = useEditor((s) => s.activeSectionId);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [previewState, setPreviewState] = useState<{ sectionId: string; visible: boolean } | null>(null);
+
+  // Listen to custom section transition preview trigger
+  useEffect(() => {
+    let animFrame: number | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ sectionId: string }>;
+      const targetId = custom.detail?.sectionId;
+      if (!targetId) return;
+
+      const targetSection = store.getState().history.present.sections.find((s) => s.id === targetId);
+      if (!targetSection) return;
+
+      if (animFrame) cancelAnimationFrame(animFrame);
+      if (timer) clearTimeout(timer);
+
+      // First hide it to setup entrance transform
+      setPreviewState({ sectionId: targetId, visible: false });
+
+      animFrame = requestAnimationFrame(() => {
+        setPreviewState({ sectionId: targetId, visible: true });
+      });
+
+      const totalDuration = (targetSection.transition?.durationMs ?? 700) + (targetSection.transition?.delayMs ?? 0) + 150;
+      timer = setTimeout(() => {
+        setPreviewState(null);
+      }, Math.max(totalDuration, 600));
+    };
+
+    window.addEventListener("dib:preview-section-transition", handler);
+    return () => {
+      window.removeEventListener("dib:preview-section-transition", handler);
+      if (animFrame) cancelAnimationFrame(animFrame);
+      if (timer) clearTimeout(timer);
+    };
+  }, [store]);
 
   // Ctrl/Cmd + wheel zooms (non-passive so the browser zoom is prevented).
   useEffect(() => {
@@ -105,6 +144,15 @@ export function Artboard() {
                 >
                   {sectionLabel(doc, section.id)} · {CANONICAL_BASE_WIDTH}×{section.baseHeight}
                 </button>
+                {section.transition?.type && section.transition.type !== "none" ? (
+                  <span
+                    className={styles.sectionTransBadge}
+                    title={`Transisi: ${getSectionTransitionMeta(section.transition.type).label}`}
+                    data-testid={`section-trans-badge-${section.id}`}
+                  >
+                    ⚡ {getSectionTransitionMeta(section.transition.type).label}
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   className={styles.layerToggle}
@@ -165,7 +213,13 @@ export function Artboard() {
                 className={styles.canvasFrame}
                 data-active={active}
                 data-testid={`canvas-${section.id}`}
-                style={{ width: CANONICAL_BASE_WIDTH * zoom, height: section.baseHeight * zoom }}
+                style={{
+                  width: CANONICAL_BASE_WIDTH * zoom,
+                  height: section.baseHeight * zoom,
+                  ...(previewState?.sectionId === section.id
+                    ? getSectionTransitionStyles(section.transition, previewState.visible)
+                    : {}),
+                }}
               >
                 <SectionCanvasLazy sectionId={section.id} />
               </div>
