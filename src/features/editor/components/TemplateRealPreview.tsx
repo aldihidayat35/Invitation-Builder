@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
 import { applyDefaults, createVariableRegistry, resolveDocument } from "@/lib/engine";
 import { DocumentRenderer } from "@/features/renderer";
@@ -95,7 +95,12 @@ export function TemplateRealPreview({
     return resolveDocument(document, data, guest);
   }, [document]);
 
+  const stageRef = useRef<HTMLElement | null>(null);
+
   function handleReplay() {
+    if (typeof stageRef.current?.scrollTo === "function") {
+      stageRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("dib:replay-animation", { detail: {} }));
@@ -159,7 +164,7 @@ export function TemplateRealPreview({
       </header>
 
       {/* Main Preview Stage */}
-      <main className={styles.stage}>
+      <main ref={stageRef} className={styles.stage}>
         <div
           className={styles.deviceShell}
           data-view={viewMode}

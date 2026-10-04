@@ -1,10 +1,12 @@
 .previewContainer {
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--dash-canvas-bg, #f4f5f8);
   color: var(--dash-text, #111827);
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  overflow: hidden;
 }
 
 .topBar {
@@ -15,6 +17,7 @@
   align-items: center;
   justify-content: space-between;
   height: 52px;
+  flex-shrink: 0;
   padding: 0 20px;
   background: var(--dash-surface, #ffffff);
   border-bottom: 1px solid var(--dash-border, #e5e7eb);
@@ -124,6 +127,18 @@
   align-items: flex-start;
   padding: 28px 16px 64px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  /* Hide ugly browser scrollbars cleanly across all browsers while keeping smooth flexible scrolling */
+  scrollbar-width: none; /* Firefox, modern Chrome/Safari */
+  -ms-overflow-style: none; /* IE / Edge */
+}
+
+.stage::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .deviceShell {
@@ -137,6 +152,14 @@
     0 8px 10px -6px rgb(16 24 40 / 0.05);
   overflow: hidden;
   transition: max-width 200ms ease, border-radius 200ms ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.deviceShell::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .deviceShell[data-view="full"] {
