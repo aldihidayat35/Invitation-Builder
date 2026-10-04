@@ -14,6 +14,7 @@ import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
 import { parseWishItems } from "@/features/widgets/runtime/WishesWidget";
+import { parseCouplePerson } from "@/features/widgets/runtime/CoupleProfileWidget";
 import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
@@ -3210,6 +3211,498 @@ export function WishesVisual({
   );
 }
 
+function CanvasPersonAvatar({
+  x,
+  y,
+  width,
+  height,
+  radius = 12,
+  arch = false,
+  circle = false,
+  strokeWidth = 1,
+  color,
+  src,
+  initial,
+  roleLabel,
+  rotation,
+}: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius?: number;
+  arch?: boolean;
+  circle?: boolean;
+  strokeWidth?: number;
+  color: string;
+  src?: string;
+  initial: string;
+  roleLabel: string;
+  rotation?: number;
+}) {
+  if (src) {
+    return (
+      <CanvasGalleryPhoto
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        radius={circle ? width / 2 : radius}
+        arch={arch}
+        strokeWidth={strokeWidth}
+        color={color}
+        src={src}
+        rotation={rotation}
+      />
+    );
+  }
+
+  // Monogram Fallback
+  const topRadius = arch ? Math.min(width / 2, 70) : radius;
+  const clippedRadius = circle ? width / 2 : Math.min(radius, width / 2, height / 2);
+  const rectCornerRadius: [number, number, number, number] | number = arch
+    ? [topRadius, topRadius, radius, radius]
+    : clippedRadius;
+
+  return (
+    <Group x={x} y={y} rotation={rotation}>
+      <Rect
+        width={width}
+        height={height}
+        cornerRadius={rectCornerRadius}
+        fill={color}
+        opacity={0.08}
+      />
+      <Rect
+        width={width}
+        height={height}
+        cornerRadius={rectCornerRadius}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        opacity={0.35}
+      />
+      <Text
+        width={width}
+        y={height * 0.22}
+        text={initial}
+        fontSize={Math.min(36, width * 0.38)}
+        fontFamily="serif"
+        fontStyle="bold"
+        fill={color}
+        align="center"
+      />
+      <Text
+        width={width}
+        y={height * 0.65}
+        text={roleLabel}
+        fontSize={8}
+        fill={color}
+        opacity={0.7}
+        align="center"
+      />
+    </Group>
+  );
+}
+
+function CoupleProfileVisual({
+  element,
+  tokens,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+}) {
+  const { w, h } = element.frame;
+  const { color } = colors(element, tokens);
+  const variant = element.style.variant || "side-by-side";
+  const props = element.props as Record<string, unknown>;
+
+  const groom = parseCouplePerson(props.groom, "Mempelai Pria");
+  const bride = parseCouplePerson(props.bride, "Mempelai Wanita");
+
+  const groomFirst = props.order !== "bride-first";
+  const first = groomFirst ? groom : bride;
+  const second = groomFirst ? bride : groom;
+  const firstRole = first.role || (groomFirst ? "Mempelai Pria" : "Mempelai Wanita");
+  const secondRole = second.role || (groomFirst ? "Mempelai Wanita" : "Mempelai Pria");
+
+  const firstSrc = parseFrameImage(first.photo) ?? undefined;
+  const secondSrc = parseFrameImage(second.photo) ?? undefined;
+
+  const firstInitial = (first.name || first.fullName || (groomFirst ? "R" : "A")).charAt(0).toUpperCase();
+  const secondInitial = (second.name || second.fullName || (groomFirst ? "A" : "R")).charAt(0).toUpperCase();
+
+  const title = typeof props.title === "string" ? props.title : "";
+  const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
+  const connector = typeof props.connector === "string" && props.connector.trim() ? props.connector.trim() : "&";
+  const showInstagram = props.showInstagram !== false;
+  const showParents = props.showParents !== false;
+
+  const hasHeader = Boolean(title || subtitle);
+  const headerH = hasHeader ? (subtitle ? 42 : 26) : 0;
+  const top = 12 + headerH;
+  const radius = element.style.radius ?? 12;
+
+  const headerVisual = hasHeader ? (
+    <Group x={12} y={10}>
+      {title ? (
+        <Text
+          width={w - 24}
+          text={title}
+          fontSize={16}
+          fontFamily={variant === "luxury-gold" ? "serif" : undefined}
+          fontStyle="bold"
+          fill={color}
+          align="center"
+        />
+      ) : null}
+      {subtitle ? (
+        <Text
+          y={title ? 20 : 0}
+          width={w - 24}
+          text={subtitle}
+          fontSize={10.5}
+          fill={color}
+          opacity={0.7}
+          align="center"
+        />
+      ) : null}
+    </Group>
+  ) : null;
+
+  // 1. Stacked Layout: for variant === "stacked-cards" or "minimalist-editorial"
+  if (variant === "stacked-cards" || variant === "minimalist-editorial") {
+    const cardGap = 28;
+    const cardH = Math.min(130, (h - top - 16 - cardGap) / 2);
+    const cardW = w - 24;
+    const isEditorial = variant === "minimalist-editorial";
+
+    const renderCard = (
+      person: typeof first,
+      personSrc: string | undefined,
+      initial: string,
+      role: string,
+      yPos: number,
+    ) => {
+      const avatarSize = Math.min(76, cardH - 18);
+      return (
+        <Group x={12} y={yPos}>
+          <Rect
+            width={cardW}
+            height={cardH}
+            cornerRadius={isEditorial ? 0 : 12}
+            fill="#ffffff"
+            opacity={0.88}
+            stroke={color}
+            strokeWidth={isEditorial ? 0 : 1}
+          />
+          {isEditorial ? (
+            <Line points={[0, 0, 0, cardH]} stroke={color} strokeWidth={3} />
+          ) : null}
+
+          <CanvasPersonAvatar
+            x={10}
+            y={(cardH - avatarSize) / 2}
+            width={avatarSize}
+            height={avatarSize}
+            radius={isEditorial ? 0 : 10}
+            circle={!isEditorial}
+            color={color}
+            src={personSrc}
+            initial={initial}
+            roleLabel={role}
+          />
+
+          <Group x={avatarSize + 22} y={10}>
+            <Text
+              text={role.toUpperCase()}
+              fontSize={8.5}
+              fontStyle="bold"
+              fill={color}
+              opacity={0.65}
+            />
+            <Text
+              y={13}
+              text={person.name ?? ""}
+              fontSize={15}
+              fontFamily={isEditorial ? "serif" : undefined}
+              fontStyle="bold"
+              fill={color}
+            />
+            <Text
+              y={32}
+              width={cardW - avatarSize - 32}
+              text={person.fullName ?? ""}
+              fontSize={11}
+              fontStyle="bold"
+              fill={color}
+              opacity={0.9}
+              ellipsis
+            />
+            {showParents && person.parents ? (
+              <Text
+                y={48}
+                width={cardW - avatarSize - 32}
+                height={26}
+                text={person.parents}
+                fontSize={9.5}
+                fill={color}
+                opacity={0.7}
+                lineHeight={1.25}
+                ellipsis
+              />
+            ) : null}
+            {showInstagram && person.instagram ? (
+              <Group y={cardH - 30}>
+                <Rect
+                  width={Math.min(110, person.instagram.length * 7 + 22)}
+                  height={18}
+                  cornerRadius={9}
+                  stroke={color}
+                  strokeWidth={0.8}
+                  opacity={0.4}
+                />
+                <Text
+                  x={8}
+                  y={4}
+                  text={`@${person.instagram}`}
+                  fontSize={9}
+                  fill={color}
+                />
+              </Group>
+            ) : null}
+          </Group>
+        </Group>
+      );
+    };
+
+    return (
+      <Group listening={false}>
+        <Background element={element} tokens={tokens} />
+        {headerVisual}
+        {renderCard(first, firstSrc, firstInitial, firstRole, top)}
+        <Group x={w / 2 - 14} y={top + cardH + (cardGap - 28) / 2}>
+          <Circle x={14} y={14} radius={14} fill="#ffffff" stroke={color} strokeWidth={1.5} />
+          <Text x={0} y={6} width={28} text={connector} fontSize={13} fontFamily="serif" fontStyle="bold" fill={color} align="center" />
+        </Group>
+        {renderCard(second, secondSrc, secondInitial, secondRole, top + cardH + cardGap)}
+      </Group>
+    );
+  }
+
+  // 2. Dual Column Layout
+  const colW = (w - 32) / 2;
+  const isCircle = variant === "circular-medallion";
+  const isArch = variant === "arch-window";
+  const isLuxury = variant === "luxury-gold";
+  const isPolaroid = variant === "polaroid-duo";
+  const isHeritage = variant === "heritage-ornament";
+  const isHeart = variant === "heart-romance";
+  const isGlass = variant === "glass-morphism";
+
+  const photoW = isCircle ? Math.min(colW - 12, 100) : colW - 8;
+  const photoH = isCircle ? photoW : isArch ? photoW * 1.3 : isPolaroid ? photoW : photoW * 1.1;
+
+  const renderColumn = (
+    person: typeof first,
+    personSrc: string | undefined,
+    initial: string,
+    role: string,
+    colX: number,
+    rotation = 0,
+  ) => {
+    const avatarX = colX + (colW - photoW) / 2;
+    const textY = top + photoH + (isPolaroid ? 16 : 8);
+
+    return (
+      <Group key={role}>
+        {isGlass ? (
+          <Rect
+            x={colX}
+            y={top - 4}
+            width={colW}
+            height={h - top - 8}
+            cornerRadius={14}
+            fill="#ffffff"
+            opacity={0.55}
+            stroke={color}
+            strokeWidth={1}
+          />
+        ) : isHeritage ? (
+          <Rect
+            x={colX}
+            y={top - 4}
+            width={colW}
+            height={h - top - 8}
+            cornerRadius={6}
+            fill="#ffffff"
+            opacity={0.8}
+            stroke="#c59b27"
+            strokeWidth={1.2}
+          />
+        ) : null}
+
+        {isPolaroid ? (
+          <Group x={avatarX} y={top} rotation={rotation}>
+            <Rect
+              x={-4}
+              y={-4}
+              width={photoW + 8}
+              height={photoH + 34}
+              fill="#ffffff"
+              cornerRadius={2}
+              stroke={color}
+              strokeWidth={0.8}
+              shadowColor="#000"
+              shadowBlur={8}
+              shadowOpacity={0.12}
+            />
+          </Group>
+        ) : null}
+
+        <CanvasPersonAvatar
+          x={avatarX}
+          y={top}
+          width={photoW}
+          height={photoH}
+          radius={isArch ? 50 : isCircle ? photoW / 2 : radius}
+          arch={isArch}
+          circle={isCircle}
+          strokeWidth={isLuxury || isHeritage ? 2 : 1}
+          color={isLuxury || isHeritage ? "#c59b27" : color}
+          src={personSrc}
+          initial={initial}
+          roleLabel={role}
+          rotation={isPolaroid ? rotation : 0}
+        />
+
+        <Group x={colX} y={textY}>
+          <Text
+            width={colW}
+            text={role.toUpperCase()}
+            fontSize={8}
+            fontStyle="bold"
+            fill={color}
+            opacity={0.65}
+            align="center"
+          />
+          <Text
+            y={12}
+            width={colW}
+            text={person.name ?? ""}
+            fontSize={16}
+            fontFamily={isLuxury ? "serif" : undefined}
+            fontStyle="bold"
+            fill={color}
+            align="center"
+          />
+          <Text
+            y={32}
+            width={colW}
+            text={person.fullName ?? ""}
+            fontSize={10.5}
+            fontStyle="bold"
+            fill={color}
+            opacity={0.9}
+            align="center"
+            ellipsis
+          />
+          {showParents && person.parents ? (
+            <Text
+              y={48}
+              width={colW}
+              height={36}
+              text={person.parents}
+              fontSize={9}
+              fill={color}
+              opacity={0.7}
+              lineHeight={1.25}
+              align="center"
+              ellipsis
+            />
+          ) : null}
+          {showInstagram && person.instagram ? (
+            <Group x={colW / 2 - Math.min(colW * 0.45, 45)} y={88}>
+              <Rect
+                width={Math.min(colW * 0.9, 90)}
+                height={18}
+                cornerRadius={9}
+                stroke={color}
+                strokeWidth={0.8}
+                opacity={0.4}
+              />
+              <Text
+                width={Math.min(colW * 0.9, 90)}
+                y={4}
+                text={`@${person.instagram}`}
+                fontSize={8.5}
+                fill={color}
+                align="center"
+                ellipsis
+              />
+            </Group>
+          ) : null}
+        </Group>
+      </Group>
+    );
+  };
+
+  const badgeY = top + photoH * 0.38;
+
+  return (
+    <Group listening={false}>
+      <Background element={element} tokens={tokens} />
+      {isLuxury ? (
+        <Rect
+          x={4}
+          y={4}
+          width={w - 8}
+          height={h - 8}
+          cornerRadius={4}
+          stroke="#b45309"
+          strokeWidth={1.5}
+        />
+      ) : null}
+      {headerVisual}
+      {renderColumn(first, firstSrc, firstInitial, firstRole, 12, isPolaroid ? -3 : 0)}
+
+      {/* Floating Center Connector */}
+      <Group x={w / 2 - 14} y={badgeY}>
+        {isLuxury ? (
+          <Rect
+            x={14}
+            y={14}
+            width={24}
+            height={24}
+            offsetX={12}
+            offsetY={12}
+            rotation={45}
+            fill="#ffffff"
+            stroke="#b45309"
+            strokeWidth={1.5}
+          />
+        ) : isHeart ? (
+          <Circle x={14} y={14} radius={14} fill="#ffffff" stroke="#e11d48" strokeWidth={1.5} />
+        ) : (
+          <Circle x={14} y={14} radius={14} fill="#ffffff" stroke={color} strokeWidth={1.5} />
+        )}
+        <Text
+          x={0}
+          y={isLuxury ? 6 : 7}
+          width={28}
+          text={isHeart ? "♥" : connector}
+          fontSize={13}
+          fontFamily="serif"
+          fontStyle="bold"
+          fill={isHeart ? "#e11d48" : isLuxury ? "#b45309" : color}
+          align="center"
+        />
+      </Group>
+
+      {renderColumn(second, secondSrc, secondInitial, secondRole, 12 + colW + 8, isPolaroid ? 3 : 0)}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -3238,6 +3731,8 @@ export function CurrentWidgetVisual({
       return <TimelineVisual element={element} tokens={tokens} />;
     case "wishes":
       return <WishesVisual element={element} tokens={tokens} />;
+    case "coupleProfile":
+      return <CoupleProfileVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

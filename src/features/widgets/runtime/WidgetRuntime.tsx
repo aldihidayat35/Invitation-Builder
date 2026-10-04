@@ -12,6 +12,7 @@ import { PhotoFrameWidget } from "./PhotoFrameWidget";
 import { RsvpWidget } from "./RsvpWidget";
 import { TimelineWidget } from "./TimelineWidget";
 import { WishesWidget } from "./WishesWidget";
+import { CoupleProfileWidget } from "./CoupleProfileWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -90,6 +91,19 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       items={p.items}
       allowPost={p.allowPost}
       maxDisplay={p.maxDisplay}
+      style={style}
+    />
+  ),
+  coupleProfile: (p, style) => (
+    <CoupleProfileWidget
+      title={p.title}
+      subtitle={p.subtitle}
+      connector={p.connector}
+      order={p.order}
+      showInstagram={p.showInstagram}
+      showParents={p.showParents}
+      groom={p.groom}
+      bride={p.bride}
       style={style}
     />
   ),

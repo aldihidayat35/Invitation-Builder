@@ -368,6 +368,15 @@ describe("Canvas Widget Visuals", () => {
         frame: { x: 0, y: 0, w: 326, h: 440, rotation: 0 },
         props: { title: "Ucapan & Doa", subtitle: "Doa restu Anda", items: [] },
       },
+      coupleProfile: {
+        frame: { x: 0, y: 0, w: 326, h: 560, rotation: 0 },
+        props: {
+          title: "Mempelai",
+          connector: "&",
+          groom: { name: "Rama", fullName: "Rama Pratama, S.T.", parents: "Putra dari Bpk. Bambang" },
+          bride: { name: "Alya", fullName: "Alya Putri Saraswati, S.Ked.", parents: "Putri dari Bpk. Hendra" },
+        },
+      },
     };
 
     for (const [widgetType, sample] of Object.entries(samples)) {

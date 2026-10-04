@@ -15,6 +15,7 @@ import { GiftAccountsControl } from "./GiftAccountsControl";
 import { PhotoFrameImageControl } from "./PhotoFrameImageControl";
 import { TimelineEventsControl } from "./TimelineEventsControl";
 import { WishesItemsControl } from "./WishesItemsControl";
+import { CouplePersonControl } from "./CouplePersonControl";
 import { useEditorStore } from "./EditorProvider";
 import {
   ColorField,
@@ -281,6 +282,14 @@ export function WidgetPanel({
                   value={value}
                   disabled={disabled}
                   onChange={(items) => setProp(name, items)}
+                />
+              ) : element.widgetType === "coupleProfile" && (name === "groom" || name === "bride") ? (
+                <CouplePersonControl
+                  personType={name as "groom" | "bride"}
+                  label={name === "groom" ? "Mempelai Pria" : "Mempelai Wanita"}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(personData: Record<string, unknown>) => setProp(name, personData)}
                 />
               ) : (
                 <StaticControl

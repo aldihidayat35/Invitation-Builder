@@ -246,17 +246,36 @@ export const wishesWidget: WidgetDefinition = {
 
 export const COUPLE_PROFILE_WIDGET_TYPE = "coupleProfile";
 
+const couplePersonSchema = z.union([
+  z.object({
+    name: z.string().optional(),
+    fullName: z.string().optional(),
+    role: z.string().optional(),
+    parents: z.string().optional(),
+    instagram: z.string().optional(),
+    photo: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+  }),
+  collectionSchema,
+  z.record(z.string(), z.unknown()),
+]);
+
 export const coupleProfileWidget: WidgetDefinition = {
   type: COUPLE_PROFILE_WIDGET_TYPE,
   version: 1,
   label: "Profil Mempelai",
-  defaultFrame: { w: 340, h: 480 },
+  defaultFrame: { w: 326, h: 560 },
   defaultStyle: getDefaultWidgetStyle(COUPLE_PROFILE_WIDGET_TYPE),
   defaultProps: {
+    title: "Mempelai",
+    subtitle: "Dengan memohon rahmat dan ridho Allah SWT",
     connector: "&",
+    order: "groom-first",
+    showInstagram: true,
+    showParents: true,
     groom: {
       name: "Rama",
       fullName: "Rama Pratama, S.T.",
+      role: "Mempelai Pria",
       parents: "Putra pertama dari Bpk. Bambang & Ibu Sri Wahyuni",
       instagram: "ramapratama",
       photo: "",
@@ -264,17 +283,29 @@ export const coupleProfileWidget: WidgetDefinition = {
     bride: {
       name: "Alya",
       fullName: "Alya Putri Saraswati, S.Ked.",
+      role: "Mempelai Wanita",
       parents: "Putri kedua dari Bpk. Dr. Hendra & Ibu Ratna Dewi",
       instagram: "alyasaraswati",
       photo: "",
     },
   },
   props: {
+    title: defineProp("text", "Judul Bagian", z.string().max(80).optional()),
+    subtitle: defineProp("text", "Subjudul / Kutipan", z.string().max(160).optional()),
     connector: defineProp("text", "Konektor / Simbol Pemisah", z.string().max(20).default("&")),
+    order: defineProp("text", "Urutan Mempelai", z.enum(["groom-first", "bride-first"]).default("groom-first"), {
+      control: "select",
+      options: [
+        { value: "groom-first", label: "Mempelai Pria dulu" },
+        { value: "bride-first", label: "Mempelai Wanita dulu" },
+      ],
+    }),
+    showInstagram: defineProp("boolean", "Tampilkan Instagram", z.boolean().default(true)),
+    showParents: defineProp("boolean", "Tampilkan Keterangan Orang Tua", z.boolean().default(true)),
     groom: defineProp(
       "collection",
       "Data Mempelai Pria (name, fullName, parents, photo, instagram)",
-      collectionSchema,
+      couplePersonSchema,
       {
         control: "binding",
       },
@@ -282,19 +313,28 @@ export const coupleProfileWidget: WidgetDefinition = {
     bride: defineProp(
       "collection",
       "Data Mempelai Wanita (name, fullName, parents, photo, instagram)",
-      collectionSchema,
+      couplePersonSchema,
       {
         control: "binding",
       },
     ),
   },
   placeholder: (props) => {
-    const groomRec = typeof props.groom === "object" && props.groom !== null ? (props.groom as Record<string, unknown>) : undefined;
-    const brideRec = typeof props.bride === "object" && props.bride !== null ? (props.bride as Record<string, unknown>) : undefined;
+    const groomRec = typeof props.groom === "object" && props.groom !== null && !Array.isArray(props.groom)
+      ? (props.groom as Record<string, unknown>)
+      : Array.isArray(props.groom) && props.groom.length > 0 && typeof props.groom[0] === "object"
+        ? (props.groom[0] as Record<string, unknown>)
+        : undefined;
+    const brideRec = typeof props.bride === "object" && props.bride !== null && !Array.isArray(props.bride)
+      ? (props.bride as Record<string, unknown>)
+      : Array.isArray(props.bride) && props.bride.length > 0 && typeof props.bride[0] === "object"
+        ? (props.bride[0] as Record<string, unknown>)
+        : undefined;
     const groomName = typeof groomRec?.name === "string" ? groomRec.name : "Rama";
     const brideName = typeof brideRec?.name === "string" ? brideRec.name : "Alya";
+    const conn = typeof props.connector === "string" ? props.connector : "&";
     return {
-      title: `${groomName} & ${brideName}`,
+      title: `${groomName} ${conn} ${brideName}`,
       subtitle: "Profil Pasangan Mempelai",
     };
   },

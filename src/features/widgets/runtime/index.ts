@@ -11,5 +11,6 @@ export { GiftWidget, parseGiftAccounts } from "./GiftWidget";
 export { PhotoFrameWidget, parseFrameImage } from "./PhotoFrameWidget";
 export { TimelineWidget, parseTimelineEvents, type TimelineEventItem } from "./TimelineWidget";
 export { WishesWidget, parseWishItems, type WishItem } from "./WishesWidget";
+export { CoupleProfileWidget, parseCouplePerson, type CouplePerson } from "./CoupleProfileWidget";
 export { PublicContextProvider, usePublicContext, type PublicContextValue } from "./PublicContext";
 

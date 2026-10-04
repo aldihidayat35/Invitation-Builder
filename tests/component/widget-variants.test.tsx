@@ -34,6 +34,12 @@ const propsByType: Readonly<Record<string, Readonly<Record<string, unknown>>>> =
       { src: "https://example.test/c.jpg", alt: "Foto C" },
     ],
   },
+  coupleProfile: {
+    title: "Mempelai",
+    connector: "&",
+    groom: { name: "Rama", fullName: "Rama Pratama, S.T.", parents: "Putra dari Bpk. Bambang" },
+    bride: { name: "Alya", fullName: "Alya Putri Saraswati, S.Ked.", parents: "Putri dari Bpk. Hendra" },
+  },
 };
 
 describe("current widget style variants", () => {
