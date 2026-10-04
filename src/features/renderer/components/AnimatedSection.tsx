@@ -30,18 +30,16 @@ export function AnimatedSection({
   const transition = section.transition;
   const hasTransition = Boolean(transition && transition.type !== "none");
 
-  // First section defaults to visible so above-the-fold content appears immediately
-  const [isVisible, setIsVisible] = useState<boolean>(() => {
-    if (!hasTransition || first) return true;
-    if (typeof window === "undefined" || typeof IntersectionObserver === "undefined") {
-      return true;
-    }
-    return false;
-  });
+  // First section defaults to visible so above-the-fold content appears immediately.
+  // Must be identical on both server and client to avoid SSR hydration mismatch.
+  const [isVisible, setIsVisible] = useState<boolean>(!hasTransition || first);
 
   useEffect(() => {
-    if (!hasTransition || !sectionRef.current || typeof IntersectionObserver === "undefined") {
-      return;
+    if (!hasTransition || !sectionRef.current) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      const timer = setTimeout(() => setIsVisible(true), 0);
+      return () => clearTimeout(timer);
     }
 
     const node = sectionRef.current;
@@ -92,6 +90,7 @@ export function AnimatedSection({
       data-section-transition={transition?.type ?? "none"}
       data-section-transition-state={isVisible ? "visible" : "hidden"}
       style={mergedStyle}
+      suppressHydrationWarning
     >
       {children}
     </section>
