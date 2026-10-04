@@ -46,6 +46,8 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
         focal: { x: 0.5, y: 0.5 },
         radius: 0,
         opacity: 1,
+        flipH: false,
+        flipV: false,
       },
       alt: "Foto mempelai",
     };
@@ -80,7 +82,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
     return { store };
   }
 
-  it("renders 'Potong (Crop)' and 'Hapus BG' buttons when an image is selected", () => {
+  it("renders 'Potong (Crop)', 'Flip H', 'Flip V', and 'Hapus BG' buttons when an image is selected", () => {
     const { store } = setupEditorWithImage();
 
     render(
@@ -90,13 +92,60 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
     );
 
     const cropBtn = screen.getByTestId("image-crop-btn");
+    const flipHBtn = screen.getByTestId("image-flip-h-btn");
+    const flipVBtn = screen.getByTestId("image-flip-v-btn");
     const removeBgBtn = screen.getByTestId("image-remove-bg-btn");
 
     expect(cropBtn).toBeInTheDocument();
     expect(cropBtn).toHaveTextContent("Potong (Crop)");
 
+    expect(flipHBtn).toBeInTheDocument();
+    expect(flipHBtn).toHaveTextContent("Flip H");
+    expect(flipHBtn).toHaveAttribute("data-active", "false");
+
+    expect(flipVBtn).toBeInTheDocument();
+    expect(flipVBtn).toHaveTextContent("Flip V");
+    expect(flipVBtn).toHaveAttribute("data-active", "false");
+
     expect(removeBgBtn).toBeInTheDocument();
     expect(removeBgBtn).toHaveTextContent("Hapus BG");
+  });
+
+  it("toggles flipH and flipV styles when flip buttons are clicked", () => {
+    const { store } = setupEditorWithImage();
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_test">
+        <Inspector />
+      </EditorProvider>,
+    );
+
+    const flipHBtn = screen.getByTestId("image-flip-h-btn");
+    const flipVBtn = screen.getByTestId("image-flip-v-btn");
+
+    // Click Flip H
+    fireEvent.click(flipHBtn);
+    let el = store.getState().history.present.sections[0]?.elements[0];
+    if (el?.type === "image") {
+      expect(el.style.flipH).toBe(true);
+    }
+    expect(flipHBtn).toHaveAttribute("data-active", "true");
+
+    // Click Flip H again to toggle off
+    fireEvent.click(flipHBtn);
+    el = store.getState().history.present.sections[0]?.elements[0];
+    if (el?.type === "image") {
+      expect(el.style.flipH).toBe(false);
+    }
+    expect(flipHBtn).toHaveAttribute("data-active", "false");
+
+    // Click Flip V
+    fireEvent.click(flipVBtn);
+    el = store.getState().history.present.sections[0]?.elements[0];
+    if (el?.type === "image") {
+      expect(el.style.flipV).toBe(true);
+    }
+    expect(flipVBtn).toHaveAttribute("data-active", "true");
   });
 
   it("opens ImageCropModal on clicking 'Potong (Crop)' and closes on cancel", async () => {

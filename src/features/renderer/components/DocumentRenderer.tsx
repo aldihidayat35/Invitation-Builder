@@ -144,6 +144,8 @@ function ElementView({
           focal={element.style.focal}
           radius={element.style.radius}
           opacity={element.style.opacity}
+          flipH={element.style.flipH}
+          flipV={element.style.flipV}
           priority={priority}
         />
       ) : null;

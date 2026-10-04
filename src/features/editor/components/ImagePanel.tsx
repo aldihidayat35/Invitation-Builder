@@ -10,7 +10,7 @@ import { useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { ImageCropModal } from "./ImageCropModal";
 import { RemoveBgModal } from "./RemoveBgModal";
 import { NumberField, SelectField, TextField } from "./fields";
-import { IconCrop, IconWand } from "./icons";
+import { IconCrop, IconFlipH, IconFlipV, IconWand } from "./icons";
 import styles from "./editor.module.css";
 
 type ImageElement = Extract<Element, { type: "image" }>;
@@ -74,6 +74,30 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
           >
             <IconCrop size={14} />
             <span>Potong (Crop)</span>
+          </button>
+          <button
+            type="button"
+            className={styles.imageToolBtn}
+            disabled={disabled}
+            data-active={Boolean(style.flipH)}
+            data-testid="image-flip-h-btn"
+            title="Balik horizontal (kiri-kanan)"
+            onClick={() => patchStyle({ flipH: !style.flipH })}
+          >
+            <IconFlipH size={14} />
+            <span>Flip H</span>
+          </button>
+          <button
+            type="button"
+            className={styles.imageToolBtn}
+            disabled={disabled}
+            data-active={Boolean(style.flipV)}
+            data-testid="image-flip-v-btn"
+            title="Balik vertikal (atas-bawah)"
+            onClick={() => patchStyle({ flipV: !style.flipV })}
+          >
+            <IconFlipV size={14} />
+            <span>Flip V</span>
           </button>
           <button
             type="button"

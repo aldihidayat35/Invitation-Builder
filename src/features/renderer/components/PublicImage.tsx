@@ -11,6 +11,8 @@ export interface PublicImageProps {
   readonly focal?: { readonly x: number; readonly y: number };
   readonly radius?: number;
   readonly opacity?: number;
+  readonly flipH?: boolean;
+  readonly flipV?: boolean;
   /** Above-the-fold image: eager load + high fetch priority. Otherwise lazy. */
   readonly priority?: boolean;
 }
@@ -29,8 +31,14 @@ export function PublicImage({
   focal = { x: 0.5, y: 0.5 },
   radius = 0,
   opacity = 1,
+  flipH = false,
+  flipV = false,
   priority = false,
 }: PublicImageProps) {
+  const transforms: string[] = [];
+  if (flipH) transforms.push("scaleX(-1)");
+  if (flipV) transforms.push("scaleY(-1)");
+
   const style: CSSProperties = {
     display: "block",
     width: "100%",
@@ -39,6 +47,7 @@ export function PublicImage({
     objectPosition: focalToObjectPosition(focal),
     borderRadius: radius > 0 ? `calc(var(--u, 1px) * ${radius})` : 0,
     opacity,
+    ...(transforms.length > 0 && { transform: transforms.join(" ") }),
   };
   return (
     // eslint-disable-next-line @next/next/no-img-element -- asset delivery is our own route; variants come later

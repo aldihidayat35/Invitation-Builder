@@ -2114,6 +2114,13 @@ textarea.input {
   cursor: not-allowed;
 }
 
+.imageToolBtn[data-active="true"] {
+  background: var(--dash-accent-soft);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+  font-weight: 600;
+}
+
 .modalBackdrop {
   position: fixed;
   inset: 0;

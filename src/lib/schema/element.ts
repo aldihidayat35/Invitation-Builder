@@ -64,6 +64,8 @@ export const imageStyleSchema = z.strictObject({
     .default({ x: 0.5, y: 0.5 }),
   radius: z.number().min(0).max(10_000).default(0),
   opacity: opacitySchema.default(1),
+  flipH: z.boolean().default(false),
+  flipV: z.boolean().default(false),
 });
 
 export const imageElementSchema = z.strictObject({

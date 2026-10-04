@@ -70,7 +70,9 @@ export function ImageVisual({ element }: { element: ImageElement }) {
   }
   if (!image) return <Placeholder w={w} h={h} title="Memuat gambar..." />;
 
-  const { fit, focal, radius } = element.style;
+  const { fit, focal, radius, flipH, flipV } = element.style;
+  const isFlipH = Boolean(flipH);
+  const isFlipV = Boolean(flipV);
   const { crop, dest } = fitImage({
     boxWidth: w,
     boxHeight: h,
@@ -84,6 +86,10 @@ export function ImageVisual({ element }: { element: ImageElement }) {
   return (
     <Group
       listening={false}
+      x={isFlipH ? w : 0}
+      y={isFlipV ? h : 0}
+      scaleX={isFlipH ? -1 : 1}
+      scaleY={isFlipV ? -1 : 1}
       {...(r > 0 && {
         clipFunc: (ctx: {
           beginPath(): void;

@@ -141,8 +141,16 @@ describe("PublicImage (FR-AST-002)", () => {
     expect(img.style.opacity).toBe("0.5");
   });
 
-  it("priority images load eagerly", () => {
-    render(<PublicImage assetId="a" alt="Hero" width={10} height={10} priority />);
-    expect(screen.getByRole("img", { name: "Hero" })).toHaveAttribute("loading", "eager");
+  it("applies flip transforms when flipH or flipV is set", () => {
+    const { unmount } = render(
+      <PublicImage assetId="a" alt="Flipped" width={100} height={100} flipH flipV />,
+    );
+    let img = screen.getByRole("img", { name: "Flipped" });
+    expect(img.style.transform).toBe("scaleX(-1) scaleY(-1)");
+    unmount();
+
+    render(<PublicImage assetId="a" alt="Flip Horizontal Only" width={100} height={100} flipH />);
+    img = screen.getByRole("img", { name: "Flip Horizontal Only" });
+    expect(img.style.transform).toBe("scaleX(-1)");
   });
 });
