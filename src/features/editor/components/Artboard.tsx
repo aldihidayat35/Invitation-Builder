@@ -101,8 +101,7 @@ export function Artboard() {
   }, [store]);
 
   const last = doc.sections.length - 1;
-
-  const [artboardMode, setArtboardMode] = useState<"cards" | "seamless">("cards");
+  const artboardMode = useEditor((s) => s.artboardMode);
 
   return (
     <div
@@ -112,39 +111,6 @@ export function Artboard() {
       data-testid="artboard"
       data-zoom={zoom}
     >
-      {/* Artboard Floating Toolbar: View mode switch & canvas info */}
-      {doc.sections.length > 0 ? (
-        <div className={styles.artboardToolbar}>
-          <div className={styles.artboardMeta}>
-            <span>📱 {doc.sections.length} Section</span>
-            <span>·</span>
-            <span>{CANONICAL_BASE_WIDTH}px Canvas</span>
-          </div>
-          <div className={styles.modeSwitch} role="group" aria-label="Mode Tampilan Artboard">
-            <button
-              type="button"
-              className={styles.modeBtn}
-              data-active={artboardMode === "cards"}
-              onClick={() => setArtboardMode("cards")}
-              title="Tampilan kartu terpisah dengan kontrol rapi"
-            >
-              <span>📑</span>
-              <span>Terpisah</span>
-            </button>
-            <button
-              type="button"
-              className={styles.modeBtn}
-              data-active={artboardMode === "seamless"}
-              onClick={() => setArtboardMode("seamless")}
-              title="Tampilan alur ponsel mulus bersambung seperti di pratinjau"
-            >
-              <span>📱</span>
-              <span>Alur Ponsel</span>
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <div
         className={styles.artboardInner}
         data-mode={artboardMode}

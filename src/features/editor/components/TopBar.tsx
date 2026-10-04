@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
+import { CANONICAL_BASE_WIDTH } from "@/lib/schema";
+import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { IconEye } from "./icons";
@@ -26,6 +27,8 @@ export interface TopBarProps {
 export function TopBar({ templateId, templateName, currentRevision }: TopBarProps) {
   const store = useEditorStore();
   const autosaver = useAutosaver();
+  const doc = useEditor(selectDoc);
+  const artboardMode = useEditor((s) => s.artboardMode);
   const canUndo = useEditor(selectCanUndo);
   const canRedo = useEditor(selectCanRedo);
   const zoom = useEditor((s) => s.zoom);
@@ -116,6 +119,35 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
         >
           Fit
         </button>
+      </div>
+
+      {/* Mode Tampilan Artboard di Header/Navbar */}
+      <div className={styles.navbarModeSwitch} role="group" aria-label="Mode Tampilan Artboard">
+        <span className={styles.navbarMeta}>
+          📱 {doc.sections.length} Section · {CANONICAL_BASE_WIDTH}px Canvas
+        </span>
+        <div className={styles.navbarModePillGroup}>
+          <button
+            type="button"
+            className={styles.navbarModeBtn}
+            data-active={artboardMode === "cards"}
+            onClick={() => store.getState().setArtboardMode("cards")}
+            title="Tampilan kartu terpisah dengan kontrol rapi"
+          >
+            <span>📑</span>
+            <span>Terpisah</span>
+          </button>
+          <button
+            type="button"
+            className={styles.navbarModeBtn}
+            data-active={artboardMode === "seamless"}
+            onClick={() => store.getState().setArtboardMode("seamless")}
+            title="Tampilan alur ponsel mulus bersambung"
+          >
+            <span>📱</span>
+            <span>Alur Ponsel</span>
+          </button>
+        </div>
       </div>
 
       <span className={styles.spacer} />
