@@ -161,13 +161,22 @@ describe("GiftWidget", () => {
   });
 });
 
-describe("MapWidget analytics", () => {
-  it("tracks map_clicked", () => {
+describe("MapWidget analytics & preview", () => {
+  it("tracks map_clicked and renders iframe embed preview", () => {
     const { events, stop } = collectEvents();
-    render(<MapWidget coordinate={{ lat: -6.2, lng: 106.8 }} />);
+    const { container } = render(<MapWidget coordinate={{ lat: -6.2, lng: 106.8 }} />);
+    const iframe = container.querySelector("iframe");
+    expect(iframe).toBeInTheDocument();
+    expect(iframe).toHaveAttribute("src", "https://maps.google.com/maps?q=-6.2,106.8&hl=id&z=15&output=embed");
     fireEvent.click(screen.getByTestId("map-link"));
     expect(events.map((e) => e.event)).toEqual(["map_clicked"]);
     stop();
+  });
+
+  it("renders placeholder when coordinate is not provided", () => {
+    const { container } = render(<MapWidget />);
+    expect(container.querySelector("iframe")).not.toBeInTheDocument();
+    expect(screen.getByTestId("map-link-disabled")).toBeInTheDocument();
   });
 });
 

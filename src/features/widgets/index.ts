@@ -30,6 +30,7 @@ export {
   describeProp,
   greetingParts,
   mapUrl,
+  mapEmbedUrl,
   type CountdownState,
   type CountdownUnit,
 } from "./logic";

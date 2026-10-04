@@ -8,6 +8,7 @@ import {
   defaultWidgetRegistry,
   greetingParts,
   mapUrl,
+  mapEmbedUrl,
   P0_WIDGETS,
 } from "@/features/widgets";
 import { createWidgetElement } from "@/features/editor/core/ops";
@@ -18,15 +19,22 @@ import {
 } from "@/lib/schema";
 import { addSection } from "@/features/editor/core/ops";
 
-describe("mapUrl (FR-WDG-002)", () => {
+describe("mapUrl and mapEmbedUrl (FR-WDG-002)", () => {
   it("builds the exact Google Maps coordinate URL", () => {
     expect(mapUrl({ lat: -7.797068, lng: 110.370529 })).toBe(
       "https://www.google.com/maps/search/?api=1&query=-7.797068,110.370529",
     );
   });
+  it("builds the exact Google Maps embed iframe URL", () => {
+    expect(mapEmbedUrl({ lat: -7.797068, lng: 110.370529 })).toBe(
+      "https://maps.google.com/maps?q=-7.797068,110.370529&hl=id&z=15&output=embed",
+    );
+  });
   it("returns null for anything that is not a valid coordinate", () => {
-    for (const bad of [null, undefined, "x", { lat: 91, lng: 0 }, { lat: 0, lng: 181 }, { lat: 1 }])
+    for (const bad of [null, undefined, "x", { lat: 91, lng: 0 }, { lat: 0, lng: 181 }, { lat: 1 }]) {
       expect(mapUrl(bad)).toBeNull();
+      expect(mapEmbedUrl(bad)).toBeNull();
+    }
   });
 });
 

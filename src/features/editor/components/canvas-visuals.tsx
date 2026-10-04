@@ -361,60 +361,275 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
 
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
-  const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
-  const variant = element.style.variant ?? "outlined";
+  const radius = typeof element.style.radius === "number" ? element.style.radius : 12;
+  const variant = element.style.variant ?? "card";
 
-  const btnH = Math.min(44, Math.max(30, h * 0.44));
-  const btnW = Math.min(w - 28, Math.max(140, w * 0.75));
+  // Calculate layout: map viewport on top, details & button on bottom
+  const pad = 8;
+  const detailsH = Math.min(76, Math.max(54, h * 0.36));
+  const mapH = Math.max(50, h - detailsH - pad * 2);
+  const mapW = w - pad * 2;
+  const mapX = pad;
+  const mapY = pad;
+
+  // Pin & roads geometry within the map viewport
+  const pinX = mapX + mapW / 2;
+  const pinY = mapY + mapH / 2 + 6;
+
+  // Button geometry
+  const btnH = Math.min(34, Math.max(26, detailsH - 28));
+  const btnW = Math.min(w - 32, Math.max(130, w * 0.72));
   const btnX = (w - btnW) / 2;
-  const labelH = 18;
-  const gap = 8;
-  const totalH = labelH + gap + btnH;
-  const startY = Math.max(6, (h - totalH) / 2);
-  const btnY = startY + labelH + gap;
+  const labelY = mapY + mapH + 6;
+  const btnY = labelY + 18;
+
+  // Callout bubble width for venue
+  const calloutW = Math.min(mapW - 16, Math.max(70, label.length * 7 + 16));
+  const calloutX = pinX - calloutW / 2;
+  const calloutY = pinY - 34;
 
   return (
     <Group listening={false}>
+      {/* Outer Card Background */}
       {background !== "transparent" && (
         <Rect width={w} height={h} cornerRadius={radius} fill={background} />
       )}
 
-      {/* Card container */}
+      {/* Card Border & Shadow styling */}
       {variant === "card" && (
         <Rect
           width={w}
           height={h}
-          cornerRadius={radius || 12}
+          cornerRadius={radius}
           stroke={color}
           strokeWidth={1}
           fill={color}
-          opacity={0.05}
+          opacity={0.04}
         />
       )}
 
       {/* Luxury double frame */}
       {variant === "luxury" && (
         <Group>
-          <Rect width={w} height={h} cornerRadius={radius || 12} stroke={color} strokeWidth={1} />
+          <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={1} />
           <Rect
             x={3}
             y={3}
             width={w - 6}
             height={h - 6}
-            cornerRadius={Math.max(0, (radius || 12) - 2)}
+            cornerRadius={Math.max(0, radius - 2)}
             stroke={color}
             strokeWidth={1.5}
           />
         </Group>
       )}
 
+      {/* --- MAP VIEWPORT (REALISTIC GOOGLE MAP PREVIEW) --- */}
+      <Group
+        clipFunc={(ctx: { rect(x: number, y: number, w: number, h: number): void }) => {
+          ctx.rect(mapX, mapY, mapW, mapH);
+        }}
+      >
+        {/* Map Land Background */}
+        <Rect x={mapX} y={mapY} width={mapW} height={mapH} fill="#eef3f6" />
+
+        {/* Park / Green Area */}
+        <Rect
+          x={mapX + mapW * 0.08}
+          y={mapY + mapH * 0.15}
+          width={mapW * 0.28}
+          height={mapH * 0.45}
+          cornerRadius={8}
+          fill="#d8edd7"
+        />
+        <Rect
+          x={mapX + mapW * 0.65}
+          y={mapY + mapH * 0.5}
+          width={mapW * 0.28}
+          height={mapH * 0.42}
+          cornerRadius={6}
+          fill="#d8edd7"
+        />
+
+        {/* Blue River / Waterway Curve */}
+        <Line
+          points={[
+            mapX - 10,
+            mapY + mapH * 0.85,
+            mapX + mapW * 0.35,
+            mapY + mapH * 0.65,
+            mapX + mapW * 0.65,
+            mapY + mapH * 0.4,
+            mapX + mapW + 10,
+            mapY + mapH * 0.2,
+          ]}
+          stroke="#bcd7ef"
+          strokeWidth={14}
+          tension={0.4}
+        />
+
+        {/* Local Road Grid (White with grey borders) */}
+        <Line
+          points={[mapX, mapY + mapH * 0.35, mapX + mapW, mapY + mapH * 0.35]}
+          stroke="#ffffff"
+          strokeWidth={6}
+        />
+        <Line
+          points={[mapX, mapY + mapH * 0.62, mapX + mapW, mapY + mapH * 0.62]}
+          stroke="#ffffff"
+          strokeWidth={5}
+        />
+        <Line
+          points={[mapX + mapW * 0.3, mapY, mapX + mapW * 0.3, mapY + mapH]}
+          stroke="#ffffff"
+          strokeWidth={5}
+        />
+        <Line
+          points={[mapX + mapW * 0.72, mapY, mapX + mapW * 0.72, mapY + mapH]}
+          stroke="#ffffff"
+          strokeWidth={5}
+        />
+
+        {/* Major Avenue / Highway (Light orange) */}
+        <Line
+          points={[
+            mapX - 10,
+            mapY + mapH * 0.15,
+            mapX + mapW * 0.45,
+            mapY + mapH * 0.52,
+            mapX + mapW + 10,
+            mapY + mapH * 0.8,
+          ]}
+          stroke="#fed7aa"
+          strokeWidth={7}
+          tension={0.3}
+        />
+        <Line
+          points={[
+            mapX - 10,
+            mapY + mapH * 0.15,
+            mapX + mapW * 0.45,
+            mapY + mapH * 0.52,
+            mapX + mapW + 10,
+            mapY + mapH * 0.8,
+          ]}
+          stroke="#ffffff"
+          strokeWidth={4}
+          tension={0.3}
+        />
+
+        {/* Pin Radar Wave / Ground shadow */}
+        <Circle x={pinX} y={pinY} radius={14} fill="#ea4335" opacity={0.18} />
+        <Circle x={pinX} y={pinY} radius={8} fill="#ea4335" opacity={0.28} />
+        <Line
+          points={[pinX - 6, pinY, pinX + 6, pinY]}
+          stroke="#000000"
+          strokeWidth={3}
+          opacity={0.2}
+        />
+
+        {/* Pin Body (Google Maps Red Marker with white inner core) */}
+        <Line
+          points={[pinX - 8, pinY - 14, pinX, pinY, pinX + 8, pinY - 14]}
+          fill="#ea4335"
+          closed
+        />
+        <Circle x={pinX} y={pinY - 14} radius={9} fill="#ea4335" />
+        <Circle x={pinX} y={pinY - 14} radius={4} fill="#ffffff" />
+
+        {/* Floating Callout Bubble for Location Label */}
+        {calloutY > mapY + 2 && (
+          <Group>
+            {/* Bubble background */}
+            <Rect
+              x={calloutX}
+              y={calloutY}
+              width={calloutW}
+              height={18}
+              cornerRadius={4}
+              fill="#ffffff"
+              stroke="#cbd5e1"
+              strokeWidth={1}
+            />
+            {/* Downward pointer triangle */}
+            <Line
+              points={[pinX - 4, calloutY + 18, pinX, calloutY + 22, pinX + 4, calloutY + 18]}
+              fill="#ffffff"
+              closed
+            />
+            {/* Text inside bubble */}
+            <Text
+              x={calloutX + 4}
+              y={calloutY + 4}
+              width={calloutW - 8}
+              text={label}
+              fontSize={10}
+              fontStyle="bold"
+              fill="#1e293b"
+              align="center"
+              ellipsis
+            />
+          </Group>
+        )}
+
+        {/* Top-Left Badge: "📍 Google Maps" */}
+        <Group x={mapX + 6} y={mapY + 6}>
+          <Rect
+            width={82}
+            height={18}
+            cornerRadius={9}
+            fill="#ffffff"
+            opacity={0.92}
+            stroke="#cbd5e1"
+            strokeWidth={0.5}
+          />
+          <Text
+            x={6}
+            y={4}
+            width={70}
+            text="📍 Google Maps"
+            fontSize={9}
+            fontStyle="600"
+            fill="#334155"
+          />
+        </Group>
+
+        {/* Bottom-Right Zoom buttons preview (+ / -) */}
+        <Group x={mapX + mapW - 20} y={mapY + mapH - 36}>
+          <Rect
+            width={16}
+            height={30}
+            cornerRadius={3}
+            fill="#ffffff"
+            opacity={0.92}
+            stroke="#cbd5e1"
+            strokeWidth={0.5}
+          />
+          <Text x={3} y={2} text="+" fontSize={11} fontStyle="bold" fill="#475569" />
+          <Line points={[2, 15, 14, 15]} stroke="#e2e8f0" strokeWidth={1} />
+          <Text x={4} y={15} text="-" fontSize={13} fontStyle="bold" fill="#475569" />
+        </Group>
+
+        {/* Map Viewport Border */}
+        <Rect
+          x={mapX}
+          y={mapY}
+          width={mapW}
+          height={mapH}
+          cornerRadius={Math.max(4, radius - 2)}
+          stroke={variant === "outlined" || variant === "luxury" ? color : "rgba(0,0,0,0.1)"}
+          strokeWidth={1}
+        />
+      </Group>
+
+      {/* --- LOCATION DETAILS & ACTION BUTTON --- */}
       {/* Label */}
       <Text
-        x={14}
-        y={startY}
-        width={w - 28}
+        x={12}
+        y={labelY}
+        width={w - 24}
         text={label}
-        fontSize={15}
+        fontSize={13}
         fontStyle="600"
         fill={color}
         align="center"
@@ -426,11 +641,11 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
         <Group>
           <Rect x={btnX} y={btnY} width={btnW} height={btnH} cornerRadius={btnH / 2} fill={color} />
           <Text
-            x={btnX + 8}
-            y={btnY + (btnH - 14) / 2}
-            width={btnW - 16}
-            text={buttonText}
-            fontSize={14}
+            x={btnX + 6}
+            y={btnY + (btnH - 12) / 2}
+            width={btnW - 12}
+            text={`🗺️ ${buttonText}`}
+            fontSize={12}
             fontStyle="600"
             fill="#ffffff"
             align="center"
@@ -441,17 +656,17 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
         <Group>
           <Text
             x={btnX}
-            y={btnY + (btnH - 14) / 2}
+            y={btnY + (btnH - 12) / 2}
             width={btnW}
             text={`📍 ${buttonText} ↗`}
-            fontSize={14}
+            fontSize={12}
             fontStyle="600"
             fill={color}
             align="center"
             ellipsis
           />
           <Line
-            points={[btnX + 16, btnY + btnH - 6, btnX + btnW - 16, btnY + btnH - 6]}
+            points={[btnX + 10, btnY + btnH - 3, btnX + btnW - 10, btnY + btnH - 3]}
             stroke={color}
             strokeWidth={1.5}
           />
@@ -470,11 +685,11 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
             fill="transparent"
           />
           <Text
-            x={btnX + 8}
-            y={btnY + (btnH - 14) / 2}
-            width={btnW - 16}
-            text={buttonText}
-            fontSize={14}
+            x={btnX + 6}
+            y={btnY + (btnH - 12) / 2}
+            width={btnW - 12}
+            text={`🗺️ ${buttonText}`}
+            fontSize={12}
             fontStyle="600"
             fill={color}
             align="center"

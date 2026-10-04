@@ -21,6 +21,18 @@ export function mapUrl(value: unknown): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${fmt(lat)},${fmt(lng)}`;
 }
 
+/**
+ * Standard Google Maps embed URL for iframe preview.
+ * Works without an API key for public map embedding.
+ */
+export function mapEmbedUrl(value: unknown): string | null {
+  const parsed = coordinateSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const { lat, lng }: Coordinate = parsed.data;
+  const fmt = (n: number) => String(Number(n.toFixed(7)));
+  return `https://maps.google.com/maps?q=${fmt(lat)},${fmt(lng)}&hl=id&z=15&output=embed`;
+}
+
 // ------------------------------------------------------------------ countdown
 
 export const COUNTDOWN_UNITS = ["days", "hours", "minutes", "seconds"] as const;

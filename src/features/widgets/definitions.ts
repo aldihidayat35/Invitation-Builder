@@ -23,7 +23,7 @@ export const mapWidget: WidgetDefinition = {
   type: MAP_WIDGET_TYPE,
   version: 1,
   label: "Peta lokasi",
-  defaultFrame: { w: 326, h: 120 },
+  defaultFrame: { w: 326, h: 220 },
   defaultProps: { label: "Lokasi acara", buttonText: "Buka Google Maps" },
   props: {
     coordinate: defineProp("coordinate", "Koordinat", coordinateSchema, { required: true }),
