@@ -229,6 +229,7 @@ export function WidgetPanel({
         ) : null}
         {Object.entries(definition.props).map(([name, spec]) => {
           if (name === "layout" && galleryLayoutFollowsVariant) return null;
+          if (name === "title" && element.widgetType === "gallery") return null;
           const value = element.props[name];
           const bound = isBinding(value);
           const control = controlOf(spec);
