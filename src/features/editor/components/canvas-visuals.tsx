@@ -1482,6 +1482,8 @@ export function WidgetVisual({
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
     case "timeline":
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+    case "wishes":
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
     default: {
       const { w, h } = element.frame;
       const resolved = defaultWidgetRegistry.resolve(element.widgetType);

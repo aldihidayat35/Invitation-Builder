@@ -13,6 +13,7 @@ import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
+import { parseWishItems } from "@/features/widgets/runtime/WishesWidget";
 import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
@@ -2659,6 +2660,188 @@ export function TimelineVisual({
   );
 }
 
+export function WishesVisual({
+  element,
+  tokens,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+}) {
+  const { frame, props, style } = element;
+  const { w, h } = frame;
+  const { color, background } = colors(element, tokens);
+  const variant = resolveWidgetStyleVariant("wishes", style.variant).variant.id;
+  const title = typeof props.title === "string" ? props.title : "Ucapan & Doa Restu";
+  const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
+  const wishes = parseWishItems(props.items);
+  const cardRadius = style.radius ?? (variant === "editorial-ticker" ? 0 : variant === "luxury-gold" ? 6 : 12);
+
+  const headerH = subtitle ? 48 : 34;
+  const availableH = h - headerH - 16;
+  const maxDisplay = Math.min(wishes.length, 3);
+  const displayWishes = wishes.slice(0, maxDisplay);
+  const slotH = maxDisplay > 0 ? Math.floor(availableH / maxDisplay) : 80;
+  const cardH = Math.min(slotH - 8, 86);
+  const cardW = w - 24;
+
+  return (
+    <Group width={w} height={h}>
+      <Background element={element} tokens={tokens} />
+
+      {/* Header */}
+      <Text
+        x={12}
+        y={12}
+        width={w - 24}
+        text={title}
+        fontSize={16}
+        fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
+        fill={color}
+        align="center"
+        ellipsis
+      />
+      {subtitle && (
+        <Text
+          x={12}
+          y={32}
+          width={w - 24}
+          text={subtitle}
+          fontSize={11}
+          fill={color}
+          opacity={0.7}
+          align="center"
+          ellipsis
+        />
+      )}
+
+      {/* Wishes Feed */}
+      <Group x={12} y={headerH + 8}>
+        {displayWishes.map((item, i) => {
+          const itemY = i * slotH;
+          const isHadir = item.presence?.toLowerCase() === "hadir";
+          const initials = item.name.slice(0, 2).toUpperCase() || "TU";
+
+          return (
+            <Group
+              key={`${item.name}-${i}`}
+              y={itemY}
+              rotation={variant === "masonry-board" ? (i % 2 === 0 ? -1 : 1) : 0}
+            >
+              {/* Card Container */}
+              <Rect
+                x={0}
+                y={0}
+                width={cardW}
+                height={cardH}
+                cornerRadius={variant === "chat-bubbles" ? [4, 14, 14, 14] : cardRadius}
+                fill={
+                  variant === "editorial-ticker"
+                    ? "transparent"
+                    : "rgba(255, 255, 255, 0.9)"
+                }
+                stroke={
+                  variant === "luxury-gold"
+                    ? color
+                    : variant === "editorial-ticker"
+                      ? "transparent"
+                      : "rgba(0, 0, 0, 0.08)"
+                }
+                strokeWidth={variant === "luxury-gold" ? 1.5 : 1}
+              />
+
+              {/* Bottom divider for editorial ticker */}
+              {variant === "editorial-ticker" && (
+                <Line
+                  points={[0, cardH - 1, cardW, cardH - 1]}
+                  stroke="rgba(0,0,0,0.12)"
+                  strokeWidth={1}
+                />
+              )}
+
+              {/* Left Accent Bar for modern-cards */}
+              {variant === "modern-cards" && (
+                <Rect
+                  x={0}
+                  y={0}
+                  width={3.5}
+                  height={cardH}
+                  cornerRadius={[cardRadius, 0, 0, cardRadius]}
+                  fill={color}
+                />
+              )}
+
+              {/* Avatar circle */}
+              <Circle
+                x={20}
+                y={20}
+                radius={12}
+                fill={color}
+              />
+              <Text
+                x={8}
+                y={15}
+                width={24}
+                text={initials}
+                fontSize={9}
+                fontStyle="bold"
+                fill={background === "transparent" ? "#ffffff" : background}
+                align="center"
+              />
+
+              {/* Author Name */}
+              <Text
+                x={38}
+                y={10}
+                width={cardW - 130}
+                text={item.name}
+                fontSize={12}
+                fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
+                fill={color}
+                ellipsis
+              />
+
+              {/* Presence Badge */}
+              <Rect
+                x={cardW - 86}
+                y={10}
+                width={78}
+                height={16}
+                cornerRadius={999}
+                fill={isHadir ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)"}
+                stroke={isHadir ? "#059669" : "#dc2626"}
+                strokeWidth={0.8}
+              />
+              <Text
+                x={cardW - 86}
+                y={13}
+                width={78}
+                text={isHadir ? "✓ HADIR" : "✕ BERHALANGAN"}
+                fontSize={8}
+                fontStyle="bold"
+                fill={isHadir ? "#059669" : "#dc2626"}
+                align="center"
+              />
+
+              {/* Message */}
+              <Text
+                x={38}
+                y={28}
+                width={cardW - 48}
+                height={cardH - 32}
+                text={item.message}
+                fontSize={11}
+                fill="#334155"
+                lineHeight={1.3}
+                ellipsis
+              />
+            </Group>
+          );
+        })}
+      </Group>
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -2685,6 +2868,8 @@ export function CurrentWidgetVisual({
       return <PhotoFrameVisual element={element} tokens={tokens} />;
     case "timeline":
       return <TimelineVisual element={element} tokens={tokens} />;
+    case "wishes":
+      return <WishesVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

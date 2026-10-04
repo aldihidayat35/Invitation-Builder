@@ -12,6 +12,7 @@ import {
   PublicContextProvider,
   RsvpWidget,
   TimelineWidget,
+  WishesWidget,
   WidgetRuntime,
 } from "@/features/widgets/runtime";
 
@@ -267,9 +268,59 @@ describe("TimelineWidget", () => {
   });
 });
 
+describe("WishesWidget", () => {
+  it("renders default wishes list and headings", () => {
+    render(
+      <WishesWidget
+        title="Buku Doa Tamu"
+        subtitle="Sampaikan doa tulus Anda"
+      />,
+    );
+    expect(screen.getByText("Buku Doa Tamu")).toBeInTheDocument();
+    expect(screen.getByText("Sampaikan doa tulus Anda")).toBeInTheDocument();
+    expect(screen.getByText("Dina & Rian")).toBeInTheDocument();
+    expect(screen.getByText("Budi Santoso")).toBeInTheDocument();
+    expect(screen.getByText("Maya Indah")).toBeInTheDocument();
+  });
+
+  it("renders custom wishes items and attendance status", () => {
+    const customWishes = [
+      {
+        name: "Keluarga Besar Ahmad",
+        message: "Semoga selalu bahagia dunia akhirat!",
+        presence: "hadir",
+        date: "5 menit lalu",
+      },
+    ];
+    render(<WishesWidget items={customWishes} />);
+    expect(screen.getByText("Keluarga Besar Ahmad")).toBeInTheDocument();
+    expect(screen.getByText("Semoga selalu bahagia dunia akhirat!")).toBeInTheDocument();
+    expect(screen.getByText("5 menit lalu")).toBeInTheDocument();
+    expect(screen.getByText("Hadir")).toBeInTheDocument();
+  });
+
+  it("renders all 5 wishes style variants", () => {
+    const variants = [
+      "chat-bubbles",
+      "modern-cards",
+      "masonry-board",
+      "editorial-ticker",
+      "luxury-gold",
+    ] as const;
+
+    for (const variant of variants) {
+      const { container, unmount } = render(
+        <WishesWidget style={{ variant }} />,
+      );
+      expect(container.querySelector(`[data-variant="${variant}"]`)).not.toBeNull();
+      unmount();
+    }
+  });
+});
+
 describe("registry-driven rendering", () => {
   it("renders every P1 type through WidgetRuntime without template-specific code", () => {
-    for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame", "timeline"]) {
+    for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame", "timeline", "wishes"]) {
       const { container, unmount } = render(<WidgetRuntime widgetType={type} props={{}} />);
       expect(container.querySelector(`[data-widget="${type}"]`)).not.toBeNull();
       unmount();

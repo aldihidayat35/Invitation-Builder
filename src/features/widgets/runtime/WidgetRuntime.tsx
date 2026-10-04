@@ -11,6 +11,7 @@ import { MusicWidget } from "./MusicWidget";
 import { PhotoFrameWidget } from "./PhotoFrameWidget";
 import { RsvpWidget } from "./RsvpWidget";
 import { TimelineWidget } from "./TimelineWidget";
+import { WishesWidget } from "./WishesWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -79,6 +80,16 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       title={p.title}
       subtitle={p.subtitle}
       events={p.events}
+      style={style}
+    />
+  ),
+  wishes: (p, style) => (
+    <WishesWidget
+      title={p.title}
+      subtitle={p.subtitle}
+      items={p.items}
+      allowPost={p.allowPost}
+      maxDisplay={p.maxDisplay}
       style={style}
     />
   ),

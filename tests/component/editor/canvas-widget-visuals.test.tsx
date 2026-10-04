@@ -271,7 +271,7 @@ describe("Canvas Widget Visuals", () => {
     await waitFor(() => expect(drawImageMock).toHaveBeenCalled());
   });
 
-  it("provides valid style variants for each of the 9 widget types", () => {
+  it("provides valid style variants for each of the 10 widget types", () => {
     const widgetTypes = [
       "countdown",
       "map",
@@ -282,6 +282,7 @@ describe("Canvas Widget Visuals", () => {
       "gallery",
       "photoFrame",
       "timeline",
+      "wishes",
     ] as const;
 
     for (const type of widgetTypes) {
@@ -362,6 +363,10 @@ describe("Canvas Widget Visuals", () => {
       timeline: {
         frame: { x: 0, y: 0, w: 326, h: 420, rotation: 0 },
         props: { title: "Rundown Acara", subtitle: "Rangkaian Acara", events: [] },
+      },
+      wishes: {
+        frame: { x: 0, y: 0, w: 326, h: 440, rotation: 0 },
+        props: { title: "Ucapan & Doa", subtitle: "Doa restu Anda", items: [] },
       },
     };
 

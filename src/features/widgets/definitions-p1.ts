@@ -190,6 +190,60 @@ export const timelineWidget: WidgetDefinition = {
   }),
 };
 
+export const WISHES_WIDGET_TYPE = "wishes";
+
+export const wishesWidget: WidgetDefinition = {
+  type: WISHES_WIDGET_TYPE,
+  version: 1,
+  label: "Buku Tamu & Doa",
+  defaultFrame: { w: 326, h: 440 },
+  defaultStyle: getDefaultWidgetStyle(WISHES_WIDGET_TYPE),
+  defaultProps: {
+    title: "Ucapan & Doa Restu",
+    subtitle: "Doa restu Anda adalah kebahagiaan bagi kami",
+    allowPost: true,
+    maxDisplay: 6,
+    items: [
+      {
+        name: "Dina & Rian",
+        message: "Selamat menempuh hidup baru! Semoga menjadi keluarga yang sakinah, mawaddah, warahmah. Bahagia selalu! 💕",
+        presence: "hadir",
+        date: "Baru saja",
+      },
+      {
+        name: "Budi Santoso",
+        message: "Happy wedding brother! Lancar jaya acaranya sampai hari H. Doa terbaik untuk kalian berdua!",
+        presence: "hadir",
+        date: "1 jam lalu",
+      },
+      {
+        name: "Maya Indah",
+        message: "Selamat ya kalian berdua! Maaf belum bisa hadir langsung karena masih dinas, tapi doa restu kami selalu menyertai kalian.",
+        presence: "berhalangan",
+        date: "3 jam lalu",
+      },
+    ],
+  },
+  props: {
+    title: defineProp("text", "Judul", z.string().max(80).default("Ucapan & Doa Restu")),
+    subtitle: defineProp("text", "Subjudul", z.string().max(120).optional()),
+    allowPost: defineProp("boolean", "Izinkan tamu kirim ucapan langsung", z.boolean().default(true)),
+    maxDisplay: defineProp("number", "Jumlah pesan ditampilkan", z.number().min(1).max(50).default(6)),
+    items: defineProp(
+      "collection",
+      "Daftar Ucapan (name, message, presence, date)",
+      collectionSchema,
+      {
+        control: "binding",
+      },
+    ),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.title) ?? "Ucapan & Doa",
+    subtitle: `${describeProp(props.subtitle) ?? "Buku Tamu"} (${Array.isArray(props.items) ? props.items.length : 3} ucapan)`,
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
@@ -197,5 +251,7 @@ export const P1_WIDGETS: readonly WidgetDefinition[] = [
   giftWidget,
   photoFrameWidget,
   timelineWidget,
+  wishesWidget,
 ];
+
 

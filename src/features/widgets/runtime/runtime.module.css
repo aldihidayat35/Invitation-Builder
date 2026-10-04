@@ -2754,4 +2754,301 @@
   letter-spacing: 0.02em;
 }
 
+/* ==========================================================================
+   Wishes / Guestbook Widget Styles & Variants
+   ========================================================================== */
+.wishesWidget {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px 16px;
+  background: var(--widget-bg, transparent);
+  color: var(--widget-color, inherit);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.wishesHeader {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.wishesHeading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--widget-color, currentColor);
+}
+
+.wishesSubheading {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+  color: var(--widget-color, currentColor);
+}
+
+/* --- Inline Wish Posting Form --- */
+.wishesForm {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--widget-radius, 12px);
+  padding: 12px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wishesInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wishesInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  outline: none;
+}
+
+.wishesInput:focus {
+  border-color: var(--widget-color, #1e293b);
+}
+
+.wishesPresenceSelector {
+  display: flex;
+  gap: 6px;
+}
+
+.presencePill {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.presencePill.presenceActive {
+  background: var(--widget-color, #1e293b);
+  border-color: var(--widget-color, #1e293b);
+  color: var(--widget-bg, #ffffff);
+}
+
+.wishesTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  resize: none;
+  outline: none;
+}
+
+.wishesTextarea:focus {
+  border-color: var(--widget-color, #1e293b);
+}
+
+.wishesFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wishesSuccessText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.wishesSubmitBtn {
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--widget-color, #1e293b);
+  color: var(--widget-bg, #ffffff);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.wishesSubmitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Wishes Feed List --- */
+.wishesFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wishCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--widget-radius, 12px);
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.wishAvatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.wishContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.wishTopBar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.wishAuthor {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--widget-color, currentColor);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wishMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wishBadge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.badgeHadir {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badgeBerhalangan {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.wishDate {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.wishMessage {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #334155;
+  word-break: break-word;
+}
+
+/* --- Variant: Chat Bubbles --- */
+.wishes_chat-bubbles .wishCard {
+  border-radius: 4px 16px 16px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Variant: Modern Cards --- */
+.wishes_modern-cards .wishCard {
+  border-left: 3.5px solid var(--widget-color, currentColor);
+  border-radius: var(--widget-radius, 10px);
+}
+
+/* --- Variant: Masonry Board (Sticky Notes) --- */
+.wishes_masonry-board .wishCard {
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.wishes_masonry-board .wishCard:nth-child(odd) {
+  transform: rotate(-0.8deg);
+}
+
+.wishes_masonry-board .wishCard:nth-child(even) {
+  transform: rotate(0.8deg);
+}
+
+/* --- Variant: Editorial Ticker --- */
+.wishes_editorial-ticker .wishCard {
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 8px 0;
+}
+
+/* --- Variant: Luxury Gold --- */
+.wishes_luxury-gold .wishesHeading {
+  font-family: serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wishes_luxury-gold .wishCard {
+  border: 1.5px solid var(--widget-color, #b45309);
+  border-radius: var(--widget-radius, 6px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.wishes_luxury-gold .wishAuthor {
+  font-family: serif;
+  letter-spacing: 0.02em;
+}
+
+
 

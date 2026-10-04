@@ -14,6 +14,7 @@ import { GalleryItemsControl } from "./GalleryItemsControl";
 import { GiftAccountsControl } from "./GiftAccountsControl";
 import { PhotoFrameImageControl } from "./PhotoFrameImageControl";
 import { TimelineEventsControl } from "./TimelineEventsControl";
+import { WishesItemsControl } from "./WishesItemsControl";
 import { useEditorStore } from "./EditorProvider";
 import {
   ColorField,
@@ -272,6 +273,13 @@ export function WidgetPanel({
                   value={value}
                   disabled={disabled}
                   onChange={(events) => setProp(name, events)}
+                />
+              ) : element.widgetType === "wishes" && name === "items" ? (
+                <WishesItemsControl
+                  elementId={element.id}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(items) => setProp(name, items)}
                 />
               ) : (
                 <StaticControl

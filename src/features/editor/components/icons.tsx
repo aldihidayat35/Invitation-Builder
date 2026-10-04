@@ -297,6 +297,13 @@ export const IconTimeline = (p: IconProps) => (
   </Svg>
 );
 
+export const IconWishes = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    <path d="M12 7.5a1.5 1.5 0 0 1 2.5 1.1c0 1.2-2.5 2.4-2.5 2.4s-2.5-1.2-2.5-2.4a1.5 1.5 0 0 1 2.5-1.1z" />
+  </Svg>
+);
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -307,6 +314,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   gift: IconGift,
   photoFrame: IconFrame,
   timeline: IconTimeline,
+  wishes: IconWishes,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {

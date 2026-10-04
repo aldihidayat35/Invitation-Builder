@@ -398,6 +398,38 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 4,
     },
   ],
+  wishes: [
+    {
+      id: "chat-bubbles",
+      label: "Gelembung Obrolan",
+      description: "Tampilan balon pesan dinamis ala chat modern dengan avatar inisial berwarna.",
+      defaultRadius: 14,
+    },
+    {
+      id: "modern-cards",
+      label: "Kartu Modern",
+      description: "Kartu-kartu doa minimalis dengan bayangan lembut, badge kehadiran, dan tanggal.",
+      defaultRadius: 10,
+    },
+    {
+      id: "masonry-board",
+      label: "Papan Tempel",
+      description: "Gaya memo notes estetik dengan rotasi lembut dan aksen peniti atau stiker.",
+      defaultRadius: 8,
+    },
+    {
+      id: "editorial-ticker",
+      label: "Feed Editorial",
+      description: "Deretan pesan bergaris batas halus elegan dengan tipografi bersih minimalis.",
+      defaultRadius: 0,
+    },
+    {
+      id: "luxury-gold",
+      label: "Kemewahan Klasik",
+      description: "Nuansa emas mewah dengan bingkai ganda halus dan font serif berkelas.",
+      defaultRadius: 6,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -410,6 +442,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   gallery: legacy(["grid-rounded", "grid-border", "slider-classic", "slider-pill", "circle"]),
   photoFrame: legacy(["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"]),
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
+  wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(
