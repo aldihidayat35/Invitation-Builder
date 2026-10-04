@@ -1,13 +1,14 @@
 /**
  * P1 widgets (FR-WDG-005..008): RSVP, Gallery, Music, Gift.
  * Pure data + schemas only (P-05); runtime components live in `./runtime`.
- * Collections are bound to `collection` variables (Data Mode), so no content
- * is ever hardcoded in a template.
+ * Collections can be bound to `collection` variables (Data Mode). Gallery
+ * items can also be managed directly in the editor as owned asset references.
  */
 import { z } from "zod";
 import { datetimeValueSchema, safeUrlSchema } from "@/lib/schema";
 import { defineProp, type WidgetDefinition } from "./registry";
 import { describeProp } from "./logic";
+import { getDefaultWidgetStyle } from "./widget-styles";
 
 export const RSVP_WIDGET_TYPE = "rsvp";
 export const GALLERY_WIDGET_TYPE = "gallery";
@@ -21,6 +22,7 @@ export const rsvpWidget: WidgetDefinition = {
   version: 1,
   label: "RSVP",
   defaultFrame: { w: 326, h: 380 },
+  defaultStyle: getDefaultWidgetStyle(RSVP_WIDGET_TYPE),
   defaultProps: {
     title: "Konfirmasi Kehadiran",
     enablePartySize: true,
@@ -45,6 +47,7 @@ export const galleryWidget: WidgetDefinition = {
   version: 1,
   label: "Galeri",
   defaultFrame: { w: 326, h: 320 },
+  defaultStyle: getDefaultWidgetStyle(GALLERY_WIDGET_TYPE),
   defaultProps: { title: "Galeri", layout: "grid", items: [] },
   props: {
     title: defineProp("text", "Judul", z.string().max(80)),
@@ -70,6 +73,7 @@ export const musicWidget: WidgetDefinition = {
   version: 1,
   label: "Musik",
   defaultFrame: { w: 326, h: 72 },
+  defaultStyle: getDefaultWidgetStyle(MUSIC_WIDGET_TYPE),
   defaultProps: { title: "Putar musik", autoplay: false },
   props: {
     src: defineProp("url", "URL audio", safeUrlSchema(), { required: true }),
@@ -87,6 +91,7 @@ export const giftWidget: WidgetDefinition = {
   version: 1,
   label: "Hadiah",
   defaultFrame: { w: 326, h: 260 },
+  defaultStyle: getDefaultWidgetStyle(GIFT_WIDGET_TYPE),
   defaultProps: { title: "Kirim Hadiah", accounts: [] },
   props: {
     title: defineProp("text", "Judul", z.string().max(80)),

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Circle, Group, Image as KonvaImage, Line, Rect, Text } from "react-konva";
 import type { Element, ThemeTokens } from "@/lib/schema";
 import { assetUrl } from "@/features/assets/urls";
-import { defaultWidgetRegistry } from "@/features/widgets";
+import { defaultWidgetRegistry, resolveWidgetStyleVariant } from "@/features/widgets";
 import {
   DEFAULT_COUNTDOWN_LABELS,
   computeCountdown,
@@ -15,46 +15,11 @@ import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
 import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
+import { CanvasGalleryPhoto, CurrentWidgetVisual } from "./canvas-widget-variants";
+import { useCanvasImage } from "./use-canvas-image";
 
 type ImageElement = Extract<Element, { type: "image" }>;
 type WidgetElement = Extract<Element, { type: "widget" }>;
-
-const imageCache = new Map<string, Promise<HTMLImageElement>>();
-
-function loadImage(url: string): Promise<HTMLImageElement> {
-  let pending = imageCache.get(url);
-  if (!pending) {
-    pending = new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new window.Image();
-      img.decoding = "async";
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("image failed to load"));
-      img.src = url;
-    });
-    pending.catch(() => imageCache.delete(url));
-    imageCache.set(url, pending);
-  }
-  return pending;
-}
-
-/** Loads (and caches) an asset image; returns null until ready or when it fails. */
-function useAssetImage(assetId: string | null): HTMLImageElement | null {
-  const [loaded, setLoaded] = useState<{ assetId: string; image: HTMLImageElement } | null>(null);
-  useEffect(() => {
-    if (!assetId) return;
-    let cancelled = false;
-    loadImage(assetUrl(assetId)).then(
-      (image) => {
-        if (!cancelled) setLoaded({ assetId, image });
-      },
-      () => undefined,
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [assetId]);
-  return loaded && loaded.assetId === assetId ? loaded.image : null;
-}
 
 function Placeholder({
   w,
@@ -97,7 +62,7 @@ function Placeholder({
 export function ImageVisual({ element }: { element: ImageElement }) {
   const { w, h } = element.frame;
   const assetId = "assetId" in element.source ? element.source.assetId : null;
-  const image = useAssetImage(assetId);
+  const image = useCanvasImage(assetId ? assetUrl(assetId) : null);
 
   if (!assetId) {
     const key = "bind" in element.source ? element.source.bind : "";
@@ -773,7 +738,12 @@ function GuestGreetingWidgetVisual({
       {variant === "ornament" && (
         <Group>
           <Line
-            points={[24, startY + prefixSize + 16, Math.max(30, w * 0.22), startY + prefixSize + 16]}
+            points={[
+              24,
+              startY + prefixSize + 16,
+              Math.max(30, w * 0.22),
+              startY + prefixSize + 16,
+            ]}
             stroke={color}
             strokeWidth={1}
             opacity={0.4}
@@ -1362,25 +1332,15 @@ function GalleryWidgetVisual({
             const navY = availH + 8;
             return (
               <Group>
-                {/* Photo frame */}
-                <Rect
+                <CanvasGalleryPhoto
                   x={sliderX}
+                  y={0}
                   width={sliderW}
                   height={availH}
-                  cornerRadius={6}
-                  stroke={color}
+                  radius={6}
+                  color={color}
                   strokeWidth={1}
-                  fill={color}
-                  opacity={0.06}
-                />
-                <Text
-                  x={sliderX}
-                  y={availH / 2 - 8}
-                  width={sliderW}
-                  text="📷 Foto Slider"
-                  fontSize={12}
-                  fill={color}
-                  align="center"
+                  src={images[0]?.src}
                 />
 
                 {/* Nav buttons */}
@@ -1459,27 +1419,17 @@ function GalleryWidgetVisual({
               if (10 + headingH + 6 + y + tileH > h) return null;
 
               return (
-                <Group key={idx}>
-                  <Rect
-                    x={x}
-                    y={y}
-                    width={tileW}
-                    height={tileH}
-                    cornerRadius={isCircle ? tileW / 2 : radius || 6}
-                    stroke={color}
-                    strokeWidth={isBorder ? 2 : 1}
-                    fill={color}
-                    opacity={0.08}
-                  />
-                  <Text
-                    x={x}
-                    y={y + tileH / 2 - 7}
-                    width={tileW}
-                    text="📷"
-                    fontSize={14}
-                    align="center"
-                  />
-                </Group>
+                <CanvasGalleryPhoto
+                  key={idx}
+                  x={x}
+                  y={y}
+                  width={tileW}
+                  height={tileH}
+                  radius={isCircle ? tileW / 2 : radius || 6}
+                  color={color}
+                  strokeWidth={isBorder ? 2 : 1}
+                  src={images[idx]?.src}
+                />
               );
             });
           })()}
@@ -1496,21 +1446,38 @@ export function WidgetVisual({
   element: WidgetElement;
   tokens?: ThemeTokens;
 }) {
+  const styleResolution = resolveWidgetStyleVariant(element.widgetType, element.style.variant);
+  if (styleResolution.kind === "current") {
+    return (
+      <CurrentWidgetVisual
+        element={{
+          ...element,
+          style: { ...element.style, variant: styleResolution.variant.id },
+        }}
+        tokens={tokens}
+      />
+    );
+  }
+
+  const legacyElement =
+    element.style.variant === styleResolution.variant.id
+      ? element
+      : { ...element, style: { ...element.style, variant: styleResolution.variant.id } };
   switch (element.widgetType) {
     case "countdown":
-      return <CountdownWidgetVisual element={element} tokens={tokens} />;
+      return <CountdownWidgetVisual element={legacyElement} tokens={tokens} />;
     case "map":
-      return <MapWidgetVisual element={element} tokens={tokens} />;
+      return <MapWidgetVisual element={legacyElement} tokens={tokens} />;
     case "guestGreeting":
-      return <GuestGreetingWidgetVisual element={element} tokens={tokens} />;
+      return <GuestGreetingWidgetVisual element={legacyElement} tokens={tokens} />;
     case "rsvp":
-      return <RsvpWidgetVisual element={element} tokens={tokens} />;
+      return <RsvpWidgetVisual element={legacyElement} tokens={tokens} />;
     case "gallery":
-      return <GalleryWidgetVisual element={element} tokens={tokens} />;
+      return <GalleryWidgetVisual element={legacyElement} tokens={tokens} />;
     case "music":
-      return <MusicWidgetVisual element={element} tokens={tokens} />;
+      return <MusicWidgetVisual element={legacyElement} tokens={tokens} />;
     case "gift":
-      return <GiftWidgetVisual element={element} tokens={tokens} />;
+      return <GiftWidgetVisual element={legacyElement} tokens={tokens} />;
     default: {
       const { w, h } = element.frame;
       const resolved = defaultWidgetRegistry.resolve(element.widgetType);

@@ -31,7 +31,14 @@ describe("mapUrl and mapEmbedUrl (FR-WDG-002)", () => {
     );
   });
   it("returns null for anything that is not a valid coordinate", () => {
-    for (const bad of [null, undefined, "x", { lat: 91, lng: 0 }, { lat: 0, lng: 181 }, { lat: 1 }]) {
+    for (const bad of [
+      null,
+      undefined,
+      "x",
+      { lat: 91, lng: 0 },
+      { lat: 0, lng: 181 },
+      { lat: 1 },
+    ]) {
       expect(mapUrl(bad)).toBeNull();
       expect(mapEmbedUrl(bad)).toBeNull();
     }
@@ -123,6 +130,14 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
       expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);
       const widgets = doc.sections.flatMap((s) => s.elements).filter((e) => e.type === "widget");
       expect(widgets).toHaveLength(7);
+      for (const widget of widgets) {
+        expect(widget.style.variant).toBeTruthy();
+        const resolved = defaultWidgetRegistry.resolve(widget.widgetType);
+        expect(resolved.kind).toBe("known");
+        if (resolved.kind === "known") {
+          expect(widget.style.variant).toBe(resolved.definition.defaultStyle?.variant);
+        }
+      }
     }
   });
 

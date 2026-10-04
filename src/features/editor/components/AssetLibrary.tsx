@@ -14,17 +14,27 @@ import styles from "./editor.module.css";
 export interface AssetLibraryProps {
   /** Called when the user picks an asset (add to artboard / replace image). */
   readonly onPick: (asset: AssetSummary) => void;
+  /** Optionally consume successful uploads immediately (for multi-image controls). */
+  readonly onUploaded?: (asset: AssetSummary) => void;
   readonly pickLabel: string;
   /** Prefix for ids/test ids so two instances can coexist. */
   readonly idPrefix?: string;
+  /** Additional lock supplied by the embedding control. */
+  readonly disabled?: boolean;
 }
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
 
-
-export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLibraryProps) {
+export function AssetLibrary({
+  onPick,
+  onUploaded,
+  pickLabel,
+  idPrefix = "asset",
+  disabled = false,
+}: AssetLibraryProps) {
   const workspaceId = useWorkspaceId();
   const readOnly = useEditor((s) => s.readOnly);
+  const interactionDisabled = readOnly || disabled;
   const [assets, setAssets] = useState<AssetSummary[]>([]);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,8 +67,10 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
     setError(null);
     for (const file of Array.from(files)) {
       const result = await uploadAssetFile(workspaceId, file);
-      if (result.ok) setAssets((current) => [result.asset, ...current]);
-      else setError(`${file.name}: ${result.error}`);
+      if (result.ok) {
+        setAssets((current) => [result.asset, ...current]);
+        onUploaded?.(result.asset);
+      } else setError(`${file.name}: ${result.error}`);
     }
     setBusy(false);
     if (fileInput.current) fileInput.current.value = "";
@@ -66,7 +78,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
 
   return (
     <div className={styles.panelStack} data-testid={`${idPrefix}-library`}>
-      <label className={styles.uploadButton} aria-disabled={readOnly || busy}>
+      <label className={styles.uploadButton} aria-disabled={interactionDisabled || busy}>
         {busy ? "Mengunggah..." : "Unggah gambar"}
         <input
           ref={fileInput}
@@ -76,7 +88,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
           accept={ACCEPT}
           multiple
           hidden
-          disabled={readOnly || busy}
+          disabled={interactionDisabled || busy}
           onChange={(event) => void onFiles(event.target.files)}
         />
       </label>
@@ -104,7 +116,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
                 type="button"
                 className={styles.assetItem}
                 title={`${pickLabel}: ${asset.filename}`}
-                disabled={readOnly}
+                disabled={interactionDisabled}
                 data-testid={`${idPrefix}-item`}
                 data-asset-id={asset.id}
                 onClick={() => onPick(asset)}
@@ -125,6 +137,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
                   className={styles.assetQuickBtn}
                   title="Potong gambar ini"
                   aria-label="Potong gambar"
+                  disabled={interactionDisabled}
                   onClick={(e) => {
                     e.stopPropagation();
                     setCroppingAsset(asset);
@@ -137,6 +150,7 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
                   className={styles.assetQuickBtn}
                   title="Hapus background gambar ini"
                   aria-label="Hapus background"
+                  disabled={interactionDisabled}
                   onClick={(e) => {
                     e.stopPropagation();
                     setRemoveBgAsset(asset);
@@ -178,4 +192,3 @@ export function AssetLibrary({ onPick, pickLabel, idPrefix = "asset" }: AssetLib
     </div>
   );
 }
-

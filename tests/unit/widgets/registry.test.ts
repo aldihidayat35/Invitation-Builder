@@ -2,7 +2,15 @@
  * PRD refs: FR-WDG-001, P-05, P-09, NFR-REL-002.
  */
 import { z } from "zod";
-import { createWidgetRegistry, defineProp, WidgetRegistry } from "@/features/widgets";
+import {
+  createWidgetRegistry,
+  defaultWidgetRegistry,
+  defineProp,
+  getDefaultWidgetStyle,
+  getWidgetStyleVariants,
+  resolveWidgetStyleVariant,
+  WidgetRegistry,
+} from "@/features/widgets";
 import { createTestRegistry } from "../../helpers/widgets";
 
 describe("widget registry", () => {
@@ -78,5 +86,30 @@ describe("widget registry", () => {
 
   it("starts empty by default", () => {
     expect(createWidgetRegistry().list()).toEqual([]);
+  });
+
+  it("provides five unique current variants and a valid explicit default per widget", () => {
+    for (const definition of defaultWidgetRegistry.list()) {
+      const variants = getWidgetStyleVariants(definition.type);
+      const ids = variants.map((variant) => variant.id);
+      expect(variants).toHaveLength(5);
+      expect(new Set(ids).size).toBe(5);
+      expect(ids).toContain(getDefaultWidgetStyle(definition.type).variant);
+      expect(definition.defaultStyle).toEqual(getDefaultWidgetStyle(definition.type));
+    }
+  });
+
+  it("distinguishes current, legacy, missing, and invalid variant ids", () => {
+    expect(resolveWidgetStyleVariant("map", "full-bleed").kind).toBe("current");
+    expect(resolveWidgetStyleVariant("map", "luxury").kind).toBe("legacy");
+    expect(resolveWidgetStyleVariant("map", undefined)).toMatchObject({
+      kind: "legacy",
+      variant: { id: "default" },
+    });
+    expect(resolveWidgetStyleVariant("map", "future-style")).toMatchObject({
+      kind: "fallback",
+      requestedVariant: "future-style",
+      variant: { id: "default" },
+    });
   });
 });

@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { coordinateSchema, datetimeValueSchema } from "@/lib/schema";
 import { defineProp, type WidgetDefinition } from "./registry";
+import { getDefaultWidgetStyle } from "./widget-styles";
 import {
   COUNTDOWN_UNITS,
   DEFAULT_COUNTDOWN_LABELS,
@@ -25,6 +26,7 @@ export const mapWidget: WidgetDefinition = {
   label: "Peta lokasi",
   defaultFrame: { w: 326, h: 220 },
   defaultProps: { label: "Lokasi acara", buttonText: "Buka Google Maps" },
+  defaultStyle: getDefaultWidgetStyle(MAP_WIDGET_TYPE),
   props: {
     coordinate: defineProp("coordinate", "Koordinat", coordinateSchema, { required: true }),
     label: defineProp("text", "Label lokasi", z.string().max(120)),
@@ -45,6 +47,7 @@ export const countdownWidget: WidgetDefinition = {
   version: 1,
   label: "Hitung mundur",
   defaultFrame: { w: 326, h: 96 },
+  defaultStyle: getDefaultWidgetStyle(COUNTDOWN_WIDGET_TYPE),
   defaultProps: {
     labels: { ...DEFAULT_COUNTDOWN_LABELS },
     afterState: "message",
@@ -78,6 +81,7 @@ export const guestGreetingWidget: WidgetDefinition = {
   version: 1,
   label: "Sapaan tamu",
   defaultFrame: { w: 326, h: 64 },
+  defaultStyle: getDefaultWidgetStyle(GUEST_GREETING_WIDGET_TYPE),
   defaultProps: {
     prefix: DEFAULT_GREETING_PREFIX,
     fallback: DEFAULT_GREETING_FALLBACK,

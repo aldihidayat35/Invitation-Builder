@@ -4,6 +4,7 @@ import { track } from "@/features/analytics/track";
 import { mapEmbedUrl, mapUrl } from "../logic";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
+import { PinIcon, RouteIcon } from "./WidgetIcons";
 
 export interface MapWidgetProps {
   readonly coordinate?: unknown;
@@ -37,20 +38,23 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
           ) : (
             <div className={`${styles.mapPlaceholder}`}>
               <div className={styles.mapEmptyContent}>
-                <span className={styles.mapPinIconLarge}>📍</span>
+                <PinIcon className={styles.mapPinIconLarge} />
                 <p className={styles.mapEmptyTitle}>Peta Lokasi Acara</p>
                 <p className={styles.mapEmptySubtitle}>Atur koordinat di panel editor</p>
               </div>
             </div>
           )}
           <div className={styles.mapBadge}>
-            <span className={styles.mapPinIcon}>📍</span>
+            <PinIcon className={styles.mapPinIcon} />
             <span>Google Maps</span>
           </div>
         </div>
 
         <div className={styles.mapDetails}>
-          <p className={styles.label}>{text(label, "Lokasi acara")}</p>
+          <div className={styles.mapTitleRow}>
+            <PinIcon className={styles.mapLocationIcon} />
+            <p className={styles.label}>{text(label, "Lokasi acara")}</p>
+          </div>
           {href ? (
             <a
               className={styles.button}
@@ -60,12 +64,12 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
               data-testid="map-link"
               onClick={() => track("map_clicked")}
             >
-              <span className={styles.buttonIcon}>🗺️</span>
+              <RouteIcon className={styles.buttonIcon} />
               {text(buttonText, "Buka Google Maps")}
             </a>
           ) : (
             <span className={styles.button} aria-disabled="true" data-testid="map-link-disabled">
-              <span className={styles.buttonIcon}>🗺️</span>
+              <RouteIcon className={styles.buttonIcon} />
               {text(buttonText, "Buka Google Maps")}
             </span>
           )}
@@ -74,4 +78,3 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
     </WidgetFrame>
   );
 }
-

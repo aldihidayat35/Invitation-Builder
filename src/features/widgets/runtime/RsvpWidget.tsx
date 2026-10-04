@@ -97,7 +97,11 @@ export function RsvpWidget({
 
   return (
     <WidgetFrame type="rsvp" style={style} className={styles.rsvp}>
-      <h3 className={styles.label}>{str(title, "Konfirmasi Kehadiran")}</h3>
+      <div className={styles.rsvpHeading}>
+        <span className={styles.eyebrow}>RSVP</span>
+        <h3 className={styles.label}>{str(title, "Konfirmasi Kehadiran")}</h3>
+        <span className={styles.headingRule} aria-hidden="true" />
+      </div>
       {closed ? (
         <p className={styles.message} data-testid="rsvp-closed">
           Konfirmasi kehadiran sudah ditutup.

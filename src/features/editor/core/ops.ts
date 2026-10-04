@@ -233,7 +233,6 @@ export function updateSection(
   });
 }
 
-
 // ------------------------------------------------------------------- elements
 
 function idPrefix(element: Element): string {
@@ -631,6 +630,7 @@ export function createWidgetElement(
     label: string;
     defaultFrame: { w: number; h: number };
     defaultProps: Readonly<Record<string, unknown>>;
+    defaultStyle?: Readonly<{ variant: string; radius?: number }>;
   },
 ): { document: CanonicalDocument; elementId: string | null } {
   return insertNewElement(doc, sectionId, "el_widget", (id, section) => {
@@ -643,6 +643,7 @@ export function createWidgetElement(
       widgetType: widget.type,
       widgetVersion: widget.version,
       props: structuredClone(widget.defaultProps),
+      ...(widget.defaultStyle && { style: structuredClone(widget.defaultStyle) }),
     };
   });
 }

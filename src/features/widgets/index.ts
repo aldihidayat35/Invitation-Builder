@@ -46,10 +46,14 @@ export {
   rsvpWidget,
 } from "./definitions-p1";
 export {
+  getDefaultWidgetStyle,
+  getGalleryPresentation,
   QUICK_COLOR_PALETTES,
+  resolveWidgetStyleVariant,
   WIDGET_STYLE_VARIANTS,
   getWidgetStyleVariants,
+  type GalleryPresentation,
   type QuickColorPalette,
+  type WidgetVariantResolution,
   type WidgetStyleVariant,
 } from "./widget-styles";
-

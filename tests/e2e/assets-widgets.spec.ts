@@ -144,4 +144,99 @@ test.describe("P0 widgets (Fase 6)", () => {
       .click();
     await expect(page.getByTestId("layer-list").locator("li")).toHaveCount(3);
   });
+
+  test("gallery images can be uploaded and managed from the right panel", async ({ page }) => {
+    await openNewEditor(page);
+    await page.getByTestId("add-widget-gallery").click();
+    await expect(page.getByTestId("gallery-items-control")).toBeVisible();
+    const canvas = page.locator("[data-testid^='canvas-']").first();
+    const emptyCanvas = await canvas.screenshot();
+
+    await page.getByTestId("gallery-add-images").click();
+    const galleryFileInput = page.locator("input[data-testid^='gallery-'][data-testid$='-file']");
+    await galleryFileInput.setInputFiles([
+      png(uniqueName("galeri-satu") + ".png", PNG_A),
+      png(uniqueName("galeri-dua") + ".png", PNG_B),
+    ]);
+
+    await expect(page.getByTestId("gallery-editor-item")).toHaveCount(2);
+    await expect.poll(async () => !(await canvas.screenshot()).equals(emptyCanvas)).toBe(true);
+    await expect(page.getByTestId("save-status")).toHaveAttribute("data-status", "saved", {
+      timeout: 15_000,
+    });
+
+    await page.reload();
+    await page
+      .locator("section[data-testid^='section-']")
+      .first()
+      .getByRole("button")
+      .first()
+      .click();
+    await page
+      .getByTestId("layer-list")
+      .locator("li")
+      .filter({ hasText: /^Galeri/ })
+      .first()
+      .getByRole("button")
+      .first()
+      .click();
+    await expect(page.getByTestId("gallery-editor-item")).toHaveCount(2);
+
+    const popupPromise = page.waitForEvent("popup");
+    await page.getByTestId("editor-preview-btn").click();
+    const preview = await popupPromise;
+    await preview.waitForLoadState("domcontentloaded");
+    await expect(preview.locator('[data-widget="gallery"]')).toHaveAttribute(
+      "data-variant",
+      "editorial-collage",
+    );
+    await expect(preview.locator('[data-widget="gallery"] img')).toHaveCount(2);
+  });
+
+  test("new widget style persists and preview uses the same variant", async ({ page }) => {
+    await openNewEditor(page);
+    await page.getByTestId("add-widget-map").click();
+
+    const defaultVariant = page.getByTestId("widget-variant-full-bleed");
+    await expect(defaultVariant).toHaveAttribute("aria-pressed", "true");
+    await expect(defaultVariant.locator("[data-preview-variant='full-bleed']")).toBeVisible();
+
+    await page.getByTestId("widget-variant-location-ticket").click();
+    await expect(page.getByTestId("widget-variant-location-ticket")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByTestId("save-status")).toHaveAttribute("data-status", "saved", {
+      timeout: 15_000,
+    });
+
+    await page.reload();
+    await page
+      .locator("section[data-testid^='section-']")
+      .first()
+      .getByRole("button")
+      .first()
+      .click();
+    await page
+      .getByTestId("layer-list")
+      .locator("li")
+      .filter({ hasText: /Peta lokasi/ })
+      .first()
+      .getByRole("button")
+      .first()
+      .click();
+    await expect(page.getByTestId("widget-variant-location-ticket")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    const popupPromise = page.waitForEvent("popup");
+    await page.getByTestId("editor-preview-btn").click();
+    const preview = await popupPromise;
+    await preview.waitForLoadState("domcontentloaded");
+    await expect(preview.locator('[data-widget="map"]')).toHaveAttribute(
+      "data-variant",
+      "location-ticket",
+    );
+  });
 });

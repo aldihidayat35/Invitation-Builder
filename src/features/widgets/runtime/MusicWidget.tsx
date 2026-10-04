@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { track } from "@/features/analytics/track";
+import { resolveWidgetStyleVariant } from "../widget-styles";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
+import { MusicIcon, PlayIcon } from "./WidgetIcons";
 
 export interface MusicWidgetProps {
   readonly src?: unknown;
@@ -25,6 +27,7 @@ export function MusicWidget({ src, title, autoplay, style }: MusicWidgetProps) {
   const [failed, setFailed] = useState(false);
   const url = typeof src === "string" && SAFE_SRC.test(src) ? src : null;
   const label = typeof title === "string" && title.trim() ? title.trim() : "Putar musik";
+  const currentVariant = resolveWidgetStyleVariant("music", style?.variant).kind === "current";
 
   async function start(): Promise<void> {
     const audio = audioRef.current;
@@ -80,8 +83,33 @@ export function MusicWidget({ src, title, autoplay, style }: MusicWidgetProps) {
         disabled={!url}
         data-testid="music-toggle"
       >
-        {playing ? "⏸ Jeda" : "▶ Putar"} · {label}
+        {currentVariant ? (
+          <>
+            <span className={styles.musicDisc} aria-hidden="true">
+              <MusicIcon className={styles.musicDiscNote} />
+            </span>
+            <span className={styles.musicToggleIcon} aria-hidden="true">
+              <PlayIcon paused={playing} />
+            </span>
+            <span className={styles.musicCopy}>
+              <small>{playing ? "Sedang diputar" : "Musik undangan"}</small>
+              <span>{label}</span>
+            </span>
+            <span className={styles.equalizerBars} aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+          </>
+        ) : (
+          <>
+            <PlayIcon className={styles.legacyPlayIcon} paused={playing} aria-hidden="true" />
+            {playing ? "Jeda" : "Putar"} · {label}
+          </>
+        )}
       </button>
+      {currentVariant ? <span className={styles.musicProgress} aria-hidden="true" /> : null}
       {failed ? (
         <p className={styles.hint} role="status" data-testid="music-failed">
           Musik tidak dapat diputar.

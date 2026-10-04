@@ -1,14 +1,17 @@
 /**
  * Component tests: Canvas Widget Visuals rendering matches Preview specs.
  */
-import { render } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Stage, Layer } from "react-konva";
 import { WidgetVisual } from "@/features/editor/components/canvas-visuals";
 import { getWidgetStyleVariants, QUICK_COLOR_PALETTES } from "@/features/widgets";
 import type { Element, ThemeTokens } from "@/lib/schema";
 
+const drawImageMock = vi.fn();
+
 beforeEach(() => {
+  drawImageMock.mockReset();
   const mockCtx = {
     fillRect: vi.fn(),
     clearRect: vi.fn(),
@@ -16,7 +19,7 @@ beforeEach(() => {
     putImageData: vi.fn(),
     createImageData: vi.fn(() => []),
     setTransform: vi.fn(),
-    drawImage: vi.fn(),
+    drawImage: drawImageMock,
     save: vi.fn(),
     fillText: vi.fn(),
     restore: vi.fn(),
@@ -27,6 +30,7 @@ beforeEach(() => {
     quadraticCurveTo: vi.fn(),
     closePath: vi.fn(),
     stroke: vi.fn(),
+    setLineDash: vi.fn(),
     translate: vi.fn(),
     scale: vi.fn(),
     rotate: vi.fn(),
@@ -41,6 +45,8 @@ beforeEach(() => {
   };
   HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(mockCtx);
 });
+
+afterEach(() => vi.unstubAllGlobals());
 
 type WidgetElement = Extract<Element, { type: "widget" }>;
 
@@ -158,9 +164,7 @@ describe("Canvas Widget Visuals", () => {
       widgetVersion: 1,
       props: {
         title: "Amplop Digital",
-        accounts: [
-          { bank: "BCA", accountNumber: "1234567890", accountName: "Siti Rahma" },
-        ],
+        accounts: [{ bank: "BCA", accountNumber: "1234567890", accountName: "Siti Rahma" }],
       },
     };
 
@@ -224,8 +228,58 @@ describe("Canvas Widget Visuals", () => {
     expect(c2.querySelector("canvas")).toBeInTheDocument();
   });
 
+  it("draws a selected gallery asset on the canvas without reloading", async () => {
+    class LoadedImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      decoding = "async";
+      naturalWidth = 800;
+      naturalHeight = 600;
+      width = 800;
+      height = 600;
+
+      set src(_value: string) {
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    vi.stubGlobal("Image", LoadedImage);
+
+    const element: WidgetElement = {
+      id: "w_gallery_asset",
+      type: "widget",
+      name: "Galeri",
+      frame: { x: 0, y: 0, w: 326, h: 320, rotation: 0 },
+      locked: false,
+      visible: true,
+      style: { variant: "editorial-collage", color: "#2b2118" },
+      widgetType: "gallery",
+      widgetVersion: 1,
+      props: {
+        title: "Galeri",
+        layout: "grid",
+        items: [
+          {
+            assetId: "33333333-3333-4333-8333-333333333333",
+            alt: "Foto terpilih",
+          },
+        ],
+      },
+    };
+
+    renderKonvaWidget(element);
+    await waitFor(() => expect(drawImageMock).toHaveBeenCalled());
+  });
+
   it("provides exactly 5 style variants for each of the 7 widget types", () => {
-    const widgetTypes = ["countdown", "map", "guestGreeting", "rsvp", "gift", "music", "gallery"] as const;
+    const widgetTypes = [
+      "countdown",
+      "map",
+      "guestGreeting",
+      "rsvp",
+      "gift",
+      "music",
+      "gallery",
+    ] as const;
 
     for (const type of widgetTypes) {
       const variants = getWidgetStyleVariants(type);
@@ -264,5 +318,60 @@ describe("Canvas Widget Visuals", () => {
     const { container } = renderKonvaWidget(elWithStyle);
     expect(container.querySelector("canvas")).toBeInTheDocument();
   });
-});
 
+  it("renders every current widget variation on the Konva canvas", () => {
+    const samples: Readonly<Record<string, Pick<WidgetElement, "frame" | "props">>> = {
+      countdown: {
+        frame: { x: 0, y: 0, w: 326, h: 96, rotation: 0 },
+        props: { targetDateTime: { local: "2030-01-01T10:00", timeZone: "Asia/Jakarta" } },
+      },
+      map: {
+        frame: { x: 0, y: 0, w: 326, h: 220, rotation: 0 },
+        props: { label: "Lokasi acara", buttonText: "Buka peta" },
+      },
+      guestGreeting: {
+        frame: { x: 0, y: 0, w: 326, h: 64, rotation: 0 },
+        props: { prefix: "Kepada Yth.", guestName: "Tamu Undangan" },
+      },
+      rsvp: {
+        frame: { x: 0, y: 0, w: 326, h: 380, rotation: 0 },
+        props: { title: "Konfirmasi Kehadiran", enablePartySize: true },
+      },
+      gift: {
+        frame: { x: 0, y: 0, w: 326, h: 260, rotation: 0 },
+        props: {
+          title: "Kirim Hadiah",
+          accounts: [{ bank: "BCA", accountNumber: "123456789", accountName: "Alya" }],
+        },
+      },
+      music: {
+        frame: { x: 0, y: 0, w: 326, h: 72, rotation: 0 },
+        props: { title: "Lagu Pilihan" },
+      },
+      gallery: {
+        frame: { x: 0, y: 0, w: 326, h: 320, rotation: 0 },
+        props: { title: "Galeri", layout: "grid", items: [] },
+      },
+    };
+
+    for (const [widgetType, sample] of Object.entries(samples)) {
+      for (const variant of getWidgetStyleVariants(widgetType)) {
+        const element: WidgetElement = {
+          id: `widget_${widgetType}_${variant.id}`,
+          type: "widget",
+          name: widgetType,
+          frame: sample.frame,
+          locked: false,
+          visible: true,
+          style: { variant: variant.id, color: "#7b2940", background: "#fff8fa" },
+          widgetType,
+          widgetVersion: 1,
+          props: sample.props,
+        };
+        const view = renderKonvaWidget(element);
+        expect(view.container.querySelector("canvas")).toBeInTheDocument();
+        view.unmount();
+      }
+    }
+  });
+});

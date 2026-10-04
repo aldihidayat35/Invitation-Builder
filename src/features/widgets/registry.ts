@@ -51,6 +51,11 @@ export interface WidgetDefinition {
   readonly props: Readonly<Record<string, WidgetPropDefinition>>;
   readonly defaultFrame: Pick<Frame, "w" | "h">;
   readonly defaultProps: Readonly<Record<string, JsonValue>>;
+  /** Explicit style for newly inserted widgets; old documents may omit it. */
+  readonly defaultStyle?: Readonly<{
+    readonly variant: string;
+    readonly radius?: number;
+  }>;
   /**
    * Pure, DOM-free description shown by editors that cannot run the runtime
    * component (the Konva canvas). The runtime renderer lives in `./runtime`.

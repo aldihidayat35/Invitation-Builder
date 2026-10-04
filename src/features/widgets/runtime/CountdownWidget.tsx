@@ -88,12 +88,15 @@ export function CountdownWidget(props: CountdownWidgetProps) {
           role="timer"
           aria-live="off"
         >
-          {COUNTDOWN_UNITS.map((unit) => (
-            <div className={styles.unit} key={unit}>
+          {COUNTDOWN_UNITS.map((unit, index) => (
+            <div className={styles.unit} key={unit} data-unit={unit}>
               <span className={styles.value} data-testid={`countdown-${unit}`}>
                 {result?.state === "counting" ? pad(result[unit]) : "--"}
               </span>
               <span className={styles.unitLabel}>{labels[unit]}</span>
+              {index < COUNTDOWN_UNITS.length - 1 ? (
+                <span className={styles.unitDivider} aria-hidden="true" />
+              ) : null}
             </div>
           ))}
         </div>

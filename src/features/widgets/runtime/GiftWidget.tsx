@@ -3,6 +3,7 @@
 import { useState } from "react";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
+import { CopyIcon } from "./WidgetIcons";
 
 export interface GiftWidgetProps {
   readonly title?: unknown;
@@ -71,15 +72,24 @@ export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
 
   return (
     <WidgetFrame type="gift" style={style} className={styles.gift}>
-      <h3 className={styles.label}>{heading}</h3>
+      <div className={styles.giftHeading}>
+        <span className={styles.eyebrow}>Digital Gift</span>
+        <h3 className={styles.label}>{heading}</h3>
+      </div>
       <ul className={styles.giftList}>
         {list.map((account, i) => (
           <li key={`${account.accountNumber}-${i}`} className={styles.giftItem}>
-            <span>
-              <strong>{account.bank}</strong>
-              <br />
-              <span data-testid="gift-number">{account.accountNumber}</span>
-              {account.accountName ? <> · a.n. {account.accountName}</> : null}
+            <span className={styles.bankBadge} aria-hidden="true">
+              {(account.bank || "$").slice(0, 2).toLocaleUpperCase()}
+            </span>
+            <span className={styles.giftAccount}>
+              <strong className={styles.giftBank}>{account.bank}</strong>
+              <span className={styles.giftNumber} data-testid="gift-number">
+                {account.accountNumber}
+              </span>
+              {account.accountName ? (
+                <span className={styles.giftOwner}>a.n. {account.accountName}</span>
+              ) : null}
             </span>
             <button
               type="button"
@@ -87,7 +97,8 @@ export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
               onClick={() => void copy(i, account)}
               aria-label={`Salin nomor ${account.bank || "rekening"} ${account.accountNumber}`}
             >
-              Salin
+              <CopyIcon className={styles.copyIcon} />
+              <span className={styles.copyLabel}>Salin</span>
             </button>
           </li>
         ))}

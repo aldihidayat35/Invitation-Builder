@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { defaultWidgetRegistry } from "../default-registry";
+import { resolveWidgetStyleVariant } from "../widget-styles";
 import type { WidgetRegistry } from "../registry";
 import { CountdownWidget } from "./CountdownWidget";
 import { GalleryWidget } from "./GalleryWidget";
@@ -77,7 +78,10 @@ export function WidgetRuntime({
 }: WidgetRuntimeProps) {
   const resolved = registry.resolve(widgetType);
   const render = resolved.kind === "known" ? RUNTIME[widgetType] : undefined;
-  if (render) return <>{render(props, style)}</>;
+  if (render) {
+    const variant = resolveWidgetStyleVariant(widgetType, style?.variant).variant.id;
+    return <>{render(props, { ...style, variant })}</>;
+  }
   if (!showFallback) return <div data-widget-fallback={widgetType} aria-hidden="true" />;
   return (
     <WidgetFrame type="unknown" style={style} className={styles.fallbackBox}>

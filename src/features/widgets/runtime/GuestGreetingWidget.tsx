@@ -17,8 +17,12 @@ export function GuestGreetingWidget({
   style,
 }: GuestGreetingWidgetProps) {
   const parts = greetingParts({ guestName, prefix, fallback });
+  const monogram = parts.name.trim().charAt(0).toLocaleUpperCase() || "T";
   return (
     <WidgetFrame type="guestGreeting" style={style}>
+      <span className={styles.greetingMonogram} aria-hidden="true">
+        {monogram}
+      </span>
       <p className={styles.greeting}>
         <span className={styles.prefix}>{parts.prefix}</span>
         <span
@@ -29,6 +33,7 @@ export function GuestGreetingWidget({
           {parts.name}
         </span>
       </p>
+      <span className={styles.greetingOrnament} aria-hidden="true" />
     </WidgetFrame>
   );
 }

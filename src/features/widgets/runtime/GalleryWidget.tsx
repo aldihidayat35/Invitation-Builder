@@ -2,6 +2,7 @@
 
 import { useState, type KeyboardEvent, type TouchEvent } from "react";
 import { assetUrl } from "@/features/assets/urls";
+import { getGalleryPresentation } from "../widget-styles";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -43,8 +44,29 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
   const [index, setIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
   const heading = typeof title === "string" && title.trim() ? title.trim() : "Galeri";
+  const presentation = getGalleryPresentation(style?.variant, layout);
 
   if (images.length === 0) {
+    if (presentation !== "legacy-grid" && presentation !== "legacy-slider") {
+      return (
+        <WidgetFrame type="gallery" style={style} className={styles.gallery}>
+          <div className={styles.galleryHeading}>
+            <span className={styles.eyebrow}>Our Moments</span>
+            <h3 className={styles.label}>{heading}</h3>
+          </div>
+          <div
+            className={styles.galleryEmptyPreview}
+            data-gallery-presentation={presentation}
+            data-testid="gallery-empty-preview"
+            aria-label="Belum ada foto galeri"
+          >
+            <span />
+            <span />
+            <span />
+          </div>
+        </WidgetFrame>
+      );
+    }
     return (
       <WidgetFrame type="gallery" style={style}>
         <p className={styles.label}>{heading}</p>
@@ -52,11 +74,19 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
     );
   }
 
-  if (layout !== "slider") {
+  if (presentation !== "slider" && presentation !== "legacy-slider") {
     return (
       <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-        <h3 className={styles.label}>{heading}</h3>
-        <ul className={styles.galleryGrid} aria-label={heading}>
+        <div className={styles.galleryHeading}>
+          <span className={styles.eyebrow}>Our Moments</span>
+          <h3 className={styles.label}>{heading}</h3>
+        </div>
+        <ul
+          className={styles.galleryGrid}
+          aria-label={heading}
+          data-gallery-presentation={presentation}
+          data-testid="gallery-collection"
+        >
           {images.map((img, i) => (
             <li key={`${img.src}-${i}`}>
               {/* eslint-disable-next-line @next/next/no-img-element -- own asset route */}
@@ -85,7 +115,10 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
 
   return (
     <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-      <h3 className={styles.label}>{heading}</h3>
+      <div className={styles.galleryHeading}>
+        <span className={styles.eyebrow}>Our Moments</span>
+        <h3 className={styles.label}>{heading}</h3>
+      </div>
       <div
         className={styles.slider}
         role="group"
@@ -96,6 +129,7 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
         onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
         onTouchEnd={onTouchEnd}
         data-testid="gallery-slider"
+        data-gallery-presentation={presentation}
       >
         <div
           role="group"

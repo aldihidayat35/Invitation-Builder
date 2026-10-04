@@ -5,11 +5,21 @@ import {
   defaultWidgetRegistry,
   getWidgetStyleVariants,
   QUICK_COLOR_PALETTES,
+  resolveWidgetStyleVariant,
+  type WidgetStyleVariant,
   type WidgetPropDefinition,
 } from "@/features/widgets";
 import { BindingControl } from "./BindingControl";
+import { GalleryItemsControl } from "./GalleryItemsControl";
 import { useEditorStore } from "./EditorProvider";
-import { ColorField, FieldRow, NumberField, SelectField, TextField, type ColorValue } from "./fields";
+import {
+  ColorField,
+  FieldRow,
+  NumberField,
+  SelectField,
+  TextField,
+  type ColorValue,
+} from "./fields";
 import { resolveColor } from "../core/display";
 import styles from "./editor.module.css";
 
@@ -53,7 +63,10 @@ export function WidgetPanel({
   const resolved = defaultWidgetRegistry.resolve(element.widgetType);
   const disabled = readOnly || element.locked;
   const variants = getWidgetStyleVariants(element.widgetType);
-  const currentVariant = element.style.variant ?? variants[0]?.id ?? "default";
+  const variantResolution = resolveWidgetStyleVariant(element.widgetType, element.style.variant);
+  const currentVariant = variantResolution.variant.id;
+  const galleryLayoutFollowsVariant =
+    element.widgetType === "gallery" && variantResolution.kind === "current";
 
   if (resolved.kind === "unknown") {
     return (
@@ -90,6 +103,27 @@ export function WidgetPanel({
       {/* 1. 5 Style Variations */}
       <div className={styles.panelStack}>
         <p className={styles.widgetSectionTitle}>Pilihan Gaya (5 Variasi)</p>
+        {variantResolution.kind !== "current" ? (
+          <div
+            className={
+              variantResolution.kind === "fallback"
+                ? styles.widgetVariantWarning
+                : styles.widgetLegacyNotice
+            }
+            data-testid="widget-legacy-variant"
+          >
+            <strong>
+              {variantResolution.kind === "fallback"
+                ? "Variasi tidak dikenal"
+                : variantResolution.variant.label}
+            </strong>
+            <span>
+              {variantResolution.kind === "fallback"
+                ? `“${variantResolution.requestedVariant}” tidak tersedia; editor memakai tampilan lama yang aman.`
+                : "Tampilan ini dipertahankan agar desain lama tidak berubah. Pilih salah satu gaya baru untuk memperbaruinya."}
+            </span>
+          </div>
+        ) : null}
         <div className={styles.widgetVariantGrid} data-testid="widget-variants">
           {variants.map((v) => {
             const active = currentVariant === v.id;
@@ -110,6 +144,7 @@ export function WidgetPanel({
                   })
                 }
               >
+                <WidgetVariantThumbnail widgetType={element.widgetType} variant={v} />
                 <span className={styles.widgetVariantLabel}>
                   {active ? "✓ " : ""}
                   {v.label}
@@ -182,7 +217,14 @@ export function WidgetPanel({
       {/* 3. Content Properties */}
       <div className={styles.panelStack}>
         <p className={styles.widgetSectionTitle}>Konten &amp; Properti</p>
+        {galleryLayoutFollowsVariant ? (
+          <p className={styles.widgetLayoutNotice} data-testid="gallery-layout-notice">
+            Tata letak galeri mengikuti gaya <strong>{variantResolution.variant.label}</strong>.
+            Pilihan grid/slider lama tetap disimpan untuk kompatibilitas.
+          </p>
+        ) : null}
         {Object.entries(definition.props).map(([name, spec]) => {
+          if (name === "layout" && galleryLayoutFollowsVariant) return null;
           const value = element.props[name];
           const bound = isBinding(value);
           const control = controlOf(spec);
@@ -201,7 +243,14 @@ export function WidgetPanel({
                 onBind={(key) => setProp(name, { bind: key })}
                 onUnbind={() => setProp(name, definition.defaultProps[name])}
               />
-              {bound ? null : (
+              {bound ? null : element.widgetType === "gallery" && name === "items" ? (
+                <GalleryItemsControl
+                  elementId={element.id}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(items) => setProp(name, items)}
+                />
+              ) : (
                 <StaticControl
                   id={fieldId}
                   control={control}
@@ -216,6 +265,28 @@ export function WidgetPanel({
         })}
       </div>
     </div>
+  );
+}
+
+function WidgetVariantThumbnail({
+  widgetType,
+  variant,
+}: {
+  widgetType: string;
+  variant: WidgetStyleVariant;
+}) {
+  return (
+    <span
+      className={styles.widgetVariantPreview}
+      data-preview-widget={widgetType}
+      data-preview-variant={variant.id}
+      aria-hidden="true"
+    >
+      <span className={styles.widgetVariantPreviewPrimary} />
+      <span className={styles.widgetVariantPreviewSecondary} />
+      <span className={styles.widgetVariantPreviewTertiary} />
+      <span className={styles.widgetVariantPreviewAction} />
+    </span>
   );
 }
 
