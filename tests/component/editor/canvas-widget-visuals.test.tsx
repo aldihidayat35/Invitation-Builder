@@ -270,7 +270,7 @@ describe("Canvas Widget Visuals", () => {
     await waitFor(() => expect(drawImageMock).toHaveBeenCalled());
   });
 
-  it("provides exactly 5 style variants for each of the 7 widget types", () => {
+  it("provides valid style variants for each of the 7 widget types", () => {
     const widgetTypes = [
       "countdown",
       "map",
@@ -283,7 +283,7 @@ describe("Canvas Widget Visuals", () => {
 
     for (const type of widgetTypes) {
       const variants = getWidgetStyleVariants(type);
-      expect(variants).toHaveLength(5);
+      expect(variants).toHaveLength(type === "gift" ? 10 : 5);
       for (const v of variants) {
         expect(v.id).toBeTruthy();
         expect(v.label).toBeTruthy();

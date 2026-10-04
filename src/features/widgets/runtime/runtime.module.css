@@ -1121,7 +1121,12 @@
 .widget[data-widget="gift"][data-variant="stacked-slips"],
 .widget[data-widget="gift"][data-variant="wallet-panel"],
 .widget[data-widget="gift"][data-variant="compact-list"],
-.widget[data-widget="gift"][data-variant="heritage-frame"] {
+.widget[data-widget="gift"][data-variant="heritage-frame"],
+.widget[data-widget="gift"][data-variant="minimalist-clean"],
+.widget[data-widget="gift"][data-variant="envelope-tuck"],
+.widget[data-widget="gift"][data-variant="glass-card"],
+.widget[data-widget="gift"][data-variant="gold-ornament"],
+.widget[data-widget="gift"][data-variant="qr-showcase"] {
   padding: 14px;
 }
 
@@ -1130,7 +1135,12 @@
     [data-variant="stacked-slips"],
     [data-variant="wallet-panel"],
     [data-variant="compact-list"],
-    [data-variant="heritage-frame"]
+    [data-variant="heritage-frame"],
+    [data-variant="minimalist-clean"],
+    [data-variant="envelope-tuck"],
+    [data-variant="glass-card"],
+    [data-variant="gold-ornament"],
+    [data-variant="qr-showcase"]
   )
   .bankBadge {
   display: grid;
@@ -1151,13 +1161,65 @@
     [data-variant="stacked-slips"],
     [data-variant="wallet-panel"],
     [data-variant="compact-list"],
-    [data-variant="heritage-frame"]
+    [data-variant="heritage-frame"],
+    [data-variant="minimalist-clean"],
+    [data-variant="envelope-tuck"],
+    [data-variant="glass-card"],
+    [data-variant="gold-ornament"],
+    [data-variant="qr-showcase"]
   )
   .copyIcon {
   display: block;
   margin: 0;
+  width: 15px;
+  height: 15px;
 }
 
+.cardChip {
+  display: inline-block;
+  width: 26px;
+  height: 18px;
+  flex: 0 0 26px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #ffd700 0%, #e6b800 50%, #b8860b 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.qrBadge {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, currentColor 10%, var(--widget-bg, #fff));
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.qrIcon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.buttonCopied {
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  border-color: currentColor;
+}
+
+.giftEmpty {
+  padding: 20px 10px;
+  opacity: 0.7;
+  font-size: 13px;
+  text-align: center;
+}
+
+.giftEmptyText {
+  margin: 0;
+}
+
+/* 1. Bank Card */
 .widget[data-widget="gift"][data-variant="bank-card"] .giftItem {
   position: relative;
   min-height: 92px;
@@ -1182,6 +1244,7 @@
   padding: 0 11px;
 }
 
+/* 2. Stacked Slips */
 .widget[data-widget="gift"][data-variant="stacked-slips"] .giftList {
   padding-inline: 8px;
 }
@@ -1198,6 +1261,7 @@
   transform: translateX(5px) rotate(0.7deg);
 }
 
+/* 3. Wallet Panel */
 .widget[data-widget="gift"][data-variant="wallet-panel"] {
   border-radius: var(--widget-radius, 14px);
   background: color-mix(in srgb, currentColor 9%, var(--widget-bg, #fff));
@@ -1214,6 +1278,7 @@
   border-top: 1px dashed color-mix(in srgb, currentColor 20%, transparent);
 }
 
+/* 4. Compact List */
 .widget[data-widget="gift"][data-variant="compact-list"] .giftHeading {
   align-items: flex-start;
 }
@@ -1238,6 +1303,7 @@
   padding: 0;
 }
 
+/* 5. Heritage Frame */
 .widget[data-widget="gift"][data-variant="heritage-frame"] {
   border: 4px double currentColor;
   border-radius: var(--widget-radius, 10px);
@@ -1246,6 +1312,167 @@
 .widget[data-widget="gift"][data-variant="heritage-frame"] .giftItem {
   padding-block: 8px;
   border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* 6. Minimalist Clean (New) */
+.widget[data-widget="gift"][data-variant="minimalist-clean"] {
+  padding: 16px;
+}
+
+.widget[data-widget="gift"][data-variant="minimalist-clean"] .giftHeading {
+  margin-bottom: 4px;
+}
+
+.widget[data-widget="gift"][data-variant="minimalist-clean"] .giftItem {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: var(--widget-radius, 6px);
+  background: color-mix(in srgb, currentColor 2.5%, var(--widget-bg, #fff));
+  box-shadow: 0 2px 6px color-mix(in srgb, currentColor 4%, transparent);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.widget[data-widget="gift"][data-variant="minimalist-clean"] .bankBadge {
+  background: transparent;
+  color: currentColor;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 6px;
+}
+
+.widget[data-widget="gift"][data-variant="minimalist-clean"] .button {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-width: 1px;
+}
+
+/* 7. Envelope Tuck (New) */
+.widget[data-widget="gift"][data-variant="envelope-tuck"] {
+  position: relative;
+  padding: 14px;
+  border-radius: var(--widget-radius, 12px);
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: color-mix(in srgb, currentColor 5%, var(--widget-bg, #fff));
+}
+
+.envelopeFlap {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1.5px dashed color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.envelopeSeal {
+  position: absolute;
+  bottom: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--widget-color, #2b2118);
+  color: var(--widget-bg, #fff);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.widget[data-widget="gift"][data-variant="envelope-tuck"] .giftItem {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 10px;
+  background: var(--widget-bg, #fff);
+  box-shadow: 0 4px 12px color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* 8. Glassmorphism (New) */
+.widget[data-widget="gift"][data-variant="glass-card"] {
+  padding: 16px;
+  border-radius: var(--widget-radius, 16px);
+  background: color-mix(in srgb, var(--widget-bg, #fff) 70%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.widget[data-widget="gift"][data-variant="glass-card"] .giftItem {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  background: color-mix(in srgb, var(--widget-bg, #fff) 85%, transparent);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.widget[data-widget="gift"][data-variant="glass-card"] .bankBadge {
+  background: color-mix(in srgb, currentColor 85%, transparent);
+  color: var(--widget-bg, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* 9. Royal Gold Ornament (New) */
+.widget[data-widget="gift"][data-variant="gold-ornament"] {
+  padding: 16px;
+  border: 3px double color-mix(in srgb, currentColor 70%, #d4af37);
+  border-radius: var(--widget-radius, 8px);
+  background: color-mix(in srgb, currentColor 3%, var(--widget-bg, #fff));
+}
+
+.goldHeaderAccent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.goldEmblem {
+  font-size: 16px;
+  color: color-mix(in srgb, currentColor 60%, #c59b27);
+}
+
+.goldHeadingRule {
+  width: 48px;
+  height: 1.5px;
+  margin-top: 4px;
+  background: color-mix(in srgb, currentColor 55%, #c59b27);
+  border-radius: 1px;
+}
+
+.widget[data-widget="gift"][data-variant="gold-ornament"] .giftItem {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, #c59b27);
+  border-radius: 6px;
+  background: var(--widget-bg, #fff);
+  box-shadow: 0 3px 8px color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.widget[data-widget="gift"][data-variant="gold-ornament"] .bankBadge {
+  background: color-mix(in srgb, currentColor 75%, #c59b27);
+  color: #fff;
+  border-radius: 6px;
+}
+
+/* 10. QR & E-Wallet Hub (New) */
+.widget[data-widget="gift"][data-variant="qr-showcase"] {
+  padding: 15px;
+}
+
+.widget[data-widget="gift"][data-variant="qr-showcase"] .giftItem {
+  padding: 12px 14px;
+  border-radius: var(--widget-radius, 14px);
+  border: 1.5px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: var(--widget-bg, #fff);
+  box-shadow: 0 4px 14px color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.widget[data-widget="gift"][data-variant="qr-showcase"] .button {
+  min-height: 38px;
+  padding: 0 14px;
+  font-weight: 700;
+  border-radius: 8px;
 }
 
 /* Music ------------------------------------------------------------------- */

@@ -37,7 +37,7 @@ const propsByType: Readonly<Record<string, Readonly<Record<string, unknown>>>> =
 };
 
 describe("current widget style variants", () => {
-  it("renders all 35 current variants with their normalized data attribute", () => {
+  it("renders all current variants (including 10 gift variants) with their normalized data attribute", () => {
     for (const [widgetType, props] of Object.entries(propsByType)) {
       for (const variant of getWidgetStyleVariants(widgetType)) {
         const { container, unmount } = render(

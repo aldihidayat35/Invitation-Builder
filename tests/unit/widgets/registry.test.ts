@@ -88,12 +88,13 @@ describe("widget registry", () => {
     expect(createWidgetRegistry().list()).toEqual([]);
   });
 
-  it("provides five unique current variants and a valid explicit default per widget", () => {
+  it("provides unique current variants and a valid explicit default per widget", () => {
     for (const definition of defaultWidgetRegistry.list()) {
       const variants = getWidgetStyleVariants(definition.type);
       const ids = variants.map((variant) => variant.id);
-      expect(variants).toHaveLength(5);
-      expect(new Set(ids).size).toBe(5);
+      const expectedCount = definition.type === "gift" ? 10 : 5;
+      expect(variants).toHaveLength(expectedCount);
+      expect(new Set(ids).size).toBe(expectedCount);
       expect(ids).toContain(getDefaultWidgetStyle(definition.type).variant);
       expect(definition.defaultStyle).toEqual(getDefaultWidgetStyle(definition.type));
     }

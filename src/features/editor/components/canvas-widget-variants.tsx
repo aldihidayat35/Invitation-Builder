@@ -919,17 +919,35 @@ function GiftVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
   const accounts = parseGiftAccounts(props.accounts);
   const list = accounts.length
     ? accounts.slice(0, 3)
-    : [{ bank: "BANK", accountNumber: "1234 5678 9012", accountName: "Nama Penerima" }];
+    : [
+        { bank: "BCA", accountNumber: "1234 5678 90", accountName: "Nama Penerima" },
+        { bank: "MANDIRI", accountNumber: "9876 5432 10", accountName: "Nama Penerima" },
+      ];
   const radius = element.style.radius ?? 10;
+
+  const isEnvelope = variant === "envelope-tuck";
+  const isGold = variant === "gold-ornament";
+  const isQr = variant === "qr-showcase";
+  const isMinimal = variant === "minimalist-clean";
+  const isGlass = variant === "glass-card";
+  const isHeritage = variant === "heritage-frame";
+  const isWallet = variant === "wallet-panel";
+  const isCompact = variant === "compact-list";
+  const isStacked = variant === "stacked-slips";
+  const isBankCard = variant === "bank-card";
+
   return (
     <Group listening={false}>
       <Background element={element} tokens={tokens} />
-      {variant === "wallet-panel" ? (
+
+      {/* Outer Containers for specific variants */}
+      {isWallet ? (
         <Rect width={w} height={h} cornerRadius={radius} fill={color} opacity={0.08} />
       ) : null}
-      {variant === "heritage-frame" ? (
+
+      {isHeritage ? (
         <>
-          <Rect width={w} height={h} cornerRadius={radius} stroke={color} />
+          <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={1} />
           <Rect
             x={4}
             y={4}
@@ -939,119 +957,347 @@ function GiftVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
             stroke={color}
             strokeWidth={1.5}
           />
+          <Text x={w / 2 - 8} y={3} width={16} text="◆" fontSize={8} fill={color} align="center" />
         </>
       ) : null}
+
+      {isGold ? (
+        <>
+          <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={1} />
+          <Rect
+            x={3}
+            y={3}
+            width={w - 6}
+            height={h - 6}
+            cornerRadius={Math.max(0, radius - 2)}
+            stroke={color}
+            strokeWidth={1.5}
+            opacity={0.7}
+          />
+          {/* Corner flourish accents */}
+          <Text x={6} y={5} text="✦" fontSize={8} fill={color} opacity={0.7} />
+          <Text x={w - 14} y={5} text="✦" fontSize={8} fill={color} opacity={0.7} />
+          <Text x={6} y={h - 14} text="✦" fontSize={8} fill={color} opacity={0.7} />
+          <Text x={w - 14} y={h - 14} text="✦" fontSize={8} fill={color} opacity={0.7} />
+          <Text x={w / 2 - 8} y={2} width={16} text="⚜" fontSize={11} fill={color} align="center" />
+        </>
+      ) : null}
+
+      {isEnvelope ? (
+        <>
+          <Line
+            points={[12, 6, w / 2, 28, w - 12, 6]}
+            stroke={color}
+            strokeWidth={1.5}
+            dash={[4, 3]}
+            opacity={0.5}
+          />
+          <Circle x={w / 2} y={28} radius={10} fill={color} />
+          <Text
+            x={w / 2 - 8}
+            y={22}
+            width={16}
+            text="✉"
+            fontSize={9}
+            fill={surface}
+            align="center"
+          />
+        </>
+      ) : null}
+
+      {/* Header Titles */}
       <Text
         x={14}
-        y={10}
+        y={isEnvelope ? 38 : isGold ? 14 : 10}
         width={w - 28}
-        text="DIGITAL GIFT"
+        text={
+          isGold
+            ? "WEDDING GIFT & BLESSING"
+            : isQr
+              ? "CASHLESS & E-WALLET"
+              : isMinimal
+                ? "DIGITAL GIFT"
+                : "DIGITAL GIFT"
+        }
         fontSize={8}
         letterSpacing={1.8}
         fill={color}
         opacity={0.65}
-        align={variant === "compact-list" ? "left" : "center"}
+        align={isCompact ? "left" : "center"}
       />
       <Text
         x={14}
-        y={25}
+        y={isEnvelope ? 51 : isGold ? 27 : 24}
         width={w - 28}
         text={title}
         fontSize={16}
         fontStyle="bold"
         fill={color}
-        align={variant === "compact-list" ? "left" : "center"}
+        align={isCompact ? "left" : "center"}
       />
+
+      {isGold ? (
+        <Line
+          points={[w / 2 - 25, 46, w / 2 + 25, 46]}
+          stroke={color}
+          strokeWidth={1}
+          opacity={0.4}
+        />
+      ) : null}
+
+      {/* Account Cards */}
       {list.map((account, index) => {
-        const compact = variant === "compact-list";
-        const itemH = compact ? 48 : variant === "bank-card" ? 82 : 58;
-        const y = 54 + index * (itemH + 7);
-        if (y + itemH > h - 6) return null;
-        const cardX = variant === "stacked-slips" ? 18 + index * 3 : 14;
+        const itemH = isCompact ? 46 : isBankCard ? 82 : isQr ? 62 : isMinimal ? 52 : 58;
+        const startY = isEnvelope ? 72 : isGold ? 54 : 50;
+        const y = startY + index * (itemH + (isMinimal ? 6 : 8));
+        if (y + itemH > h - 4) return null;
+
+        const cardX = isStacked ? 18 + index * 3 : 14;
         const cardW = w - cardX - 14;
-        const solid = variant === "bank-card";
+        const solid = isBankCard;
+
         return (
           <Group
             key={`${account.accountNumber}-${index}`}
-            rotation={variant === "stacked-slips" ? (index % 2 ? 0.8 : -0.8) : 0}
+            rotation={isStacked ? (index % 2 ? 0.9 : -0.9) : 0}
           >
-            {!compact ? (
+            {/* Card Background */}
+            {!isCompact ? (
               <Rect
                 x={cardX}
                 y={y}
                 width={cardW}
                 height={itemH}
-                cornerRadius={radius}
-                fill={solid ? color : surface}
+                cornerRadius={
+                  isMinimal
+                    ? 6
+                    : isGlass
+                      ? 14
+                      : isQr
+                        ? 12
+                        : isBankCard
+                          ? radius
+                          : Math.min(radius, 10)
+                }
+                fill={solid ? color : isGlass ? surface : surface}
                 stroke={color}
-                strokeWidth={solid ? 0 : 1}
-                opacity={solid ? 1 : 0.96}
+                strokeWidth={isMinimal || isGlass ? 1 : solid ? 0 : 1}
+                opacity={solid ? 1 : isGlass ? 0.85 : 0.96}
                 shadowColor="#000"
-                shadowBlur={variant === "stacked-slips" ? 5 : 0}
-                shadowOpacity={0.12}
+                shadowBlur={isStacked ? 6 : isGlass ? 8 : isBankCard ? 4 : 0}
+                shadowOpacity={isStacked ? 0.14 : isGlass ? 0.08 : isBankCard ? 0.15 : 0}
               />
             ) : (
               <Line points={[14, y + itemH, w - 14, y + itemH]} stroke={color} opacity={0.18} />
             )}
-            {!compact ? (
-              <Rect
-                x={cardX + 10}
-                y={y + 12}
-                width={30}
-                height={24}
-                cornerRadius={7}
-                fill={solid ? surface : color}
-                opacity={solid ? 0.18 : 0.12}
+
+            {/* Specular highlight for glass-card */}
+            {isGlass ? (
+              <Line
+                points={[cardX + 12, y + 2, cardX + cardW - 12, y + 2]}
+                stroke={surface}
+                strokeWidth={1.5}
+                opacity={0.65}
               />
             ) : null}
+
+            {/* Chip for Bank Card */}
+            {isBankCard ? (
+              <Group>
+                <Rect
+                  x={cardX + 10}
+                  y={y + 11}
+                  width={24}
+                  height={17}
+                  cornerRadius={4}
+                  fill="#ffd700"
+                  opacity={0.9}
+                />
+                <Line
+                  points={[cardX + 10, y + 19, cardX + 34, y + 19]}
+                  stroke="#b8860b"
+                  strokeWidth={0.8}
+                />
+                <Line
+                  points={[cardX + 22, y + 11, cardX + 22, y + 28]}
+                  stroke="#b8860b"
+                  strokeWidth={0.8}
+                />
+              </Group>
+            ) : null}
+
+            {/* Stylized QR placeholder for qr-showcase */}
+            {isQr ? (
+              <Group>
+                <Rect
+                  x={cardX + 8}
+                  y={y + 8}
+                  width={34}
+                  height={34}
+                  cornerRadius={6}
+                  fill={color}
+                  opacity={0.08}
+                  stroke={color}
+                  strokeWidth={1}
+                />
+                {/* 3 QR finder squares */}
+                <Rect x={cardX + 12} y={y + 12} width={8} height={8} fill={color} />
+                <Rect x={cardX + 30} y={y + 12} width={8} height={8} fill={color} />
+                <Rect x={cardX + 12} y={y + 30} width={8} height={8} fill={color} />
+              </Group>
+            ) : null}
+
+            {/* Bank Badge Monogram (when not BankCard or QR or Compact) */}
+            {!isCompact && !isBankCard && !isQr ? (
+              <Group>
+                <Rect
+                  x={cardX + 8}
+                  y={y + (itemH - 28) / 2}
+                  width={32}
+                  height={28}
+                  cornerRadius={6}
+                  fill={color}
+                  opacity={0.12}
+                />
+                <Text
+                  x={cardX + 8}
+                  y={y + (itemH - 28) / 2 + 8}
+                  width={32}
+                  text={(account.bank || "$").slice(0, 3).toUpperCase()}
+                  fontSize={9}
+                  fontStyle="bold"
+                  fill={color}
+                  align="center"
+                />
+              </Group>
+            ) : null}
+
+            {/* Bank Name */}
             <Text
-              x={compact ? 14 : cardX + 48}
-              y={y + 10}
+              x={
+                isCompact
+                  ? 14
+                  : isBankCard
+                    ? cardX + 42
+                    : isQr
+                      ? cardX + 48
+                      : cardX + 46
+              }
+              y={y + (isCompact ? 6 : isBankCard ? 11 : isMinimal ? 8 : 10)}
               width={cardW - 100}
               text={account.bank || "BANK"}
               fontSize={10}
               fontStyle="bold"
               fill={solid ? surface : color}
             />
+
+            {/* Account Number */}
             <Text
-              x={compact ? 14 : cardX + 48}
-              y={y + 27}
-              width={cardW - 100}
+              x={
+                isCompact
+                  ? 14
+                  : isBankCard
+                    ? cardX + 12
+                    : isQr
+                      ? cardX + 48
+                      : cardX + 46
+              }
+              y={y + (isCompact ? 22 : isBankCard ? 36 : isMinimal ? 22 : 25)}
+              width={cardW - 90}
               text={account.accountNumber}
-              fontSize={13}
+              fontSize={isBankCard ? 14 : 12}
               fontStyle="bold"
-              letterSpacing={0.7}
+              letterSpacing={0.8}
               fill={solid ? surface : color}
               ellipsis
             />
-            {!compact ? (
+
+            {/* Account Holder Name */}
+            {!isCompact ? (
               <Text
-                x={cardX + 48}
-                y={y + 47}
-                width={cardW - 100}
-                text={`a.n. ${account.accountName}`}
-                fontSize={9}
+                x={
+                  isBankCard
+                    ? cardX + 12
+                    : isQr
+                      ? cardX + 48
+                      : cardX + 46
+                }
+                y={y + (isBankCard ? 58 : isMinimal ? 36 : 41)}
+                width={cardW - 90}
+                text={`a.n. ${account.accountName || "Nama Pemilik"}`}
+                fontSize={8.5}
                 fill={solid ? surface : color}
-                opacity={0.72}
+                opacity={solid ? 0.85 : 0.72}
                 ellipsis
               />
             ) : null}
-            <Circle
-              x={w - 36}
-              y={y + itemH / 2}
-              radius={15}
-              stroke={solid ? surface : color}
-              opacity={0.8}
-            />
-            <Text
-              x={w - 45}
-              y={y + itemH / 2 - 6}
-              width={18}
-              text="⧉"
-              fontSize={11}
-              fill={solid ? surface : color}
-              align="center"
-            />
+
+            {/* Copy Button / Pill on right */}
+            {isMinimal ? (
+              <Group>
+                <Rect
+                  x={w - 62}
+                  y={y + (itemH - 24) / 2}
+                  width={44}
+                  height={24}
+                  cornerRadius={12}
+                  stroke={color}
+                  strokeWidth={0.8}
+                />
+                <Text
+                  x={w - 62}
+                  y={y + (itemH - 24) / 2 + 6}
+                  width={44}
+                  text="Salin"
+                  fontSize={9}
+                  fontStyle="bold"
+                  fill={color}
+                  align="center"
+                />
+              </Group>
+            ) : isBankCard ? (
+              <Group>
+                <Rect
+                  x={w - 66}
+                  y={y + (itemH - 26) / 2}
+                  width={48}
+                  height={26}
+                  cornerRadius={13}
+                  fill={surface}
+                  opacity={0.2}
+                />
+                <Text
+                  x={w - 66}
+                  y={y + (itemH - 26) / 2 + 7}
+                  width={48}
+                  text="SALIN"
+                  fontSize={8.5}
+                  fontStyle="bold"
+                  fill={surface}
+                  align="center"
+                />
+              </Group>
+            ) : (
+              <Group>
+                <Circle
+                  x={w - 34}
+                  y={y + itemH / 2}
+                  radius={14}
+                  stroke={solid ? surface : color}
+                  strokeWidth={1}
+                  opacity={0.75}
+                />
+                <Text
+                  x={w - 43}
+                  y={y + itemH / 2 - 6}
+                  width={18}
+                  text="⧉"
+                  fontSize={11}
+                  fill={solid ? surface : color}
+                  align="center"
+                />
+              </Group>
+            )}
           </Group>
         );
       })}

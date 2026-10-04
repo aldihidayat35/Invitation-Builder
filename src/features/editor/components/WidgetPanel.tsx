@@ -11,6 +11,7 @@ import {
 } from "@/features/widgets";
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
+import { GiftAccountsControl } from "./GiftAccountsControl";
 import { useEditorStore } from "./EditorProvider";
 import {
   ColorField,
@@ -100,9 +101,9 @@ export function WidgetPanel({
 
   return (
     <div className={styles.panelStack} data-testid="widget-inspector">
-      {/* 1. 5 Style Variations */}
+      {/* 1. Style Variations */}
       <div className={styles.panelStack}>
-        <p className={styles.widgetSectionTitle}>Pilihan Gaya (5 Variasi)</p>
+        <p className={styles.widgetSectionTitle}>Pilihan Gaya ({variants.length} Variasi)</p>
         {variantResolution.kind !== "current" ? (
           <div
             className={
@@ -249,6 +250,13 @@ export function WidgetPanel({
                   value={value}
                   disabled={disabled}
                   onChange={(items) => setProp(name, items)}
+                />
+              ) : element.widgetType === "gift" && name === "accounts" ? (
+                <GiftAccountsControl
+                  elementId={element.id}
+                  value={value}
+                  disabled={disabled}
+                  onChange={(accounts) => setProp(name, accounts)}
                 />
               ) : (
                 <StaticControl

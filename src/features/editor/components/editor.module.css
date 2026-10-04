@@ -2792,6 +2792,103 @@ textarea.input {
   box-shadow: 30px 3px 0 color-mix(in srgb, currentColor 18%, var(--dash-surface));
 }
 
+/* Minimalist Clean Thumbnail */
+.widgetVariantPreview[data-preview-variant="minimalist-clean"] {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+
+.widgetVariantPreview[data-preview-variant="minimalist-clean"] .widgetVariantPreviewPrimary {
+  inset: 8px 12px auto;
+  height: 2px;
+  background: currentColor;
+  box-shadow: 0 10px 0 color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="minimalist-clean"] .widgetVariantPreviewAction {
+  right: 8px;
+  bottom: 6px;
+  width: 14px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+
+/* Envelope Tuck Thumbnail */
+.widgetVariantPreview[data-preview-variant="envelope-tuck"] {
+  border: 1px solid currentColor;
+  border-radius: 6px;
+}
+
+.widgetVariantPreview[data-preview-variant="envelope-tuck"] .widgetVariantPreviewPrimary {
+  inset: 4px 6px auto;
+  height: 12px;
+  clip-path: polygon(0 0, 50% 65%, 100% 0, 100% 100%, 0 100%);
+  background: color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="envelope-tuck"] .widgetVariantPreviewSecondary {
+  inset: auto 10px 6px;
+  height: 14px;
+  border-radius: 4px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+/* Glassmorphism Thumbnail */
+.widgetVariantPreview[data-preview-variant="glass-card"] {
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, color-mix(in srgb, currentColor 10%, transparent), transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.widgetVariantPreview[data-preview-variant="glass-card"] .widgetVariantPreviewPrimary {
+  inset: 6px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* Gold Ornament Thumbnail */
+.widgetVariantPreview[data-preview-variant="gold-ornament"] {
+  border: 2px double currentColor;
+  border-radius: 4px;
+}
+
+.widgetVariantPreview[data-preview-variant="gold-ornament"] .widgetVariantPreviewPrimary {
+  inset: 6px 15%;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+}
+
+/* QR & E-Wallet Hub Thumbnail */
+.widgetVariantPreview[data-preview-variant="qr-showcase"] .widgetVariantPreviewPrimary {
+  inset: 7px auto 7px 7px;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.widgetVariantPreview[data-preview-variant="qr-showcase"] .widgetVariantPreviewSecondary {
+  inset: 8px 8px auto 32px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.widgetVariantPreview[data-preview-variant="qr-showcase"] .widgetVariantPreviewTertiary {
+  inset: 15px 12px auto 32px;
+  height: 3px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
 .widgetLegacyNotice,
 .widgetVariantWarning,
 .widgetLayoutNotice {
@@ -2904,3 +3001,241 @@ textarea.input {
   border: 1px solid rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
+
+/* Gift Accounts Control (Editor Inspector) */
+.giftAccountsControl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.giftControlHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.giftControlCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dash-muted);
+}
+
+.giftFormCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--dash-radius-md, 8px);
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-sunken);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.giftFormTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+.giftPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.giftPresetChip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.giftPresetChip:hover {
+  border-color: var(--dash-accent);
+  background: var(--dash-surface-hover);
+}
+
+.giftPresetChipActive {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  font-weight: 600;
+}
+
+.giftFormFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.giftFieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dash-muted);
+}
+
+.giftFormActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.giftEmptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 12px;
+  border: 1px dashed var(--dash-border);
+  border-radius: var(--dash-radius-md, 8px);
+  gap: 6px;
+  color: var(--dash-muted);
+}
+
+.giftEmptyBox strong {
+  font-size: 12px;
+  color: var(--dash-text);
+}
+
+.giftSampleButton {
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--dash-accent);
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.giftSampleButton:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.giftEditorList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.giftEditorItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--dash-radius-sm, 6px);
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  transition: border-color 0.12s ease;
+}
+
+.giftEditorItemActive {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+}
+
+.giftItemBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--dash-text);
+  flex-shrink: 0;
+}
+
+.giftItemDetails {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.giftItemHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.giftItemBank {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.giftItemName {
+  font-size: 11px;
+  color: var(--dash-muted);
+}
+
+.giftItemNumber {
+  font-size: 11.5px;
+  font-family: var(--dash-font-mono, monospace);
+  color: var(--dash-text);
+  letter-spacing: 0.02em;
+}
+
+.giftItemControls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.giftItemBtn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--dash-border);
+  border-radius: 4px;
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.giftItemBtn:hover:not(:disabled) {
+  border-color: var(--dash-border-strong);
+  color: var(--dash-text);
+}
+
+.giftItemBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+

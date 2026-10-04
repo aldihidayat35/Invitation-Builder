@@ -3,7 +3,7 @@
 import { useState } from "react";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
-import { CopyIcon } from "./WidgetIcons";
+import { CheckIcon, CopyIcon, QrIcon } from "./WidgetIcons";
 
 export interface GiftWidgetProps {
   readonly title?: unknown;
@@ -63,6 +63,7 @@ export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
   const list = parseGiftAccounts(accounts);
   const [feedback, setFeedback] = useState<{ index: number; ok: boolean } | null>(null);
   const heading = s(title) || "Kirim Hadiah";
+  const variant = style?.variant ?? "bank-card";
 
   async function copy(index: number, account: GiftAccount) {
     const ok = await copyText(account.accountNumber);
@@ -70,39 +71,91 @@ export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
     setTimeout(() => setFeedback(null), 2500);
   }
 
+  const isEnvelope = variant === "envelope-tuck";
+  const isGold = variant === "gold-ornament";
+  const isQr = variant === "qr-showcase";
+  const isCard = variant === "bank-card";
+
   return (
     <WidgetFrame type="gift" style={style} className={styles.gift}>
+      {isEnvelope ? (
+        <div className={styles.envelopeFlap} aria-hidden="true">
+          <span className={styles.envelopeSeal}>✉</span>
+        </div>
+      ) : null}
+
+      {isGold ? (
+        <div className={styles.goldHeaderAccent} aria-hidden="true">
+          <span className={styles.goldEmblem}>⚜</span>
+        </div>
+      ) : null}
+
       <div className={styles.giftHeading}>
-        <span className={styles.eyebrow}>Digital Gift</span>
+        <span className={styles.eyebrow}>
+          {isGold ? "Wedding Gift & Blessing" : isQr ? "Cashless & Transfer" : "Digital Gift"}
+        </span>
         <h3 className={styles.label}>{heading}</h3>
+        {isGold ? <div className={styles.goldHeadingRule} aria-hidden="true" /> : null}
       </div>
-      <ul className={styles.giftList}>
-        {list.map((account, i) => (
-          <li key={`${account.accountNumber}-${i}`} className={styles.giftItem}>
-            <span className={styles.bankBadge} aria-hidden="true">
-              {(account.bank || "$").slice(0, 2).toLocaleUpperCase()}
-            </span>
-            <span className={styles.giftAccount}>
-              <strong className={styles.giftBank}>{account.bank}</strong>
-              <span className={styles.giftNumber} data-testid="gift-number">
-                {account.accountNumber}
-              </span>
-              {account.accountName ? (
-                <span className={styles.giftOwner}>a.n. {account.accountName}</span>
-              ) : null}
-            </span>
-            <button
-              type="button"
-              className={styles.button}
-              onClick={() => void copy(i, account)}
-              aria-label={`Salin nomor ${account.bank || "rekening"} ${account.accountNumber}`}
-            >
-              <CopyIcon className={styles.copyIcon} />
-              <span className={styles.copyLabel}>Salin</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      {list.length === 0 ? (
+        <div className={styles.giftEmpty}>
+          <p className={styles.giftEmptyText}>Nomor rekening belum ditambahkan.</p>
+        </div>
+      ) : (
+        <ul className={styles.giftList}>
+          {list.map((account, i) => {
+            const isCopied = feedback?.index === i && feedback.ok;
+            return (
+              <li key={`${account.accountNumber}-${i}`} className={styles.giftItem}>
+                {isCard ? <span className={styles.cardChip} aria-hidden="true" /> : null}
+
+                {isQr ? (
+                  <span className={styles.qrBadge} aria-hidden="true">
+                    <QrIcon className={styles.qrIcon} />
+                  </span>
+                ) : (
+                  <span className={styles.bankBadge} aria-hidden="true">
+                    {(account.bank || "$").slice(0, 4).toLocaleUpperCase()}
+                  </span>
+                )}
+
+                <span className={styles.giftAccount}>
+                  <strong className={styles.giftBank}>{account.bank}</strong>
+                  <span className={styles.giftNumber} data-testid="gift-number">
+                    {account.accountNumber}
+                  </span>
+                  {account.accountName ? (
+                    <span className={styles.giftOwner}>a.n. {account.accountName}</span>
+                  ) : null}
+                </span>
+
+                <button
+                  type="button"
+                  className={[styles.button, isCopied && styles.buttonCopied]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => void copy(i, account)}
+                  aria-label={`Salin nomor ${account.bank || "rekening"} ${account.accountNumber}`}
+                >
+                  {isCopied ? (
+                    <>
+                      <CheckIcon className={styles.copyIcon} />
+                      <span className={styles.copyLabel}>Tersalin</span>
+                    </>
+                  ) : (
+                    <>
+                      <CopyIcon className={styles.copyIcon} />
+                      <span className={styles.copyLabel}>Salin</span>
+                    </>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
       <p className={styles.hint} role="status" aria-live="polite" data-testid="gift-feedback">
         {feedback ? (feedback.ok ? "Nomor tersalin ✓" : "Gagal menyalin, salin manual.") : ""}
       </p>
