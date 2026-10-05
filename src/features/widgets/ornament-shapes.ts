@@ -143,10 +143,56 @@ export const ORNAMENT_SHAPES: readonly OrnamentShapeData[] = [
   },
 ] as const;
 
-export function getOrnamentShape(id?: string): OrnamentShapeData {
+export function scaleSvgPath(
+  pathStr: string,
+  targetW: number,
+  targetH: number,
+  baseW = 400,
+  baseH = 260,
+): string {
+  if (targetW === baseW && targetH === baseH) return pathStr;
+  const sx = targetW / baseW;
+  const sy = targetH / baseH;
+
+  const tokens = pathStr.trim().split(/[\s,]+/);
+  const out: string[] = [];
+  let isX = true;
+
+  for (const token of tokens) {
+    if (/^[MLCZ]$/i.test(token)) {
+      out.push(token.toUpperCase());
+      isX = true;
+    } else {
+      const num = Number.parseFloat(token);
+      if (Number.isNaN(num)) {
+        out.push(token);
+      } else {
+        const scaled = isX ? num * sx : num * sy;
+        out.push(String(Math.round(scaled * 10) / 10));
+        isX = !isX;
+      }
+    }
+  }
+
+  return out.join(" ");
+}
+
+export function getOrnamentShape(id?: string, width = 400, height = 260): OrnamentShapeData {
   const match = ORNAMENT_SHAPES.find((s) => s.id === id);
-  if (match) return match;
-  const fallback = ORNAMENT_SHAPES[0];
-  if (fallback) return fallback;
-  throw new Error("No ornament shapes defined");
+  const baseShape = match ?? ORNAMENT_SHAPES[0];
+  if (!baseShape) throw new Error("No ornament shapes defined");
+
+  if (width === 400 && height === 260) {
+    return baseShape;
+  }
+
+  return {
+    ...baseShape,
+    leftPath: scaleSvgPath(baseShape.leftPath, width, height),
+    rightPath: scaleSvgPath(baseShape.rightPath, width, height),
+    fullPath: scaleSvgPath(baseShape.fullPath, width, height),
+    innerLeftPath: scaleSvgPath(baseShape.innerLeftPath, width, height),
+    innerRightPath: scaleSvgPath(baseShape.innerRightPath, width, height),
+    innerFullPath: scaleSvgPath(baseShape.innerFullPath, width, height),
+  };
 }

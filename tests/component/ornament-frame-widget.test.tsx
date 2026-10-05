@@ -142,16 +142,21 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     // Inner track
     expect(container.querySelector(".innerTrack")).toBeInTheDocument();
 
-    // Moving animated strokes with pathLength 1000 for 100% completion to bottom
+    // Moving animated strokes with dynamic path length and double-gap to prevent repetition
     const animatedStrokes = container.querySelectorAll(".animatedStroke");
     expect(animatedStrokes).toHaveLength(2);
     for (const stroke of animatedStrokes) {
-      expect(stroke).toHaveAttribute("pathLength", "1000");
-      expect(stroke).toHaveAttribute("stroke-dasharray", "1000");
+      expect(stroke.getAttribute("stroke-dasharray")).toMatch(/^\d+ \d+$/);
     }
 
     expect(screen.getByText("THE WEDDING OF")).toBeInTheDocument();
     expect(screen.getByText("Benny & Dinda")).toBeInTheDocument();
     expect(screen.getByText("Sabtu, 24 Oktober 2026")).toBeInTheDocument();
+  });
+
+  it("scales flexibly to taller widget heights without distortion", () => {
+    const tallShape = getOrnamentShape("arch-window", 326, 600);
+    expect(tallShape.leftPath).toMatch(/^M 163/);
+    expect(tallShape.leftPath).toContain("576.9");
   });
 });

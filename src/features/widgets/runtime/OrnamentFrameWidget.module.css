@@ -28,7 +28,6 @@
 
 /* GPU Hardware-accelerated smooth path tracing */
 .animatedStroke {
-  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
   will-change: stroke-dashoffset;
@@ -37,7 +36,6 @@
 
 .loopActiveLeft,
 .loopActiveRight {
-  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
   animation: loopDraw var(--anim-duration, 3s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -45,7 +43,7 @@
 
 @keyframes loopDraw {
   0% {
-    stroke-dashoffset: 1000;
+    stroke-dashoffset: var(--dash-len, 1000px);
     opacity: 0.15;
   }
   15% {
