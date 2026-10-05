@@ -51,7 +51,16 @@ describe("Artboard Grid / Wrap Mode", () => {
 
     const rawDoc = fullDocument();
     const doc = canonicalDocumentSchema.parse(rawDoc);
+    // SSR-safe default: createEditorStore defaults to "cards" to match server render
     const store = createEditorStore({ document: doc, revision: 1 });
+    expect(store.getState().artboardMode).toBe("cards");
+
+    // Explicit artboardMode initialization
+    const customStore = createEditorStore({ document: doc, revision: 1, artboardMode: "grid" });
+    expect(customStore.getState().artboardMode).toBe("grid");
+
+    // Synchronizing from localStorage after mount
+    store.getState().syncArtboardModeFromStorage();
     expect(store.getState().artboardMode).toBe("grid");
 
     store.getState().setArtboardMode("cards");

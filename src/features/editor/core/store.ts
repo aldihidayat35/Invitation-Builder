@@ -55,15 +55,19 @@ export type ArtboardMode = "cards" | "seamless" | "grid";
 
 export const ARTBOARD_MODE_STORAGE_KEY = "dib_artboard_mode";
 
-export function getInitialArtboardMode(): ArtboardMode {
-  if (typeof window === "undefined") return "cards";
+export function getStoredArtboardMode(): ArtboardMode | null {
+  if (typeof window === "undefined") return null;
   try {
     const saved = window.localStorage.getItem(ARTBOARD_MODE_STORAGE_KEY);
     if (saved === "cards" || saved === "seamless" || saved === "grid") return saved;
   } catch {
     // ignore
   }
-  return "cards";
+  return null;
+}
+
+export function getInitialArtboardMode(): ArtboardMode {
+  return getStoredArtboardMode() ?? "cards";
 }
 
 export interface EditorState {
@@ -128,6 +132,7 @@ export interface EditorActions {
   zoomStep(direction: 1 | -1): void;
   setPanMode(active: boolean): void;
   setArtboardMode(mode: ArtboardMode): void;
+  syncArtboardModeFromStorage(): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -198,7 +203,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       pasteCount: 0,
       readOnly: init.readOnly ?? false,
       panMode: false,
-      artboardMode: init.artboardMode ?? getInitialArtboardMode(),
+      artboardMode: init.artboardMode ?? "cards",
       savedDocument: init.document,
       revision: init.revision,
       saveStatus: "idle",
@@ -457,6 +462,12 @@ export function createEditorStore(init: EditorInit): EditorStore {
               // ignore
             }
           }
+        }
+      },
+      syncArtboardModeFromStorage() {
+        const saved = getStoredArtboardMode();
+        if (saved && saved !== get().artboardMode) {
+          set({ artboardMode: saved });
         }
       },
 

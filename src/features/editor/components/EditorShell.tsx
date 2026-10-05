@@ -54,6 +54,11 @@ export function EditorShell(props: EditorShellProps) {
     preloadEditorFonts();
   }, []);
 
+  // Synchronize stored artboard mode after mount to prevent SSR hydration mismatch
+  useEffect(() => {
+    store.getState().syncArtboardModeFromStorage();
+  }, [store]);
+
   return (
     <EditorProvider store={store} autosaver={autosaver} workspaceId={props.workspaceId}>
       <EditorFrame
