@@ -2690,14 +2690,24 @@ export function TimelineVisual({
   const title = typeof props.title === "string" ? props.title : "Rundown Acara";
   const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
   const events = parseTimelineEvents(props.events);
-  const cardRadius = style.radius ?? (variant === "minimal-cards" ? 8 : variant === "luxury-gold" ? 4 : 12);
+  const cardRadius =
+    style.radius ?? (variant === "minimal-cards" ? 8 : variant === "luxury-gold" ? 4 : 12);
 
   const headerH = subtitle ? 48 : 34;
-  const availableH = h - headerH - 16;
-  const maxDisplay = Math.min(events.length, 4);
-  const displayEvents = events.slice(0, maxDisplay);
-  const slotH = maxDisplay > 0 ? Math.floor(availableH / maxDisplay) : 60;
-  const itemH = Math.min(slotH - 8, 70);
+  const availableH = Math.max(80, h - headerH - 16);
+  const count = Math.min(events.length, 8);
+  const displayEvents = events.slice(0, count);
+
+  // Dynamic card height and gap: avoids huge empty gaps and prevents overflowing text
+  const targetCardH = 74;
+  const naturalTotalH = count * targetCardH + (count - 1) * 12;
+  const compressRatio = availableH < naturalTotalH ? Math.max(0.64, availableH / naturalTotalH) : 1;
+  const itemH = Math.round(targetCardH * compressRatio);
+  const itemGap =
+    count > 1
+      ? Math.max(6, Math.min(14, Math.floor((availableH - count * itemH) / (count - 1))))
+      : 0;
+  const slotH = itemH + itemGap;
 
   return (
     <Group width={w} height={h}>
@@ -2706,10 +2716,10 @@ export function TimelineVisual({
       {/* Header */}
       <Text
         x={12}
-        y={12}
+        y={10}
         width={w - 24}
         text={title}
-        fontSize={16}
+        fontSize={15}
         fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
         fill={color}
         align="center"
@@ -2718,12 +2728,12 @@ export function TimelineVisual({
       {subtitle && (
         <Text
           x={12}
-          y={32}
+          y={30}
           width={w - 24}
           text={subtitle}
           fontSize={11}
           fill={color}
-          opacity={0.7}
+          opacity={0.75}
           align="center"
           ellipsis
         />
@@ -2732,18 +2742,22 @@ export function TimelineVisual({
       {/* Variant Rendering */}
       {variant === "horizontal-steps" ? (
         (() => {
-          const stepW = Math.max(80, Math.floor((w - 24 - (maxDisplay - 1) * 8) / maxDisplay));
+          const stepCount = Math.min(displayEvents.length, 3);
+          const stepGap = 10;
+          const stepW = Math.max(85, Math.floor((w - 24 - (stepCount - 1) * stepGap) / stepCount));
+          const stepCardH = Math.max(56, availableH - 36);
+
           return (
             <Group x={12} y={headerH + 8}>
-              {displayEvents.map((ev, i) => {
-                const stepX = i * (stepW + 8);
+              {displayEvents.slice(0, stepCount).map((ev, i) => {
+                const stepX = i * (stepW + stepGap);
                 return (
                   <Group key={`${ev.time}-${i}`} x={stepX} y={0}>
                     {/* Step badge */}
                     <Rect
                       x={0}
                       y={0}
-                      width={24}
+                      width={26}
                       height={20}
                       cornerRadius={4}
                       fill={color}
@@ -2751,7 +2765,7 @@ export function TimelineVisual({
                     <Text
                       x={0}
                       y={4}
-                      width={24}
+                      width={26}
                       text={String(i + 1).padStart(2, "0")}
                       fontSize={10}
                       fontStyle="bold"
@@ -2759,9 +2773,9 @@ export function TimelineVisual({
                       align="center"
                     />
                     {/* Connecting line */}
-                    {i < maxDisplay - 1 && (
+                    {i < stepCount - 1 && (
                       <Line
-                        points={[26, 10, stepW + 6, 10]}
+                        points={[28, 10, stepW + stepGap - 2, 10]}
                         stroke={color}
                         strokeWidth={1.5}
                         opacity={0.3}
@@ -2772,16 +2786,16 @@ export function TimelineVisual({
                       x={0}
                       y={26}
                       width={stepW}
-                      height={Math.max(48, availableH - 30)}
+                      height={stepCardH}
                       cornerRadius={8}
-                      fill="rgba(255, 255, 255, 0.75)"
+                      fill="rgba(255, 255, 255, 0.85)"
                       stroke="rgba(0, 0, 0, 0.08)"
                       strokeWidth={1}
                     />
                     <Text
-                      x={4}
-                      y={30}
-                      width={stepW - 8}
+                      x={6}
+                      y={32}
+                      width={stepW - 12}
                       text={ev.time}
                       fontSize={9}
                       fontStyle="bold"
@@ -2789,22 +2803,22 @@ export function TimelineVisual({
                       ellipsis
                     />
                     <Text
-                      x={4}
-                      y={44}
-                      width={stepW - 8}
+                      x={6}
+                      y={46}
+                      width={stepW - 12}
                       text={ev.title}
                       fontSize={11}
                       fontStyle="bold"
                       fill={color}
                       ellipsis
                     />
-                    {ev.location && (
+                    {ev.location && stepCardH >= 70 && (
                       <Text
-                        x={4}
-                        y={58}
-                        width={stepW - 8}
+                        x={6}
+                        y={62}
+                        width={stepW - 12}
                         text={ev.location}
-                        fontSize={9}
+                        fontSize={8.5}
                         fill={color}
                         opacity={0.8}
                         ellipsis
@@ -2819,16 +2833,21 @@ export function TimelineVisual({
       ) : variant === "vertical-centered" ? (
         (() => {
           const centerX = w / 2;
-          const cardW = Math.max(90, centerX - 24);
+          const cardW = Math.max(80, Math.floor(centerX - 24));
+          const firstNodeY = 14;
+          const lastNodeY = (count - 1) * slotH + 14;
+
           return (
             <Group x={0} y={headerH + 8}>
-              {/* Center Track Line */}
-              <Line
-                points={[centerX, 6, centerX, maxDisplay * slotH - 12]}
-                stroke={color}
-                strokeWidth={2}
-                opacity={0.25}
-              />
+              {/* Center Track Line connecting first node to last node */}
+              {count > 1 && (
+                <Line
+                  points={[centerX, firstNodeY, centerX, lastNodeY]}
+                  stroke={color}
+                  strokeWidth={2}
+                  opacity={0.25}
+                />
+              )}
               {displayEvents.map((ev, i) => {
                 const itemY = i * slotH;
                 const isEven = i % 2 === 0;
@@ -2838,7 +2857,7 @@ export function TimelineVisual({
                     {/* Center Node */}
                     <Circle
                       x={centerX}
-                      y={itemH / 2}
+                      y={14}
                       radius={7}
                       fill={color}
                     />
@@ -2853,7 +2872,7 @@ export function TimelineVisual({
                       stroke="rgba(0, 0, 0, 0.08)"
                       strokeWidth={1}
                     />
-                    {/* Card Content */}
+                    {/* Time */}
                     <Text
                       x={cardX + 6}
                       y={6}
@@ -2865,26 +2884,42 @@ export function TimelineVisual({
                       align={isEven ? "right" : "left"}
                       ellipsis
                     />
+                    {/* Title */}
                     <Text
                       x={cardX + 6}
                       y={20}
                       width={cardW - 12}
                       text={ev.title}
-                      fontSize={12}
+                      fontSize={itemH < 60 ? 11 : 12}
                       fontStyle="bold"
                       fill={color}
                       align={isEven ? "right" : "left"}
                       ellipsis
                     />
-                    {ev.location && (
+                    {/* Location */}
+                    {itemH >= 54 && ev.location && (
                       <Text
                         x={cardX + 6}
                         y={36}
                         width={cardW - 12}
-                        text={ev.location}
-                        fontSize={10}
+                        text={`📍 ${ev.location}`}
+                        fontSize={itemH < 68 ? 8.5 : 9.5}
                         fill={color}
                         opacity={0.8}
+                        align={isEven ? "right" : "left"}
+                        ellipsis
+                      />
+                    )}
+                    {/* Description */}
+                    {itemH >= 70 && ev.description && (
+                      <Text
+                        x={cardX + 6}
+                        y={ev.location ? 50 : 36}
+                        width={cardW - 12}
+                        text={ev.description}
+                        fontSize={8.5}
+                        fill={color}
+                        opacity={0.7}
                         align={isEven ? "right" : "left"}
                         ellipsis
                       />
@@ -2898,16 +2933,18 @@ export function TimelineVisual({
       ) : (
         /* Vertical Left (Default) & Minimal Cards & Luxury Gold */
         (() => {
-          const trackX = variant === "minimal-cards" ? 0 : 24;
-          const cardX = variant === "minimal-cards" ? 14 : 44;
-          const cardW = w - cardX - 14;
+          const trackX = variant === "minimal-cards" ? 0 : 22;
+          const cardX = variant === "minimal-cards" ? 12 : 38;
+          const cardW = w - cardX - 12;
+          const firstNodeY = 14;
+          const lastNodeY = (count - 1) * slotH + 14;
 
           return (
             <Group x={0} y={headerH + 8}>
-              {/* Left Track Line (if not minimal-cards) */}
-              {variant !== "minimal-cards" && (
+              {/* Left Track Line (if not minimal-cards) connecting first to last node */}
+              {variant !== "minimal-cards" && count > 1 && (
                 <Line
-                  points={[trackX, 10, trackX, maxDisplay * slotH - 14]}
+                  points={[trackX, firstNodeY, trackX, lastNodeY]}
                   stroke={color}
                   strokeWidth={2}
                   opacity={0.25}
@@ -2922,7 +2959,7 @@ export function TimelineVisual({
                     {variant === "luxury-gold" ? (
                       <Rect
                         x={trackX}
-                        y={itemH / 2 - 6}
+                        y={8}
                         width={12}
                         height={12}
                         rotation={45}
@@ -2931,8 +2968,8 @@ export function TimelineVisual({
                     ) : variant !== "minimal-cards" ? (
                       <Circle
                         x={trackX}
-                        y={itemH / 2}
-                        radius={8}
+                        y={14}
+                        radius={7}
                         fill={color}
                       />
                     ) : null}
@@ -2958,7 +2995,7 @@ export function TimelineVisual({
                       <Rect
                         x={cardX}
                         y={0}
-                        width={4}
+                        width={3.5}
                         height={itemH}
                         cornerRadius={[cardRadius, 0, 0, cardRadius]}
                         fill={color}
@@ -2967,21 +3004,21 @@ export function TimelineVisual({
 
                     {/* Badge Pill for time */}
                     <Rect
-                      x={cardX + 10}
-                      y={6}
-                      width={Math.min(cardW - 20, 110)}
+                      x={cardX + 8}
+                      y={4}
+                      width={Math.min(cardW - 16, 110)}
                       height={16}
-                      cornerRadius={4}
+                      cornerRadius={999}
                       fill={variant === "minimal-cards" ? "transparent" : color}
                       stroke={variant === "minimal-cards" ? color : undefined}
                       strokeWidth={variant === "minimal-cards" ? 1 : 0}
                     />
                     <Text
-                      x={cardX + 12}
-                      y={8}
-                      width={Math.min(cardW - 24, 106)}
+                      x={cardX + 10}
+                      y={6}
+                      width={Math.min(cardW - 20, 106)}
                       text={ev.time}
-                      fontSize={9}
+                      fontSize={9.5}
                       fontStyle="bold"
                       fill={
                         variant === "minimal-cards"
@@ -2995,26 +3032,40 @@ export function TimelineVisual({
 
                     {/* Title */}
                     <Text
-                      x={cardX + 10}
-                      y={26}
-                      width={cardW - 20}
+                      x={cardX + 8}
+                      y={23}
+                      width={cardW - 16}
                       text={ev.title}
-                      fontSize={13}
+                      fontSize={itemH < 60 ? 11 : 12.5}
                       fontStyle={variant === "luxury-gold" ? "serif bold" : "bold"}
                       fill={color}
                       ellipsis
                     />
 
-                    {/* Location or Description */}
-                    {(ev.location || ev.description) && (
+                    {/* Location */}
+                    {itemH >= 54 && ev.location && (
                       <Text
-                        x={cardX + 10}
-                        y={43}
-                        width={cardW - 20}
-                        text={ev.location ? `📍 ${ev.location}` : (ev.description ?? "")}
-                        fontSize={10}
+                        x={cardX + 8}
+                        y={itemH < 68 ? 38 : 40}
+                        width={cardW - 16}
+                        text={`📍 ${ev.location}`}
+                        fontSize={itemH < 68 ? 8.5 : 9.5}
                         fill={color}
-                        opacity={0.75}
+                        opacity={0.8}
+                        ellipsis
+                      />
+                    )}
+
+                    {/* Description */}
+                    {itemH >= 70 && ev.description && (
+                      <Text
+                        x={cardX + 8}
+                        y={ev.location ? 54 : 40}
+                        width={cardW - 16}
+                        text={ev.description}
+                        fontSize={9}
+                        fill={color}
+                        opacity={0.7}
                         ellipsis
                       />
                     )}

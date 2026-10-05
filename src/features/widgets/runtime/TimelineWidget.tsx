@@ -190,6 +190,9 @@ export function TimelineWidget({ title, subtitle, events, style }: TimelineWidge
                     )}
                     {ev.description && <p className={styles.timelineItemDesc}>{ev.description}</p>}
                   </div>
+
+                  {/* Spacer for centered layout symmetry */}
+                  <div className={styles.timelineCenterSpacer} aria-hidden="true" />
                 </div>
               );
             })}

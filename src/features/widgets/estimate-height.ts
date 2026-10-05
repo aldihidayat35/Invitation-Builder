@@ -52,13 +52,14 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
     case "timeline": {
       const events = Array.isArray(props.events) ? props.events : [];
       const hasTitle = typeof props.title === "string" && props.title.trim().length > 0;
-      const headerH = hasTitle ? 44 : 0;
+      const hasSubtitle = typeof props.subtitle === "string" && props.subtitle.trim().length > 0;
+      const headerH = hasTitle ? (hasSubtitle ? 52 : 36) : 0;
       if (variant === "horizontal-steps") {
-        return Math.round(headerH + 220);
+        return Math.round(headerH + 190);
       }
       const count = Math.max(1, events.length);
-      const eventH = variant === "compact-list" ? 64 : 86;
-      return Math.round(headerH + (count * eventH) + 32);
+      const eventH = variant === "minimal-cards" ? 72 : 84;
+      return Math.round(headerH + (count * eventH) + 24);
     }
 
     case "wishes": {
