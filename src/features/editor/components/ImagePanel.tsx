@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Element } from "@/lib/schema";
+import type { Element, ImageFade } from "@/lib/schema";
 import type { AssetSummary } from "@/features/assets/api";
 import { assetUrl } from "@/features/assets/urls";
 import { AssetLibrary } from "./AssetLibrary";
@@ -165,6 +165,13 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
         disabled={disabled}
         onCommit={(radius) => patchStyle({ radius })}
       />
+
+      <ImageFadeControl
+        fade={style.fade}
+        disabled={disabled}
+        onChange={(fade) => patchStyle({ fade })}
+      />
+
       <TextField
         id="insp-image-alt"
         label="Teks alternatif (kosongkan jika dekoratif)"
@@ -221,4 +228,307 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
     </div>
   );
 }
+
+interface ImageFadeControlProps {
+  readonly fade?: ImageFade | undefined;
+  readonly disabled?: boolean;
+  readonly onChange: (fade: ImageFade | undefined) => void;
+}
+
+export function ImageFadeControl({ fade, disabled, onChange }: ImageFadeControlProps) {
+  const currentMode = fade?.mode ?? "linear";
+  const top = fade?.top ?? 0;
+  const bottom = fade?.bottom ?? 0;
+  const left = fade?.left ?? 0;
+  const right = fade?.right ?? 0;
+  const radial = fade?.radial ?? 0;
+
+  const hasFade =
+    (currentMode === "radial" && radial > 0) ||
+    (currentMode === "linear" && (top > 0 || bottom > 0 || left > 0 || right > 0));
+
+  const setSide = (side: "top" | "bottom" | "left" | "right", value: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(value)));
+    const next: ImageFade = {
+      mode: "linear",
+      top: side === "top" ? clamped : top,
+      bottom: side === "bottom" ? clamped : bottom,
+      left: side === "left" ? clamped : left,
+      right: side === "right" ? clamped : right,
+      radial,
+    };
+    onChange(next);
+  };
+
+  const setRadial = (value: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(value)));
+    const next: ImageFade = {
+      mode: "radial",
+      top,
+      bottom,
+      left,
+      right,
+      radial: clamped,
+    };
+    onChange(next);
+  };
+
+  const setMode = (mode: "linear" | "radial") => {
+    onChange({
+      mode,
+      top,
+      bottom,
+      left,
+      right,
+      radial,
+    });
+  };
+
+  return (
+    <div className={styles.fadeContainer} data-testid="image-fade-control">
+      <div className={styles.fadeHeader}>
+        <div className={styles.fadeTitle}>
+          <span>Blend Transparan</span>
+          {hasFade && <span className={styles.fadeBadge}>Aktif</span>}
+        </div>
+        {hasFade && (
+          <button
+            type="button"
+            className={styles.fadePresetBtn}
+            disabled={disabled}
+            onClick={() => onChange(undefined)}
+            data-testid="fade-reset-btn"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* Mode Tabs */}
+      <div className={styles.fadeTabs} role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={currentMode === "linear"}
+          data-active={currentMode === "linear"}
+          className={styles.fadeTabBtn}
+          disabled={disabled}
+          onClick={() => setMode("linear")}
+          data-testid="fade-mode-linear"
+        >
+          <span>Tepi Sisi</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={currentMode === "radial"}
+          data-active={currentMode === "radial"}
+          className={styles.fadeTabBtn}
+          disabled={disabled}
+          onClick={() => setMode("radial")}
+          data-testid="fade-mode-radial"
+        >
+          <span>Vignette Oval</span>
+        </button>
+      </div>
+
+      {/* Quick Presets */}
+      <div className={styles.fadePresets} role="group" aria-label="Preset blend transparan">
+        {currentMode === "linear" ? (
+          <>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={bottom === 40 && top === 0 && left === 0 && right === 0}
+              onClick={() =>
+                onChange({ mode: "linear", top: 0, bottom: 40, left: 0, right: 0, radial: 0 })
+              }
+              data-testid="fade-preset-bottom-40"
+            >
+              Bawah 40%
+            </button>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={top === 35 && bottom === 35 && left === 0 && right === 0}
+              onClick={() =>
+                onChange({ mode: "linear", top: 35, bottom: 35, left: 0, right: 0, radial: 0 })
+              }
+              data-testid="fade-preset-vertical-35"
+            >
+              Atas-Bawah 35%
+            </button>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={left === 35 && right === 35 && top === 0 && bottom === 0}
+              onClick={() =>
+                onChange({ mode: "linear", top: 0, bottom: 0, left: 35, right: 35, radial: 0 })
+              }
+              data-testid="fade-preset-horizontal-35"
+            >
+              Kiri-Kanan 35%
+            </button>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={top === 25 && bottom === 25 && left === 25 && right === 25}
+              onClick={() =>
+                onChange({ mode: "linear", top: 25, bottom: 25, left: 25, right: 25, radial: 0 })
+              }
+              data-testid="fade-preset-all-25"
+            >
+              Semua Sisi 25%
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={radial === 30}
+              onClick={() =>
+                onChange({ mode: "radial", top: 0, bottom: 0, left: 0, right: 0, radial: 30 })
+              }
+              data-testid="fade-preset-radial-30"
+            >
+              Lembut 30%
+            </button>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={radial === 50}
+              onClick={() =>
+                onChange({ mode: "radial", top: 0, bottom: 0, left: 0, right: 0, radial: 50 })
+              }
+              data-testid="fade-preset-radial-50"
+            >
+              Sedang 50%
+            </button>
+            <button
+              type="button"
+              className={styles.fadePresetBtn}
+              disabled={disabled}
+              data-active={radial === 75}
+              onClick={() =>
+                onChange({ mode: "radial", top: 0, bottom: 0, left: 0, right: 0, radial: 75 })
+              }
+              data-testid="fade-preset-radial-75"
+            >
+              Kuat 75%
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Sliders */}
+      {currentMode === "linear" ? (
+        <div className={styles.fadeSliderGrid}>
+          <FadeSliderRow
+            id="fade-top"
+            label="Atas"
+            value={top}
+            disabled={disabled}
+            onChange={(val) => setSide("top", val)}
+          />
+          <FadeSliderRow
+            id="fade-bottom"
+            label="Bawah"
+            value={bottom}
+            disabled={disabled}
+            onChange={(val) => setSide("bottom", val)}
+          />
+          <FadeSliderRow
+            id="fade-left"
+            label="Kiri"
+            value={left}
+            disabled={disabled}
+            onChange={(val) => setSide("left", val)}
+          />
+          <FadeSliderRow
+            id="fade-right"
+            label="Kanan"
+            value={right}
+            disabled={disabled}
+            onChange={(val) => setSide("right", val)}
+          />
+        </div>
+      ) : (
+        <div className={styles.fadeSliderGrid}>
+          <FadeSliderRow
+            id="fade-radial"
+            label="Radius"
+            value={radial}
+            disabled={disabled}
+            onChange={setRadial}
+          />
+          <p className={styles.fadeHint}>
+            Memudarkan tepi luar oval ke bagian tengah foto secara lembut.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FadeSliderRow({
+  id,
+  label,
+  value,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  disabled?: boolean;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div className={styles.fadeSliderRow}>
+      <label htmlFor={id} className={styles.fadeSliderLabel}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={value}
+        disabled={disabled}
+        className={styles.fadeSlider}
+        aria-label={`${label} fade slider`}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+      <div className={styles.fadeNumberWrapper}>
+        <input
+          id={`${id}-input`}
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          value={value}
+          disabled={disabled}
+          className={styles.fadeNumberInput}
+          aria-label={`${label} fade value`}
+          onChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isFinite(num)) {
+              onChange(Math.min(100, Math.max(0, num)));
+            }
+          }}
+        />
+        <span className={styles.fadeUnit}>%</span>
+      </div>
+    </div>
+  );
+}
+
 

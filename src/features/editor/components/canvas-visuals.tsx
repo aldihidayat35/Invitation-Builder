@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Circle, Group, Image as KonvaImage, Line, Rect, Text } from "react-konva";
-import type { Element, ThemeTokens } from "@/lib/schema";
+import type { Element, ImageFade, ThemeTokens } from "@/lib/schema";
 import { assetUrl } from "@/features/assets/urls";
 import { defaultWidgetRegistry, resolveWidgetStyleVariant } from "@/features/widgets";
 import {
@@ -59,10 +59,180 @@ function Placeholder({
   );
 }
 
+function hasActiveFade(fade?: ImageFade): boolean {
+  if (!fade) return false;
+  if (fade.mode === "radial") return (fade.radial ?? 0) > 0;
+  return (
+    (fade.top ?? 0) > 0 ||
+    (fade.bottom ?? 0) > 0 ||
+    (fade.left ?? 0) > 0 ||
+    (fade.right ?? 0) > 0
+  );
+}
+
+function createMaskedImageCanvas({
+  image,
+  crop,
+  dest,
+  w,
+  h,
+  fade,
+}: {
+  image: CanvasImageSource;
+  crop: { x: number; y: number; width: number; height: number };
+  dest: { x: number; y: number; width: number; height: number };
+  w: number;
+  h: number;
+  fade: ImageFade;
+}): HTMLCanvasElement | null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(w));
+  canvas.height = Math.max(1, Math.round(h));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  // 1. Draw source image inside destination area
+  ctx.drawImage(
+    image,
+    crop.x,
+    crop.y,
+    crop.width,
+    crop.height,
+    dest.x,
+    dest.y,
+    dest.width,
+    dest.height,
+  );
+
+  // 2. Alpha mask using destination-in
+  ctx.globalCompositeOperation = "destination-in";
+
+  if (fade.mode === "radial") {
+    const rad = fade.radial ?? 0;
+    if (rad > 0) {
+      const inner = Math.max(0, 100 - rad) / 100;
+      const stop1 = Math.min(1, (Math.max(0, 100 - rad) + rad * 0.35) / 100);
+      const stop2 = Math.min(1, (Math.max(0, 100 - rad) + rad * 0.7) / 100);
+
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(w / 2, h / 2);
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      grad.addColorStop(0, "rgba(0, 0, 0, 1)");
+      grad.addColorStop(inner, "rgba(0, 0, 0, 1)");
+      grad.addColorStop(stop1, "rgba(0, 0, 0, 0.8)");
+      grad.addColorStop(stop2, "rgba(0, 0, 0, 0.3)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(-1, -1, 2, 2);
+      ctx.restore();
+    }
+    return canvas;
+  }
+
+  // Linear mode: vertical (top/bottom) and horizontal (left/right)
+  const top = fade.top ?? 0;
+  const bottom = fade.bottom ?? 0;
+  const left = fade.left ?? 0;
+  const right = fade.right ?? 0;
+
+  if (top > 0 || bottom > 0) {
+    const vGrad = ctx.createLinearGradient(0, 0, 0, h);
+    let last = 0;
+    const addStop = (offset: number, col: string) => {
+      const clamped = Math.max(last, Math.min(1, Math.max(0, offset)));
+      vGrad.addColorStop(clamped, col);
+      last = clamped;
+    };
+
+    if (top > 0) {
+      addStop(0, "rgba(0, 0, 0, 0)");
+      addStop((top * 0.3) / 100, "rgba(0, 0, 0, 0.3)");
+      addStop((top * 0.65) / 100, "rgba(0, 0, 0, 0.65)");
+      addStop(top / 100, "rgba(0, 0, 0, 1)");
+    } else {
+      addStop(0, "rgba(0, 0, 0, 1)");
+    }
+
+    if (bottom > 0) {
+      const bStart = Math.max(top, 100 - bottom) / 100;
+      addStop(bStart, "rgba(0, 0, 0, 1)");
+      addStop((100 - bottom * 0.65) / 100, "rgba(0, 0, 0, 0.65)");
+      addStop((100 - bottom * 0.3) / 100, "rgba(0, 0, 0, 0.3)");
+      addStop(1, "rgba(0, 0, 0, 0)");
+    } else {
+      addStop(1, "rgba(0, 0, 0, 1)");
+    }
+
+    ctx.fillStyle = vGrad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  if (left > 0 || right > 0) {
+    const hGrad = ctx.createLinearGradient(0, 0, w, 0);
+    let last = 0;
+    const addStop = (offset: number, col: string) => {
+      const clamped = Math.max(last, Math.min(1, Math.max(0, offset)));
+      hGrad.addColorStop(clamped, col);
+      last = clamped;
+    };
+
+    if (left > 0) {
+      addStop(0, "rgba(0, 0, 0, 0)");
+      addStop((left * 0.3) / 100, "rgba(0, 0, 0, 0.3)");
+      addStop((left * 0.65) / 100, "rgba(0, 0, 0, 0.65)");
+      addStop(left / 100, "rgba(0, 0, 0, 1)");
+    } else {
+      addStop(0, "rgba(0, 0, 0, 1)");
+    }
+
+    if (right > 0) {
+      const rStart = Math.max(left, 100 - right) / 100;
+      addStop(rStart, "rgba(0, 0, 0, 1)");
+      addStop((100 - right * 0.65) / 100, "rgba(0, 0, 0, 0.65)");
+      addStop((100 - right * 0.3) / 100, "rgba(0, 0, 0, 0.3)");
+      addStop(1, "rgba(0, 0, 0, 0)");
+    } else {
+      addStop(1, "rgba(0, 0, 0, 1)");
+    }
+
+    ctx.fillStyle = hGrad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  return canvas;
+}
+
 export function ImageVisual({ element }: { element: ImageElement }) {
   const { w, h } = element.frame;
   const assetId = "assetId" in element.source ? element.source.assetId : null;
   const image = useCanvasImage(assetId ? assetUrl(assetId) : null);
+
+  const { fit, focal, radius, flipH, flipV, fade } = element.style;
+  const isFlipH = Boolean(flipH);
+  const isFlipV = Boolean(flipV);
+  const { crop, dest } = fitImage({
+    boxWidth: w,
+    boxHeight: h,
+    imageWidth: image ? image.naturalWidth || image.width : 1,
+    imageHeight: image ? image.naturalHeight || image.height : 1,
+    fit,
+    focal,
+  });
+
+  const isFadeActive = hasActiveFade(fade);
+  const maskedCanvas = useMemo(() => {
+    if (!isFadeActive || !image || !fade) return null;
+    return createMaskedImageCanvas({
+      image,
+      crop,
+      dest,
+      w,
+      h,
+      fade,
+    });
+  }, [isFadeActive, image, crop, dest, w, h, fade]);
 
   if (!assetId) {
     const key = "bind" in element.source ? element.source.bind : "";
@@ -70,17 +240,6 @@ export function ImageVisual({ element }: { element: ImageElement }) {
   }
   if (!image) return <Placeholder w={w} h={h} title="Memuat gambar..." />;
 
-  const { fit, focal, radius, flipH, flipV } = element.style;
-  const isFlipH = Boolean(flipH);
-  const isFlipV = Boolean(flipV);
-  const { crop, dest } = fitImage({
-    boxWidth: w,
-    boxHeight: h,
-    imageWidth: image.naturalWidth || image.width,
-    imageHeight: image.naturalHeight || image.height,
-    fit,
-    focal,
-  });
   const r = Math.min(radius, w / 2, h / 2);
 
   return (
@@ -90,6 +249,7 @@ export function ImageVisual({ element }: { element: ImageElement }) {
       y={isFlipV ? h : 0}
       scaleX={isFlipH ? -1 : 1}
       scaleY={isFlipV ? -1 : 1}
+      opacity={typeof element.style.opacity === "number" ? element.style.opacity : 1}
       {...(r > 0 && {
         clipFunc: (ctx: {
           beginPath(): void;
@@ -107,15 +267,26 @@ export function ImageVisual({ element }: { element: ImageElement }) {
         },
       })}
     >
-      <KonvaImage
-        image={image}
-        x={dest.x}
-        y={dest.y}
-        width={dest.width}
-        height={dest.height}
-        crop={crop}
-        listening={false}
-      />
+      {maskedCanvas ? (
+        <KonvaImage
+          image={maskedCanvas}
+          x={0}
+          y={0}
+          width={w}
+          height={h}
+          listening={false}
+        />
+      ) : (
+        <KonvaImage
+          image={image}
+          x={dest.x}
+          y={dest.y}
+          width={dest.width}
+          height={dest.height}
+          crop={crop}
+          listening={false}
+        />
+      )}
     </Group>
   );
 }

@@ -57,6 +57,16 @@ export type TextElement = z.infer<typeof textElementSchema>;
 
 // ---------------------------------------------------------------------- image
 
+export const imageFadeSchema = z.strictObject({
+  mode: z.enum(["linear", "radial"]).default("linear"),
+  top: z.number().min(0).max(100).default(0),
+  bottom: z.number().min(0).max(100).default(0),
+  left: z.number().min(0).max(100).default(0),
+  right: z.number().min(0).max(100).default(0),
+  radial: z.number().min(0).max(100).default(0),
+});
+export type ImageFade = z.infer<typeof imageFadeSchema>;
+
 export const imageStyleSchema = z.strictObject({
   fit: z.enum(["cover", "contain"]).default("cover"),
   focal: z
@@ -66,6 +76,7 @@ export const imageStyleSchema = z.strictObject({
   opacity: opacitySchema.default(1),
   flipH: z.boolean().default(false),
   flipV: z.boolean().default(false),
+  fade: imageFadeSchema.optional(),
 });
 
 export const imageElementSchema = z.strictObject({

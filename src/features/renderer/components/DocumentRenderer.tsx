@@ -146,6 +146,7 @@ function ElementView({
           opacity={element.style.opacity}
           flipH={element.style.flipH}
           flipV={element.style.flipV}
+          fade={element.style.fade}
           priority={priority}
         />
       ) : null;
