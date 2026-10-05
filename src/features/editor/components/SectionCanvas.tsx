@@ -252,6 +252,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     s.history.present.sections.find((x) => x.id === sectionId),
   );
   const tokens = useEditor((s) => s.history.present.design.tokens);
+  const docBackground = useEditor((s) => s.history.present.design.background);
   const zoom = useEditor((s) => s.zoom);
   const selectedIds = useEditor((s) => s.selectedIds);
   const readOnly = useEditor((s) => s.readOnly);
@@ -518,7 +519,11 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   if (!section) return null;
 
-  const background = resolveColor(section.background.color, tokens, "#ffffff");
+  const screenBg = resolveColor(docBackground?.color, tokens, "#ffffff");
+  const sectionBg = section.background.color
+    ? resolveColor(section.background.color, tokens, undefined)
+    : undefined;
+  const background = sectionBg ?? screenBg;
 
   return (
     <Stage

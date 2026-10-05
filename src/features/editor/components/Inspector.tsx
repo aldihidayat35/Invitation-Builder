@@ -5,6 +5,7 @@ import type { Element } from "@/lib/schema";
 import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
+import { BaseBackgroundControl } from "./BaseBackgroundControl";
 import {
   ColorField,
   FieldRow,
@@ -19,7 +20,6 @@ import {
   IconBackward,
   IconBringFront,
   IconCopy,
-  IconCursor,
   IconEyeOff,
   IconForward,
   IconLayers,
@@ -74,13 +74,21 @@ export function Inspector() {
     body = <SectionPanel sectionId={activeSectionId} readOnly={readOnly} />;
   } else {
     body = (
-      <div className={styles.emptyState}>
-        <span className={styles.emptyStateIcon}>
-          <IconCursor size={22} />
-        </span>
-        <p className={styles.emptyStateTitle}>Belum ada yang dipilih</p>
-        <p className={styles.muted}>Pilih section atau elemen untuk mengatur propertinya.</p>
-      </div>
+      <>
+        <InspectorHeader
+          icon={<IconSparkle size={18} />}
+          eyebrow="Latar Halaman"
+          title="Latar Layar Dokumen"
+        />
+        <PanelSection
+          id="insp-doc-base-bg"
+          title="Latar Layar (Screen BG)"
+          icon={<IconSparkle size={13} />}
+          count={doc.design.background ? 1 : undefined}
+        >
+          <BaseBackgroundControl readOnly={readOnly} />
+        </PanelSection>
+      </>
     );
   }
 

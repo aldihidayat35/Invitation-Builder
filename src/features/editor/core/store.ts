@@ -8,7 +8,7 @@
  * drag frame.
  */
 import { createStore, type StoreApi } from "zustand/vanilla";
-import type { CanonicalDocument, Element, Frame } from "@/lib/schema";
+import type { CanonicalDocument, DocumentBackground, Element, Frame } from "@/lib/schema";
 import { clampZoom, DEFAULT_ZOOM, stepZoom } from "./geometry";
 import {
   canRedo,
@@ -104,6 +104,9 @@ export interface EditorActions {
   duplicateSection(id: string): void;
   moveSection(id: string, direction: -1 | 1): void;
   patchSection(id: string, patch: SectionPatch): void;
+  // document base background
+  setBaseBackground(background: DocumentBackground | undefined): void;
+  patchBaseBackground(patch: Partial<DocumentBackground>): void;
   // elements
   addElement(kind: ElementKind): void;
   /** Places an uploaded image asset into the active section (FR-EDT-008). */
@@ -290,6 +293,39 @@ export function createEditorStore(init: EditorInit): EditorStore {
         edit((doc) => updateSectionOp(doc, id, patch), {
           coalesceKey: `section:${id}:${Object.keys(patch).join(",")}`,
         });
+      },
+      setBaseBackground(background) {
+        edit(
+          (doc) => ({
+            ...doc,
+            design: {
+              ...doc.design,
+              background,
+            },
+          }),
+          { coalesceKey: "doc:background" },
+        );
+      },
+      patchBaseBackground(patch) {
+        edit(
+          (doc) => {
+            const current = doc.design.background ?? {
+              fit: "cover",
+              overlayOpacity: 0,
+            };
+            return {
+              ...doc,
+              design: {
+                ...doc.design,
+                background: {
+                  ...current,
+                  ...patch,
+                },
+              },
+            };
+          },
+          { coalesceKey: "doc:background" },
+        );
       },
 
       // ------------------------------------------------------------- elements

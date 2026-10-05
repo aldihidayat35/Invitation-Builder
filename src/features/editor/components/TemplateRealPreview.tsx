@@ -85,10 +85,14 @@ export function TemplateRealPreview({
   }, [document]);
 
   const stageRef = useRef<HTMLElement | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
 
   function handleReplay() {
     if (typeof stageRef.current?.scrollTo === "function") {
       stageRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    if (typeof shellRef.current?.scrollTo === "function") {
+      shellRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (typeof window !== "undefined") {
@@ -160,6 +164,7 @@ export function TemplateRealPreview({
       {/* Main Preview Stage */}
       <main ref={stageRef} className={styles.stage}>
         <div
+          ref={shellRef}
           className={styles.deviceShell}
           data-view={viewMode}
           data-testid="preview-device-shell"

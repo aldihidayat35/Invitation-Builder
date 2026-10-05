@@ -93,10 +93,19 @@ export interface ResolvedSection {
 }
 
 
+export interface ResolvedDocumentBackground {
+  readonly color?: CanonicalDocument["sections"][number]["background"]["color"];
+  readonly image: { readonly assetId: string } | null;
+  readonly fit: "cover" | "contain" | "repeat";
+  readonly overlayColor?: string;
+  readonly overlayOpacity: number;
+}
+
 export interface ResolvedDocument {
   readonly schemaVersion: number;
   readonly baseWidth: number;
   readonly tokens: ThemeTokens;
+  readonly background?: ResolvedDocumentBackground;
   readonly sections: readonly ResolvedSection[];
   readonly issues: readonly ResolveIssue[];
   /** True when no issue blocks publishing/preview correctness. */
@@ -247,11 +256,37 @@ export function resolveDocument(
     };
   });
 
+  const docBg = document.design.background;
+  let resolvedBackground: ResolvedDocumentBackground | undefined;
+  if (docBg) {
+    let backgroundImage: { assetId: string } | null = null;
+    if (docBg.image) {
+      if (isBinding(docBg.image)) {
+        const resolved = resolveAt(docBg.image, ["design", "background", "image"], {
+          sectionId: "document",
+        });
+        backgroundImage = imageFromBinding(resolved);
+      } else {
+        backgroundImage = { assetId: docBg.image.assetId };
+      }
+    }
+
+    resolvedBackground = {
+      ...(docBg.color !== undefined && {
+        color: structuredClone(docBg.color),
+      }),
+      image: backgroundImage,
+      fit: docBg.fit,
+      overlayColor: docBg.overlayColor,
+      overlayOpacity: docBg.overlayOpacity,
+    };
+  }
 
   return {
     schemaVersion: document.schemaVersion,
     baseWidth: document.design.baseWidth,
     tokens: structuredClone(document.design.tokens),
+    ...(resolvedBackground && { background: resolvedBackground }),
     sections,
     issues,
     ok: !issues.some((i) => BLOCKING_RESOLVE_CODES.has(i.code)),

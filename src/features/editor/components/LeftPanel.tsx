@@ -5,6 +5,7 @@ import { defaultWidgetRegistry } from "@/features/widgets";
 import { elementLabel, elementTypeLabel } from "../core/display";
 import { findSection, type ElementKind } from "../core/ops";
 import { AssetLibrary } from "./AssetLibrary";
+import { BaseBackgroundControl } from "./BaseBackgroundControl";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import {
   ElementIcon,
@@ -124,6 +125,15 @@ export function LeftPanel() {
             });
           }}
         />
+      </PanelSection>
+
+      <PanelSection
+        id="left-base-bg"
+        title="Latar Layar (Screen BG)"
+        icon={<IconSparkle size={14} />}
+        count={doc.design.background ? 1 : undefined}
+      >
+        <BaseBackgroundControl readOnly={readOnly} />
       </PanelSection>
 
       <PanelSection

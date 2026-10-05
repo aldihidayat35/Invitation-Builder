@@ -11,6 +11,7 @@ import type {
 } from "@/lib/engine";
 import type { RuntimeMode } from "../types";
 import { buildGoogleFontsUrl, collectDocumentFonts, getFontFallback } from "@/lib/fonts";
+import { assetUrl } from "@/features/assets/urls";
 import { AnimatedElement } from "./AnimatedElement";
 import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
@@ -190,6 +191,60 @@ function ElementView({
   );
 }
 
+function BaseBackgroundView({
+  background,
+  tokens,
+  baseWidth,
+}: {
+  background: ResolvedDocument["background"];
+  tokens: Tokens;
+  baseWidth: number;
+}) {
+  const color = cssColor(background?.color, tokens) ?? tokens.colors["surface"] ?? "#ffffff";
+  const overlay = background?.overlayColor;
+  const overlayOpacity = background?.overlayOpacity ?? 0;
+
+  return (
+    <div
+      className={styles.baseBackground}
+      style={{ backgroundColor: color }}
+      data-testid="renderer-base-background"
+      aria-hidden="true"
+    >
+      {background?.image ? (
+        background.fit === "repeat" ? (
+          <div
+            className={styles.baseBackgroundRepeat}
+            style={{
+              backgroundImage: `url(${assetUrl(background.image.assetId)})`,
+            }}
+          />
+        ) : (
+          <div className={styles.baseBackgroundImage}>
+            <PublicImage
+              assetId={background.image.assetId}
+              alt=""
+              width={baseWidth}
+              height={Math.round(baseWidth * (16 / 9))}
+              fit={background.fit}
+              priority
+            />
+          </div>
+        )
+      ) : null}
+      {overlay && overlayOpacity > 0 ? (
+        <div
+          className={styles.baseBackgroundOverlay}
+          style={{
+            backgroundColor: overlay,
+            opacity: overlayOpacity,
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function SectionView({
   section,
   tokens,
@@ -204,7 +259,9 @@ function SectionView({
   first: boolean;
 }) {
   if (section.hidden) return null;
-  const background = cssColor(section.background.color, tokens);
+  const rawBg = cssColor(section.background.color, tokens);
+  const background = rawBg ?? (section.background.image ? undefined : "transparent");
+
   return (
     <AnimatedSection
       section={section}
@@ -260,7 +317,12 @@ export function DocumentRenderer({ document, runtimeMode }: DocumentRendererProp
   return (
     <RendererViewport runtimeMode={runtimeMode}>
       {googleFontsUrl ? <link rel="stylesheet" href={googleFontsUrl} /> : null}
-      <div className={styles.document} data-renderer-document="">
+      <BaseBackgroundView
+        background={document.background}
+        tokens={document.tokens}
+        baseWidth={document.baseWidth}
+      />
+      <div className={styles.document} data-renderer-document="" data-testid="renderer-document">
         {document.sections.map((section, index) => (
           <SectionView
             key={section.id}

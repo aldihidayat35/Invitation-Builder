@@ -5,9 +5,54 @@
  * and all artboard lengths are `calc(var(--u) * <unitless px value>)`, so the
  * 390px design scales proportionally with no horizontal overflow. */
 .document {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.baseBackground {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--dib-max-width, 430px);
+  height: 100%;
+  height: 100dvh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.baseBackgroundImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.baseBackgroundRepeat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-repeat: repeat;
+  background-position: top left;
+  background-size: auto;
+  pointer-events: none;
+}
+
+.baseBackgroundOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .section {

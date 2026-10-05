@@ -186,14 +186,18 @@
 .deviceShell {
   width: 100%;
   max-width: 430px;
-  background: #ffffff;
-  border-radius: 20px;
+  height: min(844px, calc(100vh - 120px));
+  background: transparent;
+  border-radius: 28px;
   border: 1px solid var(--dash-border, #e5e7eb);
   box-shadow:
     0 20px 25px -5px rgb(16 24 40 / 0.1),
     0 8px 10px -6px rgb(16 24 40 / 0.05);
-  overflow: hidden;
-  transition: max-width 200ms ease, border-radius 200ms ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  transform: translateZ(0);
+  transition: max-width 200ms ease, border-radius 200ms ease, height 200ms ease;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -206,9 +210,12 @@
 
 .deviceShell[data-view="full"] {
   max-width: 100%;
+  height: auto;
   border-radius: 0;
   border: none;
   box-shadow: none;
+  transform: none;
+  overflow: visible;
 }
 
 .scrollHint {

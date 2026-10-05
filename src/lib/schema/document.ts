@@ -5,6 +5,8 @@
  * PRD refs: P-03, FR-TPL-002, §15.2, §15.3, Lampiran C, AC-14.
  */
 import { z } from "zod";
+import { colorValueSchema, opacitySchema } from "./primitives";
+import { imageSourceSchema } from "./binding";
 import { CANONICAL_BASE_WIDTH } from "./constants";
 import { sectionSchema } from "./section";
 import { themeTokensSchema } from "./tokens";
@@ -14,6 +16,15 @@ export const SCHEMA_VERSION_V1 = 1 as const;
 export const MAX_SECTIONS = 100;
 export const MAX_VARIABLES = 200;
 
+export const documentBackgroundSchema = z.strictObject({
+  color: colorValueSchema.optional(),
+  image: imageSourceSchema.optional(),
+  fit: z.enum(["cover", "contain", "repeat"]).default("cover"),
+  overlayColor: z.string().optional(),
+  overlayOpacity: opacitySchema.default(0),
+});
+export type DocumentBackground = z.infer<typeof documentBackgroundSchema>;
+
 export const canonicalDocumentV1Schema = z
   .strictObject({
     schemaVersion: z.literal(SCHEMA_VERSION_V1),
@@ -22,6 +33,7 @@ export const canonicalDocumentV1Schema = z
         /** Canonical artboard width; v1 documents are always 390 px (P-07). */
         baseWidth: z.literal(CANONICAL_BASE_WIDTH).default(CANONICAL_BASE_WIDTH),
         tokens: themeTokensSchema.prefault({}),
+        background: documentBackgroundSchema.optional(),
       })
       .prefault({}),
     variables: z.array(variableDefinitionSchema).max(MAX_VARIABLES).default([]),

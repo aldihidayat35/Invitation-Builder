@@ -4381,3 +4381,119 @@ textarea.input {
   line-height: 1.4;
   margin: 0;
 }
+
+/* ----------------------------------------------------------- Base Screen BG */
+.baseBgControl {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.baseBgHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--dash-accent-soft, #f5f3ff);
+  border: 1px solid var(--dash-accent-border, #ddd6fe);
+  border-radius: 8px;
+}
+
+.baseBgHintIcon {
+  color: var(--dash-accent, #7c3aed);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.baseBgHintText {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+.baseBgHintText strong {
+  color: var(--dash-accent, #7c3aed);
+}
+
+.baseBgSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.baseBgLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.baseBgPresetsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.baseBgPresetBtn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid var(--dash-border, #e5e7eb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.baseBgPresetBtn:hover:not(:disabled) {
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  border-color: var(--dash-accent, #7c3aed);
+  z-index: 1;
+}
+
+.baseBgPresetCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.baseBgImageCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-hover, #f9fafb);
+}
+
+.baseBgImageThumb {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--dash-border);
+  flex-shrink: 0;
+}
+
+.baseBgImageActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.baseBgLibraryWrapper {
+  margin-top: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--dash-surface);
+}
+
