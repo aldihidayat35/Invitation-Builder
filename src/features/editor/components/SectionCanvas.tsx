@@ -24,6 +24,7 @@ import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
 import { frameFromNodeAttrs, nodeAttrsFromFrame, snapToSection } from "../core/geometry";
 import { findElement } from "../core/ops";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
+import { estimateWidgetContentHeight } from "@/features/widgets";
 import { useEditor, useEditorStore } from "./EditorProvider";
 import { replayKonvaNode, startKonvaLoopAnimation } from "@/features/animations";
 import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
@@ -192,6 +193,51 @@ const ElementNode = memo(function ElementNode({
           listening={false}
         />
       ) : null}
+      {selected && element.type === "widget" && (() => {
+        const estH = estimateWidgetContentHeight(element);
+        if (estH <= h + 6) return null;
+        return (
+          <Group listening={false}>
+            <Rect
+              x={0}
+              y={h}
+              width={w}
+              height={estH - h}
+              stroke="#e11d48"
+              strokeWidth={1.5}
+              dash={[5, 4]}
+              fill="rgba(225, 29, 72, 0.05)"
+              strokeScaleEnabled={false}
+            />
+            <Line
+              points={[0, estH, w, estH]}
+              stroke="#e11d48"
+              strokeWidth={2}
+              strokeScaleEnabled={false}
+            />
+            <Group x={Math.max(0, (w - 110) / 2)} y={estH + 4}>
+              <Rect
+                width={110}
+                height={18}
+                fill="#e11d48"
+                cornerRadius={4}
+                shadowColor="#000"
+                shadowBlur={4}
+                shadowOpacity={0.2}
+              />
+              <Text
+                width={110}
+                text={`Konten ~${Math.round(estH)}px`}
+                fontSize={10}
+                fill="#ffffff"
+                fontStyle="bold"
+                align="center"
+                y={4}
+              />
+            </Group>
+          </Group>
+        );
+      })()}
     </Group>
   );
 });

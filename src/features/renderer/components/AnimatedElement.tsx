@@ -11,6 +11,7 @@ export interface AnimatedElementProps {
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly "data-testid"?: string;
+  readonly "data-element-type"?: string;
 }
 
 /**
@@ -23,6 +24,7 @@ export function AnimatedElement({
   className,
   style,
   "data-testid": testId,
+  "data-element-type": elementType,
 }: AnimatedElementProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const enterTrack = element.animations?.enter;
@@ -66,6 +68,7 @@ export function AnimatedElement({
       className={className}
       style={style}
       data-element-id={element.id}
+      data-element-type={elementType}
       data-animation-preset={
         enterTrack?.presetId ?? attentionTrack?.presetId ?? exitTrack?.presetId
       }

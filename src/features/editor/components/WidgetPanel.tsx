@@ -3,6 +3,7 @@
 import type { Element, ThemeTokens } from "@/lib/schema";
 import {
   defaultWidgetRegistry,
+  estimateWidgetContentHeight,
   getWidgetStyleVariants,
   QUICK_COLOR_PALETTES,
   resolveWidgetStyleVariant,
@@ -103,8 +104,89 @@ export function WidgetPanel({
 
   const colors = tokens?.colors ?? {};
 
+  const estimatedH = estimateWidgetContentHeight(element);
+  const isOverflowing = estimatedH > element.frame.h + 5;
+  const isDifferent = Math.abs(estimatedH - element.frame.h) > 5;
+
+  const handleFitToContent = () => {
+    store.getState().patchElement(
+      element.id,
+      (el) => ({
+        ...el,
+        frame: {
+          ...el.frame,
+          h: Math.round(estimatedH),
+        },
+      }),
+      "widget:fit-to-content",
+    );
+
+    const currentDoc = store.getState().history.present;
+    const parentSection = currentDoc.sections.find((s) =>
+      s.elements.some((el) => el.id === element.id),
+    );
+    if (parentSection) {
+      const requiredBottom = element.frame.y + estimatedH + 40;
+      if (requiredBottom > parentSection.baseHeight) {
+        store.getState().patchSection(parentSection.id, {
+          baseHeight: Math.ceil(requiredBottom),
+        });
+      }
+    }
+  };
+
   return (
     <div className={styles.panelStack} data-testid="widget-inspector">
+      {/* 0. Content Height & Fit Control */}
+      <div
+        className={styles.panelStack}
+        style={{
+          padding: "10px 12px",
+          borderRadius: "8px",
+          background: isOverflowing ? "rgba(225, 29, 72, 0.08)" : "rgba(0, 0, 0, 0.04)",
+          border: `1px solid ${isOverflowing ? "rgba(225, 29, 72, 0.3)" : "rgba(0, 0, 0, 0.08)"}`,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px" }}>
+          <span style={{ fontWeight: 600 }}>Tinggi Konten Widget</span>
+          <span
+            style={{
+              fontWeight: 700,
+              color: isOverflowing ? "#e11d48" : "inherit",
+            }}
+          >
+            ~{Math.round(estimatedH)}px{" "}
+            <span style={{ fontWeight: 400, opacity: 0.7 }}>
+              (Frame: {Math.round(element.frame.h)}px)
+            </span>
+          </span>
+        </div>
+        {isDifferent && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleFitToContent}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 12px",
+              borderRadius: "6px",
+              background: isOverflowing ? "#e11d48" : "#2563eb",
+              color: "#ffffff",
+              border: "none",
+              cursor: disabled ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              fontSize: "11.5px",
+              transition: "opacity 0.15s ease",
+            }}
+          >
+            ⚡ {isOverflowing ? "Sesuaikan Tinggi dengan Konten (Fit)" : "Reset Tinggi ke Konten"}
+          </button>
+        )}
+      </div>
+
       {/* 1. Style Variations */}
       <div className={styles.panelStack}>
         <p className={styles.widgetSectionTitle}>Pilihan Gaya ({variants.length} Variasi)</p>

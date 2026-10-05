@@ -65,3 +65,5 @@ export {
   type WidgetVariantResolution,
   type WidgetStyleVariant,
 } from "./widget-styles";
+export { estimateWidgetContentHeight } from "./estimate-height";
+

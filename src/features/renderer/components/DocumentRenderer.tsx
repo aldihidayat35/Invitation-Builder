@@ -182,6 +182,7 @@ function ElementView({
       className={styles.frame}
       style={frameStyle(element)}
       data-testid={`element-${element.id}`}
+      data-element-type={element.type}
     >
       {body}
     </AnimatedElement>
