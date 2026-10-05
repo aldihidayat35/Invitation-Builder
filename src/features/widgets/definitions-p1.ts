@@ -358,12 +358,12 @@ export const ornamentFrameWidget: WidgetDefinition = {
   defaultStyle: getDefaultWidgetStyle(ORNAMENT_FRAME_WIDGET_TYPE),
   defaultProps: {
     shape: "arch-window",
-    title: "",
-    subtitle: "",
-    caption: "",
+    innerGap: 12,
+    fillOpacity: 100,
+    imageOpacity: 100,
     strokeWidth: 2,
     doubleBorder: true,
-    animationMode: "scroll",
+    animationMode: "once",
     animationSpeed: "normal",
   },
   props: {
@@ -372,6 +372,10 @@ export const ornamentFrameWidget: WidgetDefinition = {
       "Bentuk Bingkai",
       z.enum([
         "arch-window",
+        "circle",
+        "oval",
+        "rectangle",
+        "rounded-rect",
         "notched-bracket",
         "baroque-crest",
         "wavy-cartouche",
@@ -383,6 +387,10 @@ export const ornamentFrameWidget: WidgetDefinition = {
         control: "select",
         options: [
           { value: "arch-window", label: "Kubah Lengkung (Arch Window)" },
+          { value: "circle", label: "Lingkaran (Circle)" },
+          { value: "oval", label: "Oval (Elips)" },
+          { value: "rectangle", label: "Persegi Panjang (Box)" },
+          { value: "rounded-rect", label: "Persegi Membulat (Rounded Box)" },
           { value: "notched-bracket", label: "Sudut Cekung (Vintage Plaque)" },
           { value: "baroque-crest", label: "Mahkota Barok (Royal Crest)" },
           { value: "wavy-cartouche", label: "Pita Bergelombang (Rococo Waves)" },
@@ -392,18 +400,36 @@ export const ornamentFrameWidget: WidgetDefinition = {
         ],
       },
     ),
-    title: defineProp("text", "Judul / Teks Atas (Opsional)", z.string().max(100).optional()),
-    subtitle: defineProp("text", "Nama / Teks Tengah (Opsional)", z.string().max(100).optional()),
-    caption: defineProp("text", "Keterangan / Tanggal (Opsional)", z.string().max(100).optional()),
+    innerGap: defineProp(
+      "number",
+      "Jarak Garis Dalam (Inner Gap)",
+      z.number().min(2).max(40).default(12),
+    ),
+    fillOpacity: defineProp(
+      "number",
+      "Transparansi Background (%)",
+      z.number().min(0).max(100).default(100),
+    ),
+    image: defineProp(
+      "url",
+      "Foto di Dalam Bentuk (Opsional)",
+      z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+    ),
+    imageOpacity: defineProp(
+      "number",
+      "Transparansi Foto (%)",
+      z.number().min(0).max(100).default(100),
+    ),
     strokeWidth: defineProp("number", "Ketebalan Garis", z.number().min(1).max(12).default(2)),
     doubleBorder: defineProp("boolean", "Garis Ganda (Double Border)", z.boolean().default(true)),
     animationMode: defineProp(
       "text",
       "Mode Animasi Garis",
-      z.enum(["scroll", "loop", "none"]).default("scroll"),
+      z.enum(["once", "scroll", "loop", "none"]).default("once"),
       {
         control: "select",
         options: [
+          { value: "once", label: "1x Bergerak saat awal terlihat (Elegan)" },
           { value: "scroll", label: "Jalan saat di-scroll (Interaktif)" },
           { value: "loop", label: "Berjalan terus menerus (Loop)" },
           { value: "none", label: "Tanpa animasi (Statis)" },
@@ -425,7 +451,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
     ),
   },
   placeholder: (props) => ({
-    title: describeProp(props.title) || describeProp(props.subtitle) || "Bingkai Ornamen",
+    title: "Bingkai Ornamen",
     subtitle: `Bentuk: ${describeProp(props.shape) || "Kubah Lengkung"}`,
   }),
 };

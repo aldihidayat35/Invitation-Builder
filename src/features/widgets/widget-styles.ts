@@ -500,6 +500,30 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 0,
     },
     {
+      id: "circle",
+      label: "Lingkaran (Circle)",
+      description: "Bentuk bulat simetris dengan alur garis melengkung lembut mengalir dari atas ke bawah.",
+      defaultRadius: 0,
+    },
+    {
+      id: "oval",
+      label: "Oval (Elips)",
+      description: "Bentuk lonjong oval klasik yang anggun membingkai ruang kartu.",
+      defaultRadius: 0,
+    },
+    {
+      id: "rectangle",
+      label: "Persegi Panjang (Box)",
+      description: "Bingkai tegak lurus modern dan presisi dengan garis melingkari tepi kartu.",
+      defaultRadius: 0,
+    },
+    {
+      id: "rounded-rect",
+      label: "Persegi Membulat (Rounded Box)",
+      description: "Persegi dengan sudut lengkung halus modern yang bersih dan minimalis.",
+      defaultRadius: 0,
+    },
+    {
       id: "notched-bracket",
       label: "Sudut Cekung (Vintage Plaque)",
       description: "Plakat klasik dengan sudut cekung ke dalam dan bingkai ganda elegan.",
@@ -550,7 +574,19 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
   wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
   coupleProfile: legacy(["side-by-side", "stacked-cards", "circular-medallion", "arch-window", "luxury-gold"]),
-  ornamentFrame: legacy(["arch-window", "notched-bracket", "baroque-crest", "wavy-cartouche", "royal-plaque", "scalloped-stamp", "pointed-cartouche"]),
+  ornamentFrame: legacy([
+    "arch-window",
+    "circle",
+    "oval",
+    "rectangle",
+    "rounded-rect",
+    "notched-bracket",
+    "baroque-crest",
+    "wavy-cartouche",
+    "royal-plaque",
+    "scalloped-stamp",
+    "pointed-cartouche",
+  ]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(

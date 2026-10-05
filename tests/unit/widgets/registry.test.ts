@@ -96,7 +96,7 @@ describe("widget registry", () => {
         definition.type === "gift" || definition.type === "gallery" || definition.type === "coupleProfile"
           ? 10
           : definition.type === "ornamentFrame"
-            ? 7
+            ? 11
             : 5;
       expect(variants).toHaveLength(expectedCount);
       expect(new Set(ids).size).toBe(expectedCount);

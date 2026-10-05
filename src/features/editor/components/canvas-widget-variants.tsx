@@ -3810,71 +3810,45 @@ function OrnamentFrameVisual({
   const props = (element.props ?? {}) as Record<string, unknown>;
   const shapeId =
     (typeof props.shape === "string" ? props.shape : element.style.variant) || "arch-window";
-  const shapeData = getOrnamentShape(shapeId);
+  const innerGap = typeof props.innerGap === "number" ? props.innerGap : 12;
+  const shapeData = getOrnamentShape(shapeId, w, h, innerGap);
   const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
   const doubleBorder = props.doubleBorder !== false;
-  const title = typeof props.title === "string" ? props.title : "";
-  const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
-  const caption = typeof props.caption === "string" ? props.caption : "";
+  const fillOpacity =
+    (typeof props.fillOpacity === "number" ? Math.max(0, Math.min(100, props.fillOpacity)) : 100) / 100;
+  const imageOpacity =
+    (typeof props.imageOpacity === "number" ? Math.max(0, Math.min(100, props.imageOpacity)) : 100) / 100;
 
-  const scaleX = w / 400;
-  const scaleY = h / 260;
+  const src = parseFrameImage(props.image);
+  const canvasImage = useCanvasImage(src);
 
   return (
     <Group width={w} height={h}>
       <Path
         data={shapeData.fullPath}
         fill={background === "transparent" ? undefined : background}
+        opacity={background === "transparent" ? 1 : fillOpacity}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-        scaleX={scaleX}
-        scaleY={scaleY}
       />
+      {canvasImage && (
+        <Path
+          data={shapeData.fullPath}
+          fillPatternImage={canvasImage}
+          fillPatternRepeat="no-repeat"
+          fillPatternScale={{
+            x: w / (canvasImage.width || 1),
+            y: h / (canvasImage.height || 1),
+          }}
+          opacity={imageOpacity}
+        />
+      )}
       {doubleBorder && (
         <Path
           data={shapeData.innerFullPath}
           stroke={strokeColor}
           strokeWidth={Math.max(1, strokeWidth * 0.65)}
           opacity={0.45}
-          scaleX={scaleX}
-          scaleY={scaleY}
-        />
-      )}
-      {title && (
-        <Text
-          text={title}
-          x={16}
-          y={subtitle ? 24 : h / 2 - 8}
-          width={w - 32}
-          align="center"
-          fill={strokeColor}
-          fontSize={11}
-          fontStyle="bold"
-          letterSpacing={1.5}
-        />
-      )}
-      {subtitle && (
-        <Text
-          text={subtitle}
-          x={16}
-          y={caption ? h - 54 : h / 2 + 6}
-          width={w - 32}
-          align="center"
-          fill={strokeColor}
-          fontSize={15}
-          fontStyle="bold"
-        />
-      )}
-      {caption && (
-        <Text
-          text={caption}
-          x={16}
-          y={h - 32}
-          width={w - 32}
-          align="center"
-          fill={strokeColor}
-          fontSize={10}
-          opacity={0.8}
         />
       )}
     </Group>

@@ -1,12 +1,14 @@
 /**
  * Geometry and SVG path definitions for the ornamental shape variants.
  *
- * All coordinates are normalized in a standard 400x260 coordinate box.
+ * All coordinates are normalized in a standard 400x260 coordinate box by default,
+ * and dynamically adapt to actual width, height, and inner outline gap.
+ *
  * Each shape provides:
- * - leftPath: Starts at top apex (200, Y_TOP) and traces down the LEFT half to (200, Y_BOTTOM)
- * - rightPath: Starts at top apex (200, Y_TOP) and traces down the RIGHT half to (200, Y_BOTTOM)
+ * - leftPath: Starts at top apex (X_MID, Y_TOP) and traces down the LEFT half to (X_MID, Y_BOTTOM)
+ * - rightPath: Starts at top apex (X_MID, Y_TOP) and traces down the RIGHT half to (X_MID, Y_BOTTOM)
  * - fullPath: Closed outer perimeter (for fill & static outlines)
- * - innerLeftPath, innerRightPath, innerFullPath: Delicate concentric double-border frame & photo mask
+ * - innerLeftPath, innerRightPath, innerFullPath: Delicate concentric double-border frame
  */
 
 export interface OrnamentShapeData {
@@ -38,6 +40,74 @@ export const ORNAMENT_SHAPES: readonly OrnamentShapeData[] = [
       "M 200 22 C 282 22, 356 68, 356 122 L 356 238 C 356 242, 350 244, 336 244 L 200 244",
     innerFullPath:
       "M 200 22 C 282 22, 356 68, 356 122 L 356 238 C 356 242, 350 244, 336 244 L 200 244 L 64 244 C 50 244, 44 242, 44 238 L 44 122 C 44 68, 118 22, 200 22 Z",
+  },
+  {
+    id: "circle",
+    label: "Lingkaran (Circle)",
+    description: "Bentuk bulat simetris sempurna dengan alur garis melengkung lembut mengalir dari atas ke bawah.",
+    leftPath:
+      "M 200 15 A 115 115 0 0 0 200 245",
+    rightPath:
+      "M 200 15 A 115 115 0 0 1 200 245",
+    fullPath:
+      "M 200 15 A 115 115 0 0 1 200 245 A 115 115 0 0 1 200 15 Z",
+    innerLeftPath:
+      "M 200 27 A 103 103 0 0 0 200 233",
+    innerRightPath:
+      "M 200 27 A 103 103 0 0 1 200 233",
+    innerFullPath:
+      "M 200 27 A 103 103 0 0 1 200 233 A 103 103 0 0 1 200 27 Z",
+  },
+  {
+    id: "oval",
+    label: "Oval (Elips)",
+    description: "Bentuk lonjong oval halus klasik yang anggun membingkai ruang undangan.",
+    leftPath:
+      "M 200 15 A 180 115 0 0 0 200 245",
+    rightPath:
+      "M 200 15 A 180 115 0 0 1 200 245",
+    fullPath:
+      "M 200 15 A 180 115 0 0 1 200 245 A 180 115 0 0 1 200 15 Z",
+    innerLeftPath:
+      "M 200 27 A 168 103 0 0 0 200 233",
+    innerRightPath:
+      "M 200 27 A 168 103 0 0 1 200 233",
+    innerFullPath:
+      "M 200 27 A 103 103 0 0 1 200 233 A 103 103 0 0 1 200 27 Z",
+  },
+  {
+    id: "rectangle",
+    label: "Persegi Panjang (Box)",
+    description: "Bingkai sudut tegak lurus modern dan presisi dengan garis melingkari tepi kartu.",
+    leftPath:
+      "M 200 12 L 12 12 L 12 248 L 200 248",
+    rightPath:
+      "M 200 12 L 388 12 L 388 248 L 200 248",
+    fullPath:
+      "M 200 12 L 388 12 L 388 248 L 12 248 L 12 12 Z",
+    innerLeftPath:
+      "M 200 24 L 24 24 L 24 236 L 200 236",
+    innerRightPath:
+      "M 200 24 L 376 24 L 376 236 L 200 236",
+    innerFullPath:
+      "M 200 24 L 376 24 L 376 236 L 24 236 L 24 24 Z",
+  },
+  {
+    id: "rounded-rect",
+    label: "Persegi Membulat (Rounded Box)",
+    description: "Persegi dengan sudut lengkung halus modern yang bersih dan minimalis.",
+    leftPath:
+      "M 200 12 L 40 12 A 28 28 0 0 0 12 40 L 12 220 A 28 28 0 0 0 40 248 L 200 248",
+    rightPath:
+      "M 200 12 L 360 12 A 28 28 0 0 1 388 40 L 388 220 A 28 28 0 0 1 360 248 L 200 248",
+    fullPath:
+      "M 200 12 L 360 12 A 28 28 0 0 1 388 40 L 388 220 A 28 28 0 0 1 360 248 L 40 248 A 28 28 0 0 1 12 220 L 12 40 A 28 28 0 0 1 40 12 Z",
+    innerLeftPath:
+      "M 200 24 L 42 24 A 18 18 0 0 0 24 42 L 24 218 A 18 18 0 0 0 42 236 L 200 236",
+    innerRightPath:
+      "M 200 24 L 358 24 A 18 18 0 0 1 376 42 L 376 218 A 18 18 0 0 1 358 236 L 200 236",
+    innerFullPath:
+      "M 200 24 L 358 24 A 18 18 0 0 1 376 42 L 376 218 A 18 18 0 0 1 358 236 L 42 236 A 18 18 0 0 1 24 218 L 24 42 A 18 18 0 0 1 42 24 Z",
   },
   {
     id: "notched-bracket",
@@ -177,15 +247,123 @@ export function scaleSvgPath(
   return out.join(" ");
 }
 
-export function getOrnamentShape(id?: string, width = 400, height = 260): OrnamentShapeData {
+/**
+ * Dynamically computes an ornamental shape adapted to target width, height, and inner gap.
+ */
+export function getOrnamentShape(
+  id?: string,
+  width = 400,
+  height = 260,
+  innerGap = 12,
+): OrnamentShapeData {
   const match = ORNAMENT_SHAPES.find((s) => s.id === id);
   const baseShape = match ?? ORNAMENT_SHAPES[0];
   if (!baseShape) throw new Error("No ornament shapes defined");
 
-  if (width === 400 && height === 260) {
+  // Fast path for standard base size and default gap
+  if (width === 400 && height === 260 && innerGap === 12) {
     return baseShape;
   }
 
+  const cx = Math.round(width / 2);
+  const cy = Math.round(height / 2);
+  const gap = Math.max(2, Math.min(innerGap, Math.min(width, height) / 4));
+
+  // Analytical generation for common and geometric shapes
+  if (baseShape.id === "circle") {
+    const r = Math.round(Math.min(width, height) / 2 - 12);
+    const ir = Math.max(8, r - gap);
+    return {
+      ...baseShape,
+      leftPath: `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r}`,
+      rightPath: `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r}`,
+      fullPath: `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${r} ${r} 0 0 1 ${cx} ${cy - r} Z`,
+      innerLeftPath: `M ${cx} ${cy - ir} A ${ir} ${ir} 0 0 0 ${cx} ${cy + ir}`,
+      innerRightPath: `M ${cx} ${cy - ir} A ${ir} ${ir} 0 0 1 ${cx} ${cy + ir}`,
+      innerFullPath: `M ${cx} ${cy - ir} A ${ir} ${ir} 0 0 1 ${cx} ${cy + ir} A ${ir} ${ir} 0 0 1 ${cx} ${cy - ir} Z`,
+    };
+  }
+
+  if (baseShape.id === "oval") {
+    const rx = Math.round(width / 2 - 12);
+    const ry = Math.round(height / 2 - 12);
+    const irx = Math.max(8, rx - gap);
+    const iry = Math.max(8, ry - gap);
+    return {
+      ...baseShape,
+      leftPath: `M ${cx} ${cy - ry} A ${rx} ${ry} 0 0 0 ${cx} ${cy + ry}`,
+      rightPath: `M ${cx} ${cy - ry} A ${rx} ${ry} 0 0 1 ${cx} ${cy + ry}`,
+      fullPath: `M ${cx} ${cy - ry} A ${rx} ${ry} 0 0 1 ${cx} ${cy + ry} A ${rx} ${ry} 0 0 1 ${cx} ${cy - ry} Z`,
+      innerLeftPath: `M ${cx} ${cy - iry} A ${irx} ${iry} 0 0 0 ${cx} ${cy + iry}`,
+      innerRightPath: `M ${cx} ${cy - iry} A ${irx} ${iry} 0 0 1 ${cx} ${cy + iry}`,
+      innerFullPath: `M ${cx} ${cy - iry} A ${irx} ${iry} 0 0 1 ${cx} ${cy + iry} A ${irx} ${iry} 0 0 1 ${cx} ${cy - iry} Z`,
+    };
+  }
+
+  if (baseShape.id === "rectangle") {
+    const m = 12;
+    const im = m + gap;
+    return {
+      ...baseShape,
+      leftPath: `M ${cx} ${m} L ${m} ${m} L ${m} ${height - m} L ${cx} ${height - m}`,
+      rightPath: `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${cx} ${height - m}`,
+      fullPath: `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${m} ${height - m} L ${m} ${m} Z`,
+      innerLeftPath: `M ${cx} ${im} L ${im} ${im} L ${im} ${height - im} L ${cx} ${height - im}`,
+      innerRightPath: `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${cx} ${height - im}`,
+      innerFullPath: `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${im} ${height - im} L ${im} ${im} Z`,
+    };
+  }
+
+  if (baseShape.id === "rounded-rect") {
+    const m = 12;
+    const cr = Math.min(32, Math.max(12, Math.round(Math.min(width, height) * 0.15)));
+    const im = m + gap;
+    const icr = Math.max(4, cr - Math.round(gap * 0.5));
+    return {
+      ...baseShape,
+      leftPath: `M ${cx} ${m} L ${m + cr} ${m} A ${cr} ${cr} 0 0 0 ${m} ${m + cr} L ${m} ${height - m - cr} A ${cr} ${cr} 0 0 0 ${m + cr} ${height - m} L ${cx} ${height - m}`,
+      rightPath: `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${cx} ${height - m}`,
+      fullPath: `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${m + cr} ${height - m} A ${cr} ${cr} 0 0 1 ${m} ${height - m - cr} L ${m} ${m + cr} A ${cr} ${cr} 0 0 1 ${m + cr} ${m} Z`,
+      innerLeftPath: `M ${cx} ${im} L ${im + icr} ${im} A ${icr} ${icr} 0 0 0 ${im} ${im + icr} L ${im} ${height - im - icr} A ${icr} ${icr} 0 0 0 ${im + icr} ${height - im} L ${cx} ${height - im}`,
+      innerRightPath: `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${cx} ${height - im}`,
+      innerFullPath: `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${im + icr} ${height - im} A ${icr} ${icr} 0 0 1 ${im} ${height - im - icr} L ${im} ${im + icr} A ${icr} ${icr} 0 0 1 ${im + icr} ${im} Z`,
+    };
+  }
+
+  if (baseShape.id === "arch-window") {
+    const archH = Math.min(130, Math.max(50, Math.round(width * 0.35)));
+    const yTop = 10;
+    const yBot = height - 10;
+    const leftX = Math.round(Math.min(30, width * 0.08));
+    const rightX = width - leftX;
+    const cpx = Math.round(cx - (cx - leftX) * 0.55);
+
+    const leftPath = `M ${cx} ${yTop} C ${cpx} ${yTop}, ${leftX} ${Math.round(yTop + archH * 0.45)}, ${leftX} ${yTop + archH} L ${leftX} ${yBot - 10} C ${leftX} ${yBot - 2}, ${leftX + 10} ${yBot}, ${leftX + 30} ${yBot} L ${cx} ${yBot}`;
+    const rightPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} L ${rightX} ${yBot - 10} C ${rightX} ${yBot - 2}, ${rightX - 10} ${yBot}, ${rightX - 30} ${yBot} L ${cx} ${yBot}`;
+    const fullPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} L ${rightX} ${yBot - 10} C ${rightX} ${yBot - 2}, ${rightX - 10} ${yBot}, ${rightX - 30} ${yBot} L ${cx} ${yBot} L ${leftX + 30} ${yBot} C ${leftX + 10} ${yBot}, ${leftX} ${yBot - 2}, ${leftX} ${yBot - 10} L ${leftX} ${yTop + archH} C ${leftX} ${Math.round(yTop + archH * 0.45)}, ${cpx} ${yTop}, ${cx} ${yTop} Z`;
+
+    const iyTop = yTop + gap;
+    const iyBot = yBot - gap * 0.6;
+    const ileftX = leftX + gap;
+    const irightX = rightX - gap;
+    const icpx = Math.round(cx - (cx - ileftX) * 0.55);
+
+    const innerLeftPath = `M ${cx} ${iyTop} C ${icpx} ${iyTop}, ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${ileftX} ${iyTop + archH} L ${ileftX} ${iyBot - 6} C ${ileftX} ${iyBot - 2}, ${ileftX + 6} ${iyBot}, ${ileftX + 20} ${iyBot} L ${cx} ${iyBot}`;
+    const innerRightPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} L ${irightX} ${iyBot - 6} C ${irightX} ${iyBot - 2}, ${irightX - 6} ${iyBot}, ${irightX - 20} ${iyBot} L ${cx} ${iyBot}`;
+    const innerFullPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} L ${irightX} ${iyBot - 6} C ${irightX} ${iyBot - 2}, ${irightX - 6} ${iyBot}, ${irightX - 20} ${iyBot} L ${cx} ${iyBot} L ${ileftX + 20} ${iyBot} C ${ileftX + 6} ${iyBot}, ${ileftX} ${iyBot - 2}, ${ileftX} ${iyBot - 6} L ${ileftX} ${iyTop + archH} C ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${icpx} ${iyTop}, ${cx} ${iyTop} Z`;
+
+    return {
+      ...baseShape,
+      leftPath,
+      rightPath,
+      fullPath,
+      innerLeftPath,
+      innerRightPath,
+      innerFullPath,
+    };
+  }
+
+  // Scaling fallback for vintage intricate plaques
   return {
     ...baseShape,
     leftPath: scaleSvgPath(baseShape.leftPath, width, height),

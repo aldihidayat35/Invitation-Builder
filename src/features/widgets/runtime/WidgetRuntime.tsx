@@ -111,15 +111,19 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
   ornamentFrame: (p, style) => (
     <OrnamentFrameWidget
       shape={typeof p.shape === "string" ? p.shape : undefined}
-      title={typeof p.title === "string" ? p.title : undefined}
-      subtitle={typeof p.subtitle === "string" ? p.subtitle : undefined}
-      caption={typeof p.caption === "string" ? p.caption : undefined}
+      innerGap={typeof p.innerGap === "number" ? p.innerGap : undefined}
+      fillOpacity={typeof p.fillOpacity === "number" ? p.fillOpacity : undefined}
+      image={p.image}
+      imageOpacity={typeof p.imageOpacity === "number" ? p.imageOpacity : undefined}
       strokeWidth={typeof p.strokeWidth === "number" ? p.strokeWidth : undefined}
       strokeColor={typeof p.strokeColor === "string" ? p.strokeColor : undefined}
       fillColor={typeof p.fillColor === "string" ? p.fillColor : undefined}
       doubleBorder={typeof p.doubleBorder === "boolean" ? p.doubleBorder : undefined}
       animationMode={
-        p.animationMode === "scroll" || p.animationMode === "loop" || p.animationMode === "none"
+        p.animationMode === "once" ||
+        p.animationMode === "scroll" ||
+        p.animationMode === "loop" ||
+        p.animationMode === "none"
           ? p.animationMode
           : undefined
       }

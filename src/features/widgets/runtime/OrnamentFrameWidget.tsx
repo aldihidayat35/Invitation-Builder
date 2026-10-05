@@ -1,53 +1,59 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getOrnamentShape } from "../ornament-shapes";
+import { parseFrameImage } from "./PhotoFrameWidget";
 import type { WidgetStyleProps } from "./WidgetFrame";
 import styles from "./OrnamentFrameWidget.module.css";
 
 export interface OrnamentFrameWidgetProps {
   readonly shape?: string;
-  readonly title?: string;
-  readonly subtitle?: string;
-  readonly caption?: string;
+  readonly innerGap?: number;
+  readonly fillOpacity?: number;
+  readonly image?: unknown;
+  readonly imageOpacity?: number;
   readonly strokeWidth?: number;
   readonly strokeColor?: string;
   readonly fillColor?: string;
   readonly doubleBorder?: boolean;
-  readonly animationMode?: "scroll" | "loop" | "none";
+  readonly animationMode?: "once" | "scroll" | "loop" | "none";
   readonly animationSpeed?: "slow" | "normal" | "fast";
   readonly style?: WidgetStyleProps;
 }
 
 export function OrnamentFrameWidget({
   shape,
-  title,
-  subtitle,
-  caption,
+  innerGap = 12,
+  fillOpacity = 100,
+  image,
+  imageOpacity = 100,
   strokeWidth = 2,
   strokeColor,
   fillColor,
   doubleBorder = true,
-  animationMode = "scroll",
+  animationMode = "once",
   animationSpeed = "normal",
   style,
 }: OrnamentFrameWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftPathRef = useRef<SVGPathElement>(null);
+  const rawId = useId();
+  const clipId = `ornament-clip-${rawId.replace(/[^a-zA-Z0-9-_]/g, "")}`;
 
   const [dimensions, setDimensions] = useState<{ w: number; h: number }>({ w: 400, h: 260 });
   const [pathLength, setPathLength] = useState<number>(650);
 
   const activeShapeId = shape || style?.variant || "arch-window";
 
-  // Dynamic responsive path generation for container dimensions
+  // Dynamic responsive path generation for container dimensions and innerGap
   const shapeData = useMemo(
-    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h),
-    [activeShapeId, dimensions.w, dimensions.h],
+    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h, innerGap),
+    [activeShapeId, dimensions.w, dimensions.h, innerGap],
   );
 
   const resolvedStroke = strokeColor || style?.color || "#b4833e";
   const resolvedFill = fillColor || style?.background || "transparent";
+  const resolvedImageUrl = useMemo(() => parseFrameImage(image), [image]);
 
   const [isActive, setIsActive] = useState<boolean>(() => animationMode === "none");
 
@@ -97,9 +103,9 @@ export function OrnamentFrameWidget({
     }
   }, [shapeData]);
 
-  // Smooth IntersectionObserver-driven scroll reveal
+  // IntersectionObserver-driven reveal (once, scroll, or none)
   useEffect(() => {
-    if (animationMode !== "scroll" || typeof window === "undefined") {
+    if (animationMode === "none" || animationMode === "loop" || typeof window === "undefined") {
       return;
     }
 
@@ -118,6 +124,11 @@ export function OrnamentFrameWidget({
         for (const entry of entries) {
           if (entry.isIntersecting) {
             setIsActive(true);
+            if (animationMode === "once") {
+              observer.disconnect();
+            }
+          } else if (animationMode === "scroll") {
+            setIsActive(false);
           }
         }
       },
@@ -139,14 +150,14 @@ export function OrnamentFrameWidget({
     return "2.2s";
   }, [animationSpeed]);
 
-  // Dash is exact pathLength, gap is 2x pathLength so it NEVER wraps around or shows a gap
   const dashOffset = useMemo(() => {
     if (animationMode === "none") return 0;
     if (animationMode === "loop") return undefined;
     return isActive ? 0 : pathLength;
   }, [animationMode, isActive, pathLength]);
 
-  const hasText = Boolean(title || subtitle || caption);
+  const normalizedFillOpacity = Math.max(0, Math.min(100, fillOpacity)) / 100;
+  const normalizedImageOpacity = Math.max(0, Math.min(100, imageOpacity)) / 100;
 
   return (
     <div
@@ -166,16 +177,37 @@ export function OrnamentFrameWidget({
         className={styles.svg}
         aria-hidden="true"
       >
+        <defs>
+          <clipPath id={clipId}>
+            <path d={shapeData.fullPath} />
+          </clipPath>
+        </defs>
+
         {/* 1. Base Fill & Outer Card Boundary */}
         <path
           d={shapeData.fullPath}
           fill={resolvedFill}
+          fillOpacity={resolvedFill === "transparent" ? 1 : normalizedFillOpacity}
           stroke={doubleBorder ? resolvedStroke : "none"}
           strokeWidth={strokeWidth}
           className={styles.outerBorder}
         />
 
-        {/* 2. Inner Outline Faint Track (guide line inside the shape) */}
+        {/* 2. Optional Photo clipped inside shape with opacity control */}
+        {resolvedImageUrl && (
+          <image
+            href={resolvedImageUrl}
+            x={0}
+            y={0}
+            width={dimensions.w}
+            height={dimensions.h}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#${clipId})`}
+            opacity={normalizedImageOpacity}
+          />
+        )}
+
+        {/* 3. Inner Outline Faint Track (guide line inside the shape) */}
         {doubleBorder && (
           <path
             d={shapeData.innerFullPath}
@@ -187,7 +219,7 @@ export function OrnamentFrameWidget({
           />
         )}
 
-        {/* 3. Left Animated Moving Line (Traces along INNER outline from top to bottom) */}
+        {/* 4. Left Animated Moving Line (Traces along INNER outline from top to bottom) */}
         <path
           ref={leftPathRef}
           d={doubleBorder ? shapeData.innerLeftPath : shapeData.leftPath}
@@ -201,7 +233,7 @@ export function OrnamentFrameWidget({
           }`}
         />
 
-        {/* 4. Right Animated Moving Line (Traces along INNER outline from top to bottom) */}
+        {/* 5. Right Animated Moving Line (Traces along INNER outline from top to bottom) */}
         <path
           d={doubleBorder ? shapeData.innerRightPath : shapeData.rightPath}
           fill="none"
@@ -214,19 +246,6 @@ export function OrnamentFrameWidget({
           }`}
         />
       </svg>
-
-      {/* 5. Typography / Text (Optional) */}
-      {hasText && (
-        <div className={styles.innerContent}>
-          {title && <p className={styles.topBadge}>{title}</p>}
-          {(subtitle || caption) && (
-            <div className={styles.bottomGroup}>
-              {subtitle && <h3 className={styles.title}>{subtitle}</h3>}
-              {caption && <p className={styles.caption}>{caption}</p>}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

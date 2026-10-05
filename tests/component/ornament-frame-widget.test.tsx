@@ -9,11 +9,15 @@ import { WidgetRuntime } from "@/features/widgets/runtime";
 import { defaultWidgetRegistry } from "@/features/widgets";
 
 describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", () => {
-  it("provides 7 distinct ornamental shape definitions matching the reference designs", () => {
-    expect(ORNAMENT_SHAPES).toHaveLength(7);
+  it("provides 11 distinct ornamental and geometric shape definitions", () => {
+    expect(ORNAMENT_SHAPES).toHaveLength(11);
     const ids = ORNAMENT_SHAPES.map((s) => s.id);
     expect(ids).toEqual([
       "arch-window",
+      "circle",
+      "oval",
+      "rectangle",
+      "rounded-rect",
       "notched-bracket",
       "baroque-crest",
       "wavy-cartouche",
@@ -23,8 +27,8 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     ]);
 
     for (const shape of ORNAMENT_SHAPES) {
-      expect(shape.leftPath).toMatch(/^M 200/);
-      expect(shape.rightPath).toMatch(/^M 200/);
+      expect(shape.leftPath).toMatch(/^M/);
+      expect(shape.rightPath).toMatch(/^M/);
       expect(shape.fullPath).toMatch(/Z$/);
       expect(shape.innerFullPath).toMatch(/Z$/);
     }
@@ -32,6 +36,8 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
 
   it("resolves ornament shapes safely with fallback", () => {
     expect(getOrnamentShape("baroque-crest").id).toBe("baroque-crest");
+    expect(getOrnamentShape("circle").id).toBe("circle");
+    expect(getOrnamentShape("rectangle").id).toBe("rectangle");
     expect(getOrnamentShape("unknown-shape").id).toBe("arch-window");
   });
 
@@ -44,13 +50,11 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     }
   });
 
-  it("renders each of the 7 variants with its testid and data-variant attribute", () => {
+  it("renders each of the 11 variants with its testid and data-variant attribute", () => {
     for (const shape of ORNAMENT_SHAPES) {
       const { unmount } = render(
         <OrnamentFrameWidget
           shape={shape.id}
-          title="The Wedding Of"
-          subtitle="Rama & Alya"
         />,
       );
 
@@ -59,19 +63,17 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
       expect(frame).toHaveAttribute("data-widget", "ornamentFrame");
       expect(frame).toHaveAttribute("data-variant", shape.id);
 
-      expect(screen.getByText("The Wedding Of")).toBeInTheDocument();
-      expect(screen.getByText("Rama & Alya")).toBeInTheDocument();
-
       unmount();
     }
   });
 
-  it("applies custom stroke and fill colors and stroke width", () => {
+  it("applies custom stroke, fill colors, and fill opacity", () => {
     const { container } = render(
       <OrnamentFrameWidget
         shape="baroque-crest"
         strokeColor="#d97706"
         fillColor="#fffbeb"
+        fillOpacity={80}
         strokeWidth={4}
       />,
     );
@@ -81,9 +83,34 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
 
     const basePath = container.querySelector("path[fill='#fffbeb']");
     expect(basePath).toBeInTheDocument();
+    expect(basePath).toHaveAttribute("fill-opacity", "0.8");
 
     const strokePaths = container.querySelectorAll("path[stroke='#d97706']");
     expect(strokePaths.length).toBeGreaterThan(0);
+  });
+
+  it("supports dynamic innerGap between outer contour and inner outline", () => {
+    const normalGap = getOrnamentShape("circle", 300, 300, 10);
+    const wideGap = getOrnamentShape("circle", 300, 300, 25);
+
+    // Inner paths should differ when innerGap changes
+    expect(normalGap.innerFullPath).not.toEqual(wideGap.innerFullPath);
+  });
+
+  it("renders optional photo clipped inside shape with opacity", () => {
+    const { container } = render(
+      <OrnamentFrameWidget
+        shape="oval"
+        image="https://example.com/couple.jpg"
+        imageOpacity={75}
+      />,
+    );
+
+    const img = container.querySelector("image");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("href", "https://example.com/couple.jpg");
+    expect(img).toHaveAttribute("opacity", "0.75");
+    expect(img?.getAttribute("clip-path")).toMatch(/^url\(#ornament-clip-/);
   });
 
   it("toggles double border correctly", () => {
@@ -103,14 +130,15 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
         widgetType="ornamentFrame"
         props={{
           shape: "pointed-cartouche",
-          title: "Walimatul 'Urs",
-          animationMode: "loop",
+          innerGap: 16,
+          fillOpacity: 50,
+          animationMode: "once",
           animationSpeed: "fast",
         }}
         style={{
           variant: "pointed-cartouche",
           color: "#b4833e",
-          background: "transparent",
+          background: "#ffffff",
         }}
       />,
     );
@@ -118,24 +146,18 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     const widget = container.querySelector('[data-widget="ornamentFrame"]');
     expect(widget).toBeInTheDocument();
     expect(widget).toHaveAttribute("data-variant", "pointed-cartouche");
-    expect(screen.getByText("Walimatul 'Urs")).toBeInTheDocument();
+
+    const basePath = container.querySelector("path[fill='#ffffff']");
+    expect(basePath).toHaveAttribute("fill-opacity", "0.5");
   });
 
-  it("animates the inner outline without image or yellow dots", () => {
+  it("animates the inner outline with smooth moving strokes", () => {
     const { container } = render(
       <OrnamentFrameWidget
         shape="arch-window"
-        title="THE WEDDING OF"
-        subtitle="Benny & Dinda"
-        caption="Sabtu, 24 Oktober 2026"
-        animationMode="scroll"
+        animationMode="once"
       />,
     );
-
-    // No image tag or clipPath for photos
-    expect(container.querySelector("image")).not.toBeInTheDocument();
-    // No yellow glow circles
-    expect(container.querySelector("circle")).not.toBeInTheDocument();
 
     // Outer border
     expect(container.querySelector(".outerBorder")).toBeInTheDocument();
@@ -148,15 +170,11 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     for (const stroke of animatedStrokes) {
       expect(stroke.getAttribute("stroke-dasharray")).toMatch(/^\d+ \d+$/);
     }
-
-    expect(screen.getByText("THE WEDDING OF")).toBeInTheDocument();
-    expect(screen.getByText("Benny & Dinda")).toBeInTheDocument();
-    expect(screen.getByText("Sabtu, 24 Oktober 2026")).toBeInTheDocument();
   });
 
   it("scales flexibly to taller widget heights without distortion", () => {
-    const tallShape = getOrnamentShape("arch-window", 326, 600);
+    const tallShape = getOrnamentShape("arch-window", 326, 600, 12);
     expect(tallShape.leftPath).toMatch(/^M 163/);
-    expect(tallShape.leftPath).toContain("576.9");
+    expect(tallShape.leftPath).toContain("590");
   });
 });
