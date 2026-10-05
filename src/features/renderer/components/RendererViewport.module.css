@@ -1,6 +1,7 @@
 /* Public renderer root. Uses only renderer-scoped CSS variables (--dib-*) so
  * dashboard styles never leak in (PRD §5.1). */
 .viewport {
+  --dib-screen-height: 100dvh;
   position: relative;
   width: 100%;
   max-width: var(--dib-max-width);
@@ -8,4 +9,7 @@
   min-height: 100dvh;
   overflow-x: clip;
   isolation: isolate;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
 }

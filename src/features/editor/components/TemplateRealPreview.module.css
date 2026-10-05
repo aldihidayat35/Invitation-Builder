@@ -183,10 +183,15 @@
   height: 0;
 }
 
+.stage:has(.deviceShell[data-view="full"]) {
+  padding: 0;
+}
+
 .deviceShell {
   width: 100%;
   max-width: 430px;
   height: min(844px, calc(100vh - 120px));
+  --dib-screen-height: min(844px, calc(100vh - 120px));
   background: transparent;
   border-radius: 28px;
   border: 1px solid var(--dash-border, #e5e7eb);
@@ -196,7 +201,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  transform: translateZ(0);
   transition: max-width 200ms ease, border-radius 200ms ease, height 200ms ease;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -211,6 +215,7 @@
 .deviceShell[data-view="full"] {
   max-width: 100%;
   height: auto;
+  --dib-screen-height: 100dvh;
   border-radius: 0;
   border: none;
   box-shadow: none;
@@ -255,6 +260,8 @@
   }
   .deviceShell {
     max-width: 100%;
+    height: 100%;
+    --dib-screen-height: 100dvh;
     border-radius: 0;
     border: none;
     box-shadow: none;
