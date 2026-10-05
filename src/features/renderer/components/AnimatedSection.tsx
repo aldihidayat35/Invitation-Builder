@@ -72,6 +72,21 @@ export function AnimatedSection({
     };
   }, [hasTransition, transition?.once, transition?.type]);
 
+  useEffect(() => {
+    if (!hasTransition) return;
+    const handleReplay = (e: Event) => {
+      const custom = e as CustomEvent<{ sectionId?: string }>;
+      if (!custom.detail?.sectionId || custom.detail.sectionId === section.id) {
+        setIsVisible(false);
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      }
+    };
+    window.addEventListener("dib:replay-animation", handleReplay);
+    return () => window.removeEventListener("dib:replay-animation", handleReplay);
+  }, [hasTransition, section.id]);
+
   const dynamicTransitionStyle = hasTransition
     ? getSectionTransitionStyles(transition, isVisible)
     : {};

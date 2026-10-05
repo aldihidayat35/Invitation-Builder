@@ -15,8 +15,6 @@ import {
   type CanonicalDocument,
   type Element,
   type Frame,
-  type OpeningScreenConfig,
-  type OpeningTemplate,
   type SectionTransition,
   type ThemeTokens,
 } from "@/lib/schema";
@@ -85,6 +83,7 @@ export interface ResolvedSection {
   readonly baseHeight: number;
   readonly overflow: "hidden" | "visible";
   readonly hidden: boolean;
+  readonly isOpening?: boolean;
   readonly background: {
     readonly color?: CanonicalDocument["sections"][number]["background"]["color"];
     readonly image: { readonly assetId: string } | null;
@@ -94,7 +93,6 @@ export interface ResolvedSection {
   readonly elements: readonly ResolvedElement[];
 }
 
-
 export interface ResolvedDocumentBackground {
   readonly color?: CanonicalDocument["sections"][number]["background"]["color"];
   readonly image: { readonly assetId: string } | null;
@@ -103,26 +101,11 @@ export interface ResolvedDocumentBackground {
   readonly overlayOpacity: number;
 }
 
-export interface ResolvedOpeningScreen {
-  readonly enabled: boolean;
-  readonly template: OpeningTemplate;
-  readonly title: string;
-  readonly subtitle?: string;
-  readonly guestLabel: string;
-  readonly buttonText: string;
-  readonly coupleName: string;
-  readonly dateText?: string;
-  readonly locationText?: string;
-  readonly bgImage?: { readonly assetId: string } | null;
-  readonly overlayOpacity: number;
-}
-
 export interface ResolvedDocument {
   readonly schemaVersion: number;
   readonly baseWidth: number;
   readonly tokens: ThemeTokens;
   readonly background?: ResolvedDocumentBackground;
-  readonly opening?: ResolvedOpeningScreen;
   readonly sections: readonly ResolvedSection[];
   readonly issues: readonly ResolveIssue[];
   /** True when no issue blocks publishing/preview correctness. */
@@ -261,6 +244,7 @@ export function resolveDocument(
       baseHeight: section.baseHeight,
       overflow: section.overflow,
       hidden: !section.visible,
+      isOpening: Boolean(section.isOpening),
       background: {
         ...(section.background.color !== undefined && {
           color: structuredClone(section.background.color),
@@ -299,88 +283,11 @@ export function resolveDocument(
     };
   }
 
-  const docOpening = document.design.opening;
-  let resolvedOpening: ResolvedOpeningScreen | undefined;
-  if (docOpening && docOpening.enabled) {
-    let coupleName = docOpening.coupleName?.trim();
-    if (!coupleName) {
-      const groomNick = typeof data["couple.groom.nickname"] === "string" ? data["couple.groom.nickname"].trim() : "";
-      const brideNick = typeof data["couple.bride.nickname"] === "string" ? data["couple.bride.nickname"].trim() : "";
-      if (groomNick && brideNick) {
-        coupleName = `${groomNick} & ${brideNick}`;
-      } else if (groomNick) {
-        coupleName = groomNick;
-      } else if (brideNick) {
-        coupleName = brideNick;
-      } else {
-        coupleName = "Romeo & Juliet";
-      }
-    }
-
-    let dateText = docOpening.dateText?.trim();
-    if (!dateText) {
-      const ceremony = data["event.ceremony.startAt"];
-      if (typeof ceremony === "object" && ceremony !== null && "local" in ceremony) {
-        const rawLocal = String((ceremony as { local?: unknown }).local ?? "");
-        if (rawLocal) {
-          try {
-            const d = new Date(rawLocal);
-            if (!isNaN(d.getTime())) {
-              dateText = d.toLocaleDateString("id-ID", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              });
-            }
-          } catch {
-            dateText = rawLocal;
-          }
-        }
-      }
-    }
-
-    let locationText = docOpening.locationText?.trim();
-    if (!locationText) {
-      const venue = data["venue.name"];
-      if (typeof venue === "string" && venue.trim()) {
-        locationText = venue.trim();
-      }
-    }
-
-    let bgImage: { assetId: string } | null = null;
-    if (docOpening.bgImage) {
-      if (isBinding(docOpening.bgImage)) {
-        const resolved = resolveAt(docOpening.bgImage, ["design", "opening", "bgImage"], {
-          sectionId: "opening",
-        });
-        bgImage = imageFromBinding(resolved);
-      } else {
-        bgImage = { assetId: docOpening.bgImage.assetId };
-      }
-    }
-
-    resolvedOpening = {
-      enabled: true,
-      template: docOpening.template ?? "royal-envelope",
-      title: docOpening.title?.trim() || "The Wedding Of",
-      ...(docOpening.subtitle?.trim() && { subtitle: docOpening.subtitle.trim() }),
-      guestLabel: docOpening.guestLabel?.trim() || "Kepada Yth. Bapak/Ibu/Saudara/i:",
-      buttonText: docOpening.buttonText?.trim() || "Buka Undangan",
-      coupleName,
-      ...(dateText && { dateText }),
-      ...(locationText && { locationText }),
-      bgImage,
-      overlayOpacity: docOpening.overlayOpacity ?? 0.4,
-    };
-  }
-
   return {
     schemaVersion: document.schemaVersion,
     baseWidth: document.design.baseWidth,
     tokens: structuredClone(document.design.tokens),
     ...(resolvedBackground && { background: resolvedBackground }),
-    ...(resolvedOpening && { opening: resolvedOpening }),
     sections,
     issues,
     ok: !issues.some((i) => BLOCKING_RESOLVE_CODES.has(i.code)),

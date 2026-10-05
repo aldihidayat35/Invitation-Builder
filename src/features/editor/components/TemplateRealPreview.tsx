@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import type { CanonicalDocument, OpeningTemplate } from "@/lib/schema";
+import type { CanonicalDocument } from "@/lib/schema";
 import { applyDefaults, createVariableRegistry, resolveDocument } from "@/lib/engine";
 import { DocumentRenderer } from "@/features/renderer";
 import { PublicContextProvider } from "@/features/widgets/runtime";
@@ -35,9 +35,7 @@ export function TemplateRealPreview({
 }: TemplateRealPreviewProps) {
   const [viewMode, setViewMode] = useState<"mobile" | "full">("mobile");
   const [justUpdated, setJustUpdated] = useState(false);
-  const [coverMode, setCoverMode] = useState<OpeningTemplate | "off">(
-    initialDocument.design.opening?.template ?? "royal-envelope",
-  );
+  const [showCover, setShowCover] = useState(true);
 
   const serverSnapshot = useMemo<PreviewStateSnapshot>(
     () => ({
@@ -84,30 +82,10 @@ export function TemplateRealPreview({
     const registry = createVariableRegistry(document.variables);
     const data = applyDefaults(registry, {});
     const guest = { name: "Bapak / Ibu / Saudara(i)" };
-    const base = resolveDocument(document, data, guest);
-    if (coverMode === "off") {
-      return {
-        ...base,
-        opening: undefined,
-      };
-    }
-    const current = base.opening;
-    return {
-      ...base,
-      opening: {
-        enabled: true,
-        template: coverMode,
-        title: current?.title ?? "The Wedding Of",
-        subtitle: current?.subtitle ?? "Undangan Pernikahan",
-        coupleName: current?.coupleName ?? "Anindya & Raka",
-        dateText: current?.dateText ?? "Minggu, 14 Maret 2027",
-        locationText: current?.locationText ?? "Gedung Serbaguna, Jakarta",
-        guestLabel: current?.guestLabel ?? "Kepada Yth. Bapak/Ibu/Saudara/i:",
-        buttonText: current?.buttonText ?? "Buka Undangan",
-        overlayOpacity: current?.overlayOpacity ?? 0.4,
-      },
-    };
-  }, [document, coverMode]);
+    return resolveDocument(document, data, guest);
+  }, [document]);
+
+  const hasOpeningSection = document.sections.some((s) => s.isOpening);
 
   const stageRef = useRef<HTMLElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -157,39 +135,22 @@ export function TemplateRealPreview({
         </div>
 
         <div className={styles.rightGroup}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>
-              Cover:
-            </span>
-            <select
-              className={styles.toolBtn}
-              value={coverMode}
-              onChange={(e) => {
-                setCoverMode(e.target.value as OpeningTemplate | "off");
+          {hasOpeningSection ? (
+            <button
+              type="button"
+              className={`${styles.toolBtn} ${showCover ? styles.toolBtnActive : ""}`}
+              onClick={() => {
+                setShowCover((v) => !v);
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(new CustomEvent("dib:replay-opening"));
                 }
               }}
-              data-testid="preview-cover-select"
-              title="Pilih Desain Template Cover Opening"
-              style={{
-                cursor: "pointer",
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "6px",
-                padding: "0.35rem 0.55rem",
-                color: "#ffffff",
-                fontSize: "0.78rem",
-              }}
+              data-testid="preview-toggle-cover"
+              title="Aktifkan/nonaktifkan Cover Opening (Section 0)"
             >
-              <option value="royal-envelope" style={{ background: "#1f2937", color: "#fff" }}>✉️ Royal Envelope</option>
-              <option value="modern-editorial" style={{ background: "#1f2937", color: "#fff" }}>📰 Modern Editorial</option>
-              <option value="luxury-arch" style={{ background: "#1f2937", color: "#fff" }}>👑 Luxury Arch</option>
-              <option value="botanical-watercolor" style={{ background: "#1f2937", color: "#fff" }}>🌿 Botanical Garden</option>
-              <option value="cinematic-glass" style={{ background: "#1f2937", color: "#fff" }}>💎 Cinematic Glass</option>
-              <option value="off" style={{ background: "#1f2937", color: "#fff" }}>Tutup Cover (Off)</option>
-            </select>
-          </div>
+              {showCover ? "✨ Cover (#0): On" : "Cover: Off"}
+            </button>
+          ) : null}
 
           <button
             type="button"
@@ -235,7 +196,11 @@ export function TemplateRealPreview({
               guestName: "Tamu Undangan",
             }}
           >
-            <DocumentRenderer document={resolved} runtimeMode="preview" />
+            <DocumentRenderer
+              document={resolved}
+              runtimeMode="preview"
+              showOpeningScreen={showCover}
+            />
           </PublicContextProvider>
         </div>
       </main>

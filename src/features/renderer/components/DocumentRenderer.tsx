@@ -16,7 +16,7 @@ import { AnimatedElement } from "./AnimatedElement";
 import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
-import { OpeningScreen } from "./opening";
+import { OpeningCoverCanvas } from "./opening";
 import styles from "./DocumentRenderer.module.css";
 
 export interface DocumentRendererProps {
@@ -320,6 +320,13 @@ export function DocumentRenderer({
   const fonts = collectDocumentFonts(document);
   const googleFontsUrl = buildGoogleFontsUrl(fonts);
 
+  const openingSection = document.sections.find((s) => s.isOpening);
+  const contentSections =
+    openingSection && document.sections.length > 1
+      ? document.sections.filter((s) => s.id !== openingSection.id)
+      : document.sections;
+  const nextSectionId = contentSections[0]?.id;
+
   return (
     <RendererViewport runtimeMode={runtimeMode}>
       {googleFontsUrl ? <link rel="stylesheet" href={googleFontsUrl} /> : null}
@@ -328,11 +335,28 @@ export function DocumentRenderer({
         tokens={document.tokens}
         baseWidth={document.baseWidth}
       />
-      {document.opening && document.opening.enabled && showOpeningScreen ? (
-        <OpeningScreen opening={document.opening} />
+      {openingSection && showOpeningScreen ? (
+        <OpeningCoverCanvas
+          openingSection={openingSection}
+          nextSectionId={nextSectionId}
+          tokens={document.tokens}
+          baseWidth={document.baseWidth}
+          runtimeMode={runtimeMode}
+          renderElements={(sec) =>
+            sec.elements.map((element, index) => (
+              <ElementView
+                key={element.id}
+                element={element}
+                tokens={document.tokens}
+                runtimeMode={runtimeMode}
+                priority={index === 0}
+              />
+            ))
+          }
+        />
       ) : null}
       <div className={styles.document} data-renderer-document="" data-testid="renderer-document">
-        {document.sections.map((section, index) => (
+        {contentSections.map((section, index) => (
           <SectionView
             key={section.id}
             section={section}

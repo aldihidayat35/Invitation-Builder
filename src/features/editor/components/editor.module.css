@@ -785,6 +785,14 @@
   color: var(--dash-accent, #7c3aed);
 }
 
+.sectionOpeningBadge {
+  background: linear-gradient(135deg, #d97706, #b45309) !important;
+  color: #ffffff !important;
+  padding: 0 6px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+}
+
 .sectionTitle {
   background: none;
   border: 0;

@@ -39,28 +39,54 @@ export function AnimatedElement({
     let cleanupAttention: (() => void) | null = null;
     let cleanupExit: (() => void) | null = null;
 
-    if (enterTrack) {
-      cleanupEnter = playAnimation(el, enterTrack, {
-        onComplete: () => {
-          if (attentionTrack && rootRef.current) {
-            cleanupAttention = playAnimation(rootRef.current, attentionTrack);
-          }
-        },
-      });
-    } else if (attentionTrack) {
-      cleanupAttention = playAnimation(el, attentionTrack);
-    }
+    const play = () => {
+      cleanupEnter?.();
+      cleanupAttention?.();
+      cleanupExit?.();
 
-    if (exitTrack) {
-      cleanupExit = playAnimation(el, exitTrack);
-    }
+      if (enterTrack) {
+        cleanupEnter = playAnimation(el, enterTrack, {
+          onComplete: () => {
+            if (attentionTrack && rootRef.current) {
+              cleanupAttention = playAnimation(rootRef.current, attentionTrack);
+            }
+          },
+        });
+      } else if (attentionTrack) {
+        cleanupAttention = playAnimation(el, attentionTrack);
+      }
+
+      if (exitTrack) {
+        cleanupExit = playAnimation(el, exitTrack);
+      }
+    };
+
+    play();
+
+    const handleReplay = (e: Event) => {
+      const custom = e as CustomEvent<{ elementId?: string; sectionId?: string }>;
+      if (!custom.detail || (!custom.detail.elementId && !custom.detail.sectionId)) {
+        play();
+        return;
+      }
+      if (custom.detail.elementId === element.id) {
+        play();
+        return;
+      }
+      if (custom.detail.sectionId && el.closest(`[data-section-id="${custom.detail.sectionId}"]`)) {
+        play();
+      }
+    };
+
+    window.addEventListener("dib:replay-animation", handleReplay);
 
     return () => {
+      window.removeEventListener("dib:replay-animation", handleReplay);
       cleanupEnter?.();
       cleanupAttention?.();
       cleanupExit?.();
     };
-  }, [enterTrack, attentionTrack, exitTrack]);
+  }, [element.id, enterTrack, attentionTrack, exitTrack]);
 
   return (
     <div

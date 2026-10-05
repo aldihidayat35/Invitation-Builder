@@ -51,6 +51,8 @@ export const sectionSchema = z.strictObject({
   /** Default hidden; `visible` is for decorative edge objects (PRD §9.3). */
   overflow: z.enum(["hidden", "visible"]).default("hidden"),
   visible: z.boolean().default(true),
+  /** When true, marks this section as the Opening Cover Canvas (Section 0). */
+  isOpening: z.boolean().optional(),
   transition: sectionTransitionSchema.optional(),
   elements: z.array(elementSchema).max(MAX_ELEMENTS_PER_SECTION).default([]),
 });

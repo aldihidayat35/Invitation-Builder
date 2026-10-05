@@ -13,7 +13,6 @@ import type {
   DocumentBackground,
   Element,
   Frame,
-  OpeningScreenConfig,
 } from "@/lib/schema";
 import { clampZoom, DEFAULT_ZOOM, stepZoom } from "./geometry";
 import {
@@ -47,6 +46,7 @@ import {
   setLocked as setLockedOp,
   setVisible as setVisibleOp,
   shiftSection,
+  toggleSectionOpening as toggleSectionOpeningOp,
   updateElement,
   updateElementFrame,
   updateElementStyle,
@@ -106,16 +106,15 @@ export interface EditorActions {
   setActiveSection(id: string | null): void;
   // sections
   addSection(afterSectionId?: string): void;
+  addOpeningSection(): void;
   deleteSection(id: string): void;
   duplicateSection(id: string): void;
   moveSection(id: string, direction: -1 | 1): void;
   patchSection(id: string, patch: SectionPatch): void;
+  toggleSectionOpening(id: string): void;
   // document base background
   setBaseBackground(background: DocumentBackground | undefined): void;
   patchBaseBackground(patch: Partial<DocumentBackground>): void;
-  // opening screen
-  setOpeningScreen(opening: OpeningScreenConfig | undefined): void;
-  patchOpeningScreen(patch: Partial<OpeningScreenConfig>): void;
   // elements
   addElement(kind: ElementKind): void;
   /** Places an uploaded image asset into the active section (FR-EDT-008). */
@@ -279,6 +278,18 @@ export function createEditorStore(init: EditorInit): EditorStore {
           () => ({ activeSectionId: created, selectedIds: [] }),
         );
       },
+      addOpeningSection() {
+        let created: string | null = null;
+        edit(
+          (doc) => {
+            const result = addSectionOp(doc, { isOpening: true });
+            created = result.sectionId;
+            return result.document;
+          },
+          undefined,
+          () => ({ activeSectionId: created, selectedIds: [] }),
+        );
+      },
       deleteSection(id) {
         edit(
           (doc) => deleteSectionOp(doc, id),
@@ -305,6 +316,9 @@ export function createEditorStore(init: EditorInit): EditorStore {
         edit((doc) => updateSectionOp(doc, id, patch), {
           coalesceKey: `section:${id}:${Object.keys(patch).join(",")}`,
         });
+      },
+      toggleSectionOpening(id) {
+        edit((doc) => toggleSectionOpeningOp(doc, id));
       },
       setBaseBackground(background) {
         edit(
@@ -337,38 +351,6 @@ export function createEditorStore(init: EditorInit): EditorStore {
             };
           },
           { coalesceKey: "doc:background" },
-        );
-      },
-
-      setOpeningScreen(opening) {
-        edit((doc) => ({
-          ...doc,
-          design: {
-            ...doc.design,
-            opening,
-          },
-        }));
-      },
-      patchOpeningScreen(patch) {
-        edit(
-          (doc) => {
-            const current = doc.design.opening ?? {
-              enabled: true,
-              template: "royal-envelope",
-              overlayOpacity: 0.4,
-            };
-            return {
-              ...doc,
-              design: {
-                ...doc.design,
-                opening: {
-                  ...current,
-                  ...patch,
-                },
-              },
-            };
-          },
-          { coalesceKey: "doc:opening" },
         );
       },
 

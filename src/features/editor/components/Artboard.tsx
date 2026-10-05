@@ -134,6 +134,10 @@ export function Artboard() {
         {doc.sections.map((section, index) => {
           const active = section.id === activeSectionId;
           const sectionWidth = CANONICAL_BASE_WIDTH * zoom;
+          const hasOpening = doc.sections.some((s) => s.isOpening);
+          const displayNumber = section.isOpening ? 0 : hasOpening ? index : index + 1;
+          const badgeText = section.isOpening ? "#0 OPENING" : `#${displayNumber}`;
+          const defaultTitle = section.isOpening ? "Cover Opening" : `Section ${displayNumber}`;
           return (
             <div key={section.id} style={{ display: "contents" }}>
               <section
@@ -145,14 +149,19 @@ export function Artboard() {
               >
                 <div className={styles.sectionHead} data-active={active}>
                   <div className={styles.sectionHeadLeft}>
-                    <span className={styles.sectionIndexBadge}>#{index + 1}</span>
+                    <span
+                      className={`${styles.sectionIndexBadge} ${section.isOpening ? styles.sectionOpeningBadge : ""}`}
+                      data-testid={`section-badge-${section.id}`}
+                    >
+                      {badgeText}
+                    </span>
                     <button
                       type="button"
                       className={styles.sectionTitle}
                       onClick={() => store.getState().setActiveSection(section.id)}
                       title={sectionLabel(doc, section.id)}
                     >
-                      {section.name || `Section ${index + 1}`}
+                      {section.name || defaultTitle}
                     </button>
                     <span className={styles.sectionDimBadge}>
                       {section.baseHeight}px

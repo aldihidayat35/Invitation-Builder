@@ -100,6 +100,8 @@ export interface AddSectionOptions {
   /** Insert after this section; default: at the end. */
   readonly afterSectionId?: string;
   readonly baseHeight?: number;
+  readonly isOpening?: boolean;
+  readonly atIndex?: number;
 }
 
 export function addSection(
@@ -108,16 +110,28 @@ export function addSection(
 ): { document: CanonicalDocument; sectionId: string } {
   const used = collectIds(doc);
   const sectionId = generateId(used, "sec");
+  const isOpening = Boolean(options.isOpening);
   const section = sectionSchema.parse({
     id: sectionId,
-    name: `Section ${doc.sections.length + 1}`,
+    name: isOpening ? "Opening" : `Section ${doc.sections.length + 1}`,
     baseHeight: options.baseHeight ?? DEFAULT_SECTION_HEIGHT,
+    isOpening,
   });
-  const after = options.afterSectionId
-    ? doc.sections.findIndex((s) => s.id === options.afterSectionId)
-    : doc.sections.length - 1;
-  const sections = [...doc.sections];
-  sections.splice(after + 1, 0, section);
+
+  let sections = [...doc.sections];
+  if (isOpening) {
+    // Clear isOpening from any existing sections and place at the very top (index 0)
+    sections = sections.map((s) => (s.isOpening ? { ...s, isOpening: false } : s));
+    sections.unshift(section);
+  } else if (options.atIndex !== undefined) {
+    sections.splice(options.atIndex, 0, section);
+  } else {
+    const after = options.afterSectionId
+      ? sections.findIndex((s) => s.id === options.afterSectionId)
+      : sections.length - 1;
+    sections.splice(after + 1, 0, section);
+  }
+
   return { document: withSections(doc, sections), sectionId };
 }
 
@@ -236,6 +250,7 @@ export interface SectionPatch {
   readonly baseHeight?: number;
   readonly overflow?: Section["overflow"];
   readonly visible?: boolean;
+  readonly isOpening?: boolean;
   readonly background?: Partial<Section["background"]>;
   readonly transition?: Section["transition"];
 }
@@ -246,13 +261,25 @@ export function updateSection(
   sectionId: string,
   patch: SectionPatch,
 ): CanonicalDocument {
-  return mapSection(doc, sectionId, (section) => {
+  // If marking as opening, ensure other sections are not marked as opening
+  const baseDoc =
+    patch.isOpening === true
+      ? {
+          ...doc,
+          sections: doc.sections.map((s) =>
+            s.id !== sectionId && s.isOpening ? { ...s, isOpening: false } : s,
+          ),
+        }
+      : doc;
+
+  return mapSection(baseDoc, sectionId, (section) => {
     const candidate = {
       ...section,
       ...(patch.name !== undefined && { name: patch.name }),
       ...(patch.baseHeight !== undefined && { baseHeight: patch.baseHeight }),
       ...(patch.overflow !== undefined && { overflow: patch.overflow }),
       ...(patch.visible !== undefined && { visible: patch.visible }),
+      ...(patch.isOpening !== undefined && { isOpening: patch.isOpening }),
       ...(patch.background !== undefined && {
         background: { ...section.background, ...patch.background },
       }),
@@ -261,6 +288,15 @@ export function updateSection(
     const parsed = sectionSchema.safeParse(candidate);
     return parsed.success ? parsed.data : section;
   });
+}
+
+export function toggleSectionOpening(
+  doc: CanonicalDocument,
+  sectionId: string,
+): CanonicalDocument {
+  const current = doc.sections.find((s) => s.id === sectionId);
+  if (!current) return doc;
+  return updateSection(doc, sectionId, { isOpening: !current.isOpening });
 }
 
 // ------------------------------------------------------------------- elements

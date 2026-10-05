@@ -72,5 +72,8 @@ export function sectionLabel(doc: CanonicalDocument, sectionId: string): string 
   const index = doc.sections.findIndex((s) => s.id === sectionId);
   const section = doc.sections[index];
   if (!section) return sectionId;
-  return section.name?.trim() ? section.name : `Section ${index + 1}`;
+  if (section.isOpening) return section.name?.trim() ? section.name : "Cover Opening (Section 0)";
+  const hasOpening = doc.sections.some((s) => s.isOpening);
+  const num = hasOpening ? index : index + 1;
+  return section.name?.trim() ? section.name : `Section ${num}`;
 }

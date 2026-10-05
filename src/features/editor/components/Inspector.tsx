@@ -6,7 +6,6 @@ import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { BaseBackgroundControl } from "./BaseBackgroundControl";
-import { OpeningScreenControl } from "./OpeningScreenControl";
 import {
   ColorField,
   FieldRow,
@@ -61,6 +60,7 @@ type TextElement = Extract<Element, { type: "text" }>;
 type ShapeElement = Extract<Element, { type: "shape" }>;
 
 export function Inspector() {
+  const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const selectedIds = useEditor((s) => s.selectedIds);
   const activeSectionId = useEditor((s) => s.activeSectionId);
@@ -77,6 +77,7 @@ export function Inspector() {
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
     body = <SectionPanel sectionId={activeSectionId} readOnly={readOnly} />;
   } else {
+    const openingSection = doc.sections.find((s) => s.isOpening);
     body = (
       <>
         <InspectorHeader
@@ -86,12 +87,41 @@ export function Inspector() {
         />
         <PanelSection
           id="insp-doc-opening"
-          title="Halaman Opening (Cover Depan)"
+          title="Cover Opening (Section 0)"
           icon={<IconSparkle size={13} />}
-          count={doc.design.opening?.enabled ? 1 : undefined}
+          count={openingSection ? 1 : undefined}
           defaultOpen={true}
         >
-          <OpeningScreenControl readOnly={readOnly} />
+          {openingSection ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <p className={styles.muted} style={{ fontSize: "0.8rem", margin: 0 }}>
+                Dokumen memiliki <strong>Section 0 (Cover Opening)</strong>. Section ini akan menjadi layar pembuka penuh yang dapat dikustomisasi, dan harus diklik untuk masuk ke Section 1.
+              </p>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                onClick={() => store.getState().setActiveSection(openingSection.id)}
+                data-testid="focus-opening-section-btn"
+              >
+                ✏️ Edit Canvas Section Opening (#0)
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <p className={styles.muted} style={{ fontSize: "0.8rem", margin: 0 }}>
+                Belum ada Section Opening khusus. Anda dapat menambahkan canvas Section 0 sebagai cover pembuka custom.
+              </p>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                disabled={readOnly}
+                onClick={() => store.getState().addOpeningSection()}
+                data-testid="add-opening-section-btn"
+              >
+                ＋ Tambah Canvas Opening (Section 0)
+              </button>
+            </div>
+          )}
         </PanelSection>
         <PanelSection
           id="insp-doc-base-bg"
@@ -177,6 +207,32 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
           />
           Tampilkan section saat publish
         </label>
+        <div
+          style={{
+            marginTop: 8,
+            padding: "8px 10px",
+            background: section.isOpening ? "rgba(217, 119, 6, 0.12)" : "rgba(255, 255, 255, 0.03)",
+            borderRadius: 6,
+            border: section.isOpening ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid rgba(255, 255, 255, 0.06)",
+          }}
+        >
+          <label className={styles.checkRow} style={{ margin: 0, fontWeight: 500 }}>
+            <input
+              id="insp-section-opening"
+              type="checkbox"
+              checked={Boolean(section.isOpening)}
+              disabled={readOnly}
+              onChange={() => act().toggleSectionOpening(sectionId)}
+              data-testid="section-opening-toggle"
+            />
+            ✨ Jadikan Section Opening (Section 0 / Cover)
+          </label>
+          <p className={styles.muted} style={{ fontSize: "0.72rem", marginTop: 4, marginBottom: 0 }}>
+            {section.isOpening
+              ? "Section ini adalah Cover Pembuka (#0). Pengunjung harus mengklik layar untuk membukanya dan memicu animasi masuk Section 1."
+              : "Jadikan section ini sebagai kanvas cover pembuka beranimasi sebelum masuk ke isi undangan."}
+          </p>
+        </div>
       </PanelSection>
 
       <PanelSection id="insp-section-layout" title="Ukuran & latar">
