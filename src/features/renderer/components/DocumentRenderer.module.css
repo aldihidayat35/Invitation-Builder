@@ -35,11 +35,6 @@
   height: calc(var(--u) * var(--h));
 }
 
-.frame[data-element-type="widget"] {
-  min-height: calc(var(--u) * var(--h));
-  height: auto;
-}
-
 .text {
   display: block;
   width: 100%;

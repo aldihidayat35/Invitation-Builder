@@ -23,6 +23,7 @@ export function GuestGreetingWidget({
       <span className={styles.greetingMonogram} aria-hidden="true">
         {monogram}
       </span>
+      <span className={styles.diamondLeft} aria-hidden="true">◆</span>
       <p className={styles.greeting}>
         <span className={styles.prefix}>{parts.prefix}</span>
         <span
@@ -33,6 +34,7 @@ export function GuestGreetingWidget({
           {parts.name}
         </span>
       </p>
+      <span className={styles.diamondRight} aria-hidden="true">◆</span>
       <span className={styles.greetingOrnament} aria-hidden="true" />
     </WidgetFrame>
   );
