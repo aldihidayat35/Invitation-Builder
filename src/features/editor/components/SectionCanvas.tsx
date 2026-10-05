@@ -21,13 +21,14 @@ import {
   type ThemeTokens,
 } from "@/lib/schema";
 import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
-import { frameFromNodeAttrs, nodeAttrsFromFrame, snapToSection } from "../core/geometry";
+import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToSection } from "../core/geometry";
 import { findElement } from "../core/ops";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { estimateWidgetContentHeight } from "@/features/widgets";
 import { useEditor, useEditorStore } from "./EditorProvider";
 import { replayKonvaNode, startKonvaLoopAnimation } from "@/features/animations";
 import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
+import { ContextMenu } from "./ContextMenu";
 
 const ACCENT = "#e85d8f";
 const MIN_BOX = 8;
@@ -44,6 +45,7 @@ interface ElementNodeProps {
 interface ElementHandlers {
   onPointerDown(id: string, e: KonvaEventObject<MouseEvent | TouchEvent>): void;
   onClick(id: string, e: KonvaEventObject<MouseEvent | TouchEvent>): void;
+  onContextMenu(id: string, e: KonvaEventObject<PointerEvent | MouseEvent>): void;
   onDragStart(id: string, e: KonvaEventObject<DragEvent>): void;
   onDragMove(id: string, e: KonvaEventObject<DragEvent>): void;
   onDragEnd(id: string, e: KonvaEventObject<DragEvent>): void;
@@ -165,6 +167,7 @@ const ElementNode = memo(function ElementNode({
       onTouchStart={(e) => handlers.onPointerDown(element.id, e)}
       onClick={(e) => handlers.onClick(element.id, e)}
       onTap={(e) => handlers.onClick(element.id, e)}
+      onContextMenu={(e) => handlers.onContextMenu(element.id, e)}
       onDragStart={(e) => handlers.onDragStart(element.id, e)}
       onDragMove={(e) => handlers.onDragMove(element.id, e)}
       onDragEnd={(e) => handlers.onDragEnd(element.id, e)}
@@ -271,6 +274,20 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const baseHeight = section?.baseHeight ?? 0;
 
   const [fontRev, setFontRev] = useState(0);
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    canvasX: number;
+    canvasY: number;
+    elementId?: string;
+  }>({
+    isOpen: false,
+    x: 0,
+    y: 0,
+    canvasX: 0,
+    canvasY: 0,
+  });
 
   // Re-draw when web fonts finish loading so text metrics and font glyphs update immediately.
   useEffect(() => {
@@ -414,6 +431,27 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           store.getState().selectElements([id]);
         }
       },
+      onContextMenu(id, e) {
+        if (store.getState().panMode) return;
+        e.cancelBubble = true;
+        e.evt.preventDefault();
+        const state = store.getState();
+        if (!state.selectedIds.includes(id)) {
+          state.selectElements([id]);
+        }
+        const stage = stageRef.current;
+        const pointerPos = stage?.getPointerPosition();
+        const canvasX = pointerPos ? round2(pointerPos.x / zoom) : 0;
+        const canvasY = pointerPos ? round2(pointerPos.y / zoom) : 0;
+        setContextMenu({
+          isOpen: true,
+          x: e.evt.clientX,
+          y: e.evt.clientY,
+          canvasX,
+          canvasY,
+          elementId: id,
+        });
+      },
       onDragStart(id) {
         const stage = stageRef.current;
         if (!stage) return;
@@ -526,8 +564,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const background = sectionBg ?? screenBg;
 
   return (
-    <Stage
-      ref={stageRef}
+    <>
+      <Stage
+        ref={stageRef}
       width={CANONICAL_BASE_WIDTH * zoom}
       height={section.baseHeight * zoom}
       scaleX={zoom}
@@ -546,6 +585,28 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         if (target === target.getStage() || target.name() === "bg") {
           store.getState().clearSelection();
           store.getState().setActiveSection(sectionId);
+        }
+      }}
+      onContextMenu={(e) => {
+        if (store.getState().panMode) return;
+        e.evt.preventDefault();
+        const target = e.target;
+        if (target === target.getStage() || target.name() === "bg") {
+          const state = store.getState();
+          state.clearSelection();
+          state.setActiveSection(sectionId);
+          const stage = stageRef.current;
+          const pointerPos = stage?.getPointerPosition();
+          const canvasX = pointerPos ? round2(pointerPos.x / zoom) : 0;
+          const canvasY = pointerPos ? round2(pointerPos.y / zoom) : 0;
+          setContextMenu({
+            isOpen: true,
+            x: e.evt.clientX,
+            y: e.evt.clientY,
+            canvasX,
+            canvasY,
+            elementId: undefined,
+          });
         }
       }}
     >
@@ -610,5 +671,16 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         />
       </Layer>
     </Stage>
+    <ContextMenu
+      isOpen={contextMenu.isOpen}
+      x={contextMenu.x}
+      y={contextMenu.y}
+      canvasX={contextMenu.canvasX}
+      canvasY={contextMenu.canvasY}
+      sectionId={sectionId}
+      elementId={contextMenu.elementId}
+      onClose={() => setContextMenu((prev) => ({ ...prev, isOpen: false }))}
+    />
+    </>
   );
 }

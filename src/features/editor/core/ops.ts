@@ -135,8 +135,20 @@ function cloneElements(
   used: Set<string>,
   offset: number,
   unlock: boolean,
+  targetPosition?: { readonly x: number; readonly y: number },
+  targetBaseHeight?: number,
 ): { elements: Element[]; ids: string[] } {
   const ids: string[] = [];
+
+  let dx = offset;
+  let dy = offset;
+  if (targetPosition && elements.length > 0) {
+    const minX = Math.min(...elements.map((e) => e.frame.x));
+    const minY = Math.min(...elements.map((e) => e.frame.y));
+    dx = targetPosition.x - minX;
+    dy = targetPosition.y - minY;
+  }
+
   const out = elements.map((el) => {
     const prefix = idPrefix(el);
     const id = generateId(used, prefix);
@@ -144,10 +156,28 @@ function cloneElements(
     ids.push(id);
     const clone = structuredClone(el);
     clone.id = id;
+
+    let nextX = round2(clone.frame.x + dx);
+    let nextY = round2(clone.frame.y + dy);
+
+    // If explicit target position is specified, ensure it stays within canvas / section bounds
+    if (targetPosition) {
+      if (nextX < 0) nextX = 0;
+      if (nextX + clone.frame.w > CANONICAL_BASE_WIDTH) {
+        nextX = Math.max(0, CANONICAL_BASE_WIDTH - clone.frame.w);
+      }
+      if (targetBaseHeight && targetBaseHeight > 0) {
+        if (nextY < 0) nextY = 0;
+        if (nextY + clone.frame.h > targetBaseHeight) {
+          nextY = Math.max(0, targetBaseHeight - clone.frame.h);
+        }
+      }
+    }
+
     clone.frame = {
       ...clone.frame,
-      x: round2(clone.frame.x + offset),
-      y: round2(clone.frame.y + offset),
+      x: round2(nextX),
+      y: round2(nextY),
     };
     if (unlock) clone.locked = false;
     return clone;
@@ -481,16 +511,35 @@ export function deleteElements(doc: CanonicalDocument, ids: readonly string[]): 
   return changedAny ? withSections(doc, sections) : doc;
 }
 
+export interface InsertCopiesOptions {
+  readonly offset?: number;
+  readonly position?: { readonly x: number; readonly y: number };
+}
+
 /** Places copies at the top of `sectionId`; returns the new ids in source order. */
 export function insertElementCopies(
   doc: CanonicalDocument,
   sectionId: string,
   source: readonly Element[],
-  offset: number = DEFAULT_DUPLICATE_OFFSET,
+  offsetOrOptions: number | InsertCopiesOptions = DEFAULT_DUPLICATE_OFFSET,
 ): { document: CanonicalDocument; ids: string[] } {
-  if (!findSection(doc, sectionId) || source.length === 0) return { document: doc, ids: [] };
+  const targetSection = findSection(doc, sectionId);
+  if (!targetSection || source.length === 0) return { document: doc, ids: [] };
+  const offset =
+    typeof offsetOrOptions === "number"
+      ? offsetOrOptions
+      : (offsetOrOptions.offset ?? DEFAULT_DUPLICATE_OFFSET);
+  const position = typeof offsetOrOptions === "object" ? offsetOrOptions.position : undefined;
+
   const used = collectIds(doc);
-  const cloned = cloneElements(source, used, offset, true);
+  const cloned = cloneElements(
+    source,
+    used,
+    offset,
+    true,
+    position,
+    targetSection.baseHeight,
+  );
   return {
     document: mapSection(doc, sectionId, (s) => ({
       ...s,
@@ -505,11 +554,20 @@ export function duplicateElements(
   ids: readonly string[],
   offset: number = DEFAULT_DUPLICATE_OFFSET,
 ): { document: CanonicalDocument; ids: string[] } {
-  const first = ids.length > 0 ? findElement(doc, ids[0]!) : undefined;
-  if (!first) return { document: doc, ids: [] };
+  if (ids.length === 0) return { document: doc, ids: [] };
   const wanted = new Set(ids);
-  const source = first.section.elements.filter((e) => wanted.has(e.id));
-  return insertElementCopies(doc, first.section.id, source, offset);
+  const createdIds: string[] = [];
+  let nextDoc = doc;
+
+  for (const section of nextDoc.sections) {
+    const source = section.elements.filter((e) => wanted.has(e.id));
+    if (source.length === 0) continue;
+    const res = insertElementCopies(nextDoc, section.id, source, offset);
+    nextDoc = res.document;
+    createdIds.push(...res.ids);
+  }
+
+  return { document: nextDoc, ids: createdIds };
 }
 
 export function setLocked(

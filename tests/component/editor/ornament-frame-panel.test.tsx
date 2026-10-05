@@ -98,7 +98,7 @@ describe("OrnamentFrame Widget Panel UI (Clean, consistent, non-redundant)", () 
     fireEvent.click(screen.getByText("Pasang"));
 
     // Check that store is updated with image
-    const updated = store.getState().history.present.sections[0].elements[0] as WidgetElement;
+    const updated = store.getState().history.present.sections[0]!.elements[0]! as WidgetElement;
     expect(updated.props.image).toBe("https://example.com/photo.jpg");
   });
 });

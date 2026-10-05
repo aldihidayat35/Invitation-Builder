@@ -5,12 +5,14 @@ import {
   addSection,
   collectIds,
   createElement,
+  createWidgetElement,
   deleteElements,
   deleteSection,
   duplicateElements,
   duplicateSection,
   ELEMENT_KINDS,
   findElement,
+  insertElementCopies,
   moveSection,
   nudgeElements,
   reorderElements,
@@ -227,6 +229,120 @@ describe("duplicate / delete / style", () => {
     expect(copy.element.frame.x).toBe(original.element.frame.x + 16);
     expect(copy.element.locked).toBe(false);
     expect(copy.index).toBe(1);
+    assertValid(result.document);
+  });
+
+  it("duplicates preserving all settings: animations, styles, sizes, widget props, and name", () => {
+    let doc = docWithSections(1);
+    const created = createWidgetElement(doc, "sec_1", {
+      type: "ornamentFrame",
+      version: 1,
+      label: "Bingkai Ornamen",
+      defaultFrame: { w: 300, h: 300 },
+      defaultProps: { shapeType: "arch" },
+    });
+    doc = created.document;
+    const elemId = created.elementId!;
+
+    // Custom animation, style, frame size, and widget props
+    doc = updateElement(doc, elemId, (el) => {
+      if (el.type !== "widget") return el;
+      return {
+        ...el,
+        name: "Custom Bingkai Ornamen",
+        frame: { ...el.frame, w: 250, h: 320, rotation: 15 },
+        animations: {
+          enter: {
+            presetId: "fade-in",
+            trigger: "onEnterViewport",
+            durationMs: 800,
+            delayMs: 200,
+            easing: "ease-out",
+            repeat: 0,
+            yoyo: false,
+            staggerUnit: "none",
+            staggerAmountMs: 0,
+            once: true,
+          },
+          attention: {
+            presetId: "pulse",
+            trigger: "whileVisible",
+            durationMs: 1200,
+            delayMs: 0,
+            easing: "ease-in-out",
+            repeat: -1,
+            yoyo: true,
+            staggerUnit: "none",
+            staggerAmountMs: 0,
+            once: false,
+          },
+        },
+        style: {
+          ...el.style,
+          color: "#d97706",
+          opacity: 0.9,
+        },
+        props: {
+          ...el.props,
+          shapeType: "arch",
+          strokeWidth: 4,
+          animationMode: "loop",
+          animationSpeed: "fast",
+        },
+      };
+    });
+
+    const result = duplicateElements(doc, [elemId]);
+    expect(result.ids).toHaveLength(1);
+    const copy = findElement(result.document, result.ids[0]!)!.element;
+    const original = findElement(result.document, elemId)!.element;
+
+    // Verify all settings are cloned with full fidelity
+    expect(copy.id).not.toBe(original.id);
+    expect(copy.name).toBe("Custom Bingkai Ornamen");
+    expect(copy.frame.w).toBe(250);
+    expect(copy.frame.h).toBe(320);
+    expect(copy.frame.rotation).toBe(15);
+    expect(copy.frame.x).toBe(original.frame.x + 16);
+    expect(copy.frame.y).toBe(original.frame.y + 16);
+    expect(copy.animations).toEqual(original.animations);
+    expect(copy.style).toEqual(original.style);
+    if (copy.type === "widget" && original.type === "widget") {
+      expect(copy.props).toEqual(original.props);
+    }
+    assertValid(result.document);
+  });
+
+  it("duplicates multiple elements across different sections", () => {
+    let doc = docWithSections(2);
+    const el1 = createElement(doc, "sec_1", "text");
+    const el2 = createElement(el1.document, "sec_2", "rectangle");
+    doc = el2.document;
+
+    const result = duplicateElements(doc, [el1.elementId!, el2.elementId!]);
+    expect(result.ids).toHaveLength(2);
+
+    const copy1 = findElement(result.document, result.ids[0]!)!;
+    const copy2 = findElement(result.document, result.ids[1]!)!;
+
+    expect(copy1.section.id).toBe("sec_1");
+    expect(copy2.section.id).toBe("sec_2");
+    assertValid(result.document);
+  });
+
+  it("inserts copies at a specified target position (paste at cursor)", () => {
+    let doc = docWithSections(1);
+    const a = createElement(doc, "sec_1", "text");
+    doc = a.document;
+    const elem = findElement(doc, a.elementId!)!.element;
+
+    const result = insertElementCopies(doc, "sec_1", [elem], {
+      position: { x: 100, y: 150 },
+    });
+    expect(result.ids).toHaveLength(1);
+    const copy = findElement(result.document, result.ids[0]!)!.element;
+    expect(copy.frame.x).toBe(100);
+    expect(copy.frame.y).toBe(150);
     assertValid(result.document);
   });
 

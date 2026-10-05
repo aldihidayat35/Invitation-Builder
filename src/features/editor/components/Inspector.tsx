@@ -19,7 +19,10 @@ import {
   ElementIcon,
   IconBackward,
   IconBringFront,
+  IconClipboardCopy,
+  IconClipboardPaste,
   IconCopy,
+  IconDuplicate,
   IconEyeOff,
   IconForward,
   IconLayers,
@@ -130,6 +133,7 @@ function InspectorHeader({
 function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: boolean }) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
+  const clipboard = useEditor((s) => s.clipboard);
   const section = findSection(doc, sectionId);
   if (!section) return null;
   const tokens = doc.design.tokens;
@@ -227,6 +231,37 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
         <p className={styles.muted}>Preview animasi elemen diputar langsung di artboard.</p>
       </PanelSection>
 
+      <PanelSection id="insp-section-actions" title="Tindakan Section">
+        <div className={styles.actionGrid}>
+          <button
+            type="button"
+            className={styles.actionTile}
+            disabled={readOnly}
+            data-testid="section-duplicate-btn"
+            title="Duplikat section ini beserta semua elemennya"
+            onClick={() => act().duplicateSection(sectionId)}
+          >
+            <IconSection size={15} />
+            <span>Duplikat</span>
+          </button>
+          <button
+            type="button"
+            className={styles.actionTile}
+            disabled={readOnly || clipboard.length === 0}
+            data-testid="section-paste-btn"
+            title={
+              clipboard.length === 0
+                ? "Clipboard kosong"
+                : `Tempel ${clipboard.length} elemen ke section ini (Ctrl+V)`
+            }
+            onClick={() => act().paste({ sectionId })}
+          >
+            <IconClipboardPaste size={15} />
+            <span>Tempel ({clipboard.length})</span>
+          </button>
+        </div>
+      </PanelSection>
+
       <p className={styles.footHint}>
         Urutan section = urutan scroll publik. Lebar kanonik 390 px.
       </p>
@@ -240,6 +275,7 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
 function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: boolean }) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
+  const clipboard = useEditor((s) => s.clipboard);
   const elements = ids
     .map((id) => findElement(doc, id)?.element)
     .filter((e): e is Element => e !== undefined);
@@ -270,8 +306,30 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
           title="Duplikat (Ctrl+D)"
           onClick={() => act().duplicateSelected()}
         >
-          <IconCopy size={15} />
+          <IconDuplicate size={15} />
           <span>Duplikat</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly}
+          data-testid="action-copy"
+          title="Salin (Ctrl+C)"
+          onClick={() => act().copySelected()}
+        >
+          <IconClipboardCopy size={15} />
+          <span>Salin</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly || clipboard.length === 0}
+          data-testid="action-paste"
+          title={clipboard.length === 0 ? "Clipboard kosong" : `Tempel ${clipboard.length} elemen (Ctrl+V)`}
+          onClick={() => act().paste()}
+        >
+          <IconClipboardPaste size={15} />
+          <span>Tempel</span>
         </button>
         <button
           type="button"
@@ -491,7 +549,11 @@ function ElementPanel({
         id="insp-animation"
         title="Animasi"
         icon={<IconSparkle size={13} />}
-        count={element.animations?.enter ? 1 : undefined}
+        count={
+          (element.animations?.enter ? 1 : 0) +
+          (element.animations?.attention ? 1 : 0) +
+          (element.animations?.exit ? 1 : 0) || undefined
+        }
       >
         <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
       </PanelSection>

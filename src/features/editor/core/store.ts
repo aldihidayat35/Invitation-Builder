@@ -117,7 +117,10 @@ export interface EditorActions {
   deleteSelected(): void;
   duplicateSelected(): void;
   copySelected(): void;
-  paste(): void;
+  paste(options?: {
+    readonly position?: { readonly x: number; readonly y: number };
+    readonly sectionId?: string;
+  }): void;
   nudgeSelected(dx: number, dy: number): void;
   /** Commit the final frames of a finished pointer gesture (one history entry). */
   commitFrames(frames: Readonly<Record<string, Frame>>): void;
@@ -385,6 +388,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       },
       duplicateSelected() {
         const ids = get().selectedIds;
+        if (ids.length === 0) return;
         let created: string[] = [];
         edit(
           (doc) => {
@@ -395,6 +399,15 @@ export function createEditorStore(init: EditorInit): EditorStore {
           undefined,
           () => (created.length ? { selectedIds: created } : {}),
         );
+        if (typeof window !== "undefined" && created.length > 0) {
+          requestAnimationFrame(() => {
+            for (const id of created) {
+              window.dispatchEvent(
+                new CustomEvent("dib:replay-animation", { detail: { elementId: id } }),
+              );
+            }
+          });
+        }
       },
       copySelected() {
         const state = get();
@@ -403,24 +416,68 @@ export function createEditorStore(init: EditorInit): EditorStore {
           .map((id) => findElement(doc, id)?.element)
           .filter((e): e is Element => e !== undefined)
           .map((e) => structuredClone(e));
-        if (elements.length > 0) set({ clipboard: elements, pasteCount: 0 });
+        if (elements.length > 0) {
+          set({ clipboard: elements, pasteCount: 0 });
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("undangan_clipboard", JSON.stringify(elements));
+            } catch {
+              // Ignore storage errors
+            }
+          }
+        }
       },
-      paste() {
+      paste(options) {
         const state = get();
-        if (state.clipboard.length === 0) return;
-        const offset = DEFAULT_DUPLICATE_OFFSET * (state.pasteCount + 1);
+        let clipboard = state.clipboard;
+        if (clipboard.length === 0 && typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("undangan_clipboard");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                clipboard = parsed;
+              }
+            }
+          } catch {
+            // Ignore storage errors
+          }
+        }
+        if (clipboard.length === 0) return;
+        const offset = options?.position ? 0 : DEFAULT_DUPLICATE_OFFSET * (state.pasteCount + 1);
         let created: string[] = [];
+        let targetSectionId = options?.sectionId ?? state.activeSectionId;
         edit(
           (doc, s) => {
-            const sectionId = s.activeSectionId ?? doc.sections[0]?.id;
+            const sectionId = targetSectionId ?? s.activeSectionId ?? doc.sections[0]?.id;
             if (!sectionId) return doc;
-            const result = insertElementCopies(doc, sectionId, s.clipboard, offset);
+            targetSectionId = sectionId;
+            const result = insertElementCopies(doc, sectionId, clipboard, {
+              offset,
+              position: options?.position,
+            });
             created = result.ids;
             return result.document;
           },
           undefined,
-          () => (created.length ? { selectedIds: created, pasteCount: state.pasteCount + 1 } : {}),
+          () =>
+            created.length
+              ? {
+                  selectedIds: created,
+                  pasteCount: state.pasteCount + 1,
+                  activeSectionId: targetSectionId,
+                }
+              : {},
         );
+        if (typeof window !== "undefined" && created.length > 0) {
+          requestAnimationFrame(() => {
+            for (const id of created) {
+              window.dispatchEvent(
+                new CustomEvent("dib:replay-animation", { detail: { elementId: id } }),
+              );
+            }
+          });
+        }
       },
       nudgeSelected(dx, dy) {
         const ids = get().selectedIds;

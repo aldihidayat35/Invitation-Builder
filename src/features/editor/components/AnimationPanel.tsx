@@ -74,7 +74,12 @@ const STAGGER_OPTIONS = [
 
 export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelProps) {
   const store = useEditorStore();
-  const [activeTab, setActiveTab] = useState<AnimationTabType>("enter");
+  const [activeTab, setActiveTab] = useState<AnimationTabType>(() => {
+    if (element.animations?.enter) return "enter";
+    if (element.animations?.attention) return "attention";
+    if (element.animations?.exit) return "exit";
+    return "enter";
+  });
 
   const isText = element.type === "text";
   const enterTrack = element.animations?.enter;

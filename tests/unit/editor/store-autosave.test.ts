@@ -162,6 +162,68 @@ describe("editor store", () => {
     valid(s);
   });
 
+  it("copies and pastes with full settings fidelity, target positioning, and animation replay", () => {
+    const s = newStore();
+    const st = () => s.getState();
+    st().addSection();
+    st().addSection();
+    st().setActiveSection("sec_1");
+    st().addElement("text");
+
+    const elemId = doc(s).sections[0]!.elements[0]!.id;
+    // Add custom animation, style, and frame
+    st().patchElement(elemId, (el) => {
+      if (el.type !== "text") return el;
+      return {
+        ...el,
+        frame: { ...el.frame, w: 180, h: 60, rotation: 10 },
+        animations: {
+          enter: {
+            presetId: "zoom-in",
+            trigger: "onEnterViewport",
+            durationMs: 750,
+            delayMs: 100,
+            easing: "back.out",
+            repeat: 0,
+            yoyo: false,
+            staggerUnit: "none",
+            staggerAmountMs: 0,
+            once: true,
+          },
+        },
+        style: {
+          ...el.style,
+          color: "#10b981",
+          fontSize: 28,
+        },
+      };
+    });
+
+    const sourceEl = doc(s).sections[0]!.elements[0]!;
+    st().selectElements([elemId]);
+
+    // Copy selected
+    st().copySelected();
+    expect(st().clipboard).toHaveLength(1);
+
+    // Paste into sec_2 at target position
+    st().paste({ position: { x: 55, y: 75 }, sectionId: "sec_2" });
+    const pastedElements = doc(s).sections[1]!.elements;
+    expect(pastedElements).toHaveLength(1);
+    const pasted = pastedElements[0]!;
+
+    expect(pasted.id).not.toBe(sourceEl.id);
+    expect(pasted.frame.x).toBe(55);
+    expect(pasted.frame.y).toBe(75);
+    expect(pasted.frame.w).toBe(180);
+    expect(pasted.frame.h).toBe(60);
+    expect(pasted.frame.rotation).toBe(10);
+    expect(pasted.animations).toEqual(sourceEl.animations);
+    expect(pasted.style).toEqual(sourceEl.style);
+    expect(st().selectedIds).toEqual([pasted.id]);
+    valid(s);
+  });
+
   it("section lifecycle: add, duplicate, reorder, delete, patch", () => {
     const s = newStore();
     const st = () => s.getState();
