@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { CanonicalDocument } from "@/lib/schema";
 import { applyDefaults, createVariableRegistry, resolveDocument } from "@/lib/engine";
 import { DocumentRenderer } from "@/features/renderer";
 import { PublicContextProvider } from "@/features/widgets/runtime";
+import {
+  getCachedPreviewSnapshot,
+  subscribePreviewSync,
+  type PreviewStateSnapshot,
+} from "../core/preview-sync";
 import styles from "./TemplateRealPreview.module.css";
 
 export interface TemplateRealPreviewProps {
@@ -14,57 +19,13 @@ export interface TemplateRealPreviewProps {
   readonly initialDocument: CanonicalDocument;
 }
 
-interface PreviewSnapshot {
-  readonly raw: string | null;
-  readonly document: CanonicalDocument;
-  readonly isLiveDraft: boolean;
-}
-
-let cachedSnapshot: { key: string; snapshot: PreviewSnapshot } | null = null;
-
-function subscribeStorage(callback: () => void): () => void {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-function getPreviewSnapshot(
-  templateId: string,
-  fallbackDoc: CanonicalDocument,
-): PreviewSnapshot {
-  if (typeof window === "undefined") {
-    return { raw: null, document: fallbackDoc, isLiveDraft: false };
-  }
-  try {
-    const raw = localStorage.getItem(`dib_preview_doc_${templateId}`);
-    if (
-      cachedSnapshot &&
-      cachedSnapshot.key === templateId &&
-      cachedSnapshot.snapshot.raw === raw
-    ) {
-      return cachedSnapshot.snapshot;
-    }
-    if (raw) {
-      const parsed = canonicalDocumentSchema.safeParse(JSON.parse(raw));
-      if (parsed.success) {
-        const snap: PreviewSnapshot = {
-          raw,
-          document: parsed.data,
-          isLiveDraft: true,
-        };
-        cachedSnapshot = { key: templateId, snapshot: snap };
-        return snap;
-      }
-    }
-  } catch {
-    // ignore storage or parse errors
-  }
-  const snap: PreviewSnapshot = {
-    raw: null,
-    document: fallbackDoc,
-    isLiveDraft: false,
-  };
-  cachedSnapshot = { key: templateId, snapshot: snap };
-  return snap;
+function formatSyncTime(ts: number | null): string {
+  if (!ts) return "";
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
 }
 
 export function TemplateRealPreview({
@@ -73,20 +34,48 @@ export function TemplateRealPreview({
   initialDocument,
 }: TemplateRealPreviewProps) {
   const [viewMode, setViewMode] = useState<"mobile" | "full">("mobile");
+  const [justUpdated, setJustUpdated] = useState(false);
 
-  const serverSnapshot = useMemo<PreviewSnapshot>(
-    () => ({ raw: null, document: initialDocument, isLiveDraft: false }),
+  const serverSnapshot = useMemo<PreviewStateSnapshot>(
+    () => ({
+      raw: null,
+      document: initialDocument,
+      isLiveDraft: false,
+      lastUpdated: null,
+    }),
     [initialDocument],
   );
 
+  const subscribe = useCallback(
+    (callback: () => void) => subscribePreviewSync(templateId, initialDocument, callback),
+    [templateId, initialDocument],
+  );
+
+  const getSnapshot = useCallback(
+    () => getCachedPreviewSnapshot(templateId, initialDocument),
+    [templateId, initialDocument],
+  );
+
   const snapshot = useSyncExternalStore(
-    subscribeStorage,
-    () => getPreviewSnapshot(templateId, initialDocument),
+    subscribe,
+    getSnapshot,
     () => serverSnapshot,
   );
 
   const document = snapshot.document;
   const isLiveDraft = snapshot.isLiveDraft;
+  const lastUpdated = snapshot.lastUpdated;
+
+  const prevUpdatedRef = useRef<number | null>(lastUpdated);
+
+  useEffect(() => {
+    if (lastUpdated && lastUpdated !== prevUpdatedRef.current) {
+      prevUpdatedRef.current = lastUpdated;
+      setJustUpdated(true);
+      const timer = setTimeout(() => setJustUpdated(false), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [lastUpdated]);
 
   const resolved = useMemo(() => {
     const registry = createVariableRegistry(document.variables);
@@ -122,12 +111,17 @@ export function TemplateRealPreview({
           <div className={styles.titleArea}>
             <h1 className={styles.templateName}>{templateName}</h1>
             <span
-              className={styles.liveBadge}
+              className={`${styles.liveBadge} ${isLiveDraft ? styles.liveBadgeActive : ""} ${justUpdated ? styles.liveBadgeJustUpdated : ""}`}
               suppressHydrationWarning
               data-testid="preview-live-badge"
+              title={lastUpdated ? `Terakhir disinkronkan pukul ${formatSyncTime(lastUpdated)}` : undefined}
             >
               <span className={styles.pulseDot} />
-              {isLiveDraft ? "Pratinjau Live Draft" : "Pratinjau Nyata"}
+              <span>
+                {isLiveDraft
+                  ? `Live Terhubung${lastUpdated ? ` · ${formatSyncTime(lastUpdated)}` : ""}`
+                  : "Pratinjau Nyata"}
+              </span>
             </span>
           </div>
         </div>

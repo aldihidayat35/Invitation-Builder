@@ -67,22 +67,64 @@
 .liveBadge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: var(--dash-accent-soft, #f5f3ff);
-  color: var(--dash-accent, #7c3aed);
+  background: var(--dash-surface-hover, #f3f4f6);
+  color: var(--dash-muted, #6b7280);
   border: 1px solid var(--dash-border, #e5e7eb);
   white-space: nowrap;
+  transition: all 200ms ease;
+}
+
+.liveBadgeActive {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.liveBadgeActive .pulseDot {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  animation: pulseGreen 1.8s infinite ease-in-out;
+}
+
+.liveBadgeJustUpdated {
+  animation: flashUpdate 1s ease-out;
+}
+
+@keyframes pulseGreen {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+}
+
+@keyframes flashUpdate {
+  0% {
+    background-color: #d1fae5;
+    border-color: #34d399;
+    transform: scale(1.04);
+  }
+  100% {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    transform: scale(1);
+  }
 }
 
 .pulseDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--dash-accent, #7c3aed);
+  background: var(--dash-muted, #9ca3af);
+  flex-shrink: 0;
 }
 
 .rightGroup {

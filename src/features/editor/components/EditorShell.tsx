@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type CSSProperties 
 import type { CanonicalDocument } from "@/lib/schema";
 import { createAutosaver, type SaveResult } from "../core/autosave";
 import { panelLayoutStore } from "../core/panel-layout";
+import { createPreviewBroadcaster } from "../core/preview-sync";
 import { createEditorStore } from "../core/store";
 import { isEditableTarget, isPanKey, resolveShortcut } from "../core/shortcuts";
 import { Artboard } from "./Artboard";
@@ -58,6 +59,33 @@ export function EditorShell(props: EditorShellProps) {
   useEffect(() => {
     store.getState().syncArtboardModeFromStorage();
   }, [store]);
+
+  // Realtime Live Preview Cross-Tab Broadcaster (120ms debounce)
+  useEffect(() => {
+    const broadcaster = createPreviewBroadcaster(
+      templateId,
+      () => store.getState().history.present,
+      120,
+    );
+
+    // Initial broadcast so preview tabs immediately get current document
+    broadcaster.broadcastNow();
+
+    // Subscribe to store document changes
+    let lastDoc = store.getState().history.present;
+    const unsubscribe = store.subscribe((state) => {
+      const nextDoc = state.history.present;
+      if (nextDoc !== lastDoc) {
+        lastDoc = nextDoc;
+        broadcaster.broadcastDebounced();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      broadcaster.dispose();
+    };
+  }, [store, templateId]);
 
   return (
     <EditorProvider store={store} autosaver={autosaver} workspaceId={props.workspaceId}>

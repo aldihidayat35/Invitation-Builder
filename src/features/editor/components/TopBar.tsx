@@ -6,6 +6,7 @@ import { CANONICAL_BASE_WIDTH } from "@/lib/schema";
 import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
+import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
 import { IconEye } from "./icons";
 import styles from "./editor.module.css";
 
@@ -184,8 +185,8 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
         onClick={() => {
           try {
             const currentDoc = store.getState().history.present;
-            localStorage.setItem(`dib_preview_doc_${templateId}`, JSON.stringify(currentDoc));
-            localStorage.setItem(`dib_preview_time_${templateId}`, String(Date.now()));
+            localStorage.setItem(`${PREVIEW_STORAGE_DOC_PREFIX}${templateId}`, JSON.stringify(currentDoc));
+            localStorage.setItem(`${PREVIEW_STORAGE_TIME_PREFIX}${templateId}`, String(Date.now()));
           } catch {
             // ignore storage quota errors
           }
