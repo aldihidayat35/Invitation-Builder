@@ -72,6 +72,14 @@ export function collectDocumentFonts(doc: CanonicalDocument | ResolvedDocument):
         if (typeof ff === "string" && ff.trim()) {
           result.add(ff.trim());
         }
+      } else if (el.type === "widget" && el.props) {
+        const props = el.props as Record<string, unknown>;
+        if (typeof props.nameFont === "string" && props.nameFont.trim()) {
+          result.add(props.nameFont.trim());
+        }
+        if (typeof props.bodyFont === "string" && props.bodyFont.trim()) {
+          result.add(props.bodyFont.trim());
+        }
       }
     }
   }

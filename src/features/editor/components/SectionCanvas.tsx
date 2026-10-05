@@ -294,6 +294,14 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         if (family) {
           void ensureFontLoaded(family);
         }
+      } else if (el.type === "widget" && el.props) {
+        const p = el.props as Record<string, unknown>;
+        if (typeof p.nameFont === "string" && p.nameFont) {
+          void ensureFontLoaded(p.nameFont);
+        }
+        if (typeof p.bodyFont === "string" && p.bodyFont) {
+          void ensureFontLoaded(p.bodyFont);
+        }
       }
     }
   }, [elements, tokens]);

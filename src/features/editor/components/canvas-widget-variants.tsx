@@ -3276,6 +3276,8 @@ function CanvasPersonAvatar({
   initial,
   roleLabel,
   rotation,
+  nameFont,
+  bodyFont,
 }: {
   x: number;
   y: number;
@@ -3290,6 +3292,8 @@ function CanvasPersonAvatar({
   initial: string;
   roleLabel: string;
   rotation?: number;
+  nameFont?: string;
+  bodyFont?: string;
 }) {
   if (src) {
     return (
@@ -3337,7 +3341,7 @@ function CanvasPersonAvatar({
         y={height * 0.22}
         text={initial}
         fontSize={Math.min(36, width * 0.38)}
-        fontFamily="serif"
+        fontFamily={nameFont || "serif"}
         fontStyle="bold"
         fill={color}
         align="center"
@@ -3347,6 +3351,7 @@ function CanvasPersonAvatar({
         y={height * 0.65}
         text={roleLabel}
         fontSize={8}
+        fontFamily={bodyFont}
         fill={color}
         opacity={0.7}
         align="center"
@@ -3384,12 +3389,28 @@ function CoupleProfileVisual({
 
   const title = typeof props.title === "string" ? props.title : "";
   const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
-  const connector = typeof props.connector === "string" && props.connector.trim() ? props.connector.trim() : "&";
+  const rawConnector = typeof props.connector === "string" && props.connector.trim() ? props.connector.trim() : "&";
+  const connector = variant === "heart-romance" && rawConnector === "&" ? "♥" : rawConnector;
   const showInstagram = props.showInstagram !== false;
   const showParents = props.showParents !== false;
 
-  const hasHeader = Boolean(title || subtitle);
-  const headerH = hasHeader ? (subtitle ? 42 : 26) : 0;
+  const rawNameFont = typeof props.nameFont === "string" && props.nameFont.trim() ? props.nameFont.trim() : undefined;
+  const rawBodyFont = typeof props.bodyFont === "string" && props.bodyFont.trim() ? props.bodyFont.trim() : undefined;
+
+  const isEditorial = variant === "minimalist-editorial";
+  const isLuxury = variant === "luxury-gold";
+  const isHeritage = variant === "heritage-ornament";
+  const isHeart = variant === "heart-romance";
+  const isCircle = variant === "circular-medallion";
+  const isArch = variant === "arch-window";
+  const isPolaroid = variant === "polaroid-duo";
+  const isGlass = variant === "glass-morphism";
+
+  const nameFont = rawNameFont || (isLuxury || isEditorial ? "serif" : undefined);
+  const bodyFont = rawBodyFont || undefined;
+
+  const hasHeader = Boolean(title || subtitle || isHeritage);
+  const headerH = hasHeader ? (subtitle ? (isHeritage ? 54 : 42) : (isHeritage ? 38 : 26)) : 0;
   const top = 12 + headerH;
   const radius = element.style.radius ?? 12;
 
@@ -3400,7 +3421,7 @@ function CoupleProfileVisual({
           width={w - 24}
           text={title}
           fontSize={16}
-          fontFamily={variant === "luxury-gold" ? "serif" : undefined}
+          fontFamily={nameFont}
           fontStyle="bold"
           fill={color}
           align="center"
@@ -3412,8 +3433,19 @@ function CoupleProfileVisual({
           width={w - 24}
           text={subtitle}
           fontSize={10.5}
+          fontFamily={bodyFont}
           fill={color}
           opacity={0.7}
+          align="center"
+        />
+      ) : null}
+      {isHeritage ? (
+        <Text
+          y={title && subtitle ? 34 : title || subtitle ? 20 : 0}
+          width={w - 24}
+          text="❖ ─── ✦ ─── ❖"
+          fontSize={9}
+          fill="#c59b27"
           align="center"
         />
       ) : null}
@@ -3421,11 +3453,10 @@ function CoupleProfileVisual({
   ) : null;
 
   // 1. Stacked Layout: for variant === "stacked-cards" or "minimalist-editorial"
-  if (variant === "stacked-cards" || variant === "minimalist-editorial") {
-    const cardGap = 28;
+  if (variant === "stacked-cards" || isEditorial) {
+    const cardGap = 20;
     const cardH = Math.min(130, (h - top - 16 - cardGap) / 2);
-    const cardW = w - 24;
-    const isEditorial = variant === "minimalist-editorial";
+    const cardW = w - 16;
 
     const renderCard = (
       person: typeof first,
@@ -3434,39 +3465,45 @@ function CoupleProfileVisual({
       role: string,
       yPos: number,
     ) => {
-      const avatarSize = Math.min(76, cardH - 18);
+      const avatarW = isEditorial ? 80 : 78;
+      const avatarH = isEditorial ? 100 : 78;
+      const avatarY = (cardH - avatarH) / 2;
+
       return (
-        <Group x={12} y={yPos}>
+        <Group x={8} y={yPos}>
           <Rect
             width={cardW}
             height={cardH}
-            cornerRadius={isEditorial ? 0 : 12}
+            cornerRadius={isEditorial ? 0 : 14}
             fill="#ffffff"
-            opacity={0.88}
+            opacity={0.92}
             stroke={color}
             strokeWidth={isEditorial ? 0 : 1}
           />
           {isEditorial ? (
-            <Line points={[0, 0, 0, cardH]} stroke={color} strokeWidth={3} />
+            <Line points={[0, 0, 0, cardH]} stroke={color} strokeWidth={2.5} />
           ) : null}
 
           <CanvasPersonAvatar
             x={10}
-            y={(cardH - avatarSize) / 2}
-            width={avatarSize}
-            height={avatarSize}
-            radius={isEditorial ? 0 : 10}
+            y={avatarY}
+            width={avatarW}
+            height={avatarH}
+            radius={isEditorial ? 0 : 39}
             circle={!isEditorial}
             color={color}
             src={personSrc}
             initial={initial}
             roleLabel={role}
+            nameFont={nameFont}
+            bodyFont={bodyFont}
           />
 
-          <Group x={avatarSize + 22} y={10}>
+          <Group x={avatarW + 20} y={10}>
             <Text
               text={role.toUpperCase()}
               fontSize={8.5}
+              fontFamily={bodyFont}
               fontStyle="bold"
               fill={color}
               opacity={0.65}
@@ -3474,16 +3511,17 @@ function CoupleProfileVisual({
             <Text
               y={13}
               text={person.name ?? ""}
-              fontSize={15}
-              fontFamily={isEditorial ? "serif" : undefined}
-              fontStyle="bold"
+              fontSize={16}
+              fontFamily={nameFont}
+              fontStyle={isEditorial && !rawNameFont ? "italic" : "bold"}
               fill={color}
             />
             <Text
-              y={32}
-              width={cardW - avatarSize - 32}
+              y={33}
+              width={cardW - avatarW - 30}
               text={person.fullName ?? ""}
               fontSize={11}
+              fontFamily={bodyFont}
               fontStyle="bold"
               fill={color}
               opacity={0.9}
@@ -3491,11 +3529,12 @@ function CoupleProfileVisual({
             />
             {showParents && person.parents ? (
               <Text
-                y={48}
-                width={cardW - avatarSize - 32}
+                y={49}
+                width={cardW - avatarW - 30}
                 height={26}
                 text={person.parents}
                 fontSize={9.5}
+                fontFamily={bodyFont}
                 fill={color}
                 opacity={0.7}
                 lineHeight={1.25}
@@ -3517,6 +3556,7 @@ function CoupleProfileVisual({
                   y={4}
                   text={`@${person.instagram}`}
                   fontSize={9}
+                  fontFamily={bodyFont}
                   fill={color}
                 />
               </Group>
@@ -3533,25 +3573,19 @@ function CoupleProfileVisual({
         {renderCard(first, firstSrc, firstInitial, firstRole, top)}
         <Group x={w / 2 - 14} y={top + cardH + (cardGap - 28) / 2}>
           <Circle x={14} y={14} radius={14} fill="#ffffff" stroke={color} strokeWidth={1.5} />
-          <Text x={0} y={6} width={28} text={connector} fontSize={13} fontFamily="serif" fontStyle="bold" fill={color} align="center" />
+          <Text x={0} y={6} width={28} text={connector} fontSize={13} fontFamily={nameFont || "serif"} fontStyle="bold" fill={color} align="center" />
         </Group>
         {renderCard(second, secondSrc, secondInitial, secondRole, top + cardH + cardGap)}
       </Group>
     );
   }
 
-  // 2. Dual Column Layout
+  // 2. Dual Column Layout (all other 8 variants)
   const colW = (w - 32) / 2;
-  const isCircle = variant === "circular-medallion";
-  const isArch = variant === "arch-window";
-  const isLuxury = variant === "luxury-gold";
-  const isPolaroid = variant === "polaroid-duo";
-  const isHeritage = variant === "heritage-ornament";
-  const isHeart = variant === "heart-romance";
-  const isGlass = variant === "glass-morphism";
 
-  const photoW = isCircle ? Math.min(colW - 12, 100) : colW - 8;
-  const photoH = isCircle ? photoW : isArch ? photoW * 1.3 : isPolaroid ? photoW : photoW * 1.1;
+  // Viewport sizes exactly matching runtime DOM
+  const photoW = isCircle ? 90 : isArch ? 106 : isPolaroid ? 106 : isGlass || isHeritage ? 96 : isHeart ? 100 : 108;
+  const photoH = isCircle ? 90 : isArch ? 138 : isPolaroid ? 106 : isGlass || isHeritage ? 110 : isHeart ? 114 : 122;
 
   const renderColumn = (
     person: typeof first,
@@ -3584,11 +3618,11 @@ function CoupleProfileVisual({
             y={top - 4}
             width={colW}
             height={h - top - 8}
-            cornerRadius={6}
+            cornerRadius={8}
             fill="#ffffff"
             opacity={0.8}
             stroke="#c59b27"
-            strokeWidth={1.2}
+            strokeWidth={1.5}
           />
         ) : null}
 
@@ -3615,15 +3649,17 @@ function CoupleProfileVisual({
           y={top}
           width={photoW}
           height={photoH}
-          radius={isArch ? 50 : isCircle ? photoW / 2 : radius}
+          radius={isArch ? 53 : isCircle ? 45 : isLuxury ? 4 : isHeritage ? 6 : radius}
           arch={isArch}
           circle={isCircle}
-          strokeWidth={isLuxury || isHeritage ? 2 : 1}
-          color={isLuxury || isHeritage ? "#c59b27" : color}
+          strokeWidth={isLuxury || isHeritage || isHeart || isCircle ? 2 : 1}
+          color={isLuxury ? "#b45309" : isHeritage || isCircle ? "#c59b27" : isHeart ? "#e11d48" : color}
           src={personSrc}
           initial={initial}
           roleLabel={role}
           rotation={isPolaroid ? rotation : 0}
+          nameFont={nameFont}
+          bodyFont={bodyFont}
         />
 
         <Group x={colX} y={textY}>
@@ -3631,6 +3667,7 @@ function CoupleProfileVisual({
             width={colW}
             text={role.toUpperCase()}
             fontSize={8}
+            fontFamily={bodyFont}
             fontStyle="bold"
             fill={color}
             opacity={0.65}
@@ -3641,7 +3678,7 @@ function CoupleProfileVisual({
             width={colW}
             text={person.name ?? ""}
             fontSize={16}
-            fontFamily={isLuxury ? "serif" : undefined}
+            fontFamily={nameFont}
             fontStyle="bold"
             fill={color}
             align="center"
@@ -3651,6 +3688,7 @@ function CoupleProfileVisual({
             width={colW}
             text={person.fullName ?? ""}
             fontSize={10.5}
+            fontFamily={bodyFont}
             fontStyle="bold"
             fill={color}
             opacity={0.9}
@@ -3664,6 +3702,7 @@ function CoupleProfileVisual({
               height={36}
               text={person.parents}
               fontSize={9}
+              fontFamily={bodyFont}
               fill={color}
               opacity={0.7}
               lineHeight={1.25}
@@ -3686,6 +3725,7 @@ function CoupleProfileVisual({
                 y={4}
                 text={`@${person.instagram}`}
                 fontSize={8.5}
+                fontFamily={bodyFont}
                 fill={color}
                 align="center"
                 ellipsis
@@ -3697,7 +3737,7 @@ function CoupleProfileVisual({
     );
   };
 
-  const badgeY = top + photoH * 0.38;
+  const badgeY = top + (isCircle ? 31 : isArch ? 41 : isPolaroid ? 36 : 34);
 
   return (
     <Group listening={false}>
@@ -3708,9 +3748,9 @@ function CoupleProfileVisual({
           y={4}
           width={w - 8}
           height={h - 8}
-          cornerRadius={4}
+          cornerRadius={6}
           stroke="#b45309"
-          strokeWidth={1.5}
+          strokeWidth={2}
         />
       ) : null}
       {headerVisual}
@@ -3733,6 +3773,8 @@ function CoupleProfileVisual({
           />
         ) : isHeart ? (
           <Circle x={14} y={14} radius={14} fill="#ffffff" stroke="#e11d48" strokeWidth={1.5} />
+        ) : isHeritage || isCircle ? (
+          <Circle x={14} y={14} radius={14} fill="#ffffff" stroke="#c59b27" strokeWidth={1.5} />
         ) : (
           <Circle x={14} y={14} radius={14} fill="#ffffff" stroke={color} strokeWidth={1.5} />
         )}
@@ -3740,11 +3782,11 @@ function CoupleProfileVisual({
           x={0}
           y={isLuxury ? 6 : 7}
           width={28}
-          text={isHeart ? "♥" : connector}
+          text={connector}
           fontSize={13}
-          fontFamily="serif"
+          fontFamily={nameFont || "serif"}
           fontStyle="bold"
-          fill={isHeart ? "#e11d48" : isLuxury ? "#b45309" : color}
+          fill={isHeart ? "#e11d48" : isLuxury ? "#b45309" : isHeritage || isCircle ? "#c59b27" : color}
           align="center"
         />
       </Group>

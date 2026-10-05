@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { ensureFontLoaded } from "@/lib/fonts";
 import { parseFrameImage } from "./PhotoFrameWidget";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 import styles from "./runtime.module.css";
@@ -17,6 +18,8 @@ export interface CouplePerson {
 export interface CoupleProfileWidgetProps {
   readonly title?: unknown;
   readonly subtitle?: unknown;
+  readonly nameFont?: unknown;
+  readonly bodyFont?: unknown;
   readonly connector?: unknown;
   readonly order?: unknown;
   readonly showInstagram?: unknown;
@@ -73,14 +76,21 @@ function PersonCard({
   type,
   showInstagram,
   showParents,
+  nameFont,
+  bodyFont,
 }: {
   readonly person: CouplePerson;
   readonly type: "groom" | "bride";
   readonly showInstagram: boolean;
   readonly showParents: boolean;
+  readonly nameFont?: string;
+  readonly bodyFont?: string;
 }) {
   const photoSrc = parseFrameImage(person.photo);
   const initial = (person.name || person.fullName || (type === "groom" ? "R" : "A")).charAt(0).toUpperCase();
+
+  const nameStyle = nameFont ? { fontFamily: `"${nameFont}", sans-serif` } : undefined;
+  const bodyStyle = bodyFont ? { fontFamily: `"${bodyFont}", sans-serif` } : undefined;
 
   return (
     <article className={styles.couplePersonCard} data-person={type}>
@@ -96,8 +106,8 @@ function PersonCard({
           />
         ) : (
           <div className={styles.coupleMonogramFallback} aria-label={`Inisial ${initial}`}>
-            <span className={styles.coupleMonogramLetter}>{initial}</span>
-            <span className={styles.coupleMonogramSubtext}>
+            <span className={styles.coupleMonogramLetter} style={nameStyle}>{initial}</span>
+            <span className={styles.coupleMonogramSubtext} style={bodyStyle}>
               {type === "groom" ? "Mempelai Pria" : "Mempelai Wanita"}
             </span>
           </div>
@@ -106,11 +116,25 @@ function PersonCard({
 
       {/* Details */}
       <div className={styles.couplePersonInfo}>
-        {person.role && <span className={styles.couplePersonRole}>{person.role}</span>}
-        {person.name && <h3 className={styles.couplePersonName}>{person.name}</h3>}
-        {person.fullName && <h4 className={styles.couplePersonFullName}>{person.fullName}</h4>}
+        {person.role && (
+          <span className={styles.couplePersonRole} style={bodyStyle}>
+            {person.role}
+          </span>
+        )}
+        {person.name && (
+          <h3 className={styles.couplePersonName} style={nameStyle}>
+            {person.name}
+          </h3>
+        )}
+        {person.fullName && (
+          <h4 className={styles.couplePersonFullName} style={bodyStyle}>
+            {person.fullName}
+          </h4>
+        )}
         {showParents && person.parents && (
-          <p className={styles.couplePersonParents}>{person.parents}</p>
+          <p className={styles.couplePersonParents} style={bodyStyle}>
+            {person.parents}
+          </p>
         )}
         {showInstagram && person.instagram && (
           <a
@@ -119,6 +143,7 @@ function PersonCard({
             rel="noopener noreferrer"
             className={styles.coupleInstagramBtn}
             title={`Instagram @${person.instagram}`}
+            style={bodyStyle}
           >
             <InstagramIcon />
             <span>@{person.instagram}</span>
@@ -132,6 +157,8 @@ function PersonCard({
 export function CoupleProfileWidget({
   title,
   subtitle,
+  nameFont,
+  bodyFont,
   connector = "&",
   order = "groom-first",
   showInstagram = true,
@@ -143,6 +170,18 @@ export function CoupleProfileWidget({
   const resolvedGroom = useMemo(() => parseCouplePerson(groom, "Mempelai Pria"), [groom]);
   const resolvedBride = useMemo(() => parseCouplePerson(bride, "Mempelai Wanita"), [bride]);
 
+  const resolvedNameFont = typeof nameFont === "string" && nameFont.trim() ? nameFont.trim() : undefined;
+  const resolvedBodyFont = typeof bodyFont === "string" && bodyFont.trim() ? bodyFont.trim() : undefined;
+
+  useEffect(() => {
+    if (resolvedNameFont) {
+      void ensureFontLoaded(resolvedNameFont);
+    }
+    if (resolvedBodyFont) {
+      void ensureFontLoaded(resolvedBodyFont);
+    }
+  }, [resolvedNameFont, resolvedBodyFont]);
+
   const groomFirst = order !== "bride-first";
   const firstPerson = groomFirst ? resolvedGroom : resolvedBride;
   const firstType = groomFirst ? ("groom" as const) : ("bride" as const);
@@ -151,9 +190,14 @@ export function CoupleProfileWidget({
 
   const headingText = typeof title === "string" ? title : undefined;
   const subHeadingText = typeof subtitle === "string" ? subtitle : undefined;
-  const connSymbol = typeof connector === "string" && connector.trim() ? connector.trim() : "&";
+  const variant = style?.variant || "side-by-side";
+  const rawConnector = typeof connector === "string" && connector.trim() ? connector.trim() : "&";
+  const connSymbol = variant === "heart-romance" && rawConnector === "&" ? "♥" : rawConnector;
   const displayIg = showInstagram !== false;
   const displayParents = showParents !== false;
+
+  const headingStyle = resolvedNameFont ? { fontFamily: `"${resolvedNameFont}", sans-serif` } : undefined;
+  const subHeadingStyle = resolvedBodyFont ? { fontFamily: `"${resolvedBodyFont}", sans-serif` } : undefined;
 
   return (
     <WidgetFrame
@@ -165,8 +209,8 @@ export function CoupleProfileWidget({
       {/* Header if specified */}
       {(headingText || subHeadingText) && (
         <header className={styles.coupleHeader}>
-          {headingText && <h2 className={styles.coupleHeading}>{headingText}</h2>}
-          {subHeadingText && <p className={styles.coupleSubheading}>{subHeadingText}</p>}
+          {headingText && <h2 className={styles.coupleHeading} style={headingStyle}>{headingText}</h2>}
+          {subHeadingText && <p className={styles.coupleSubheading} style={subHeadingStyle}>{subHeadingText}</p>}
         </header>
       )}
 
@@ -177,6 +221,8 @@ export function CoupleProfileWidget({
           type={firstType}
           showInstagram={displayIg}
           showParents={displayParents}
+          nameFont={resolvedNameFont}
+          bodyFont={resolvedBodyFont}
         />
 
         {/* Center Floating Connector Badge */}
@@ -189,6 +235,8 @@ export function CoupleProfileWidget({
           type={secondType}
           showInstagram={displayIg}
           showParents={displayParents}
+          nameFont={resolvedNameFont}
+          bodyFont={resolvedBodyFont}
         />
       </div>
     </WidgetFrame>

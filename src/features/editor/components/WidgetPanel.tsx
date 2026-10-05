@@ -10,6 +10,7 @@ import {
   type WidgetStyleVariant,
   type WidgetPropDefinition,
 } from "@/features/widgets";
+import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
 import { GiftAccountsControl } from "./GiftAccountsControl";
@@ -380,6 +381,7 @@ export function WidgetPanel({
                   spec={spec}
                   value={value}
                   disabled={disabled}
+                  tokens={tokens}
                   onChange={(next) => setProp(name, next)}
                 />
               )}
@@ -387,6 +389,100 @@ export function WidgetPanel({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function FontPropControl({
+  id,
+  label,
+  value,
+  disabled,
+  tokens,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: unknown;
+  disabled: boolean;
+  tokens?: ThemeTokens;
+  onChange: (value: unknown) => void;
+}) {
+  const currentFont = typeof value === "string" ? value : "";
+
+  const fontOptions: {
+    value: string;
+    label: string;
+    group?: string;
+    fontFamily?: string;
+  }[] = [
+    { value: "", label: "(Bawaan Desain / Gaya)", group: "Pilihan Default" },
+  ];
+
+  if (tokens?.fonts) {
+    for (const [tokenKey, tokenVal] of Object.entries(tokens.fonts)) {
+      if (tokenVal) {
+        fontOptions.push({
+          value: tokenVal,
+          label: `${tokenKey} (${tokenVal})`,
+          group: "Token Tema",
+          fontFamily: tokenVal,
+        });
+      }
+    }
+  }
+
+  for (const cat of FONT_CATEGORIES) {
+    const fontsInCat = INVITATION_FONTS.filter((f) => f.category === cat.id);
+    for (const f of fontsInCat) {
+      fontOptions.push({
+        value: f.family,
+        label: f.name,
+        group: cat.label,
+        fontFamily: f.family,
+      });
+    }
+  }
+
+  if (
+    currentFont &&
+    !fontOptions.some((o) => o.value.toLowerCase() === currentFont.toLowerCase())
+  ) {
+    fontOptions.push({
+      value: currentFont,
+      label: currentFont,
+      group: "Font Lainnya",
+      fontFamily: currentFont,
+    });
+  }
+
+  return (
+    <div className={styles.panelStack}>
+      <SelectField
+        id={id}
+        label={label}
+        value={currentFont}
+        options={fontOptions}
+        disabled={disabled}
+        onChange={(nextVal) => {
+          if (nextVal) {
+            void ensureFontLoaded(nextVal);
+          }
+          onChange(nextVal === "" ? undefined : nextVal);
+        }}
+      />
+      {currentFont ? (
+        <div
+          className={styles.fontPreviewBadge}
+          style={{ fontFamily: `"${currentFont}", sans-serif` }}
+          title={`Pratinjau font: ${currentFont}`}
+        >
+          <span className={styles.fontPreviewName}>{currentFont}</span>
+          <span className={styles.fontPreviewSample}>
+            {label.toLowerCase().includes("nama") ? "Rama & Alya" : "Putra & Putri Tercinta"}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -419,6 +515,7 @@ function StaticControl({
   spec,
   value,
   disabled,
+  tokens,
   onChange,
 }: {
   id: string;
@@ -426,9 +523,22 @@ function StaticControl({
   spec: WidgetPropDefinition;
   value: unknown;
   disabled: boolean;
+  tokens?: ThemeTokens;
   onChange: (value: unknown) => void;
 }) {
   switch (control) {
+    case "font": {
+      return (
+        <FontPropControl
+          id={id}
+          label={spec.label}
+          value={value}
+          disabled={disabled}
+          tokens={tokens}
+          onChange={onChange}
+        />
+      );
+    }
     case "select": {
       const options = spec.options ?? [];
       return (

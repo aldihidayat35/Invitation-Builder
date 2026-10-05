@@ -108,4 +108,41 @@ describe("CoupleProfileWidget", () => {
       instagram: "username",
     });
   });
+
+  it("applies custom nameFont and bodyFont to headings and details", () => {
+    render(
+      <CoupleProfileWidget
+        title="Pernikahan"
+        subtitle="Mohon doa restu"
+        nameFont="Great Vibes"
+        bodyFont="Montserrat"
+        groom={{ name: "Rama", fullName: "Rama Pratama", parents: "Bpk. Bambang" }}
+        bride={{ name: "Alya", fullName: "Alya Putri", parents: "Bpk. Hendra" }}
+      />,
+    );
+
+    const titleEl = screen.getByText("Pernikahan");
+    expect(titleEl).toHaveStyle({ fontFamily: '"Great Vibes", sans-serif' });
+
+    const groomNameEl = screen.getByText("Rama");
+    expect(groomNameEl).toHaveStyle({ fontFamily: '"Great Vibes", sans-serif' });
+
+    const subtitleEl = screen.getByText("Mohon doa restu");
+    expect(subtitleEl).toHaveStyle({ fontFamily: '"Montserrat", sans-serif' });
+
+    const groomFullNameEl = screen.getByText("Rama Pratama");
+    expect(groomFullNameEl).toHaveStyle({ fontFamily: '"Montserrat", sans-serif' });
+  });
+
+  it("defaults heart-romance connector to ♥ when not explicitly overridden", () => {
+    render(
+      <CoupleProfileWidget
+        style={{ variant: "heart-romance" }}
+        groom={{ name: "Rama" }}
+        bride={{ name: "Alya" }}
+      />,
+    );
+
+    expect(screen.getByText("♥")).toBeInTheDocument();
+  });
 });

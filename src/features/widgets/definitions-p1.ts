@@ -268,6 +268,8 @@ export const coupleProfileWidget: WidgetDefinition = {
   defaultProps: {
     title: "Mempelai",
     subtitle: "Dengan memohon rahmat dan ridho Allah SWT",
+    nameFont: "",
+    bodyFont: "",
     connector: "&",
     order: "groom-first",
     showInstagram: true,
@@ -292,6 +294,12 @@ export const coupleProfileWidget: WidgetDefinition = {
   props: {
     title: defineProp("text", "Judul Bagian", z.string().max(80).optional()),
     subtitle: defineProp("text", "Subjudul / Kutipan", z.string().max(160).optional()),
+    nameFont: defineProp("text", "Font Nama Mempelai", z.string().max(80).optional(), {
+      control: "font",
+    }),
+    bodyFont: defineProp("text", "Font Keterangan & Teks", z.string().max(80).optional(), {
+      control: "font",
+    }),
     connector: defineProp("text", "Konektor / Simbol Pemisah", z.string().max(20).default("&")),
     order: defineProp("text", "Urutan Mempelai", z.enum(["groom-first", "bride-first"]).default("groom-first"), {
       control: "select",
