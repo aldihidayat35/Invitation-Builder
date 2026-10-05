@@ -121,21 +121,34 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     expect(screen.getByText("Walimatul 'Urs")).toBeInTheDocument();
   });
 
-  it("renders clipped image photo and typography labels", () => {
+  it("animates the inner outline without image or yellow dots", () => {
     const { container } = render(
       <OrnamentFrameWidget
         shape="arch-window"
-        image="https://images.unsplash.com/photo-1519741497674-611481863552"
         title="THE WEDDING OF"
         subtitle="Benny & Dinda"
         caption="Sabtu, 24 Oktober 2026"
+        animationMode="scroll"
       />,
     );
 
-    const img = container.querySelector("image");
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute("href", "https://images.unsplash.com/photo-1519741497674-611481863552");
-    expect(img?.getAttribute("clip-path")).toMatch(/^url\(#ornament-clip-/);
+    // No image tag or clipPath for photos
+    expect(container.querySelector("image")).not.toBeInTheDocument();
+    // No yellow glow circles
+    expect(container.querySelector("circle")).not.toBeInTheDocument();
+
+    // Outer border
+    expect(container.querySelector(".outerBorder")).toBeInTheDocument();
+    // Inner track
+    expect(container.querySelector(".innerTrack")).toBeInTheDocument();
+
+    // Moving animated strokes with pathLength 1000 for 100% completion to bottom
+    const animatedStrokes = container.querySelectorAll(".animatedStroke");
+    expect(animatedStrokes).toHaveLength(2);
+    for (const stroke of animatedStrokes) {
+      expect(stroke).toHaveAttribute("pathLength", "1000");
+      expect(stroke).toHaveAttribute("stroke-dasharray", "1000");
+    }
 
     expect(screen.getByText("THE WEDDING OF")).toBeInTheDocument();
     expect(screen.getByText("Benny & Dinda")).toBeInTheDocument();

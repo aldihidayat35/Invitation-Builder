@@ -113,10 +113,10 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       shape={typeof p.shape === "string" ? p.shape : undefined}
       title={typeof p.title === "string" ? p.title : undefined}
       subtitle={typeof p.subtitle === "string" ? p.subtitle : undefined}
+      caption={typeof p.caption === "string" ? p.caption : undefined}
       strokeWidth={typeof p.strokeWidth === "number" ? p.strokeWidth : undefined}
       strokeColor={typeof p.strokeColor === "string" ? p.strokeColor : undefined}
       fillColor={typeof p.fillColor === "string" ? p.fillColor : undefined}
-      glowColor={typeof p.glowColor === "string" ? p.glowColor : undefined}
       doubleBorder={typeof p.doubleBorder === "boolean" ? p.doubleBorder : undefined}
       animationMode={
         p.animationMode === "scroll" || p.animationMode === "loop" || p.animationMode === "none"
@@ -128,7 +128,6 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
           ? p.animationSpeed
           : undefined
       }
-      showGlow={typeof p.showGlow === "boolean" ? p.showGlow : undefined}
       style={style}
     />
   ),

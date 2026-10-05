@@ -365,7 +365,6 @@ export const ornamentFrameWidget: WidgetDefinition = {
     doubleBorder: true,
     animationMode: "scroll",
     animationSpeed: "normal",
-    showGlow: true,
   },
   props: {
     shape: defineProp(
@@ -393,7 +392,6 @@ export const ornamentFrameWidget: WidgetDefinition = {
         ],
       },
     ),
-    image: defineProp("url", "Foto (asset / URL)", z.union([z.string(), z.record(z.string(), z.unknown())]).optional()),
     title: defineProp("text", "Judul / Teks Atas (Opsional)", z.string().max(100).optional()),
     subtitle: defineProp("text", "Nama / Teks Tengah (Opsional)", z.string().max(100).optional()),
     caption: defineProp("text", "Keterangan / Tanggal (Opsional)", z.string().max(100).optional()),
@@ -425,7 +423,6 @@ export const ornamentFrameWidget: WidgetDefinition = {
         ],
       },
     ),
-    showGlow: defineProp("boolean", "Efek Kilau Garis", z.boolean().default(true)),
   },
   placeholder: (props) => ({
     title: describeProp(props.title) || describeProp(props.subtitle) || "Bingkai Ornamen",
