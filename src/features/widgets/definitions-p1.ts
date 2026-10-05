@@ -385,6 +385,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
       ]),
       {
         control: "select",
+        bindable: false,
         options: [
           { value: "arch-window", label: "Kubah Lengkung (Arch Window)" },
           { value: "circle", label: "Lingkaran (Circle)" },
@@ -404,11 +405,13 @@ export const ornamentFrameWidget: WidgetDefinition = {
       "number",
       "Jarak Garis Dalam (Inner Gap)",
       z.number().min(2).max(40).default(12),
+      { bindable: false, min: 2, max: 40, step: 1 },
     ),
     fillOpacity: defineProp(
       "number",
       "Transparansi Background (%)",
       z.number().min(0).max(100).default(100),
+      { bindable: false, min: 0, max: 100, step: 1 },
     ),
     image: defineProp(
       "url",
@@ -419,15 +422,27 @@ export const ornamentFrameWidget: WidgetDefinition = {
       "number",
       "Transparansi Foto (%)",
       z.number().min(0).max(100).default(100),
+      { bindable: false, min: 0, max: 100, step: 1 },
     ),
-    strokeWidth: defineProp("number", "Ketebalan Garis", z.number().min(1).max(12).default(2)),
-    doubleBorder: defineProp("boolean", "Garis Ganda (Double Border)", z.boolean().default(true)),
+    strokeWidth: defineProp(
+      "number",
+      "Ketebalan Garis",
+      z.number().min(1).max(12).default(2),
+      { bindable: false, min: 1, max: 12, step: 1 },
+    ),
+    doubleBorder: defineProp(
+      "boolean",
+      "Garis Ganda (Double Border)",
+      z.boolean().default(true),
+      { bindable: false },
+    ),
     animationMode: defineProp(
       "text",
       "Mode Animasi Garis",
       z.enum(["once", "scroll", "loop", "none"]).default("once"),
       {
         control: "select",
+        bindable: false,
         options: [
           { value: "once", label: "1x Bergerak saat awal terlihat (Elegan)" },
           { value: "scroll", label: "Jalan saat di-scroll (Interaktif)" },
@@ -442,6 +457,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
       z.enum(["slow", "normal", "fast"]).default("normal"),
       {
         control: "select",
+        bindable: false,
         options: [
           { value: "slow", label: "Lambat & Anggun (3.6s)" },
           { value: "normal", label: "Standar (2.2s)" },

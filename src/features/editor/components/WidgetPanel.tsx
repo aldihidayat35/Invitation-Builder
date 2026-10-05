@@ -24,6 +24,7 @@ import {
   ColorField,
   FieldRow,
   NumberField,
+  OpacityField,
   SelectField,
   TextField,
   type ColorValue,
@@ -315,83 +316,234 @@ export function WidgetPanel({
             Pilihan grid/slider lama tetap disimpan untuk kompatibilitas.
           </p>
         ) : null}
-        {Object.entries(definition.props).map(([name, spec]) => {
-          if (name === "layout" && galleryLayoutFollowsVariant) return null;
-          if (name === "title" && element.widgetType === "gallery") return null;
-          const value = element.props[name];
-          const bound = isBinding(value);
-          const control = controlOf(spec);
-          const fieldId = `insp-widget-${name}`;
-          return (
-            <div key={name} className={styles.panelStack} data-testid={`widget-prop-${name}`}>
-              <p className={styles.fieldLabel}>
-                {spec.label}
-                {spec.required ? <span className={styles.badge}>Wajib</span> : null}
-              </p>
-              <BindingControl
-                id={`${fieldId}-bind`}
-                slot={spec.slot}
-                boundKey={bound ? value.bind : undefined}
-                disabled={disabled}
-                onBind={(key) => setProp(name, { bind: key })}
-                onUnbind={() => setProp(name, definition.defaultProps[name])}
-              />
-              {bound ? null : element.widgetType === "gallery" && name === "items" ? (
-                <GalleryItemsControl
-                  elementId={element.id}
-                  value={value}
-                  disabled={disabled}
-                  onChange={(items) => setProp(name, items)}
-                />
-              ) : element.widgetType === "gift" && name === "accounts" ? (
-                <GiftAccountsControl
-                  elementId={element.id}
-                  value={value}
-                  disabled={disabled}
-                  onChange={(accounts) => setProp(name, accounts)}
-                />
-              ) : (element.widgetType === "photoFrame" || element.widgetType === "ornamentFrame") && name === "image" ? (
-                <PhotoFrameImageControl
-                  value={value}
-                  disabled={disabled}
-                  onChange={(img) => setProp(name, img)}
-                />
-              ) : element.widgetType === "timeline" && name === "events" ? (
-                <TimelineEventsControl
-                  elementId={element.id}
-                  value={value}
-                  disabled={disabled}
-                  onChange={(events) => setProp(name, events)}
-                />
-              ) : element.widgetType === "wishes" && name === "items" ? (
-                <WishesItemsControl
-                  elementId={element.id}
-                  value={value}
-                  disabled={disabled}
-                  onChange={(items) => setProp(name, items)}
-                />
-              ) : element.widgetType === "coupleProfile" && (name === "groom" || name === "bride") ? (
-                <CouplePersonControl
-                  personType={name as "groom" | "bride"}
-                  label={name === "groom" ? "Mempelai Pria" : "Mempelai Wanita"}
-                  value={value}
-                  disabled={disabled}
-                  onChange={(personData: Record<string, unknown>) => setProp(name, personData)}
-                />
-              ) : (
-                <StaticControl
-                  id={fieldId}
-                  control={control}
-                  spec={spec}
-                  value={value}
-                  disabled={disabled}
-                  tokens={tokens}
-                  onChange={(next) => setProp(name, next)}
-                />
-              )}
-            </div>
-          );
-        })}
+        {element.widgetType === "ornamentFrame" ? (
+          <OrnamentFramePropsControl
+            element={element}
+            disabled={disabled}
+            setProp={setProp}
+          />
+        ) : (
+          Object.entries(definition.props).map(([name, spec]) => {
+            if (name === "layout" && galleryLayoutFollowsVariant) return null;
+            if (name === "title" && element.widgetType === "gallery") return null;
+            const value = element.props[name];
+            const bound = isBinding(value);
+            const isBindable = spec.bindable !== false;
+            const control = controlOf(spec);
+            const fieldId = `insp-widget-${name}`;
+            return (
+              <div key={name} className={styles.panelStack} data-testid={`widget-prop-${name}`}>
+                {isBindable && (
+                  <>
+                    <p className={styles.fieldLabel}>
+                      {spec.label}
+                      {spec.required ? <span className={styles.badge}>Wajib</span> : null}
+                    </p>
+                    <BindingControl
+                      id={`${fieldId}-bind`}
+                      slot={spec.slot}
+                      boundKey={bound ? value.bind : undefined}
+                      disabled={disabled}
+                      onBind={(key) => setProp(name, { bind: key })}
+                      onUnbind={() => setProp(name, definition.defaultProps[name])}
+                    />
+                  </>
+                )}
+                {bound ? null : element.widgetType === "gallery" && name === "items" ? (
+                  <GalleryItemsControl
+                    elementId={element.id}
+                    value={value}
+                    disabled={disabled}
+                    onChange={(items) => setProp(name, items)}
+                  />
+                ) : element.widgetType === "gift" && name === "accounts" ? (
+                  <GiftAccountsControl
+                    elementId={element.id}
+                    value={value}
+                    disabled={disabled}
+                    onChange={(accounts) => setProp(name, accounts)}
+                  />
+                ) : (element.widgetType === "photoFrame" || element.widgetType === "ornamentFrame") && name === "image" ? (
+                  <PhotoFrameImageControl
+                    value={value}
+                    disabled={disabled}
+                    onChange={(img) => setProp(name, img)}
+                  />
+                ) : element.widgetType === "timeline" && name === "events" ? (
+                  <TimelineEventsControl
+                    elementId={element.id}
+                    value={value}
+                    disabled={disabled}
+                    onChange={(events) => setProp(name, events)}
+                  />
+                ) : element.widgetType === "wishes" && name === "items" ? (
+                  <WishesItemsControl
+                    elementId={element.id}
+                    value={value}
+                    disabled={disabled}
+                    onChange={(items) => setProp(name, items)}
+                  />
+                ) : element.widgetType === "coupleProfile" && (name === "groom" || name === "bride") ? (
+                  <CouplePersonControl
+                    personType={name as "groom" | "bride"}
+                    label={name === "groom" ? "Mempelai Pria" : "Mempelai Wanita"}
+                    value={value}
+                    disabled={disabled}
+                    onChange={(personData: Record<string, unknown>) => setProp(name, personData)}
+                  />
+                ) : (
+                  <StaticControl
+                    id={fieldId}
+                    control={control}
+                    spec={spec}
+                    value={value}
+                    disabled={disabled}
+                    tokens={tokens}
+                    onChange={(next) => setProp(name, next)}
+                  />
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OrnamentFramePropsControl({
+  element,
+  disabled,
+  setProp,
+}: {
+  readonly element: WidgetElement;
+  readonly disabled: boolean;
+  readonly setProp: (name: string, value: unknown) => void;
+}) {
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const image = props.image;
+  const imageOpacity = typeof props.imageOpacity === "number" ? props.imageOpacity : 100;
+  const fillOpacity = typeof props.fillOpacity === "number" ? props.fillOpacity : 100;
+  const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
+  const doubleBorder = props.doubleBorder !== false;
+  const innerGap = typeof props.innerGap === "number" ? props.innerGap : 12;
+  const animationMode = typeof props.animationMode === "string" ? props.animationMode : "once";
+  const animationSpeed = typeof props.animationSpeed === "string" ? props.animationSpeed : "normal";
+
+  return (
+    <div className={styles.panelStack} data-testid="ornament-frame-controls">
+      {/* 1. Foto di Dalam Bentuk */}
+      <div className={styles.panelStack} data-testid="widget-prop-image">
+        <p className={styles.fieldLabel}>Foto di Dalam Bentuk (Opsional)</p>
+        <PhotoFrameImageControl
+          value={image}
+          disabled={disabled}
+          onChange={(img) => setProp("image", img)}
+        />
+        {Boolean(image) && (
+          <div data-testid="widget-prop-imageOpacity" style={{ marginTop: 6 }}>
+            <OpacityField
+              id={`insp-widget-imageOpacity-${element.id}`}
+              label="Transparansi Foto"
+              value={imageOpacity / 100}
+              disabled={disabled}
+              onChange={(op) => setProp("imageOpacity", Math.round(op * 100))}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 2. Latar Belakang */}
+      <div className={styles.panelStack} data-testid="widget-prop-fillOpacity">
+        <OpacityField
+          id={`insp-widget-fillOpacity-${element.id}`}
+          label="Transparansi Background"
+          value={fillOpacity / 100}
+          disabled={disabled}
+          onChange={(op) => setProp("fillOpacity", Math.round(op * 100))}
+        />
+      </div>
+
+      {/* 3. Garis & Border */}
+      <div className={styles.panelStack}>
+        <div data-testid="widget-prop-strokeWidth">
+          <NumberField
+            id={`insp-widget-strokeWidth-${element.id}`}
+            label="Ketebalan Garis (px)"
+            value={strokeWidth}
+            min={1}
+            max={12}
+            step={1}
+            decimals={0}
+            disabled={disabled}
+            onCommit={(val) => setProp("strokeWidth", val)}
+          />
+        </div>
+
+        <div data-testid="widget-prop-doubleBorder">
+          <label className={styles.fieldLabel} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 4 }}>
+            <input
+              id={`insp-widget-doubleBorder-${element.id}`}
+              type="checkbox"
+              checked={doubleBorder}
+              disabled={disabled}
+              onChange={(e) => setProp("doubleBorder", e.target.checked)}
+            />
+            <span>Garis Ganda (Double Border)</span>
+          </label>
+        </div>
+
+        {doubleBorder && (
+          <div data-testid="widget-prop-innerGap">
+            <NumberField
+              id={`insp-widget-innerGap-${element.id}`}
+              label="Jarak Garis Dalam (px)"
+              value={innerGap}
+              min={2}
+              max={40}
+              step={1}
+              decimals={0}
+              disabled={disabled}
+              onCommit={(val) => setProp("innerGap", val)}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 4. Animasi Garis */}
+      <div className={styles.panelStack}>
+        <div data-testid="widget-prop-animationMode">
+          <SelectField
+            id={`insp-widget-animationMode-${element.id}`}
+            label="Mode Animasi Garis"
+            value={animationMode}
+            disabled={disabled}
+            options={[
+              { value: "once", label: "1x Bergerak saat awal terlihat (Elegan)" },
+              { value: "scroll", label: "Jalan saat di-scroll (Interaktif)" },
+              { value: "loop", label: "Berjalan terus menerus (Loop)" },
+              { value: "none", label: "Tanpa animasi (Statis)" },
+            ]}
+            onChange={(val) => setProp("animationMode", val)}
+          />
+        </div>
+
+        {animationMode !== "none" && (
+          <div data-testid="widget-prop-animationSpeed">
+            <SelectField
+              id={`insp-widget-animationSpeed-${element.id}`}
+              label="Kecepatan Animasi"
+              value={animationSpeed}
+              disabled={disabled}
+              options={[
+                { value: "slow", label: "Lambat & Anggun (3.6s)" },
+                { value: "normal", label: "Standar (2.2s)" },
+                { value: "fast", label: "Cepat (1.5s)" },
+              ]}
+              onChange={(val) => setProp("animationSpeed", val)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -685,10 +837,10 @@ function StaticControl({
         <NumberField
           id={id}
           label={spec.label}
-          value={typeof value === "number" ? value : 1}
-          min={1}
-          max={20}
-          step={1}
+          value={typeof value === "number" ? value : (spec.min ?? 1)}
+          min={spec.min ?? 0}
+          max={spec.max ?? 100}
+          step={spec.step ?? 1}
           decimals={0}
           disabled={disabled}
           onCommit={onChange}

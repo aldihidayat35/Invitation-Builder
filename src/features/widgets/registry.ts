@@ -42,6 +42,10 @@ export interface WidgetPropDefinition<S extends z.ZodType = z.ZodType> extends W
   readonly control?: WidgetPropControl;
   readonly options?: readonly { readonly value: string; readonly label: string }[];
   readonly fields?: readonly { readonly key: string; readonly label: string }[];
+  readonly bindable?: boolean;
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
 }
 
 /** Editor placeholder text (title + optional subtitle). */
@@ -152,6 +156,10 @@ export function defineProp<S extends z.ZodType>(
     readonly control?: WidgetPropControl;
     readonly options?: WidgetPropDefinition["options"];
     readonly fields?: WidgetPropDefinition["fields"];
+    readonly bindable?: boolean;
+    readonly min?: number;
+    readonly max?: number;
+    readonly step?: number;
   } = {},
 ): WidgetPropDefinition<S> {
   return {
@@ -162,5 +170,9 @@ export function defineProp<S extends z.ZodType>(
     ...(options.control !== undefined ? { control: options.control } : {}),
     ...(options.options !== undefined ? { options: options.options } : {}),
     ...(options.fields !== undefined ? { fields: options.fields } : {}),
+    ...(options.bindable !== undefined ? { bindable: options.bindable } : {}),
+    ...(options.min !== undefined ? { min: options.min } : {}),
+    ...(options.max !== undefined ? { max: options.max } : {}),
+    ...(options.step !== undefined ? { step: options.step } : {}),
   };
 }
