@@ -536,12 +536,16 @@
 }
 
 .layerRow {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 1px 4px 1px 2px;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .layerRow:hover {
@@ -551,6 +555,65 @@
 .layerRow[data-selected="true"] {
   border-color: var(--dash-accent);
   background: var(--dash-accent-soft);
+}
+
+.layerRow[data-dragging="true"] {
+  opacity: 0.35;
+  background: var(--dash-surface-sunken);
+  border-style: dashed;
+  border-color: var(--dash-accent);
+}
+
+.layerRow[data-drop-target="above"]::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--dash-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.layerRow[data-drop-target="below"]::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--dash-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.layerGrip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 24px;
+  color: var(--dash-muted);
+  cursor: grab;
+  opacity: 0.35;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.layerRow:hover .layerGrip {
+  opacity: 0.85;
+}
+
+.layerGrip:hover {
+  opacity: 1;
+  color: var(--dash-text);
+}
+
+.layerGrip:active {
+  cursor: grabbing;
 }
 
 .layerRow[data-hidden="true"] .layerText {

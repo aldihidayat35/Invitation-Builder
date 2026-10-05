@@ -33,6 +33,7 @@ import {
   findElement,
   findSection,
   insertElementCopies,
+  moveElementInLayers,
   nudgeElements,
   renameElement as renameElementOp,
   reorderElements,
@@ -124,6 +125,12 @@ export interface EditorActions {
   setLocked(ids: readonly string[], locked: boolean): void;
   setVisible(ids: readonly string[], visible: boolean): void;
   reorder(mode: ReorderMode, ids?: readonly string[]): void;
+  moveElementLayer(
+    sectionId: string,
+    sourceId: string,
+    targetId: string,
+    placement: "above" | "below",
+  ): void;
   // history
   undo(): void;
   redo(): void;
@@ -424,6 +431,11 @@ export function createEditorStore(init: EditorInit): EditorStore {
         const sectionId = sectionOfSelection({ ...state, selectedIds: target });
         if (!sectionId) return;
         edit((doc) => reorderElements(doc, sectionId, target, mode));
+      },
+      moveElementLayer(sectionId, sourceId, targetId, placement) {
+        const state = get();
+        if (state.readOnly) return;
+        edit((doc) => moveElementInLayers(doc, sectionId, sourceId, targetId, placement));
       },
 
       // -------------------------------------------------------------- history

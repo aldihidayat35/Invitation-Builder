@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { defaultWidgetRegistry } from "@/features/widgets";
 import { elementLabel, elementTypeLabel } from "../core/display";
 import { findSection, type ElementKind } from "../core/ops";
@@ -11,6 +11,7 @@ import {
   IconCircle,
   IconEye,
   IconEyeOff,
+  IconGripVertical,
   IconImages,
   IconLayers,
   IconLine,
@@ -45,6 +46,11 @@ export function LeftPanel() {
   // Layers are listed top-first: the last element in the array is rendered on top.
   const layers = section ? [...section.elements].reverse() : [];
   const noSection = !section;
+
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; placement: "above" | "below" } | null>(
+    null,
+  );
 
   return (
     <aside className={styles.side} aria-label="Panel kiri">
@@ -134,6 +140,10 @@ export function LeftPanel() {
           <ul className={styles.layerList} data-testid="layer-list">
             {layers.map((element) => {
               const selected = selectedIds.includes(element.id);
+              const isDragging = draggingId === element.id;
+              const isDropTarget = dropTarget?.id === element.id;
+              const dropPlacement = isDropTarget ? dropTarget.placement : undefined;
+
               return (
                 <li
                   key={element.id}
@@ -142,7 +152,56 @@ export function LeftPanel() {
                   data-selected={selected}
                   data-hidden={!element.visible}
                   data-locked={element.locked}
+                  data-dragging={isDragging}
+                  data-drop-target={dropPlacement}
+                  draggable={!readOnly}
+                  onDragStart={(event) => {
+                    if (readOnly) return;
+                    event.dataTransfer.setData("text/plain", element.id);
+                    event.dataTransfer.effectAllowed = "move";
+                    setDraggingId(element.id);
+                  }}
+                  onDragOver={(event) => {
+                    if (readOnly || !draggingId || draggingId === element.id) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    const placement = event.clientY < midY ? "above" : "below";
+                    if (dropTarget?.id !== element.id || dropTarget?.placement !== placement) {
+                      setDropTarget({ id: element.id, placement });
+                    }
+                  }}
+                  onDragLeave={(event) => {
+                    if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+                    if (dropTarget?.id === element.id) {
+                      setDropTarget(null);
+                    }
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const sourceId = event.dataTransfer.getData("text/plain") || draggingId;
+                    if (sourceId && dropTarget && section && sourceId !== dropTarget.id) {
+                      store
+                        .getState()
+                        .moveElementLayer(section.id, sourceId, dropTarget.id, dropTarget.placement);
+                    }
+                    setDraggingId(null);
+                    setDropTarget(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingId(null);
+                    setDropTarget(null);
+                  }}
                 >
+                  <span
+                    className={styles.layerGrip}
+                    title="Tarik untuk memindahkan urutan layer"
+                    aria-label="Tarik urutan layer"
+                    data-testid={`layer-grip-${element.id}`}
+                  >
+                    <IconGripVertical size={13} />
+                  </span>
                   <button
                     type="button"
                     className={styles.layerName}

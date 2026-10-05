@@ -205,6 +205,16 @@ export const IconCursor = (p: IconProps) => (
     <path d="m5 3 14 7-6 2-2 6L5 3Z" />
   </Svg>
 );
+export const IconGripVertical = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="9" cy="6" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="6" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="18" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="18" r="1.5" fill="currentColor" stroke="none" />
+  </Svg>
+);
 export const IconSection = (p: IconProps) => (
   <Svg {...p}>
     <rect x="4" y="3.5" width="16" height="7" rx="1.5" />

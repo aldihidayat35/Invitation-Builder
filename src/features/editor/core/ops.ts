@@ -578,6 +578,43 @@ export function reorderElements(
   });
 }
 
+/**
+ * Moves an element in the layer order within a section.
+ * "above" means the source element will be placed above the target element in the visual layer list
+ * (i.e. higher z-index, rendered later).
+ * "below" means the source element will be placed below the target element in the visual layer list
+ * (i.e. lower z-index, rendered earlier).
+ */
+export function moveElementInLayers(
+  doc: CanonicalDocument,
+  sectionId: string,
+  sourceId: string,
+  targetId: string,
+  placement: "above" | "below",
+): CanonicalDocument {
+  if (sourceId === targetId) return doc;
+
+  return mapSection(doc, sectionId, (section) => {
+    // Visual layers order: index 0 is top-most (last in elements array)
+    const layers = [...section.elements].reverse();
+    const sourceIdx = layers.findIndex((e) => e.id === sourceId);
+    if (sourceIdx === -1) return section;
+
+    const [sourceElement] = layers.splice(sourceIdx, 1);
+    if (!sourceElement) return section;
+
+    const targetIdx = layers.findIndex((e) => e.id === targetId);
+    if (targetIdx === -1) return section;
+
+    const insertIdx = placement === "above" ? targetIdx : targetIdx + 1;
+    layers.splice(insertIdx, 0, sourceElement);
+
+    const newElements = layers.reverse();
+    const unchanged = newElements.every((el, i) => el === section.elements[i]);
+    return unchanged ? section : { ...section, elements: newElements };
+  });
+}
+
 // ----------------------------------------------------- asset / widget elements
 
 function insertNewElement(

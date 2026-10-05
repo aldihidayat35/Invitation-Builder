@@ -199,8 +199,9 @@ describe("Image Fade UI in Inspector", () => {
     const presetBottomBtn = screen.getByTestId("fade-preset-bottom-40");
     fireEvent.click(presetBottomBtn);
 
-    const el = store.getState().history.present.sections[0].elements[0];
-    if (el.type !== "image") throw new Error("Expected image element");
+    const sec = store.getState().history.present.sections[0];
+    const el = sec?.elements[0];
+    if (!el || el.type !== "image") throw new Error("Expected image element");
 
     expect(el.style.fade).toBeDefined();
     expect(el.style.fade?.mode).toBe("linear");
@@ -223,8 +224,9 @@ describe("Image Fade UI in Inspector", () => {
     const presetRadial50 = screen.getByTestId("fade-preset-radial-50");
     fireEvent.click(presetRadial50);
 
-    const el = store.getState().history.present.sections[0].elements[0];
-    if (el.type !== "image") throw new Error("Expected image element");
+    const sec = store.getState().history.present.sections[0];
+    const el = sec?.elements[0];
+    if (!el || el.type !== "image") throw new Error("Expected image element");
 
     expect(el.style.fade?.mode).toBe("radial");
     expect(el.style.fade?.radial).toBe(50);
@@ -250,8 +252,9 @@ describe("Image Fade UI in Inspector", () => {
     expect(resetBtn).toBeInTheDocument();
     fireEvent.click(resetBtn);
 
-    const el = store.getState().history.present.sections[0].elements[0];
-    if (el.type !== "image") throw new Error("Expected image element");
+    const sec = store.getState().history.present.sections[0];
+    const el = sec?.elements[0];
+    if (!el || el.type !== "image") throw new Error("Expected image element");
 
     expect(el.style.fade).toBeUndefined();
   });
