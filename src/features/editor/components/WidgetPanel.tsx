@@ -10,6 +10,7 @@ import {
   type WidgetStyleVariant,
   type WidgetPropDefinition,
 } from "@/features/widgets";
+import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
@@ -225,12 +226,15 @@ export function WidgetPanel({
                 data-testid={`widget-variant-${v.id}`}
                 aria-pressed={active}
                 disabled={disabled}
-                onClick={() =>
+                onClick={() => {
                   setStyle({
                     variant: v.id,
                     radius: v.defaultRadius !== undefined ? v.defaultRadius : element.style.radius,
-                  })
-                }
+                  });
+                  if (element.widgetType === "ornamentFrame") {
+                    setProp("shape", v.id);
+                  }
+                }}
               >
                 <WidgetVariantThumbnail widgetType={element.widgetType} variant={v} />
                 <span className={styles.widgetVariantLabel}>
@@ -494,6 +498,29 @@ function WidgetVariantThumbnail({
   widgetType: string;
   variant: WidgetStyleVariant;
 }) {
+  if (widgetType === "ornamentFrame") {
+    const shape = getOrnamentShape(variant.id);
+    return (
+      <span
+        className={styles.widgetVariantPreview}
+        data-preview-widget={widgetType}
+        data-preview-variant={variant.id}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "6px 8px",
+        }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 400 260" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+          <path d={shape.fullPath} fill="none" stroke="currentColor" strokeWidth={18} />
+          <path d={shape.innerFullPath} fill="none" stroke="currentColor" strokeWidth={8} opacity={0.6} />
+        </svg>
+      </span>
+    );
+  }
+
   return (
     <span
       className={styles.widgetVariantPreview}

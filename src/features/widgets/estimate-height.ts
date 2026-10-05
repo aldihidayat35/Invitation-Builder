@@ -114,6 +114,10 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
       return Math.round(w * 1.2);
     }
 
+    case "ornamentFrame": {
+      return Math.round((w * 260) / 400);
+    }
+
     default:
       return element.frame.h;
   }

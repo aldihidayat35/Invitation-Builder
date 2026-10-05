@@ -13,6 +13,7 @@ import { RsvpWidget } from "./RsvpWidget";
 import { TimelineWidget } from "./TimelineWidget";
 import { WishesWidget } from "./WishesWidget";
 import { CoupleProfileWidget } from "./CoupleProfileWidget";
+import { OrnamentFrameWidget } from "./OrnamentFrameWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -104,6 +105,30 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       showParents={p.showParents}
       groom={p.groom}
       bride={p.bride}
+      style={style}
+    />
+  ),
+  ornamentFrame: (p, style) => (
+    <OrnamentFrameWidget
+      shape={typeof p.shape === "string" ? p.shape : undefined}
+      title={typeof p.title === "string" ? p.title : undefined}
+      subtitle={typeof p.subtitle === "string" ? p.subtitle : undefined}
+      strokeWidth={typeof p.strokeWidth === "number" ? p.strokeWidth : undefined}
+      strokeColor={typeof p.strokeColor === "string" ? p.strokeColor : undefined}
+      fillColor={typeof p.fillColor === "string" ? p.fillColor : undefined}
+      glowColor={typeof p.glowColor === "string" ? p.glowColor : undefined}
+      doubleBorder={typeof p.doubleBorder === "boolean" ? p.doubleBorder : undefined}
+      animationMode={
+        p.animationMode === "scroll" || p.animationMode === "loop" || p.animationMode === "none"
+          ? p.animationMode
+          : undefined
+      }
+      animationSpeed={
+        p.animationSpeed === "slow" || p.animationSpeed === "normal" || p.animationSpeed === "fast"
+          ? p.animationSpeed
+          : undefined
+      }
+      showGlow={typeof p.showGlow === "boolean" ? p.showGlow : undefined}
       style={style}
     />
   ),

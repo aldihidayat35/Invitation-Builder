@@ -108,6 +108,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
       "guestGreeting",
       "map",
       "music",
+      "ornamentFrame",
       "photoFrame",
       "rsvp",
       "timeline",
@@ -141,7 +142,7 @@ describe("defaultWidgetRegistry (FR-WDG-001, P-05, P-09)", () => {
     for (const doc of [make(), make()]) {
       expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);
       const widgets = doc.sections.flatMap((s) => s.elements).filter((e) => e.type === "widget");
-      expect(widgets).toHaveLength(11);
+      expect(widgets).toHaveLength(12);
       for (const widget of widgets) {
         expect(widget.style.variant).toBeTruthy();
         const resolved = defaultWidgetRegistry.resolve(widget.widgetType);

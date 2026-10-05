@@ -377,6 +377,17 @@ describe("Canvas Widget Visuals", () => {
           bride: { name: "Alya", fullName: "Alya Putri Saraswati, S.Ked.", parents: "Putri dari Bpk. Hendra" },
         },
       },
+      ornamentFrame: {
+        frame: { x: 0, y: 0, w: 326, h: 220, rotation: 0 },
+        props: {
+          shape: "notched-bracket",
+          title: "The Wedding Of",
+          subtitle: "Rama & Alya",
+          strokeWidth: 2,
+          doubleBorder: true,
+          animationMode: "scroll",
+        },
+      },
     };
 
     for (const [widgetType, sample] of Object.entries(samples)) {

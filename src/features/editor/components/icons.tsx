@@ -314,6 +314,25 @@ export const IconWishes = (p: IconProps) => (
   </Svg>
 );
 
+export function IconOrnamentFrame({ size = 18, color = "currentColor", ...rest }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <path d="M7 3h10M7 21h10M3 7v10M21 7v10M7 3a4 4 0 0 0-4 4M17 3a4 4 0 0 1 4 4M3 17a4 4 0 0 0 4 4M21 17a4 4 0 0 1-4 4" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -325,6 +344,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   photoFrame: IconFrame,
   timeline: IconTimeline,
   wishes: IconWishes,
+  ornamentFrame: IconOrnamentFrame,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {

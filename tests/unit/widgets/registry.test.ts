@@ -93,7 +93,11 @@ describe("widget registry", () => {
       const variants = getWidgetStyleVariants(definition.type);
       const ids = variants.map((variant) => variant.id);
       const expectedCount =
-        definition.type === "gift" || definition.type === "gallery" || definition.type === "coupleProfile" ? 10 : 5;
+        definition.type === "gift" || definition.type === "gallery" || definition.type === "coupleProfile"
+          ? 10
+          : definition.type === "ornamentFrame"
+            ? 6
+            : 5;
       expect(variants).toHaveLength(expectedCount);
       expect(new Set(ids).size).toBe(expectedCount);
       expect(ids).toContain(getDefaultWidgetStyle(definition.type).variant);

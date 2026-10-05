@@ -348,6 +348,86 @@ export const coupleProfileWidget: WidgetDefinition = {
   },
 };
 
+export const ORNAMENT_FRAME_WIDGET_TYPE = "ornamentFrame";
+
+export const ornamentFrameWidget: WidgetDefinition = {
+  type: ORNAMENT_FRAME_WIDGET_TYPE,
+  version: 1,
+  label: "Bingkai Ornamen",
+  defaultFrame: { w: 326, h: 220 },
+  defaultStyle: getDefaultWidgetStyle(ORNAMENT_FRAME_WIDGET_TYPE),
+  defaultProps: {
+    shape: "notched-bracket",
+    title: "",
+    subtitle: "",
+    strokeWidth: 2,
+    doubleBorder: true,
+    animationMode: "scroll",
+    animationSpeed: "normal",
+    showGlow: true,
+  },
+  props: {
+    shape: defineProp(
+      "text",
+      "Bentuk Bingkai",
+      z.enum([
+        "notched-bracket",
+        "baroque-crest",
+        "wavy-cartouche",
+        "royal-plaque",
+        "scalloped-stamp",
+        "pointed-cartouche",
+      ]),
+      {
+        control: "select",
+        options: [
+          { value: "notched-bracket", label: "Sudut Cekung (Vintage Plaque)" },
+          { value: "baroque-crest", label: "Mahkota Barok (Royal Crest)" },
+          { value: "wavy-cartouche", label: "Pita Bergelombang (Rococo Waves)" },
+          { value: "royal-plaque", label: "Plakat Oval Kerajaan (Smooth Plaque)" },
+          { value: "scalloped-stamp", label: "Prangko Gerigi Klasik (Scalloped Stamp)" },
+          { value: "pointed-cartouche", label: "Bintang Lancip Barok (Pointed Plaque)" },
+        ],
+      },
+    ),
+    title: defineProp("text", "Judul / Teks (Opsional)", z.string().max(100).optional()),
+    subtitle: defineProp("text", "Subjudul (Opsional)", z.string().max(100).optional()),
+    strokeWidth: defineProp("number", "Ketebalan Garis", z.number().min(1).max(12).default(2)),
+    doubleBorder: defineProp("boolean", "Garis Ganda (Double Border)", z.boolean().default(true)),
+    animationMode: defineProp(
+      "text",
+      "Mode Animasi Garis",
+      z.enum(["scroll", "loop", "none"]).default("scroll"),
+      {
+        control: "select",
+        options: [
+          { value: "scroll", label: "Jalan saat di-scroll (Interaktif)" },
+          { value: "loop", label: "Berjalan terus menerus (Loop)" },
+          { value: "none", label: "Tanpa animasi (Statis)" },
+        ],
+      },
+    ),
+    animationSpeed: defineProp(
+      "text",
+      "Kecepatan Animasi",
+      z.enum(["slow", "normal", "fast"]).default("normal"),
+      {
+        control: "select",
+        options: [
+          { value: "slow", label: "Lambat & Anggun (4.5s)" },
+          { value: "normal", label: "Standar (3s)" },
+          { value: "fast", label: "Cepat (1.8s)" },
+        ],
+      },
+    ),
+    showGlow: defineProp("boolean", "Efek Kilau Garis", z.boolean().default(true)),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.title) || "Bingkai Ornamen",
+    subtitle: `Bentuk: ${describeProp(props.shape) || "Sudut Cekung"}`,
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
@@ -357,6 +437,7 @@ export const P1_WIDGETS: readonly WidgetDefinition[] = [
   timelineWidget,
   wishesWidget,
   coupleProfileWidget,
+  ornamentFrameWidget,
 ];
 
 

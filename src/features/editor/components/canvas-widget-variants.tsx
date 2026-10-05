@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Circle, Group, Image as KonvaImage, Line, Rect, Text } from "react-konva";
+import { Circle, Group, Image as KonvaImage, Line, Path, Rect, Text } from "react-konva";
 import type { Element, ThemeTokens } from "@/lib/schema";
 import {
   DEFAULT_COUNTDOWN_LABELS,
@@ -15,6 +15,7 @@ import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
 import { parseWishItems } from "@/features/widgets/runtime/WishesWidget";
 import { parseCouplePerson } from "@/features/widgets/runtime/CoupleProfileWidget";
+import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
 import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
@@ -3796,6 +3797,76 @@ function CoupleProfileVisual({
   );
 }
 
+function OrnamentFrameVisual({
+  element,
+  tokens,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+}) {
+  const { w, h } = element.frame;
+  const { color, background } = colors(element, tokens);
+  const strokeColor = color || "#b4833e";
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const shapeId =
+    (typeof props.shape === "string" ? props.shape : element.style.variant) || "notched-bracket";
+  const shapeData = getOrnamentShape(shapeId);
+  const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
+  const doubleBorder = props.doubleBorder !== false;
+  const title = typeof props.title === "string" ? props.title : "";
+  const subtitle = typeof props.subtitle === "string" ? props.subtitle : "";
+
+  const scaleX = w / 400;
+  const scaleY = h / 260;
+
+  return (
+    <Group width={w} height={h}>
+      <Path
+        data={shapeData.fullPath}
+        fill={background === "transparent" ? undefined : background}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        scaleX={scaleX}
+        scaleY={scaleY}
+      />
+      {doubleBorder && (
+        <Path
+          data={shapeData.innerFullPath}
+          stroke={strokeColor}
+          strokeWidth={Math.max(1, strokeWidth * 0.65)}
+          opacity={0.45}
+          scaleX={scaleX}
+          scaleY={scaleY}
+        />
+      )}
+      {title && (
+        <Text
+          text={title}
+          x={16}
+          y={subtitle ? h / 2 - 18 : h / 2 - 8}
+          width={w - 32}
+          align="center"
+          fill={strokeColor}
+          fontSize={15}
+          fontStyle="bold"
+        />
+      )}
+      {subtitle && (
+        <Text
+          text={subtitle}
+          x={16}
+          y={title ? h / 2 + 6 : h / 2 - 6}
+          width={w - 32}
+          align="center"
+          fill={strokeColor}
+          fontSize={11}
+          opacity={0.8}
+        />
+      )}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -3826,6 +3897,8 @@ export function CurrentWidgetVisual({
       return <WishesVisual element={element} tokens={tokens} />;
     case "coupleProfile":
       return <CoupleProfileVisual element={element} tokens={tokens} />;
+    case "ornamentFrame":
+      return <OrnamentFrameVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

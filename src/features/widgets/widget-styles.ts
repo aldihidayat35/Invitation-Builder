@@ -492,6 +492,44 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 14,
     },
   ],
+  ornamentFrame: [
+    {
+      id: "notched-bracket",
+      label: "Sudut Cekung (Vintage Plaque)",
+      description: "Plakat klasik dengan sudut cekung ke dalam dan bingkai ganda elegan.",
+      defaultRadius: 0,
+    },
+    {
+      id: "baroque-crest",
+      label: "Mahkota Barok (Royal Crest)",
+      description: "Bentuk mahkota barok megah dengan puncak lancip dan lekukan anggun di setiap sisi.",
+      defaultRadius: 0,
+    },
+    {
+      id: "wavy-cartouche",
+      label: "Pita Bergelombang (Rococo Waves)",
+      description: "Pigura bergelombang ritmis ala Rococo dengan alur dinamis yang simetris dan artistik.",
+      defaultRadius: 0,
+    },
+    {
+      id: "royal-plaque",
+      label: "Plakat Oval Kerajaan (Smooth Plaque)",
+      description: "Plakat lengkung halus gaya kerajaan dengan kuping membulat dan pinggang berlekuk lembut.",
+      defaultRadius: 0,
+    },
+    {
+      id: "scalloped-stamp",
+      label: "Prangko Gerigi Klasik (Scalloped Stamp)",
+      description: "Bingkai tepi bergerigi halus seperti segel prangko pos vintage dengan outline ganda mewah.",
+      defaultRadius: 0,
+    },
+    {
+      id: "pointed-cartouche",
+      label: "Bintang Lancip Barok (Pointed Plaque)",
+      description: "Plakat ornamen dengan ujung sudut meruncing simetris dan puncak dekoratif di setiap sisi.",
+      defaultRadius: 0,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -506,6 +544,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
   wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
   coupleProfile: legacy(["side-by-side", "stacked-cards", "circular-medallion", "arch-window", "luxury-gold"]),
+  ornamentFrame: legacy(["notched-bracket", "baroque-crest", "wavy-cartouche", "royal-plaque", "scalloped-stamp", "pointed-cartouche"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(
