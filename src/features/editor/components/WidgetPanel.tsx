@@ -350,7 +350,7 @@ export function WidgetPanel({
                   disabled={disabled}
                   onChange={(accounts) => setProp(name, accounts)}
                 />
-              ) : element.widgetType === "photoFrame" && name === "image" ? (
+              ) : (element.widgetType === "photoFrame" || element.widgetType === "ornamentFrame") && name === "image" ? (
                 <PhotoFrameImageControl
                   value={value}
                   disabled={disabled}

@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getOrnamentShape } from "../ornament-shapes";
+import { parseFrameImage } from "./PhotoFrameWidget";
 import type { WidgetStyleProps } from "./WidgetFrame";
 import styles from "./OrnamentFrameWidget.module.css";
 
 export interface OrnamentFrameWidgetProps {
   readonly shape?: string;
+  readonly image?: unknown;
   readonly title?: string;
   readonly subtitle?: string;
+  readonly caption?: string;
   readonly strokeWidth?: number;
   readonly strokeColor?: string;
   readonly fillColor?: string;
@@ -20,23 +23,12 @@ export interface OrnamentFrameWidgetProps {
   readonly style?: WidgetStyleProps;
 }
 
-function findScrollContainer(element: HTMLElement | null): HTMLElement | Window {
-  if (!element || typeof window === "undefined") return window;
-  let parent = element.parentElement;
-  while (parent && parent !== document.body && parent !== document.documentElement) {
-    const overflowY = window.getComputedStyle(parent).overflowY;
-    if (overflowY === "auto" || overflowY === "scroll") {
-      return parent;
-    }
-    parent = parent.parentElement;
-  }
-  return window;
-}
-
 export function OrnamentFrameWidget({
   shape,
+  image,
   title,
   subtitle,
+  caption,
   strokeWidth = 2,
   strokeColor,
   fillColor,
@@ -49,24 +41,21 @@ export function OrnamentFrameWidget({
 }: OrnamentFrameWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftPathRef = useRef<SVGPathElement>(null);
-  const rightPathRef = useRef<SVGPathElement>(null);
+  const rawId = useId();
+  const clipId = `ornament-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const filterId = `ornament-glow-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
-  const activeShapeId = shape || style?.variant || "notched-bracket";
+  const activeShapeId = shape || style?.variant || "arch-window";
   const shapeData = getOrnamentShape(activeShapeId);
 
   const resolvedStroke = strokeColor || style?.color || "#b4833e";
   const resolvedFill = fillColor || style?.background || "transparent";
   const resolvedGlow = glowColor || "#fbbf24";
+  const imgSrc = parseFrameImage(image);
 
-  const [pathLength, setPathLength] = useState<number>(550);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [leftTip, setLeftTip] = useState<{ x: number; y: number }>({ x: 200, y: 10 });
-  const [rightTip, setRightTip] = useState<{ x: number; y: number }>({ x: 200, y: 10 });
-  const [isMet, setIsMet] = useState(false);
-
-  const isNone = animationMode === "none";
-  const effectiveProgress = isNone ? 1 : scrollProgress;
-  const isEffectiveMet = isNone ? true : isMet;
+  const [pathLength, setPathLength] = useState<number>(600);
+  const [isActive, setIsActive] = useState<boolean>(() => animationMode === "none");
+  const [isMet, setIsMet] = useState<boolean>(() => animationMode === "none");
 
   // Measure path length on mount & shape switch
   useEffect(() => {
@@ -80,7 +69,7 @@ export function OrnamentFrameWidget({
     }
   }, [shapeData.id]);
 
-  // Handle scroll animation
+  // Smooth IntersectionObserver-driven scroll reveal
   useEffect(() => {
     if (animationMode !== "scroll" || typeof window === "undefined") {
       return;
@@ -89,101 +78,64 @@ export function OrnamentFrameWidget({
     const container = containerRef.current;
     if (!container) return;
 
-    const scrollTarget = findScrollContainer(container);
+    if (typeof IntersectionObserver === "undefined") {
+      const fallbackTimer = setTimeout(() => {
+        setIsActive(true);
+        setIsMet(true);
+      }, 0);
+      return () => clearTimeout(fallbackTimer);
+    }
 
-    let rafId: number | null = null;
-    let targetProgress = 0;
-    let currentProgress = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const updateTips = (progress: number) => {
-      if (leftPathRef.current && typeof leftPathRef.current.getPointAtLength === "function") {
-        try {
-          const ptL = leftPathRef.current.getPointAtLength(progress * pathLength);
-          setLeftTip({ x: ptL.x, y: ptL.y });
-        } catch {
-          // ignore in testing
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setIsActive(true);
+            const animDurationMs =
+              animationSpeed === "slow" ? 3600 : animationSpeed === "fast" ? 1500 : 2200;
+            timer = setTimeout(() => {
+              setIsMet(true);
+            }, animDurationMs);
+          } else {
+            // Reset when scrolled far away so it can re-trigger gracefully
+            if (entry.intersectionRatio <= 0.05) {
+              setIsActive(false);
+              setIsMet(false);
+              if (timer) clearTimeout(timer);
+            }
+          }
         }
-      }
-      if (rightPathRef.current && typeof rightPathRef.current.getPointAtLength === "function") {
-        try {
-          const ptR = rightPathRef.current.getPointAtLength(progress * pathLength);
-          setRightTip({ x: ptR.x, y: ptR.y });
-        } catch {
-          // ignore in testing
-        }
-      }
-    };
+      },
+      {
+        threshold: [0, 0.15, 0.3],
+        rootMargin: "0px 0px -8% 0px",
+      },
+    );
 
-    const animate = () => {
-      const diff = targetProgress - currentProgress;
-      if (Math.abs(diff) > 0.002) {
-        currentProgress += diff * 0.18;
-        setScrollProgress(currentProgress);
-        updateTips(currentProgress);
-        setIsMet(currentProgress >= 0.96);
-        rafId = requestAnimationFrame(animate);
-      } else {
-        currentProgress = targetProgress;
-        setScrollProgress(currentProgress);
-        updateTips(currentProgress);
-        setIsMet(currentProgress >= 0.96);
-        rafId = null;
-      }
-    };
-
-    const handleScroll = () => {
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const viewportH =
-        scrollTarget instanceof HTMLElement
-          ? scrollTarget.getBoundingClientRect().height
-          : window.innerHeight;
-
-      const viewportTop =
-        scrollTarget instanceof HTMLElement
-          ? scrollTarget.getBoundingClientRect().top
-          : 0;
-
-      const elemRelativeTop = rect.top - viewportTop;
-      // Start when element enters from bottom, complete when it reaches upper-middle
-      const enterThreshold = viewportH * 0.95;
-      const completeThreshold = viewportH * 0.35;
-
-      const progress = (enterThreshold - elemRelativeTop) / (enterThreshold - completeThreshold);
-      targetProgress = Math.max(0, Math.min(1, progress));
-
-      if (!rafId) {
-        rafId = requestAnimationFrame(animate);
-      }
-    };
-
-    handleScroll();
-
-    scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
+    observer.observe(container);
 
     return () => {
-      scrollTarget.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
     };
-  }, [animationMode, pathLength]);
+  }, [animationMode, animationSpeed]);
 
-  const dashOffset =
-    animationMode === "scroll"
-      ? pathLength * (1 - effectiveProgress)
-      : animationMode === "none"
-        ? 0
-        : undefined;
+  const durationStr = useMemo(() => {
+    if (animationSpeed === "slow") return "3.6s";
+    if (animationSpeed === "fast") return "1.5s";
+    return "2.2s";
+  }, [animationSpeed]);
 
-  const durationStyle =
-    animationSpeed === "slow"
-      ? { animationDuration: "4.5s" }
-      : animationSpeed === "fast"
-        ? { animationDuration: "1.8s" }
-        : { animationDuration: "3s" };
+  const dashOffset = useMemo(() => {
+    if (animationMode === "none") return 0;
+    if (animationMode === "loop") return undefined;
+    return isActive ? 0 : pathLength;
+  }, [animationMode, isActive, pathLength]);
+
+  const hasPhoto = Boolean(imgSrc);
+  const hasText = Boolean(title || subtitle || caption);
 
   return (
     <div
@@ -195,6 +147,7 @@ export function OrnamentFrameWidget({
       style={{
         ["--frame-text" as string]: resolvedStroke,
         ["--dash-len" as string]: `${pathLength}px`,
+        ["--anim-duration" as string]: durationStr,
       }}
     >
       <svg
@@ -204,38 +157,56 @@ export function OrnamentFrameWidget({
         aria-hidden="true"
       >
         <defs>
-          <filter id={`ornament-glow-${shapeData.id}`} x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          {hasPhoto && (
+            <clipPath id={clipId}>
+              <path d={doubleBorder ? shapeData.innerFullPath : shapeData.fullPath} />
+            </clipPath>
+          )}
         </defs>
 
         {/* 1. Base Fill */}
         <path d={shapeData.fullPath} fill={resolvedFill} stroke="none" />
 
-        {/* 2. Track Stroke (Light background outline) */}
+        {/* 2. Photo inside the shape (clipped to contour) */}
+        {hasPhoto && imgSrc && (
+          <image
+            href={imgSrc}
+            x="0"
+            y="0"
+            width="400"
+            height="260"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#${clipId})`}
+          />
+        )}
+
+        {/* 3. Track Stroke (Light background outline track) */}
         <path
           d={shapeData.fullPath}
           fill="none"
           stroke={resolvedStroke}
           strokeWidth={Math.max(1, strokeWidth - 0.5)}
-          opacity={animationMode === "none" ? 0 : 0.25}
+          opacity={animationMode === "none" ? 0 : 0.22}
           className={styles.baseTrack}
         />
 
-        {/* 3. Inner Double-Border (if enabled) */}
+        {/* 4. Inner Double-Border (if enabled) */}
         {doubleBorder && (
           <path
             d={shapeData.innerFullPath}
             fill="none"
             stroke={resolvedStroke}
             strokeWidth={Math.max(0.75, strokeWidth * 0.65)}
-            opacity={0.45}
+            opacity={0.4}
             className={styles.innerTrack}
           />
         )}
 
-        {/* 4. Left Animated Path */}
+        {/* 5. Left Animated Path (Starts top-center, flows down left edge) */}
         <path
           ref={leftPathRef}
           d={shapeData.leftPath}
@@ -244,69 +215,49 @@ export function OrnamentFrameWidget({
           strokeWidth={strokeWidth}
           strokeDasharray={pathLength}
           strokeDashoffset={dashOffset}
-          className={`${styles.activeStroke} ${
+          className={`${styles.animatedStroke} ${
             animationMode === "loop" ? styles.loopActiveLeft : ""
           }`}
-          style={animationMode === "loop" ? durationStyle : undefined}
         />
 
-        {/* 5. Right Animated Path */}
+        {/* 6. Right Animated Path (Starts top-center, flows down right edge) */}
         <path
-          ref={rightPathRef}
           d={shapeData.rightPath}
           fill="none"
           stroke={resolvedStroke}
           strokeWidth={strokeWidth}
           strokeDasharray={pathLength}
           strokeDashoffset={dashOffset}
-          className={`${styles.activeStroke} ${
+          className={`${styles.animatedStroke} ${
             animationMode === "loop" ? styles.loopActiveRight : ""
           }`}
-          style={animationMode === "loop" ? durationStyle : undefined}
         />
 
-        {/* 6. Glowing Comet Head at Leading Edge (Top to Bottom Meeting Effect) */}
-        {showGlow && animationMode === "scroll" && effectiveProgress > 0.02 && (
-          <>
-            <circle
-              cx={leftTip.x}
-              cy={leftTip.y}
-              r={strokeWidth * 1.5 + 1.5}
-              fill={resolvedGlow}
-              opacity={effectiveProgress > 0.05 ? 0.95 : 0}
-              filter={`url(#ornament-glow-${shapeData.id})`}
-              className={styles.cometGlow}
-            />
-            <circle
-              cx={rightTip.x}
-              cy={rightTip.y}
-              r={strokeWidth * 1.5 + 1.5}
-              fill={resolvedGlow}
-              opacity={effectiveProgress > 0.05 ? 0.95 : 0}
-              filter={`url(#ornament-glow-${shapeData.id})`}
-              className={styles.cometGlow}
-            />
-          </>
-        )}
-
-        {/* 7. Meeting Pulse Shimmer when both ends meet at bottom */}
-        {showGlow && isEffectiveMet && (
+        {/* 7. Meeting Pulse Shimmer when lines meet at the bottom */}
+        {showGlow && isMet && (
           <circle
             cx={200}
             cy={250}
             r={strokeWidth * 2.2 + 2}
             fill={resolvedGlow}
-            filter={`url(#ornament-glow-${shapeData.id})`}
+            filter={`url(#${filterId})`}
             className={styles.shimmerPulse}
           />
         )}
       </svg>
 
-      {/* Optional Inner Typography */}
-      {(title || subtitle) && (
-        <div className={styles.innerContent}>
-          {title && <h3 className={styles.title}>{title}</h3>}
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+      {/* 8. Text & Labels (Optional) */}
+      {hasText && (
+        <div
+          className={`${styles.innerContent} ${hasPhoto ? "" : styles.contentCenter}`}
+        >
+          {title && <p className={styles.topBadge}>{title}</p>}
+          {(subtitle || caption) && (
+            <div className={styles.bottomGroup}>
+              {subtitle && <h3 className={styles.title}>{subtitle}</h3>}
+              {caption && <p className={styles.caption}>{caption}</p>}
+            </div>
+          )}
         </div>
       )}
     </div>

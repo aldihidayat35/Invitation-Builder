@@ -1,12 +1,12 @@
 /**
- * Geometry and SVG path definitions for the 6 ornamental shape variants.
+ * Geometry and SVG path definitions for the ornamental shape variants.
  *
  * All coordinates are normalized in a standard 400x260 coordinate box.
  * Each shape provides:
  * - leftPath: Starts at top apex (200, Y_TOP) and traces down the LEFT half to (200, Y_BOTTOM)
  * - rightPath: Starts at top apex (200, Y_TOP) and traces down the RIGHT half to (200, Y_BOTTOM)
  * - fullPath: Closed outer perimeter (for fill & static outlines)
- * - innerLeftPath, innerRightPath, innerFullPath: Delicate concentric double-border frame
+ * - innerLeftPath, innerRightPath, innerFullPath: Delicate concentric double-border frame & photo mask
  */
 
 export interface OrnamentShapeData {
@@ -22,6 +22,23 @@ export interface OrnamentShapeData {
 }
 
 export const ORNAMENT_SHAPES: readonly OrnamentShapeData[] = [
+  {
+    id: "arch-window",
+    label: "Kubah Lengkung (Arch Window)",
+    description: "Kubah lengkung elegan seperti bingkai jendela katedral dengan garis mengalir dari puncak atas ke bawah.",
+    leftPath:
+      "M 200 10 C 110 10, 30 60, 30 120 L 30 240 C 30 248, 40 250, 60 250 L 200 250",
+    rightPath:
+      "M 200 10 C 290 10, 370 60, 370 120 L 370 240 C 370 248, 360 250, 340 250 L 200 250",
+    fullPath:
+      "M 200 10 C 290 10, 370 60, 370 120 L 370 240 C 370 248, 360 250, 340 250 L 200 250 L 60 250 C 40 250, 30 248, 30 240 L 30 120 C 30 60, 110 10, 200 10 Z",
+    innerLeftPath:
+      "M 200 22 C 118 22, 44 68, 44 122 L 44 238 C 44 242, 50 244, 64 244 L 200 244",
+    innerRightPath:
+      "M 200 22 C 282 22, 356 68, 356 122 L 356 238 C 356 242, 350 244, 336 244 L 200 244",
+    innerFullPath:
+      "M 200 22 C 282 22, 356 68, 356 122 L 356 238 C 356 242, 350 244, 336 244 L 200 244 L 64 244 C 50 244, 44 242, 44 238 L 44 122 C 44 68, 118 22, 200 22 Z",
+  },
   {
     id: "notched-bracket",
     label: "Sudut Cekung (Vintage Plaque)",

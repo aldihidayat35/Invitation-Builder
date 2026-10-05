@@ -9,10 +9,11 @@ import { WidgetRuntime } from "@/features/widgets/runtime";
 import { defaultWidgetRegistry } from "@/features/widgets";
 
 describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", () => {
-  it("provides 6 distinct ornamental shape definitions matching the reference designs", () => {
-    expect(ORNAMENT_SHAPES).toHaveLength(6);
+  it("provides 7 distinct ornamental shape definitions matching the reference designs", () => {
+    expect(ORNAMENT_SHAPES).toHaveLength(7);
     const ids = ORNAMENT_SHAPES.map((s) => s.id);
     expect(ids).toEqual([
+      "arch-window",
       "notched-bracket",
       "baroque-crest",
       "wavy-cartouche",
@@ -31,7 +32,7 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
 
   it("resolves ornament shapes safely with fallback", () => {
     expect(getOrnamentShape("baroque-crest").id).toBe("baroque-crest");
-    expect(getOrnamentShape("unknown-shape").id).toBe("notched-bracket");
+    expect(getOrnamentShape("unknown-shape").id).toBe("arch-window");
   });
 
   it("is registered in defaultWidgetRegistry", () => {
@@ -39,11 +40,11 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     expect(resolved.kind).toBe("known");
     if (resolved.kind === "known") {
       expect(resolved.definition.label).toBe("Bingkai Ornamen");
-      expect(resolved.definition.defaultFrame).toEqual({ w: 326, h: 220 });
+      expect(resolved.definition.defaultFrame).toEqual({ w: 326, h: 360 });
     }
   });
 
-  it("renders each of the 6 variants with its testid and data-variant attribute", () => {
+  it("renders each of the 7 variants with its testid and data-variant attribute", () => {
     for (const shape of ORNAMENT_SHAPES) {
       const { unmount } = render(
         <OrnamentFrameWidget
@@ -118,5 +119,26 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     expect(widget).toBeInTheDocument();
     expect(widget).toHaveAttribute("data-variant", "pointed-cartouche");
     expect(screen.getByText("Walimatul 'Urs")).toBeInTheDocument();
+  });
+
+  it("renders clipped image photo and typography labels", () => {
+    const { container } = render(
+      <OrnamentFrameWidget
+        shape="arch-window"
+        image="https://images.unsplash.com/photo-1519741497674-611481863552"
+        title="THE WEDDING OF"
+        subtitle="Benny & Dinda"
+        caption="Sabtu, 24 Oktober 2026"
+      />,
+    );
+
+    const img = container.querySelector("image");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("href", "https://images.unsplash.com/photo-1519741497674-611481863552");
+    expect(img?.getAttribute("clip-path")).toMatch(/^url\(#ornament-clip-/);
+
+    expect(screen.getByText("THE WEDDING OF")).toBeInTheDocument();
+    expect(screen.getByText("Benny & Dinda")).toBeInTheDocument();
+    expect(screen.getByText("Sabtu, 24 Oktober 2026")).toBeInTheDocument();
   });
 });

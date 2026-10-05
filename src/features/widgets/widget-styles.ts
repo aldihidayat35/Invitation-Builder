@@ -494,6 +494,12 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   ],
   ornamentFrame: [
     {
+      id: "arch-window",
+      label: "Kubah Lengkung (Arch Window)",
+      description: "Kubah lengkung elegan jendela katedral dengan garis alur mengalir mulus dari puncak atas ke bawah.",
+      defaultRadius: 0,
+    },
+    {
       id: "notched-bracket",
       label: "Sudut Cekung (Vintage Plaque)",
       description: "Plakat klasik dengan sudut cekung ke dalam dan bingkai ganda elegan.",
@@ -544,7 +550,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
   wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
   coupleProfile: legacy(["side-by-side", "stacked-cards", "circular-medallion", "arch-window", "luxury-gold"]),
-  ornamentFrame: legacy(["notched-bracket", "baroque-crest", "wavy-cartouche", "royal-plaque", "scalloped-stamp", "pointed-cartouche"]),
+  ornamentFrame: legacy(["arch-window", "notched-bracket", "baroque-crest", "wavy-cartouche", "royal-plaque", "scalloped-stamp", "pointed-cartouche"]),
 };
 
 const LEGACY_DEFAULTS: Readonly<Record<string, WidgetStyleVariant>> = Object.fromEntries(

@@ -354,12 +354,13 @@ export const ornamentFrameWidget: WidgetDefinition = {
   type: ORNAMENT_FRAME_WIDGET_TYPE,
   version: 1,
   label: "Bingkai Ornamen",
-  defaultFrame: { w: 326, h: 220 },
+  defaultFrame: { w: 326, h: 360 },
   defaultStyle: getDefaultWidgetStyle(ORNAMENT_FRAME_WIDGET_TYPE),
   defaultProps: {
-    shape: "notched-bracket",
+    shape: "arch-window",
     title: "",
     subtitle: "",
+    caption: "",
     strokeWidth: 2,
     doubleBorder: true,
     animationMode: "scroll",
@@ -371,6 +372,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
       "text",
       "Bentuk Bingkai",
       z.enum([
+        "arch-window",
         "notched-bracket",
         "baroque-crest",
         "wavy-cartouche",
@@ -381,6 +383,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
       {
         control: "select",
         options: [
+          { value: "arch-window", label: "Kubah Lengkung (Arch Window)" },
           { value: "notched-bracket", label: "Sudut Cekung (Vintage Plaque)" },
           { value: "baroque-crest", label: "Mahkota Barok (Royal Crest)" },
           { value: "wavy-cartouche", label: "Pita Bergelombang (Rococo Waves)" },
@@ -390,8 +393,10 @@ export const ornamentFrameWidget: WidgetDefinition = {
         ],
       },
     ),
-    title: defineProp("text", "Judul / Teks (Opsional)", z.string().max(100).optional()),
-    subtitle: defineProp("text", "Subjudul (Opsional)", z.string().max(100).optional()),
+    image: defineProp("url", "Foto (asset / URL)", z.union([z.string(), z.record(z.string(), z.unknown())]).optional()),
+    title: defineProp("text", "Judul / Teks Atas (Opsional)", z.string().max(100).optional()),
+    subtitle: defineProp("text", "Nama / Teks Tengah (Opsional)", z.string().max(100).optional()),
+    caption: defineProp("text", "Keterangan / Tanggal (Opsional)", z.string().max(100).optional()),
     strokeWidth: defineProp("number", "Ketebalan Garis", z.number().min(1).max(12).default(2)),
     doubleBorder: defineProp("boolean", "Garis Ganda (Double Border)", z.boolean().default(true)),
     animationMode: defineProp(
@@ -414,17 +419,17 @@ export const ornamentFrameWidget: WidgetDefinition = {
       {
         control: "select",
         options: [
-          { value: "slow", label: "Lambat & Anggun (4.5s)" },
-          { value: "normal", label: "Standar (3s)" },
-          { value: "fast", label: "Cepat (1.8s)" },
+          { value: "slow", label: "Lambat & Anggun (3.6s)" },
+          { value: "normal", label: "Standar (2.2s)" },
+          { value: "fast", label: "Cepat (1.5s)" },
         ],
       },
     ),
     showGlow: defineProp("boolean", "Efek Kilau Garis", z.boolean().default(true)),
   },
   placeholder: (props) => ({
-    title: describeProp(props.title) || "Bingkai Ornamen",
-    subtitle: `Bentuk: ${describeProp(props.shape) || "Sudut Cekung"}`,
+    title: describeProp(props.title) || describeProp(props.subtitle) || "Bingkai Ornamen",
+    subtitle: `Bentuk: ${describeProp(props.shape) || "Kubah Lengkung"}`,
   }),
 };
 
