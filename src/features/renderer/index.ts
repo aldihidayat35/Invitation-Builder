@@ -12,3 +12,13 @@ export { AnimatedElement } from "./components/AnimatedElement";
 export type { AnimatedElementProps } from "./components/AnimatedElement";
 export { DocumentRenderer } from "./components/DocumentRenderer";
 export type { DocumentRendererProps } from "./components/DocumentRenderer";
+export {
+  OpeningScreen,
+  type OpeningScreenProps,
+  RoyalEnvelopeTemplate,
+  ModernEditorialTemplate,
+  LuxuryArchTemplate,
+  BotanicalWatercolorTemplate,
+  CinematicGlassTemplate,
+} from "./components/opening";
+

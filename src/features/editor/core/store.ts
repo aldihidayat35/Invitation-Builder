@@ -8,7 +8,13 @@
  * drag frame.
  */
 import { createStore, type StoreApi } from "zustand/vanilla";
-import type { CanonicalDocument, DocumentBackground, Element, Frame } from "@/lib/schema";
+import type {
+  CanonicalDocument,
+  DocumentBackground,
+  Element,
+  Frame,
+  OpeningScreenConfig,
+} from "@/lib/schema";
 import { clampZoom, DEFAULT_ZOOM, stepZoom } from "./geometry";
 import {
   canRedo,
@@ -107,6 +113,9 @@ export interface EditorActions {
   // document base background
   setBaseBackground(background: DocumentBackground | undefined): void;
   patchBaseBackground(patch: Partial<DocumentBackground>): void;
+  // opening screen
+  setOpeningScreen(opening: OpeningScreenConfig | undefined): void;
+  patchOpeningScreen(patch: Partial<OpeningScreenConfig>): void;
   // elements
   addElement(kind: ElementKind): void;
   /** Places an uploaded image asset into the active section (FR-EDT-008). */
@@ -328,6 +337,38 @@ export function createEditorStore(init: EditorInit): EditorStore {
             };
           },
           { coalesceKey: "doc:background" },
+        );
+      },
+
+      setOpeningScreen(opening) {
+        edit((doc) => ({
+          ...doc,
+          design: {
+            ...doc.design,
+            opening,
+          },
+        }));
+      },
+      patchOpeningScreen(patch) {
+        edit(
+          (doc) => {
+            const current = doc.design.opening ?? {
+              enabled: true,
+              template: "royal-envelope",
+              overlayOpacity: 0.4,
+            };
+            return {
+              ...doc,
+              design: {
+                ...doc.design,
+                opening: {
+                  ...current,
+                  ...patch,
+                },
+              },
+            };
+          },
+          { coalesceKey: "doc:opening" },
         );
       },
 

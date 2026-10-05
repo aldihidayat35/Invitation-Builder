@@ -6,6 +6,7 @@ import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { BaseBackgroundControl } from "./BaseBackgroundControl";
+import { OpeningScreenControl } from "./OpeningScreenControl";
 import {
   ColorField,
   FieldRow,
@@ -80,9 +81,18 @@ export function Inspector() {
       <>
         <InspectorHeader
           icon={<IconSparkle size={18} />}
-          eyebrow="Latar Halaman"
-          title="Latar Layar Dokumen"
+          eyebrow="Pengaturan Template"
+          title="Pengaturan Dokumen"
         />
+        <PanelSection
+          id="insp-doc-opening"
+          title="Halaman Opening (Cover Depan)"
+          icon={<IconSparkle size={13} />}
+          count={doc.design.opening?.enabled ? 1 : undefined}
+          defaultOpen={true}
+        >
+          <OpeningScreenControl readOnly={readOnly} />
+        </PanelSection>
         <PanelSection
           id="insp-doc-base-bg"
           title="Latar Layar (Screen BG)"

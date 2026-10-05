@@ -25,6 +25,30 @@ export const documentBackgroundSchema = z.strictObject({
 });
 export type DocumentBackground = z.infer<typeof documentBackgroundSchema>;
 
+export const openingTemplateSchema = z.enum([
+  "royal-envelope",
+  "modern-editorial",
+  "luxury-arch",
+  "botanical-watercolor",
+  "cinematic-glass",
+]);
+export type OpeningTemplate = z.infer<typeof openingTemplateSchema>;
+
+export const openingScreenSchema = z.strictObject({
+  enabled: z.boolean().default(true),
+  template: openingTemplateSchema.default("royal-envelope"),
+  title: z.string().max(100).optional(),
+  subtitle: z.string().max(100).optional(),
+  guestLabel: z.string().max(100).optional(),
+  buttonText: z.string().max(60).optional(),
+  coupleName: z.string().max(120).optional(),
+  dateText: z.string().max(100).optional(),
+  locationText: z.string().max(120).optional(),
+  bgImage: imageSourceSchema.optional(),
+  overlayOpacity: opacitySchema.default(0.4),
+});
+export type OpeningScreenConfig = z.infer<typeof openingScreenSchema>;
+
 export const canonicalDocumentV1Schema = z
   .strictObject({
     schemaVersion: z.literal(SCHEMA_VERSION_V1),
@@ -34,6 +58,7 @@ export const canonicalDocumentV1Schema = z
         baseWidth: z.literal(CANONICAL_BASE_WIDTH).default(CANONICAL_BASE_WIDTH),
         tokens: themeTokensSchema.prefault({}),
         background: documentBackgroundSchema.optional(),
+        opening: openingScreenSchema.optional(),
       })
       .prefault({}),
     variables: z.array(variableDefinitionSchema).max(MAX_VARIABLES).default([]),

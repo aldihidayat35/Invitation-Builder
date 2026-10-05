@@ -1,0 +1,603 @@
+/* ==========================================================================
+   Opening Screen (Cover Buka Undangan) Styles
+   5 Premium Design Templates:
+   1. royal-envelope     - 3D Classic Envelope & Gold Wax Seal
+   2. modern-editorial   - High-Fashion Clean Vogue Magazine
+   3. luxury-arch        - Royal Palace Golden Archway & Parting Gate
+   4. botanical-watercolor - Romantic Floral Garden & Floating Petals
+   5. cinematic-glass    - Deep Dark Aurora & Frosted Glassmorphism
+   ========================================================================== */
+
+/* --- Root Overlay Container --- */
+.openingRoot {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: pan-y;
+  background-color: #0b0f19;
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.openingHidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Background image overlay layer */
+.bgImageLayer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Common Content Shell */
+.contentShell {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  min-height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3rem 1.5rem 2.5rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* --- Common Typography & Badges --- */
+.eyebrowBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.coupleTitle {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0.5rem 0;
+  letter-spacing: -0.01em;
+}
+
+.dateBadge {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin-top: 0.5rem;
+}
+
+/* Guest Card Box */
+.guestBox {
+  width: 100%;
+  max-width: 320px;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1rem;
+  margin: 1.5rem auto 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  box-sizing: border-box;
+}
+
+.guestPrefix {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.guestName {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0.15rem 0;
+}
+
+.guestNote {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+/* Action CTA Button */
+.openButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.9rem 2rem;
+  border-radius: 9999px;
+  font-size: 0.925rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease,
+              background 0.25s ease,
+              filter 0.25s ease;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25);
+  margin-top: 0.75rem;
+}
+
+.openButton:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.openButton:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+
+/* ==========================================================================
+   TEMPLATE 1: ROYAL ENVELOPE (Amplop Surat Elegan & Wax Seal Emas 3D)
+   ========================================================================== */
+.royalEnvelope {
+  background: radial-gradient(circle at 50% 30%, #2a2824 0%, #151412 100%);
+  color: #f7eed8;
+  perspective: 1200px;
+}
+
+.envelopeContainer {
+  position: relative;
+  width: 330px;
+  max-width: 90vw;
+  height: 480px;
+  margin: auto;
+  perspective: 1000px;
+}
+
+/* Envelope Card (Letter inside) */
+.envelopeCard {
+  position: absolute;
+  top: 40px;
+  left: 15px;
+  right: 15px;
+  bottom: 25px;
+  background: #fbf7ee;
+  color: #2c251e;
+  border-radius: 12px;
+  padding: 1.75rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-sizing: border-box;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+}
+
+.envelopeCardBorder {
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(184, 134, 11, 0.45);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.envelopeBody {
+  position: absolute;
+  inset: 0;
+  background: #3c352a;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Flap top */
+.envelopeFlap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(180deg, #4d4436 0%, #3a3328 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 3;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.envelopeFlapOpen {
+  transform: rotateX(180deg);
+  z-index: 1;
+}
+
+.envelopeCardSlideUp {
+  transform: translateY(-90px) scale(1.02);
+}
+
+/* 3D Wax Seal Button */
+.waxSealBtn {
+  position: relative;
+  z-index: 10;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f4d06f, #b8860b 60%, #7d5a03 100%);
+  border: 2px solid #ffe89e;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45),
+              inset 0 2px 4px rgba(255, 255, 255, 0.6),
+              inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+  color: #3b2a05;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.waxSealBtn:hover {
+  transform: scale(1.08);
+}
+
+.waxSealMonogram {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.waxSealSub {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+/* ==========================================================================
+   TEMPLATE 2: MODERN EDITORIAL (Minimalist High-Fashion Vogue Editorial)
+   ========================================================================== */
+.modernEditorial {
+  background-color: #f7f5f0;
+  color: #171717;
+}
+
+.editorialFrame {
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 380px;
+  padding: 3rem 1.75rem 2.5rem;
+  background: #ffffff;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.07);
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+/* Corner markers */
+.cornerMarker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #171717;
+  border-style: solid;
+  opacity: 0.7;
+}
+.cornerTL { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.cornerTR { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.cornerBL { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.cornerBR { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.editorialIssue {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #737373;
+  margin-bottom: 1.5rem;
+}
+
+.editorialDivider {
+  width: 40px;
+  height: 1px;
+  background-color: #171717;
+  margin: 1.25rem auto;
+}
+
+.editorialTitle {
+  font-family: "Didot", "Bodoni MT", "Cinzel", serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.editorialBtn {
+  background: #171717;
+  color: #f5f5f5;
+  border-radius: 0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  padding: 1rem 2.5rem;
+}
+
+.editorialBtn:hover {
+  background: #333333;
+}
+
+
+/* ==========================================================================
+   TEMPLATE 3: LUXURY ARCH (Gerbang Kubah Emas Kerajaan / Royal Palace Gate)
+   ========================================================================== */
+.luxuryArch {
+  background: radial-gradient(circle at 50% 20%, #1e1b18 0%, #0d0c0a 100%);
+  color: #fdf6e2;
+}
+
+.archWindow {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  border-radius: 180px 180px 16px 16px;
+  border: 2px solid #d4af37;
+  padding: 3.5rem 1.75rem 2.5rem;
+  background: rgba(22, 19, 15, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.15),
+              inset 0 0 30px rgba(212, 175, 55, 0.08);
+  box-sizing: border-box;
+}
+
+.archFlourish {
+  font-size: 1.75rem;
+  color: #d4af37;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.4));
+}
+
+.goldMetallicText {
+  background: linear-gradient(135deg, #fdf6e2 0%, #e6ca65 40%, #b38728 70%, #fbf5b7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: "Cinzel", "Playfair Display", serif;
+}
+
+.goldArchBtn {
+  background: linear-gradient(135deg, #d4af37 0%, #f4d06f 50%, #aa771c 100%);
+  color: #1a1408;
+  font-weight: 700;
+  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
+}
+
+.goldArchBtn:hover {
+  filter: brightness(1.1);
+}
+
+
+/* ==========================================================================
+   TEMPLATE 4: BOTANICAL WATERCOLOR (Floral Romantic & Floating Petals)
+   ========================================================================== */
+.botanicalWatercolor {
+  background: linear-gradient(180deg, #f7f9f6 0%, #eef3eb 100%);
+  color: #2d3b2f;
+  position: relative;
+  overflow: hidden;
+}
+
+.floralWreathBox {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  border: 1px solid rgba(138, 168, 140, 0.3);
+  padding: 3rem 1.75rem 2.25rem;
+  box-shadow: 0 12px 36px -10px rgba(60, 80, 65, 0.1);
+  box-sizing: border-box;
+}
+
+.botanicalIcon {
+  font-size: 2rem;
+  color: #557153;
+  margin-bottom: 0.5rem;
+}
+
+.botanicalBtn {
+  background: #557153;
+  color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px -4px rgba(85, 113, 83, 0.4);
+}
+
+.botanicalBtn:hover {
+  background: #435b41;
+}
+
+/* Floating Petals Animation */
+.floatingPetalsContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.petal {
+  position: absolute;
+  width: 14px;
+  height: 20px;
+  background: rgba(242, 185, 196, 0.65);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  animation: floatDown linear infinite;
+}
+
+@keyframes floatDown {
+  0% {
+    transform: translateY(-20px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(105vh) rotate(360deg) scale(1);
+    opacity: 0;
+  }
+}
+
+
+/* ==========================================================================
+   TEMPLATE 5: CINEMATIC GLASS (Dark Aurora & Frosted Glassmorphism)
+   ========================================================================== */
+.cinematicGlass {
+  background-color: #07090e;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient Aurora Mesh */
+.auroraMesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.auroraOrb1 {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  top: 10%;
+  left: 5%;
+  background: radial-gradient(circle, rgba(232, 93, 143, 0.45) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: pulseOrb 8s ease-in-out infinite alternate;
+}
+
+.auroraOrb2 {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  bottom: 10%;
+  right: 5%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+  filter: blur(70px);
+  animation: pulseOrb 10s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes pulseOrb {
+  0% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+  100% { transform: scale(1.2) translate(20px, 30px); opacity: 0.9; }
+}
+
+/* Glass Card */
+.glassCard {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  padding: 3rem 1.75rem 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
+}
+
+.glassMonogram {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, serif;
+  font-size: 1.35rem;
+  margin: 0 auto 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+}
+
+.glassBtn {
+  background: linear-gradient(135deg, #e85d8f 0%, #b23b68 100%);
+  color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 8px 30px rgba(232, 93, 143, 0.5);
+  font-weight: 600;
+}
+
+.glassBtn:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 12px 35px rgba(232, 93, 143, 0.7);
+}
+
+
+/* ==========================================================================
+   Closing Exit Animation Variants
+   ========================================================================== */
+.closingSlideUp {
+  animation: exitSlideUp 0.8s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.closingFadeOut {
+  animation: exitFadeOut 0.75s ease-out forwards;
+}
+
+.closingCurtainSplit {
+  animation: exitCurtain 0.85s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes exitSlideUp {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
+}
+
+@keyframes exitFadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); filter: blur(8px); }
+}
+
+@keyframes exitCurtain {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); filter: blur(4px); }
+}

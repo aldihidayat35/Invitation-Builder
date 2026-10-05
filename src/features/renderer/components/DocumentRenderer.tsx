@@ -16,11 +16,13 @@ import { AnimatedElement } from "./AnimatedElement";
 import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
+import { OpeningScreen } from "./opening";
 import styles from "./DocumentRenderer.module.css";
 
 export interface DocumentRendererProps {
   readonly document: ResolvedDocument;
   readonly runtimeMode: RuntimeMode;
+  readonly showOpeningScreen?: boolean;
 }
 
 type ColorInput = string | { readonly token: string };
@@ -310,7 +312,11 @@ function SectionView({
  * renders a canvas and never imports Konva or editor modules. Text is rendered
  * as React text nodes (always escaped), never as markup.
  */
-export function DocumentRenderer({ document, runtimeMode }: DocumentRendererProps) {
+export function DocumentRenderer({
+  document,
+  runtimeMode,
+  showOpeningScreen = true,
+}: DocumentRendererProps) {
   const fonts = collectDocumentFonts(document);
   const googleFontsUrl = buildGoogleFontsUrl(fonts);
 
@@ -322,6 +328,9 @@ export function DocumentRenderer({ document, runtimeMode }: DocumentRendererProp
         tokens={document.tokens}
         baseWidth={document.baseWidth}
       />
+      {document.opening && document.opening.enabled && showOpeningScreen ? (
+        <OpeningScreen opening={document.opening} />
+      ) : null}
       <div className={styles.document} data-renderer-document="" data-testid="renderer-document">
         {document.sections.map((section, index) => (
           <SectionView
