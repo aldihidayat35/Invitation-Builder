@@ -131,6 +131,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
             type="button"
             className={styles.navbarModeBtn}
             data-active={artboardMode === "cards"}
+            data-testid="artboard-mode-cards"
             onClick={() => store.getState().setArtboardMode("cards")}
             title="Tampilan kartu terpisah dengan kontrol rapi"
           >
@@ -141,11 +142,23 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
             type="button"
             className={styles.navbarModeBtn}
             data-active={artboardMode === "seamless"}
+            data-testid="artboard-mode-seamless"
             onClick={() => store.getState().setArtboardMode("seamless")}
             title="Tampilan alur ponsel mulus bersambung"
           >
             <span>📱</span>
             <span>Alur Ponsel</span>
+          </button>
+          <button
+            type="button"
+            className={styles.navbarModeBtn}
+            data-active={artboardMode === "grid"}
+            data-testid="artboard-mode-grid"
+            onClick={() => store.getState().setArtboardMode("grid")}
+            title="Tampilan sejajar kesamping (responsif wrap)"
+          >
+            <span>🔲</span>
+            <span>Sejajar</span>
           </button>
         </div>
       </div>

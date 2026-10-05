@@ -51,6 +51,20 @@ import {
 } from "./ops";
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error" | "conflict";
+export type ArtboardMode = "cards" | "seamless" | "grid";
+
+export const ARTBOARD_MODE_STORAGE_KEY = "dib_artboard_mode";
+
+export function getInitialArtboardMode(): ArtboardMode {
+  if (typeof window === "undefined") return "cards";
+  try {
+    const saved = window.localStorage.getItem(ARTBOARD_MODE_STORAGE_KEY);
+    if (saved === "cards" || saved === "seamless" || saved === "grid") return saved;
+  } catch {
+    // ignore
+  }
+  return "cards";
+}
 
 export interface EditorState {
   readonly history: History<CanonicalDocument>;
@@ -62,8 +76,8 @@ export interface EditorState {
   readonly readOnly: boolean;
   /** Space is held: drag pans the artboard instead of manipulating elements. */
   readonly panMode: boolean;
-  /** View layout mode for the artboard: separated cards vs seamless phone flow. */
-  readonly artboardMode: "cards" | "seamless";
+  /** View layout mode for the artboard: separated cards, seamless phone flow, or responsive grid wrap. */
+  readonly artboardMode: ArtboardMode;
 
   /** Last document known to be persisted on the server, and its revision. */
   readonly savedDocument: CanonicalDocument;
@@ -113,7 +127,7 @@ export interface EditorActions {
   setZoom(zoom: number): void;
   zoomStep(direction: 1 | -1): void;
   setPanMode(active: boolean): void;
-  setArtboardMode(mode: "cards" | "seamless"): void;
+  setArtboardMode(mode: ArtboardMode): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -130,6 +144,7 @@ export interface EditorInit {
   readonly document: CanonicalDocument;
   readonly revision: number;
   readonly readOnly?: boolean;
+  readonly artboardMode?: ArtboardMode;
 }
 
 export const isDirty = (s: Pick<EditorState, "history" | "savedDocument">): boolean =>
@@ -183,7 +198,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       pasteCount: 0,
       readOnly: init.readOnly ?? false,
       panMode: false,
-      artboardMode: "cards",
+      artboardMode: init.artboardMode ?? getInitialArtboardMode(),
       savedDocument: init.document,
       revision: init.revision,
       saveStatus: "idle",
@@ -433,7 +448,16 @@ export function createEditorStore(init: EditorInit): EditorStore {
         if (get().panMode !== active) set({ panMode: active });
       },
       setArtboardMode(mode) {
-        if (get().artboardMode !== mode) set({ artboardMode: mode });
+        if (get().artboardMode !== mode) {
+          set({ artboardMode: mode });
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem(ARTBOARD_MODE_STORAGE_KEY, mode);
+            } catch {
+              // ignore
+            }
+          }
+        }
       },
 
       // ---------------------------------------------------------- persistence

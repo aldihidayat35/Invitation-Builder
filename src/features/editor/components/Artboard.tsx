@@ -172,24 +172,24 @@ export function Artboard() {
                     <button
                       type="button"
                       className={`${styles.layerToggle} ${styles.secActionBtn}`}
-                      aria-label="Pindah section ke atas"
-                      title="Naik"
+                      aria-label={artboardMode === "grid" ? "Pindah section ke kiri" : "Pindah section ke atas"}
+                      title={artboardMode === "grid" ? "Geser ke Kiri" : "Naik"}
                       disabled={readOnly || index === 0}
                       data-testid={`section-up-${section.id}`}
                       onClick={() => store.getState().moveSection(section.id, -1)}
                     >
-                      ▲
+                      {artboardMode === "grid" ? "◀" : "▲"}
                     </button>
                     <button
                       type="button"
                       className={`${styles.layerToggle} ${styles.secActionBtn}`}
-                      aria-label="Pindah section ke bawah"
-                      title="Turun"
+                      aria-label={artboardMode === "grid" ? "Pindah section ke kanan" : "Pindah section ke bawah"}
+                      title={artboardMode === "grid" ? "Geser ke Kanan" : "Turun"}
                       disabled={readOnly || index === last}
                       data-testid={`section-down-${section.id}`}
                       onClick={() => store.getState().moveSection(section.id, 1)}
                     >
-                      ▼
+                      {artboardMode === "grid" ? "▶" : "▼"}
                     </button>
                     <button
                       type="button"
@@ -217,8 +217,8 @@ export function Artboard() {
                     <button
                       type="button"
                       className={`${styles.layerToggle} ${styles.secActionBtn}`}
-                      aria-label="Tambah section di bawah"
-                      title="Tambah di bawah"
+                      aria-label={artboardMode === "grid" ? "Tambah section setelah ini" : "Tambah section di bawah"}
+                      title={artboardMode === "grid" ? "Tambah section berikutnya" : "Tambah di bawah"}
                       disabled={readOnly}
                       data-testid={`section-add-${section.id}`}
                       onClick={() => store.getState().addSection(section.id)}
@@ -262,6 +262,28 @@ export function Artboard() {
             </div>
           );
         })}
+
+        {artboardMode === "grid" && !readOnly ? (
+          <div
+            className={styles.addSectionGridCard}
+            style={{
+              width: CANONICAL_BASE_WIDTH * zoom,
+              minHeight: 280 * zoom,
+            }}
+          >
+            <button
+              type="button"
+              className={styles.addSectionGridButton}
+              data-testid="add-section-grid"
+              onClick={() => store.getState().addSection()}
+              title="Tambah section baru di akhir kanvas"
+            >
+              <div className={styles.addSectionGridIcon}>＋</div>
+              <span className={styles.addSectionGridLabel}>Tambah Section Baru</span>
+              <span className={styles.addSectionGridSub}>Section #{doc.sections.length + 1}</span>
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -666,6 +666,7 @@
   box-sizing: border-box;
   position: relative;
   transition: transform 120ms ease;
+  flex-shrink: 0;
 }
 
 /* Sleek compact section head */
@@ -921,6 +922,93 @@
 .artboardInner[data-mode="seamless"] .canvasFrame {
   border-radius: 0;
   box-shadow: none;
+}
+
+/* Responsive Grid / Wrap Mode */
+.artboardInner[data-mode="grid"] {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+.addSectionGridCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 12px;
+  border: 2px dashed rgba(124, 58, 237, 0.35);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  transition: all 160ms ease;
+}
+
+.addSectionGridCard:hover {
+  border-color: var(--dash-accent, #7c3aed);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px -4px rgba(124, 58, 237, 0.14);
+  transform: translateY(-2px);
+}
+
+.addSectionGridButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 32px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font: inherit;
+  user-select: none;
+  border-radius: 12px;
+}
+
+.addSectionGridButton:hover {
+  color: var(--dash-accent, #7c3aed);
+}
+
+.addSectionGridIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 22px;
+  font-weight: 600;
+  transition: all 160ms ease;
+}
+
+.addSectionGridCard:hover .addSectionGridIcon {
+  background: var(--dash-accent, #7c3aed);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.addSectionGridLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.addSectionGridSub {
+  font-size: 11.5px;
+  color: #94a3b8;
 }
 
 .canvasPlaceholder {
