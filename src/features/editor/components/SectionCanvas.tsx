@@ -21,9 +21,10 @@ import {
   type ThemeTokens,
 } from "@/lib/schema";
 import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
-import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToSection } from "../core/geometry";
 import { findElement } from "../core/ops";
+import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToSection } from "../core/geometry";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
+import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
 import { useEditor, useEditorStore } from "./EditorProvider";
 import { replayKonvaNode, startKonvaLoopAnimation } from "@/features/animations";
@@ -84,6 +85,7 @@ function Visual({
           fill={resolveColor(s.color, tokens)}
           wrap="word"
           listening={false}
+          {...konvaShadowProps(s.shadow, tokens)}
         />
       );
     }
@@ -91,6 +93,7 @@ function Visual({
       const s = element.style;
       const stroke = s.stroke ? resolveColor(s.stroke.color, tokens) : undefined;
       const fill = s.fill ? resolveColor(s.fill, tokens) : undefined;
+      const shadowProps = konvaShadowProps(s.shadow, tokens);
       if (element.shapeType === "circle") {
         return (
           <Ellipse
@@ -100,6 +103,7 @@ function Visual({
             radiusY={h / 2}
             {...(fill && { fill })}
             {...(stroke && { stroke, strokeWidth: s.stroke!.width })}
+            {...shadowProps}
             listening={false}
           />
         );
@@ -111,6 +115,7 @@ function Visual({
             stroke={stroke ?? "#000000"}
             strokeWidth={s.stroke?.width ?? 1}
             lineCap="round"
+            {...shadowProps}
             listening={false}
           />
         );
@@ -122,14 +127,31 @@ function Visual({
           cornerRadius={Math.min(s.radius, w / 2, h / 2)}
           {...(fill && { fill })}
           {...(stroke && { stroke, strokeWidth: s.stroke!.width })}
+          {...shadowProps}
           listening={false}
         />
       );
     }
     case "image":
-      return <ImageVisual element={element} />;
-    case "widget":
-      return <WidgetVisual element={element} tokens={tokens} />;
+      return <ImageVisual element={element} tokens={tokens} />;
+    case "widget": {
+      const s = element.style;
+      const shadowProps = konvaShadowProps(s.shadow, tokens);
+      return (
+        <Group listening={false}>
+          {s.shadow && (
+            <Rect
+              width={w}
+              height={h}
+              cornerRadius={typeof s.radius === "number" ? s.radius : 10}
+              fill={s.background ? resolveColor(s.background, tokens) : "rgba(255,255,255,0.01)"}
+              {...shadowProps}
+            />
+          )}
+          <WidgetVisual element={element} tokens={tokens} />
+        </Group>
+      );
+    }
   }
 }
 

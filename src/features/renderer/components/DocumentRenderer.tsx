@@ -12,6 +12,8 @@ import type {
 import type { RuntimeMode } from "../types";
 import { buildGoogleFontsUrl, collectDocumentFonts, getFontFallback } from "@/lib/fonts";
 import { assetUrl } from "@/features/assets/urls";
+import { cssDropShadowFilter, cssTextShadow } from "@/lib/shadow";
+import type { ElementShadow } from "@/lib/schema";
 import { AnimatedElement } from "./AnimatedElement";
 import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
@@ -48,8 +50,13 @@ function cssFont(value: ColorInput | undefined, tokens: Tokens): string | undefi
  * section scale unit `--u` (= container width / baseWidth) in CSS, so one
  * artboard scales proportionally to any viewport 320-430px (ADR 0009).
  */
-function frameStyle(element: ResolvedElement): CSSProperties {
+function frameStyle(element: ResolvedElement, tokens?: Tokens): CSSProperties {
   const { x, y, w, h, rotation } = element.frame;
+  const shadow = (element.style as { shadow?: ElementShadow })?.shadow;
+  const dropShadow =
+    element.type !== "text" && shadow && tokens
+      ? cssDropShadowFilter(shadow, tokens)
+      : undefined;
   return {
     position: "absolute",
     "--x": x,
@@ -58,11 +65,13 @@ function frameStyle(element: ResolvedElement): CSSProperties {
     "--h": h,
     transformOrigin: "center center",
     ...(rotation !== 0 && { transform: `rotate(${rotation}deg)` }),
+    ...(dropShadow && { filter: dropShadow }),
   } as CSSProperties;
 }
 
 function TextBody({ element, tokens }: { element: ResolvedTextElement; tokens: Tokens }) {
   const { style } = element;
+  const textShadow = style.shadow ? cssTextShadow(style.shadow, tokens) : undefined;
   const css = {
     "--fs": style.fontSize,
     "--ls": style.letterSpacing ?? 0,
@@ -72,6 +81,7 @@ function TextBody({ element, tokens }: { element: ResolvedTextElement; tokens: T
     textAlign: style.textAlign,
     color: cssColor(style.color, tokens),
     opacity: style.opacity,
+    ...(textShadow && { textShadow }),
   } as CSSProperties;
   const staggerUnit = element.animations?.enter?.staggerUnit ?? "none";
   return (
@@ -184,7 +194,7 @@ function ElementView({
     <AnimatedElement
       element={element}
       className={styles.frame}
-      style={frameStyle(element)}
+      style={frameStyle(element, tokens)}
       data-testid={`element-${element.id}`}
       data-element-type={element.type}
     >

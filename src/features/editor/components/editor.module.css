@@ -1344,6 +1344,147 @@
   gap: 8px 10px;
 }
 
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 6px;
+}
+
+/* ---------------------------------------------------------------- shadow */
+.shadowControlStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shadowHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shadowHeaderBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dash-text-muted, #64748b);
+}
+
+.shadowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: all 160ms ease;
+}
+
+.shadowDot[data-active="true"] {
+  background: var(--dash-accent, #7c3aed);
+  box-shadow: 0 0 6px var(--dash-accent, #7c3aed);
+}
+
+.shadowResetBtn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 120ms ease;
+}
+
+.shadowResetBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.shadowPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.shadowPresetTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border, #e2e8f0);
+  background: var(--dash-surface-strong, #ffffff);
+  color: var(--dash-text, #1e293b);
+  cursor: pointer;
+  font: inherit;
+  transition: all 140ms ease;
+}
+
+.shadowPresetTile:hover:not(:disabled) {
+  border-color: var(--dash-accent, #7c3aed);
+  background: var(--dash-accent-soft, #f5f3ff);
+  transform: translateY(-1px);
+}
+
+.shadowPresetTileActive {
+  border-color: var(--dash-accent, #7c3aed) !important;
+  background: var(--dash-accent-soft, #f5f3ff) !important;
+  color: var(--dash-accent, #7c3aed) !important;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--dash-accent, #7c3aed);
+}
+
+.shadowPresetIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.shadowPresetLabel {
+  font-size: 10.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.shadowSlidersSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--dash-border, #e2e8f0);
+}
+
+.shadowPreviewBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 12px;
+  border-radius: 8px;
+  background: var(--dash-surface-sunken, #f8fafc);
+  border: 1px solid var(--dash-border, #e2e8f0);
+}
+
+.shadowPreviewObject {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: box-shadow 150ms ease;
+}
+
+.shadowFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .fieldRow {
   display: flex;
   flex-direction: column;

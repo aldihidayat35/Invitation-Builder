@@ -41,6 +41,7 @@ import { PanelSection } from "./PanelSection";
 import { WidgetPanel } from "./WidgetPanel";
 import { AnimationPanel } from "./AnimationPanel";
 import { SectionTransitionControl } from "./SectionTransitionControl";
+import { ShadowControl } from "./ShadowControl";
 import styles from "./editor.module.css";
 
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
@@ -451,6 +452,8 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
 
 function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boolean }) {
   const store = useEditorStore();
+  const doc = useEditor(selectDoc);
+  const tokens = doc.design.tokens;
   return (
     <div className={styles.inspStack} data-testid="multi-inspector">
       <InspectorHeader
@@ -469,6 +472,17 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           value={1}
           disabled={readOnly}
           onChange={(percent) => store.getState().patchStyle(ids, { opacity: percent })}
+        />
+      </PanelSection>
+      <PanelSection
+        id="insp-multi-shadow-section"
+        title="Efek Bayangan (Shadow)"
+        icon={<IconSparkle size={14} />}
+      >
+        <ShadowControl
+          tokens={tokens}
+          disabled={readOnly}
+          onChange={(shadow) => store.getState().patchStyle(ids, { shadow })}
         />
       </PanelSection>
       <p className={styles.footHint}>Geser atau ubah ukuran langsung di artboard.</p>
@@ -587,6 +601,20 @@ function ElementPanel({
           value={opacity}
           disabled={disabled}
           onChange={(newOpacity) => act().patchStyle([id], { opacity: newOpacity })}
+        />
+      </PanelSection>
+
+      <PanelSection
+        id="insp-shadow-section"
+        title="Efek Bayangan (Shadow)"
+        icon={<IconSparkle size={13} />}
+        count={element.style.shadow ? 1 : undefined}
+      >
+        <ShadowControl
+          shadow={element.style.shadow}
+          tokens={tokens}
+          disabled={disabled}
+          onChange={(shadow) => act().patchStyle([id], { shadow })}
         />
       </PanelSection>
 

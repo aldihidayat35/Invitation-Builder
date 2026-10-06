@@ -17,6 +17,7 @@ import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { CanvasGalleryPhoto, CurrentWidgetVisual } from "./canvas-widget-variants";
 import { useCanvasImage } from "./use-canvas-image";
+import { konvaShadowProps } from "../core/shadow";
 
 type ImageElement = Extract<Element, { type: "image" }>;
 type WidgetElement = Extract<Element, { type: "widget" }>;
@@ -204,7 +205,13 @@ function createMaskedImageCanvas({
   return canvas;
 }
 
-export function ImageVisual({ element }: { element: ImageElement }) {
+export function ImageVisual({
+  element,
+  tokens,
+}: {
+  element: ImageElement;
+  tokens?: ThemeTokens;
+}) {
   const { w, h } = element.frame;
   const assetId = "assetId" in element.source ? element.source.assetId : null;
   const image = useCanvasImage(assetId ? assetUrl(assetId) : null);
@@ -241,6 +248,7 @@ export function ImageVisual({ element }: { element: ImageElement }) {
   if (!image) return <Placeholder w={w} h={h} title="Memuat gambar..." />;
 
   const r = Math.min(radius, w / 2, h / 2);
+  const shadowProps = tokens ? konvaShadowProps(element.style.shadow, tokens) : {};
 
   return (
     <Group
@@ -275,6 +283,7 @@ export function ImageVisual({ element }: { element: ImageElement }) {
           width={w}
           height={h}
           listening={false}
+          {...shadowProps}
         />
       ) : (
         <KonvaImage
@@ -285,6 +294,7 @@ export function ImageVisual({ element }: { element: ImageElement }) {
           height={dest.height}
           crop={crop}
           listening={false}
+          {...shadowProps}
         />
       )}
     </Group>

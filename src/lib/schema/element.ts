@@ -34,6 +34,15 @@ const baseElementShape = {
 
 export const TEXT_ALIGNMENTS = ["left", "center", "right", "justify"] as const;
 
+export const elementShadowSchema = z.strictObject({
+  color: colorValueSchema.default("#000000"),
+  blur: z.number().min(0).max(100).default(8),
+  offsetX: z.number().min(-100).max(100).default(0),
+  offsetY: z.number().min(-100).max(100).default(4),
+  opacity: opacitySchema.default(0.4),
+});
+export type ElementShadow = z.infer<typeof elementShadowSchema>;
+
 export const textStyleSchema = z.strictObject({
   fontFamily: fontValueSchema.optional(),
   fontSize: z.number().min(1).max(400).default(16),
@@ -43,6 +52,7 @@ export const textStyleSchema = z.strictObject({
   textAlign: z.enum(TEXT_ALIGNMENTS).default("left"),
   color: colorValueSchema.default("#000000"),
   opacity: opacitySchema.default(1),
+  shadow: elementShadowSchema.optional(),
 });
 
 export const textElementSchema = z.strictObject({
@@ -77,6 +87,7 @@ export const imageStyleSchema = z.strictObject({
   flipH: z.boolean().default(false),
   flipV: z.boolean().default(false),
   fade: imageFadeSchema.optional(),
+  shadow: elementShadowSchema.optional(),
 });
 
 export const imageElementSchema = z.strictObject({
@@ -99,6 +110,7 @@ export const shapeStyleSchema = z.strictObject({
   /** Corner radius (rectangle only). */
   radius: z.number().min(0).max(10_000).default(0),
   opacity: opacitySchema.default(1),
+  shadow: elementShadowSchema.optional(),
 });
 
 export const shapeElementSchema = z
@@ -130,6 +142,7 @@ export const widgetStyleSchema = z.strictObject({
   radius: z.number().min(0).max(10_000).optional(),
   opacity: opacitySchema.optional(),
   variant: z.string().optional(),
+  shadow: elementShadowSchema.optional(),
 });
 
 /**
