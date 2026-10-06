@@ -28,6 +28,7 @@ import {
   IconLayers,
   IconLock,
   IconOpacity,
+  IconPencil,
   IconPlus,
   IconReplay,
   IconSection,
@@ -103,8 +104,10 @@ export function Inspector() {
                 className={styles.ghostButton}
                 onClick={() => store.getState().setActiveSection(openingSection.id)}
                 data-testid="focus-opening-section-btn"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
               >
-                ✏️ Edit Canvas Section Opening (#0)
+                <IconPencil size={13} />
+                <span>Edit Canvas Section Opening (#0)</span>
               </button>
             </div>
           ) : (
@@ -118,8 +121,10 @@ export function Inspector() {
                 disabled={readOnly}
                 onClick={() => store.getState().addOpeningSection()}
                 data-testid="add-opening-section-btn"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
               >
-                ＋ Tambah Canvas Opening (Section 0)
+                <IconPlus size={13} />
+                <span>Tambah Canvas Opening (Section 0)</span>
               </button>
             </div>
           )}
@@ -217,7 +222,7 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
             border: section.isOpening ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid rgba(255, 255, 255, 0.06)",
           }}
         >
-          <label className={styles.checkRow} style={{ margin: 0, fontWeight: 500 }}>
+          <label className={styles.checkRow} style={{ margin: 0, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <input
               id="insp-section-opening"
               type="checkbox"
@@ -226,7 +231,8 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
               onChange={() => act().toggleSectionOpening(sectionId)}
               data-testid="section-opening-toggle"
             />
-            ✨ Jadikan Section Opening (Section 0 / Cover)
+            <IconSparkle size={13} />
+            <span>Jadikan Section Opening (Section 0 / Cover)</span>
           </label>
           <p className={styles.muted} style={{ fontSize: "0.72rem", marginTop: 4, marginBottom: 0 }}>
             {section.isOpening

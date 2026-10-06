@@ -99,7 +99,23 @@ function CanvaLandscapePlaceholder({ label }: { readonly label?: string }) {
         />
       </svg>
       <div className={styles.canvaHint}>
-        <span className={styles.canvaHintIcon}>🖼️</span>
+        <span className={styles.canvaHintIcon} aria-hidden="true">
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ display: "inline-block", verticalAlign: "middle" }}
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+        </span>
         <span className={styles.canvaHintText}>Pilih Foto</span>
       </div>
     </div>

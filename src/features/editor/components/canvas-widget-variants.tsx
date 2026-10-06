@@ -2488,7 +2488,7 @@ function PhotoFrameVisual({ element, tokens }: { element: WidgetElement; tokens?
             x={4}
             y={4}
             width={72}
-            text="🖼️ Pilih Foto"
+            text="Pilih Foto"
             fontSize={9}
             fontStyle="bold"
             fill="#334155"
@@ -2903,7 +2903,7 @@ export function TimelineVisual({
                         x={cardX + 6}
                         y={36}
                         width={cardW - 12}
-                        text={`📍 ${ev.location}`}
+                        text={ev.location}
                         fontSize={itemH < 68 ? 8.5 : 9.5}
                         fill={color}
                         opacity={0.8}
@@ -3049,7 +3049,7 @@ export function TimelineVisual({
                         x={cardX + 8}
                         y={itemH < 68 ? 38 : 40}
                         width={cardW - 16}
-                        text={`📍 ${ev.location}`}
+                        text={ev.location}
                         fontSize={itemH < 68 ? 8.5 : 9.5}
                         fill={color}
                         opacity={0.8}

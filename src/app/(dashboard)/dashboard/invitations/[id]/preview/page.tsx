@@ -53,7 +53,21 @@ export default async function InvitationPreviewPage({
   return (
     <main className={styles.page}>
       <Link href={`/dashboard/invitations/${id}`} className={styles.breadcrumb}>
-        ← Kembali ke data
+        <svg
+          width={14}
+          height={14}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 4 }}
+          aria-hidden="true"
+        >
+          <path d="m12 19-7-7 7-7M5 12h14" />
+        </svg>
+        <span>Kembali ke data</span>
       </Link>
       <header className={styles.header}>
         <div>

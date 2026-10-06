@@ -5,7 +5,7 @@ import type { AssetSummary } from "@/features/assets/api";
 import { parseCouplePerson, type CouplePerson } from "@/features/widgets/runtime/CoupleProfileWidget";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { AssetLibrary } from "./AssetLibrary";
-import { IconImages, IconTrash } from "./icons";
+import { IconBride, IconClose, IconGroom, IconImages, IconTrash } from "./icons";
 import styles from "./editor.module.css";
 
 export interface CouplePersonControlProps {
@@ -69,8 +69,9 @@ export function CouplePersonControl({
       data-testid={`couple-person-control-${personType}`}
     >
       <div className={styles.couplePersonCardHeader}>
-        <span className={styles.couplePersonBadge}>
-          {personType === "groom" ? "🤵" : "👰"} {label}
+        <span className={styles.couplePersonBadge} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          {personType === "groom" ? <IconGroom size={14} /> : <IconBride size={14} />}
+          <span>{label}</span>
         </span>
       </div>
 
@@ -85,8 +86,8 @@ export function CouplePersonControl({
           />
         ) : (
           <div className={styles.photoFrameCanvaPlaceholderThumb}>
-            <span className={styles.canvaIconEmoji}>
-              {personType === "groom" ? "🤵" : "👰"}
+            <span className={styles.canvaIconEmoji} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              {personType === "groom" ? <IconGroom size={28} /> : <IconBride size={28} />}
             </span>
             <span className={styles.canvaThumbText}>
               Belum ada foto {label}
@@ -172,7 +173,7 @@ export function CouplePersonControl({
               className={styles.closeDrawerBtn}
               onClick={() => setPicking(false)}
             >
-              ✕
+              <IconClose size={13} />
             </button>
           </div>
           <AssetLibrary

@@ -11,6 +11,13 @@ import {
   subscribePreviewSync,
   type PreviewStateSnapshot,
 } from "../core/preview-sync";
+import {
+  IconArrowLeft,
+  IconMonitor,
+  IconReplay,
+  IconSmartphone,
+  IconSparkle,
+} from "./icons";
 import styles from "./TemplateRealPreview.module.css";
 
 export interface TemplateRealPreviewProps {
@@ -114,7 +121,8 @@ export function TemplateRealPreview({
             className={styles.backLink}
             data-testid="preview-back-editor"
           >
-            ← Kembali ke Editor
+            <IconArrowLeft size={14} />
+            <span>Kembali ke Editor</span>
           </Link>
           <div className={styles.titleArea}>
             <h1 className={styles.templateName}>{templateName}</h1>
@@ -148,7 +156,8 @@ export function TemplateRealPreview({
               data-testid="preview-toggle-cover"
               title="Aktifkan/nonaktifkan Cover Opening (Section 0)"
             >
-              {showCover ? "✨ Cover (#0): On" : "Cover: Off"}
+              <IconSparkle size={13} />
+              <span>Cover (#0): {showCover ? "On" : "Off"}</span>
             </button>
           ) : null}
 
@@ -159,7 +168,8 @@ export function TemplateRealPreview({
             data-testid="preview-view-mobile"
             title="Tampilan ponsel (390px)"
           >
-            📱 Mobile
+            <IconSmartphone size={13} />
+            <span>Mobile</span>
           </button>
           <button
             type="button"
@@ -168,7 +178,8 @@ export function TemplateRealPreview({
             data-testid="preview-view-full"
             title="Tampilan layar penuh responsif"
           >
-            💻 Lebar Penuh
+            <IconMonitor size={13} />
+            <span>Lebar Penuh</span>
           </button>
           <button
             type="button"
@@ -177,7 +188,8 @@ export function TemplateRealPreview({
             data-testid="preview-replay-btn"
             title="Scroll ke atas dan putar ulang animasi"
           >
-            🔄 Putar Ulang
+            <IconReplay size={13} />
+            <span>Putar Ulang</span>
           </button>
         </div>
       </header>

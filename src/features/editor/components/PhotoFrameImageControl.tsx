@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AssetSummary } from "@/features/assets/api";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { AssetLibrary } from "./AssetLibrary";
-import { IconImages, IconTrash } from "./icons";
+import { IconClose, IconImages, IconLandscape, IconTrash } from "./icons";
 import styles from "./editor.module.css";
 
 export function PhotoFrameImageControl({
@@ -49,8 +49,10 @@ export function PhotoFrameImageControl({
           <img src={currentSrc} alt="Preview foto" className={styles.photoFrameThumbImg} />
         ) : (
           <div className={styles.photoFrameCanvaPlaceholderThumb}>
-            <span className={styles.canvaIconEmoji}>🏞️</span>
-            <span className={styles.canvaThumbText}>Canva Cloud &amp; Hill Slot</span>
+            <span className={styles.canvaIconEmoji} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <IconLandscape size={32} />
+            </span>
+            <span className={styles.canvaThumbText}>Slot Foto Bingkai (Canva Frame)</span>
           </div>
         )}
       </div>
@@ -129,7 +131,7 @@ export function PhotoFrameImageControl({
               className={styles.closeDrawerBtn}
               onClick={() => setPicking(false)}
             >
-              ✕
+              <IconClose size={13} />
             </button>
           </div>
           <AssetLibrary

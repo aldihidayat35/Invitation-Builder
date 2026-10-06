@@ -7,7 +7,7 @@ import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProv
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
-import { IconEye } from "./icons";
+import { IconCardsView, IconEye, IconGridView, IconSmartphone } from "./icons";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -125,7 +125,8 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
       {/* Mode Tampilan Artboard di Header/Navbar */}
       <div className={styles.navbarModeSwitch} role="group" aria-label="Mode Tampilan Artboard">
         <span className={styles.navbarMeta}>
-          📱 {doc.sections.length} Section · {CANONICAL_BASE_WIDTH}px Canvas
+          <IconSmartphone size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
+          {doc.sections.length} Section · {CANONICAL_BASE_WIDTH}px Canvas
         </span>
         <div className={styles.navbarModePillGroup}>
           <button
@@ -136,7 +137,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
             onClick={() => store.getState().setArtboardMode("cards")}
             title="Tampilan kartu terpisah dengan kontrol rapi"
           >
-            <span>📑</span>
+            <IconCardsView size={13} />
             <span>Terpisah</span>
           </button>
           <button
@@ -147,7 +148,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
             onClick={() => store.getState().setArtboardMode("seamless")}
             title="Tampilan alur ponsel mulus bersambung"
           >
-            <span>📱</span>
+            <IconSmartphone size={13} />
             <span>Alur Ponsel</span>
           </button>
           <button
@@ -158,7 +159,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
             onClick={() => store.getState().setArtboardMode("grid")}
             title="Tampilan sejajar kesamping (responsif wrap)"
           >
-            <span>🔲</span>
+            <IconGridView size={13} />
             <span>Sejajar</span>
           </button>
         </div>

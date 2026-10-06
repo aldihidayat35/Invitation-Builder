@@ -17,6 +17,25 @@ export interface OpeningCoverCanvasProps {
   readonly renderElements: (section: ResolvedSection) => ReactElement[];
 }
 
+function TapHintIcon() {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3a4 4 0 0 1 4 4v5" />
+      <path d="M8 7a4 4 0 0 0-4 4v5a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-3a2 2 0 0 0-2-2 2 2 0 0 0-2-2v-4a2 2 0 0 0-4 0v4" />
+    </svg>
+  );
+}
+
 export function OpeningCoverCanvas({
   openingSection,
   nextSectionId,
@@ -148,7 +167,9 @@ export function OpeningCoverCanvas({
 
       {/* Floating click-to-open hint badge */}
       <div className={styles.openHintBanner} aria-hidden="true">
-        <span className={styles.openHintIcon}>👆</span>
+        <span className={styles.openHintIcon}>
+          <TapHintIcon />
+        </span>
         <span>Klik di mana saja untuk membuka undangan</span>
       </div>
     </div>

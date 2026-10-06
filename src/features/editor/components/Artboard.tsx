@@ -6,6 +6,7 @@ import { getSectionTransitionMeta, getSectionTransitionStyles } from "@/features
 import { sectionLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { SectionCanvasLazy } from "./SectionCanvasLazy";
+import { IconZap } from "./icons";
 import styles from "./editor.module.css";
 
 export function Artboard() {
@@ -172,7 +173,8 @@ export function Artboard() {
                         title={`Transisi: ${getSectionTransitionMeta(section.transition.type).label}`}
                         data-testid={`section-trans-badge-${section.id}`}
                       >
-                        ⚡ {getSectionTransitionMeta(section.transition.type).label}
+                        <IconZap size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 3 }} />
+                        {getSectionTransitionMeta(section.transition.type).label}
                       </span>
                     ) : null}
                   </div>

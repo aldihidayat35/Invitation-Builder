@@ -390,3 +390,163 @@ export function ElementIcon({ element, ...rest }: IconProps & { readonly element
       return <IconSparkle {...rest} />;
   }
 }
+
+// Device & View Mode Icons
+export const IconSmartphone = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="6" y="2" width="12" height="20" rx="2.5" />
+    <line x1="11" y1="18" x2="13" y2="18" />
+  </Svg>
+);
+
+export const IconMonitor = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+  </Svg>
+);
+
+export const IconCardsView = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="4" y="3" width="16" height="7" rx="1.5" />
+    <rect x="4" y="14" width="16" height="7" rx="1.5" />
+  </Svg>
+);
+
+export const IconGridView = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="7.5" height="18" rx="1.5" />
+    <rect x="13.5" y="3" width="7.5" height="18" rx="1.5" />
+  </Svg>
+);
+
+// Navigation & Actions
+export const IconArrowLeft = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m12 19-7-7 7-7M5 12h14" />
+  </Svg>
+);
+
+export const IconArrowRight = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m12 5 7 7-7 7M19 12H5" />
+  </Svg>
+);
+
+export const IconArrowUp = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m18 15-6-6-6 6" />
+  </Svg>
+);
+
+export const IconArrowDown = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Svg>
+);
+
+export const IconChevronUp = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m18 15-6-6-6 6" />
+  </Svg>
+);
+
+export const IconChevronDown = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Svg>
+);
+
+export const IconPencil = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
+  </Svg>
+);
+
+export const IconZap = (p: IconProps) => (
+  <Svg {...p}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </Svg>
+);
+
+export const IconTap = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3a4 4 0 0 1 4 4v5" />
+    <path d="M8 7a4 4 0 0 0-4 4v5a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-3a2 2 0 0 0-2-2 2 2 0 0 0-2-2v-4a2 2 0 0 0-4 0v4" />
+  </Svg>
+);
+
+export const IconGroom = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="4" />
+    <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+    <path d="m10 15 2 2 2-2" />
+  </Svg>
+);
+
+export const IconBride = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="4" />
+    <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+    <path d="M8 4c1-1.5 3-2 4-2s3 .5 4 2" />
+    <path d="M9 13.5c1.5 1 4.5 1 6 0" />
+  </Svg>
+);
+
+export const IconLandscape = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <path d="m21 15-5-5L5 21" />
+  </Svg>
+);
+
+// Canva-style Shadow Preset Graphic Icons
+export const IconShadowNone = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="5" y="5" width="14" height="14" rx="2" strokeDasharray="3 3" />
+    <line x1="4" y1="20" x2="20" y2="4" strokeWidth={2} />
+  </Svg>
+);
+
+export const IconShadowSoft = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="5" y="4" width="13" height="13" rx="2" />
+    <path d="M8 20h10a2 2 0 0 0 2-2V8" opacity={0.35} strokeWidth={2.5} />
+    <path d="M10 21h7a2 2 0 0 0 2-2v-7" opacity={0.15} strokeWidth={4} />
+  </Svg>
+);
+
+export const IconShadowDrop = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="4" y="4" width="13" height="13" rx="2" />
+    <path d="M8 20h10a2 2 0 0 0 2-2V8" strokeWidth={2.5} opacity={0.65} />
+  </Svg>
+);
+
+export const IconShadowLift = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="5" y="3" width="14" height="12" rx="2" />
+    <ellipse cx="12" cy="20" rx="7" ry="1.8" fill="currentColor" opacity={0.4} stroke="none" />
+  </Svg>
+);
+
+export const IconShadowGlow = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="7" y="7" width="10" height="10" rx="2" />
+    <path
+      d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"
+      strokeWidth={1.5}
+      opacity={0.7}
+    />
+  </Svg>
+);
+
+export const IconShadowHard = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="8" y="8" width="12" height="12" rx="1.5" fill="currentColor" stroke="none" opacity={0.4} />
+    <rect x="4" y="4" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.8} />
+  </Svg>
+);

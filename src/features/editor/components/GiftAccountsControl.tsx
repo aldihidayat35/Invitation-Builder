@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconGift, IconPlus, IconTrash } from "./icons";
+import { IconChevronDown, IconChevronUp, IconGift, IconPencil, IconPlus, IconTrash } from "./icons";
 import styles from "./editor.module.css";
 
 export interface GiftEditorAccount {
@@ -299,7 +299,7 @@ export function GiftAccountsControl({
                   onClick={() => move(index, index - 1)}
                   title="Pindah ke atas"
                 >
-                  &uarr;
+                  <IconChevronUp size={12} />
                 </button>
                 <button
                   type="button"
@@ -309,7 +309,7 @@ export function GiftAccountsControl({
                   onClick={() => move(index, index + 1)}
                   title="Pindah ke bawah"
                 >
-                  &darr;
+                  <IconChevronDown size={12} />
                 </button>
                 <button
                   type="button"
@@ -319,7 +319,7 @@ export function GiftAccountsControl({
                   onClick={() => startEdit(index)}
                   title="Edit rekening"
                 >
-                  ✎
+                  <IconPencil size={12} />
                 </button>
                 <button
                   type="button"

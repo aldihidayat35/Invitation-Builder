@@ -19,13 +19,13 @@ export const SHADOW_PRESETS: readonly ShadowPresetItem[] = [
     id: "none",
     label: "Tanpa Shadow",
     description: "Hilangkan efek bayangan",
-    icon: "🚫",
+    icon: "none",
   },
   {
     id: "soft",
     label: "Halus",
     description: "Bayangan lembut & elegan untuk teks dan elemen modern",
-    icon: "☁️",
+    icon: "soft",
     defaultShadow: {
       blur: 12,
       offsetX: 0,
@@ -38,7 +38,7 @@ export const SHADOW_PRESETS: readonly ShadowPresetItem[] = [
     id: "drop",
     label: "Klasik",
     description: "Bayangan jatuh natural dengan jarak proporsional",
-    icon: "🌤️",
+    icon: "drop",
     defaultShadow: {
       blur: 8,
       offsetX: 3,
@@ -51,7 +51,7 @@ export const SHADOW_PRESETS: readonly ShadowPresetItem[] = [
     id: "lift",
     label: "Melayang",
     description: "Elevasi tinggi memberikan efek kartu melayang",
-    icon: "🎈",
+    icon: "lift",
     defaultShadow: {
       blur: 24,
       offsetX: 0,
@@ -64,7 +64,7 @@ export const SHADOW_PRESETS: readonly ShadowPresetItem[] = [
     id: "glow",
     label: "Pijar",
     description: "Cahaya halo lembut bersinar di sekeliling objek",
-    icon: "✨",
+    icon: "glow",
     defaultShadow: {
       blur: 16,
       offsetX: 0,
@@ -77,7 +77,7 @@ export const SHADOW_PRESETS: readonly ShadowPresetItem[] = [
     id: "hard",
     label: "Retro",
     description: "Bayangan tegas tanpa blur bergaya pop art retro",
-    icon: "⬛",
+    icon: "hard",
     defaultShadow: {
       blur: 0,
       offsetX: 4,

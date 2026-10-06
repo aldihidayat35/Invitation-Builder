@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconPlus, IconTrash, IconWishes } from "./icons";
+import { IconCheck, IconClose, IconPencil, IconPlus, IconTrash, IconWishes } from "./icons";
 import styles from "./editor.module.css";
 import type { WishItem } from "@/features/widgets/runtime/WishesWidget";
 
@@ -192,8 +192,16 @@ export function WishesItemsControl({
               className={`${styles.timelineItemRow} ${editingIndex === idx ? styles.activeRow : ""}`}
             >
               <div className={styles.timelineItemBadge}>
-                <span className={styles.timelineItemTime}>
-                  {item.presence === "hadir" ? "✓ Hadir" : "✕ Berhalangan"}
+                <span className={styles.timelineItemTime} style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  {item.presence === "hadir" ? (
+                    <>
+                      <IconCheck size={11} /> Hadir
+                    </>
+                  ) : (
+                    <>
+                      <IconClose size={11} /> Berhalangan
+                    </>
+                  )}
                 </span>
               </div>
               <div className={styles.timelineItemInfo} onClick={() => handleStartEdit(idx)}>
@@ -208,7 +216,7 @@ export function WishesItemsControl({
                   disabled={disabled}
                   title="Ubah Ucapan"
                 >
-                  ✎
+                  <IconPencil size={13} />
                 </button>
                 <button
                   type="button"
@@ -244,7 +252,7 @@ export function WishesItemsControl({
           <div className={styles.timelineFormHeader}>
             <strong>{isAdding ? "Tambah Sampel Ucapan" : "Ubah Ucapan"}</strong>
             <button type="button" className={styles.closeDrawerBtn} onClick={handleCancel}>
-              ✕
+              <IconClose size={13} />
             </button>
           </div>
 
@@ -266,15 +274,19 @@ export function WishesItemsControl({
                 type="button"
                 className={`${styles.presencePill} ${draftPresence === "hadir" ? styles.presenceActive : ""}`}
                 onClick={() => setDraftPresence("hadir")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                ✓ Hadir
+                <IconCheck size={12} />
+                <span>Hadir</span>
               </button>
               <button
                 type="button"
                 className={`${styles.presencePill} ${draftPresence === "berhalangan" ? styles.presenceActive : ""}`}
                 onClick={() => setDraftPresence("berhalangan")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                ✕ Berhalangan
+                <IconClose size={12} />
+                <span>Berhalangan</span>
               </button>
             </div>
           </div>

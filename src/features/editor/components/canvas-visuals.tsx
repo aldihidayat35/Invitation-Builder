@@ -739,7 +739,7 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
             x={6}
             y={4}
             width={70}
-            text="📍 Google Maps"
+            text="Google Maps"
             fontSize={9}
             fontStyle="600"
             fill="#334155"
@@ -796,7 +796,7 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
             x={btnX + 6}
             y={btnY + (btnH - 12) / 2}
             width={btnW - 12}
-            text={`🗺️ ${buttonText}`}
+            text={buttonText}
             fontSize={12}
             fontStyle="600"
             fill="#ffffff"
@@ -810,7 +810,7 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
             x={btnX}
             y={btnY + (btnH - 12) / 2}
             width={btnW}
-            text={`📍 ${buttonText} ↗`}
+            text={`${buttonText} ↗`}
             fontSize={12}
             fontStyle="600"
             fill={color}
@@ -840,7 +840,7 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
             x={btnX + 6}
             y={btnY + (btnH - 12) / 2}
             width={btnW - 12}
-            text={`🗺️ ${buttonText}`}
+            text={buttonText}
             fontSize={12}
             fontStyle="600"
             fill={color}
@@ -1372,7 +1372,7 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
             x={btnX + 10}
             y={btnY + (btnH - 14) / 2}
             width={btnW - 20}
-            text={`🎵 ${title}`}
+            text={title}
             fontSize={14}
             fontStyle="600"
             fill="#ffffff"
@@ -1402,7 +1402,7 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
             x={btnX}
             y={btnY + (btnH - 14) / 2}
             width={btnW}
-            text={`🎵 ${title}`}
+            text={title}
             fontSize={14}
             fontStyle="600"
             fill={color}
@@ -1452,7 +1452,7 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
             x={btnX + 10}
             y={btnY + (btnH - 14) / 2}
             width={btnW - 20}
-            text={`🎵 ${title}`}
+            text={title}
             fontSize={14}
             fontStyle="600"
             fill={color}

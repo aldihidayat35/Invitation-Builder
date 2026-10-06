@@ -20,6 +20,7 @@ import { TimelineEventsControl } from "./TimelineEventsControl";
 import { WishesItemsControl } from "./WishesItemsControl";
 import { CouplePersonControl } from "./CouplePersonControl";
 import { useEditorStore } from "./EditorProvider";
+import { IconCheck, IconZap } from "./icons";
 import {
   ColorField,
   FieldRow,
@@ -185,7 +186,8 @@ export function WidgetPanel({
               transition: "opacity 0.15s ease",
             }}
           >
-            ⚡ {isOverflowing ? "Sesuaikan Tinggi dengan Konten (Fit)" : "Reset Tinggi ke Konten"}
+            <IconZap size={13} />
+            <span>{isOverflowing ? "Sesuaikan Tinggi dengan Konten (Fit)" : "Reset Tinggi ke Konten"}</span>
           </button>
         )}
       </div>
@@ -239,7 +241,7 @@ export function WidgetPanel({
               >
                 <WidgetVariantThumbnail widgetType={element.widgetType} variant={v} />
                 <span className={styles.widgetVariantLabel}>
-                  {active ? "✓ " : ""}
+                  {active && <IconCheck size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 3 }} />}
                   {v.label}
                 </span>
                 <span className={styles.widgetVariantDesc}>{v.description}</span>

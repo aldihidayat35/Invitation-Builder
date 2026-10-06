@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconCalendar, IconPlus, IconTrash } from "./icons";
+import { IconCalendar, IconClose, IconPencil, IconPlus, IconTrash } from "./icons";
 import styles from "./editor.module.css";
 
 export interface TimelineEditorEvent {
@@ -65,12 +65,12 @@ const EVENT_PRESETS: readonly {
 ];
 
 const ICON_OPTIONS: readonly { readonly value: NonNullable<TimelineEditorEvent["icon"]>; readonly label: string }[] = [
-  { value: "ring", label: "💍 Cincin (Akad/Janji)" },
-  { value: "glass", label: "🥂 Gelas (Resepsi/Pesta)" },
-  { value: "heart", label: "❤️ Hati (Cinta/Romantis)" },
-  { value: "calendar", label: "📅 Kalender (Jadwal)" },
-  { value: "church", label: "⛪ Tempat Ibadah" },
-  { value: "sparkles", label: "✨ Kilau (After Party)" },
+  { value: "ring", label: "Cincin (Akad / Janji Suci)" },
+  { value: "glass", label: "Gelas Bersulang (Resepsi / Pesta)" },
+  { value: "heart", label: "Hati Romantis (Momen Kasih)" },
+  { value: "calendar", label: "Kalender (Jadwal & Tanggal)" },
+  { value: "church", label: "Tempat Ibadah (Pemberkatan / Akad)" },
+  { value: "sparkles", label: "Kilau Selebrasi (After Party)" },
 ];
 
 function normalizeEvents(value: unknown): TimelineEditorEvent[] {
@@ -248,7 +248,7 @@ export function TimelineEventsControl({
                   disabled={disabled}
                   title="Ubah Agenda"
                 >
-                  ✎
+                  <IconPencil size={13} />
                 </button>
                 <button
                   type="button"
@@ -284,7 +284,7 @@ export function TimelineEventsControl({
           <div className={styles.timelineFormHeader}>
             <strong>{isAdding ? "Tambah Agenda Baru" : "Ubah Agenda"}</strong>
             <button type="button" className={styles.closeDrawerBtn} onClick={handleCancel}>
-              ✕
+              <IconClose size={13} />
             </button>
           </div>
 

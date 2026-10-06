@@ -9,8 +9,25 @@ import {
   resolveShadowColor,
   type ShadowPreset,
 } from "@/lib/shadow";
+import {
+  IconShadowNone,
+  IconShadowSoft,
+  IconShadowDrop,
+  IconShadowLift,
+  IconShadowGlow,
+  IconShadowHard,
+} from "./icons";
 import { ColorField, NumberField, OpacityField } from "./fields";
 import styles from "./editor.module.css";
+
+const SHADOW_ICONS: Record<ShadowPreset, React.ComponentType<{ size?: number }>> = {
+  none: IconShadowNone,
+  soft: IconShadowSoft,
+  drop: IconShadowDrop,
+  lift: IconShadowLift,
+  glow: IconShadowGlow,
+  hard: IconShadowHard,
+};
 
 export interface ShadowControlProps {
   readonly shadow?: ElementShadow | undefined;
@@ -68,6 +85,7 @@ export function ShadowControl({
         {SHADOW_PRESETS.map((preset) => {
           const isSelected =
             preset.id === "none" ? !isEnabled : isEnabled && currentPreset === preset.id;
+          const PresetIcon = SHADOW_ICONS[preset.id] ?? IconShadowNone;
           return (
             <button
               key={preset.id}
@@ -80,7 +98,9 @@ export function ShadowControl({
               data-testid={`shadow-preset-${preset.id}`}
               title={preset.description}
             >
-              <span className={styles.shadowPresetIcon}>{preset.icon}</span>
+              <span className={styles.shadowPresetIcon}>
+                <PresetIcon size={22} />
+              </span>
               <span className={styles.shadowPresetLabel}>{preset.label}</span>
             </button>
           );
