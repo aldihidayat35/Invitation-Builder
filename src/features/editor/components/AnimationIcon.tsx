@@ -329,6 +329,101 @@ export function AnimationPresetIcon({ presetId, size = 22, ...rest }: AnimationI
         </Svg>
       );
 
+    // ==========================================
+    // MOTION PATH PRESETS
+    // ==========================================
+    case "leftToRight":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="5" cy="12" r="2" fill="currentColor" />
+          <path d="M7 12h11M15 8l4 4-4 4" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "rightToLeft":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="19" cy="12" r="2" fill="currentColor" />
+          <path d="M17 12H6M9 8l-4 4 4 4" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "topToBottom":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="5" r="2" fill="currentColor" />
+          <path d="M12 7v11M8 15l4 4 4-4" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "bottomToTop":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="19" r="2" fill="currentColor" />
+          <path d="M12 17V6M8 9l4-4 4 4" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "diagonalDownRight":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="6" cy="6" r="2" fill="currentColor" />
+          <path d="M7.5 7.5 17 17M12 17h5v-5" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "diagonalUpRight":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="6" cy="18" r="2" fill="currentColor" />
+          <path d="M7.5 16.5 17 7M12 7h5v5" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "arcUp":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="4" cy="17" r="2" fill="currentColor" />
+          <path d="M5 15C8 7 16 7 19 15" strokeWidth={1.8} />
+          <circle cx="20" cy="17" r="2" fill="currentColor" />
+        </Svg>
+      );
+
+    case "arcDown":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="4" cy="7" r="2" fill="currentColor" />
+          <path d="M5 9C8 17 16 17 19 9" strokeWidth={1.8} />
+          <circle cx="20" cy="7" r="2" fill="currentColor" />
+        </Svg>
+      );
+
+    case "waveHorizontal":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="4" cy="12" r="2" fill="currentColor" />
+          <path d="M5 12c3-6 5-6 8 0s5 6 7 0" strokeWidth={1.8} />
+        </Svg>
+      );
+
+    case "circleOrbit":
+      return (
+        <Svg size={size} {...rest}>
+          <ellipse cx="12" cy="12" rx="8" ry="6" strokeWidth={1.8} strokeDasharray="3 2" />
+          <circle cx="20" cy="12" r="2.5" fill="currentColor" />
+        </Svg>
+      );
+
+    case "custom":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="5" cy="18" r="2" fill="currentColor" />
+          <circle cx="12" cy="7" r="2" fill="currentColor" />
+          <circle cx="19" cy="15" r="2" fill="currentColor" />
+          <path d="M6 17 11 8l7 6" strokeWidth={1.5} strokeDasharray="2 2" />
+        </Svg>
+      );
+
     default:
       return (
         <Svg size={size} {...rest}>

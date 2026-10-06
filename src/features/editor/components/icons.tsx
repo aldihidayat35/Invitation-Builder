@@ -579,3 +579,17 @@ export const IconShadowHard = (p: IconProps) => (
     <rect x="4" y="4" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.8} />
   </Svg>
 );
+
+export const IconMotion = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="6" cy="18" r="2.5" />
+    <path d="M8.5 18h7a4 4 0 0 0 0-8H7a3 3 0 0 1 0-6h11" />
+    <path d="m15 1 3 3-3 3" />
+  </Svg>
+);
+
+export const IconReverse = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m7 16-4-4m0 0 4-4m-4 4h18" />
+  </Svg>
+);

@@ -2412,6 +2412,105 @@ textarea.input {
   line-height: 1.45;
 }
 
+/* ------------------------------------------------------------- Motion Path Styles */
+
+.motionWaypointsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.motionWaypointCard {
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.motionWaypointHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.motionPointBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.motionPointBadgeStart {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.motionPointBadgeMid {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.motionPointBadgeEnd {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.motionCoordsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.motionAddBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px dashed var(--dash-border-strong);
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.motionAddBtn:hover:not(:disabled) {
+  background: var(--dash-surface-hover);
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+
+.motionSliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.motionSliderInput {
+  flex: 1;
+  accent-color: var(--dash-accent);
+}
+
+.motionSliderValue {
+  font-size: 11.5px;
+  font-weight: 600;
+  min-width: 38px;
+  text-align: right;
+  color: var(--dash-text);
+}
+
 /* ------------------------------------------------------------- section transitions */
 
 .sectionTransitionWrap {

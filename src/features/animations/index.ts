@@ -9,3 +9,4 @@ export * from "./config";
 export * from "./text-splitter";
 export * from "./runtime";
 export * from "./konva-replay";
+export * from "./motion";

@@ -73,5 +73,10 @@ export function normalizeAnimationTrack(input: unknown): AnimationTrack {
 
 export function hasActiveAnimations(config?: AnimationConfig): boolean {
   if (!config) return false;
-  return Boolean(config.enter || config.attention || config.exit);
+  return Boolean(
+    config.enter ||
+      config.attention ||
+      config.exit ||
+      (config.motion && config.motion.enabled),
+  );
 }

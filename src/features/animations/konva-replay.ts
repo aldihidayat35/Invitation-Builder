@@ -6,8 +6,9 @@
  */
 import gsap from "gsap";
 import type Konva from "konva";
-import type { AnimationTrack } from "@/lib/schema";
+import type { AnimationTrack, MotionTrack } from "@/lib/schema";
 import { animationPresetRegistry } from "./registry";
+import { getPointOnMotionPath } from "./motion";
 
 export function replayKonvaNode(
   node: Konva.Node,
@@ -191,6 +192,65 @@ export function startKonvaLoopAnimation(node: Konva.Node, track: AnimationTrack)
     node.rotation(origRotation);
     node.scaleX(origScaleX);
     node.scaleY(origScaleY);
+    layer?.batchDraw();
+  };
+}
+
+/**
+ * Drives visual preview/replay of motion path animations directly on Konva canvas nodes.
+ */
+export function replayKonvaMotion(
+  node: Konva.Node,
+  track: MotionTrack,
+  onComplete?: () => void,
+): () => void {
+  const layer = node.getLayer();
+  const origX = node.x();
+  const origY = node.y();
+  const origRotation = node.rotation();
+
+  const startPt = getPointOnMotionPath(track, 0);
+  node.x(origX + startPt.x);
+  node.y(origY + startPt.y);
+  if (track.autoRotate) {
+    node.rotation(origRotation + startPt.rotation);
+  }
+  layer?.batchDraw();
+
+  const tweenObj = { progress: 0 };
+  const durationSec = Math.max(0.1, track.durationMs / 1000);
+  const delaySec = Math.max(0, track.delayMs / 1000);
+
+  const tween = gsap.to(tweenObj, {
+    progress: 1,
+    duration: durationSec,
+    delay: delaySec,
+    ease: track.easing,
+    repeat: track.repeat !== 0 ? (track.repeat === -1 ? 2 : Math.min(2, track.repeat)) : 0,
+    yoyo: track.yoyo ?? false,
+    onUpdate: () => {
+      const pt = getPointOnMotionPath(track, tweenObj.progress);
+      node.x(origX + pt.x);
+      node.y(origY + pt.y);
+      if (track.autoRotate) {
+        node.rotation(origRotation + pt.rotation);
+      }
+      layer?.batchDraw();
+    },
+    onComplete: () => {
+      node.x(origX);
+      node.y(origY);
+      node.rotation(origRotation);
+      layer?.batchDraw();
+      onComplete?.();
+    },
+  });
+
+  return () => {
+    tween.kill();
+    node.x(origX);
+    node.y(origY);
+    node.rotation(origRotation);
     layer?.batchDraw();
   };
 }

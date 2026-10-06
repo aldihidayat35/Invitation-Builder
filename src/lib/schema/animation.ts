@@ -56,9 +56,64 @@ export const animationTrackSchema = z.strictObject({
 });
 export type AnimationTrack = z.infer<typeof animationTrackSchema>;
 
+// ----------------------------------------------------------------------- Motion Path
+export const motionPointSchema = z.strictObject({
+  x: z.number().min(-5000).max(5000),
+  y: z.number().min(-5000).max(5000),
+});
+export type MotionPoint = z.infer<typeof motionPointSchema>;
+
+export const MOTION_PATH_SHAPES = [
+  "linear",
+  "curved",
+  "arcUp",
+  "arcDown",
+  "wave",
+  "zigzag",
+  "circle",
+  "custom",
+] as const;
+export type MotionPathShape = (typeof MOTION_PATH_SHAPES)[number];
+
+export const MOTION_PRESETS = [
+  "leftToRight",
+  "rightToLeft",
+  "topToBottom",
+  "bottomToTop",
+  "diagonalDownRight",
+  "diagonalUpRight",
+  "arcUp",
+  "arcDown",
+  "waveHorizontal",
+  "circleOrbit",
+  "custom",
+] as const;
+export type MotionPreset = (typeof MOTION_PRESETS)[number];
+
+export const motionTrackSchema = z.strictObject({
+  enabled: z.boolean().default(true),
+  preset: z.enum(MOTION_PRESETS).default("leftToRight"),
+  pathShape: z.enum(MOTION_PATH_SHAPES).default("curved"),
+  points: z.array(motionPointSchema).min(2).max(20).default([
+    { x: -120, y: 0 },
+    { x: 120, y: 0 },
+  ]),
+  curviness: z.number().min(0).max(3).default(1),
+  durationMs: z.number().min(100).max(30_000).default(2000),
+  delayMs: z.number().min(0).max(30_000).default(0),
+  easing: z.enum(ANIMATION_EASINGS).default("ease-in-out"),
+  repeat: z.int().min(-1).max(ANIMATION_LIMITS.maxRepeat).default(0),
+  yoyo: z.boolean().default(false),
+  autoRotate: z.boolean().default(false),
+  trigger: z.enum(ANIMATION_TRIGGERS).default("onEnterViewport"),
+  once: z.boolean().default(true),
+});
+export type MotionTrack = z.infer<typeof motionTrackSchema>;
+
 export const animationConfigSchema = z.strictObject({
   enter: animationTrackSchema.optional(),
   attention: animationTrackSchema.optional(),
   exit: animationTrackSchema.optional(),
+  motion: motionTrackSchema.optional(),
 });
 export type AnimationConfig = z.infer<typeof animationConfigSchema>;

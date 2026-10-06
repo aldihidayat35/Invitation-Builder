@@ -12,7 +12,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { Ellipse, Group, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
+import { Circle, Ellipse, Group, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
   CANONICAL_BASE_WIDTH,
   type Element,
@@ -27,7 +27,12 @@ import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
 import { useEditor, useEditorStore } from "./EditorProvider";
-import { replayKonvaNode, startKonvaLoopAnimation } from "@/features/animations";
+import {
+  replayKonvaMotion,
+  replayKonvaNode,
+  sampleMotionPathPoints,
+  startKonvaLoopAnimation,
+} from "@/features/animations";
 import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
 import { ContextMenu } from "./ContextMenu";
 
@@ -543,7 +548,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
       const custom = e as CustomEvent<{
         elementId?: string;
         sectionId?: string;
-        trackType?: "enter" | "exit" | "attention";
+        trackType?: "enter" | "exit" | "attention" | "motion";
       }>;
       if (custom.detail?.sectionId && custom.detail.sectionId !== sectionId) return;
       const stage = stageRef.current;
@@ -555,19 +560,34 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         const node = stage.findOne(`#${custom.detail.elementId}`);
         const el = section.elements.find((x) => x.id === custom.detail.elementId);
         const anims = el?.animations;
+        if (node && (trackType === "motion" || !trackType) && anims?.motion?.enabled) {
+          replayKonvaMotion(node, anims.motion);
+          return;
+        }
         const track =
-          (trackType && anims?.[trackType]) || anims?.enter || anims?.attention || anims?.exit;
+          (trackType && anims?.[trackType as "enter" | "exit" | "attention"]) ||
+          anims?.enter ||
+          anims?.attention ||
+          anims?.exit;
         if (node && track) {
           replayKonvaNode(node, track);
         }
       } else if (custom.detail?.sectionId === sectionId) {
         for (const el of section.elements) {
           const anims = el.animations;
-          const track =
-            (trackType && anims?.[trackType]) || anims?.enter || anims?.attention || anims?.exit;
-          if (track) {
-            const node = stage.findOne(`#${el.id}`);
-            if (node) replayKonvaNode(node, track);
+          const node = stage.findOne(`#${el.id}`);
+          if (!node) continue;
+          if ((trackType === "motion" || !trackType) && anims?.motion?.enabled) {
+            replayKonvaMotion(node, anims.motion);
+          } else {
+            const track =
+              (trackType && anims?.[trackType as "enter" | "exit" | "attention"]) ||
+              anims?.enter ||
+              anims?.attention ||
+              anims?.exit;
+            if (track) {
+              replayKonvaNode(node, track);
+            }
           }
         }
       }
@@ -576,6 +596,23 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     window.addEventListener("dib:replay-animation", handleReplay);
     return () => window.removeEventListener("dib:replay-animation", handleReplay);
   }, [section, sectionId]);
+
+  const selectedElementWithMotion = useMemo(() => {
+    if (selectedHere.length !== 1 || !section) return null;
+    const el = section.elements.find((x) => x.id === selectedHere[0]);
+    if (el?.animations?.motion?.enabled) return el;
+    return null;
+  }, [selectedHere, section]);
+
+  const motionGuidePoints = useMemo(() => {
+    if (!selectedElementWithMotion?.animations?.motion) return [];
+    const samples = sampleMotionPathPoints(selectedElementWithMotion.animations.motion, 32);
+    const flat: number[] = [];
+    for (const s of samples) {
+      flat.push(s.x, s.y);
+    }
+    return flat;
+  }, [selectedElementWithMotion]);
 
   if (!section) return null;
 
@@ -691,6 +728,31 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           dash={[4, 4]}
           visible={false}
         />
+        {selectedElementWithMotion?.animations?.motion && motionGuidePoints.length >= 4 && (
+          <Group
+            x={selectedElementWithMotion.frame.x + selectedElementWithMotion.frame.w / 2}
+            y={selectedElementWithMotion.frame.y + selectedElementWithMotion.frame.h / 2}
+          >
+            <Line
+              points={motionGuidePoints}
+              stroke="#6366f1"
+              strokeWidth={2 / zoom}
+              dash={[5 / zoom, 4 / zoom]}
+              opacity={0.85}
+            />
+            {selectedElementWithMotion.animations.motion.points.map((pt, idx, arr) => (
+              <Circle
+                key={idx}
+                x={pt.x}
+                y={pt.y}
+                radius={(idx === 0 || idx === arr.length - 1 ? 5 : 3.5) / zoom}
+                fill={idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#ef4444" : "#818cf8"}
+                stroke="#ffffff"
+                strokeWidth={1.5 / zoom}
+              />
+            ))}
+          </Group>
+        )}
       </Layer>
     </Stage>
     <ContextMenu

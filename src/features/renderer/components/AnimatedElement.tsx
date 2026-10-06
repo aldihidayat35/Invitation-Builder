@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { playAnimation } from "@/features/animations";
+import { playAnimation, playMotionAnimation } from "@/features/animations";
 import type { Element } from "@/lib/schema";
 
 export interface AnimatedElementProps {
@@ -15,7 +15,7 @@ export interface AnimatedElementProps {
 }
 
 /**
- * Wraps an element for the HTML renderer and applies its enter/attention/exit
+ * Wraps an element for the HTML renderer and applies its enter/motion/attention/exit
  * animation track using the GSAP runtime (FR-ANM-001..006, AC-07, AC-11).
  */
 export function AnimatedElement({
@@ -30,6 +30,7 @@ export function AnimatedElement({
   const enterTrack = element.animations?.enter;
   const attentionTrack = element.animations?.attention;
   const exitTrack = element.animations?.exit;
+  const motionTrack = element.animations?.motion;
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -38,11 +39,17 @@ export function AnimatedElement({
     let cleanupEnter: (() => void) | null = null;
     let cleanupAttention: (() => void) | null = null;
     let cleanupExit: (() => void) | null = null;
+    let cleanupMotion: (() => void) | null = null;
 
     const play = () => {
       cleanupEnter?.();
       cleanupAttention?.();
       cleanupExit?.();
+      cleanupMotion?.();
+
+      if (motionTrack && motionTrack.enabled) {
+        cleanupMotion = playMotionAnimation(el, motionTrack);
+      }
 
       if (enterTrack) {
         cleanupEnter = playAnimation(el, enterTrack, {
@@ -85,8 +92,9 @@ export function AnimatedElement({
       cleanupEnter?.();
       cleanupAttention?.();
       cleanupExit?.();
+      cleanupMotion?.();
     };
-  }, [element.id, enterTrack, attentionTrack, exitTrack]);
+  }, [element.id, enterTrack, attentionTrack, exitTrack, motionTrack]);
 
   return (
     <div
@@ -96,7 +104,10 @@ export function AnimatedElement({
       data-element-id={element.id}
       data-element-type={elementType}
       data-animation-preset={
-        enterTrack?.presetId ?? attentionTrack?.presetId ?? exitTrack?.presetId
+        enterTrack?.presetId ??
+        (motionTrack?.enabled ? `motion-${motionTrack.preset}` : undefined) ??
+        attentionTrack?.presetId ??
+        exitTrack?.presetId
       }
       data-testid={testId}
     >
