@@ -90,6 +90,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const cropBtn = screen.getByTestId("image-crop-btn");
     const flipHBtn = screen.getByTestId("image-flip-h-btn");
@@ -119,6 +120,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const flipHBtn = screen.getByTestId("image-flip-h-btn");
     const flipVBtn = screen.getByTestId("image-flip-v-btn");
@@ -156,6 +158,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const cropBtn = screen.getByTestId("image-crop-btn");
     fireEvent.click(cropBtn);
@@ -186,6 +189,7 @@ describe("Image Crop & Remove BG Integration in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const removeBgBtn = screen.getByTestId("image-remove-bg-btn");
     fireEvent.click(removeBgBtn);

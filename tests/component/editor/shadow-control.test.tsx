@@ -148,6 +148,7 @@ describe("Inspector and Renderer Shadow Integration", () => {
       </EditorProvider>,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /^efek bayangan \(shadow\)$/i }));
     expect(screen.getByTestId("shadow-control")).toBeInTheDocument();
 
     // Click Lift preset

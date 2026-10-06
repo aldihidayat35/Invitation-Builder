@@ -275,6 +275,7 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
     // Both sections must exist separately
     expect(screen.getByText("Galeri Foto")).toBeInTheDocument();
     expect(screen.getByText("GIF Animasi & Stiker")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^galeri foto$/i }));
 
     // Gallery should display only standard photo and exclude gifs
     await waitFor(() => {

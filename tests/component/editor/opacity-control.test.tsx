@@ -136,6 +136,7 @@ describe("Inspector Opacity Integration", () => {
 
     // Dedicated Transparansi & Opasitas heading
     expect(screen.getByText("Transparansi & Opasitas")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^transparansi & opasitas$/i }));
 
     // Change opacity using slider
     const slider = screen.getByRole("slider", { name: /slider/i });

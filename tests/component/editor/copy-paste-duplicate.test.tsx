@@ -194,6 +194,9 @@ describe("Copy-Paste and Duplicate in Inspector", () => {
       </EditorProvider>,
     );
 
+    // Open Tindakan Section (default closed)
+    fireEvent.click(screen.getByText("Tindakan Section"));
+
     const secDupBtn = screen.getByTestId("section-duplicate-btn");
     const secPasteBtn = screen.getByTestId("section-paste-btn");
 

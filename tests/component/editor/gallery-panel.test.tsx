@@ -77,6 +77,7 @@ function setupGallery(items: readonly Record<string, string>[] = []) {
       <Inspector />
     </EditorProvider>,
   );
+  fireEvent.click(screen.getByRole("button", { name: /^pengaturan widget$/i }));
   return store;
 }
 

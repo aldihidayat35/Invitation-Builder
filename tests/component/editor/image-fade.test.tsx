@@ -180,6 +180,7 @@ describe("Image Fade UI in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     expect(screen.getByTestId("image-fade-control")).toBeInTheDocument();
     expect(screen.getByTestId("fade-mode-linear")).toBeInTheDocument();
@@ -195,6 +196,7 @@ describe("Image Fade UI in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const presetBottomBtn = screen.getByTestId("fade-preset-bottom-40");
     fireEvent.click(presetBottomBtn);
@@ -217,6 +219,7 @@ describe("Image Fade UI in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const radialTab = screen.getByTestId("fade-mode-radial");
     fireEvent.click(radialTab);
@@ -247,6 +250,7 @@ describe("Image Fade UI in Inspector", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^gambar$/i }));
 
     const resetBtn = screen.getByTestId("fade-reset-btn");
     expect(resetBtn).toBeInTheDocument();

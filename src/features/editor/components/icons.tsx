@@ -159,6 +159,16 @@ export const IconChevron = (p: IconProps) => (
     <path d="m9 6 6 6-6 6" />
   </Svg>
 );
+export const IconChevronUp = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m18 15-6-6-6 6" />
+  </Svg>
+);
+export const IconChevronDown = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Svg>
+);
 export const IconCopy = (p: IconProps) => (
   <Svg {...p}>
     <rect x="8" y="8" width="12" height="12" rx="2" />
@@ -476,17 +486,6 @@ export const IconArrowDown = (p: IconProps) => (
   </Svg>
 );
 
-export const IconChevronUp = (p: IconProps) => (
-  <Svg {...p}>
-    <path d="m18 15-6-6-6 6" />
-  </Svg>
-);
-
-export const IconChevronDown = (p: IconProps) => (
-  <Svg {...p}>
-    <path d="m6 9 6 6 6-6" />
-  </Svg>
-);
 
 export const IconPencil = (p: IconProps) => (
   <Svg {...p}>

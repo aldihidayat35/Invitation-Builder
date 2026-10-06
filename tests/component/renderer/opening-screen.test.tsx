@@ -218,6 +218,7 @@ describe("Editor Artboard & Store Section 0 Opening Integration", () => {
         <Inspector />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^umum$/i }));
 
     const toggle = screen.getByTestId("section-opening-toggle") as HTMLInputElement;
     expect(toggle.checked).toBe(false);

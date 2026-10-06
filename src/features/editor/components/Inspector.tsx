@@ -43,6 +43,7 @@ import { WidgetPanel } from "./WidgetPanel";
 import { AnimationPanel } from "./AnimationPanel";
 import { SectionTransitionControl } from "./SectionTransitionControl";
 import { ShadowControl } from "./ShadowControl";
+import { usePanelSectionOrder } from "./usePanelSectionOrder";
 import styles from "./editor.module.css";
 
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
@@ -72,12 +73,17 @@ export function Inspector() {
   if (selectedIds.length === 1) {
     const loc = findElement(doc, selectedIds[0]!);
     body = loc ? (
-      <ElementPanel element={loc.element} readOnly={readOnly} sectionId={loc.section.id} />
+      <ElementPanel
+        key={loc.element.id}
+        element={loc.element}
+        readOnly={readOnly}
+        sectionId={loc.section.id}
+      />
     ) : null;
   } else if (selectedIds.length > 1) {
-    body = <MultiPanel ids={selectedIds} readOnly={readOnly} />;
+    body = <MultiPanel key={selectedIds.join(",")} ids={selectedIds} readOnly={readOnly} />;
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
-    body = <SectionPanel sectionId={activeSectionId} readOnly={readOnly} />;
+    body = <SectionPanel key={activeSectionId} sectionId={activeSectionId} readOnly={readOnly} />;
   } else {
     const openingSection = doc.sections.find((s) => s.isOpening);
     body = (
@@ -92,7 +98,7 @@ export function Inspector() {
           title="Cover Opening (Section 0)"
           icon={<IconSparkle size={13} />}
           count={openingSection ? 1 : undefined}
-          defaultOpen={true}
+          defaultOpen={false}
         >
           {openingSection ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -176,6 +182,16 @@ function InspectorHeader({
 
 // ------------------------------------------------------------------ section
 
+export const DEFAULT_SECTION_INSPECTOR_ORDER = [
+  "insp-section-general",
+  "insp-section-layout",
+  "insp-section-transition",
+  "insp-section-anim",
+  "insp-section-actions",
+] as const;
+
+export type SectionInspectorSectionId = (typeof DEFAULT_SECTION_INSPECTOR_ORDER)[number];
+
 function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: boolean }) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
@@ -184,6 +200,204 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
   if (!section) return null;
   const tokens = doc.design.tokens;
   const act = () => store.getState();
+
+  const { order: sectionOrder, getDragProps } = usePanelSectionOrder(
+    "dib:section-inspector-order",
+    DEFAULT_SECTION_INSPECTOR_ORDER,
+    readOnly,
+  );
+
+  const renderSection = (id: SectionInspectorSectionId) => {
+    switch (id) {
+      case "insp-section-general":
+        return (
+          <PanelSection
+            key="insp-section-general"
+            id="insp-section-general"
+            title="Umum"
+            scopeKey={sectionId}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-section-general")}
+          >
+            <TextField
+              id="insp-section-name"
+              label="Nama"
+              value={section.name ?? ""}
+              disabled={readOnly}
+              maxLength={120}
+              onCommit={(name) => act().patchSection(sectionId, { name })}
+            />
+            <label className={styles.checkRow}>
+              <input
+                id="insp-section-visible"
+                type="checkbox"
+                checked={section.visible}
+                disabled={readOnly}
+                onChange={(e) => act().patchSection(sectionId, { visible: e.target.checked })}
+              />
+              Tampilkan section saat publish
+            </label>
+            <div
+              style={{
+                marginTop: 8,
+                padding: "8px 10px",
+                background: section.isOpening ? "rgba(217, 119, 6, 0.12)" : "rgba(255, 255, 255, 0.03)",
+                borderRadius: 6,
+                border: section.isOpening ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <label className={styles.checkRow} style={{ margin: 0, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <input
+                  id="insp-section-opening"
+                  type="checkbox"
+                  checked={Boolean(section.isOpening)}
+                  disabled={readOnly}
+                  onChange={() => act().toggleSectionOpening(sectionId)}
+                  data-testid="section-opening-toggle"
+                />
+                <IconSparkle size={13} />
+                <span>Jadikan Section Opening (Section 0 / Cover)</span>
+              </label>
+              <p className={styles.muted} style={{ fontSize: "0.72rem", marginTop: 4, marginBottom: 0 }}>
+                {section.isOpening
+                  ? "Section ini adalah Cover Pembuka (#0). Pengunjung harus mengklik layar untuk membukanya dan memicu animasi masuk Section 1."
+                  : "Jadikan section ini sebagai kanvas cover pembuka beranimasi sebelum masuk ke isi undangan."}
+              </p>
+            </div>
+          </PanelSection>
+        );
+
+      case "insp-section-layout":
+        return (
+          <PanelSection
+            key="insp-section-layout"
+            id="insp-section-layout"
+            title="Ukuran & latar"
+            scopeKey={sectionId}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-section-layout")}
+          >
+            <NumberField
+              id="insp-section-height"
+              label="Tinggi (px)"
+              value={section.baseHeight}
+              min={100}
+              max={4000}
+              disabled={readOnly}
+              onCommit={(baseHeight) => act().patchSection(sectionId, { baseHeight })}
+            />
+            <ColorField
+              id="insp-section-bg"
+              label="Warna latar"
+              value={section.background.color}
+              resolvedHex={resolveColor(section.background.color, tokens, "#ffffff")}
+              tokens={tokens.colors}
+              allowNone
+              disabled={readOnly}
+              onChange={(color) => act().patchSection(sectionId, { background: { color } })}
+            />
+            <SelectField
+              id="insp-section-overflow"
+              label="Konten di luar batas"
+              value={section.overflow}
+              disabled={readOnly}
+              options={[
+                { value: "hidden", label: "Dipotong (hidden)" },
+                { value: "visible", label: "Terlihat (visible)" },
+              ]}
+              onChange={(overflow) => act().patchSection(sectionId, { overflow })}
+            />
+          </PanelSection>
+        );
+
+      case "insp-section-transition":
+        return (
+          <PanelSection
+            key="insp-section-transition"
+            id="insp-section-transition"
+            title="Transisi scroll section"
+            icon={<IconSparkle size={13} />}
+            count={section.transition && section.transition.type !== "none" ? 1 : undefined}
+            scopeKey={sectionId}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-section-transition")}
+          >
+            <SectionTransitionControl section={section} readOnly={readOnly} />
+          </PanelSection>
+        );
+
+      case "insp-section-anim":
+        return (
+          <PanelSection
+            key="insp-section-anim"
+            id="insp-section-anim"
+            title="Animasi elemen section"
+            scopeKey={sectionId}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-section-anim")}
+          >
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(
+                    new CustomEvent("dib:replay-animation", { detail: { sectionId } }),
+                  );
+                }
+              }}
+              title="Putar ulang semua animasi di section ini"
+              data-testid="replay-section-btn"
+            >
+              <IconReplay size={13} />
+              Putar ulang animasi elemen
+            </button>
+            <p className={styles.muted}>Preview animasi elemen diputar langsung di artboard.</p>
+          </PanelSection>
+        );
+
+      case "insp-section-actions":
+        return (
+          <PanelSection
+            key="insp-section-actions"
+            id="insp-section-actions"
+            title="Tindakan Section"
+            scopeKey={sectionId}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-section-actions")}
+          >
+            <div className={styles.actionGrid}>
+              <button
+                type="button"
+                className={styles.actionTile}
+                disabled={readOnly}
+                data-testid="section-duplicate-btn"
+                title="Duplikat section ini beserta semua elemennya"
+                onClick={() => act().duplicateSection(sectionId)}
+              >
+                <IconSection size={15} />
+                <span>Duplikat</span>
+              </button>
+              <button
+                type="button"
+                className={styles.actionTile}
+                disabled={readOnly || clipboard.length === 0}
+                data-testid="section-paste-btn"
+                title={
+                  clipboard.length === 0
+                    ? "Clipboard kosong"
+                    : `Tempel ${clipboard.length} elemen ke section ini (Ctrl+V)`
+                }
+                onClick={() => act().paste({ sectionId })}
+              >
+                <IconClipboardPaste size={15} />
+                <span>Tempel ({clipboard.length})</span>
+              </button>
+            </div>
+          </PanelSection>
+        );
+    }
+  };
 
   return (
     <div className={styles.inspStack} data-testid="section-inspector">
@@ -194,146 +408,7 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
         badge={section.visible ? null : <span className={styles.badge}>Disembunyikan</span>}
       />
 
-      <PanelSection id="insp-section-general" title="Umum">
-        <TextField
-          id="insp-section-name"
-          label="Nama"
-          value={section.name ?? ""}
-          disabled={readOnly}
-          maxLength={120}
-          onCommit={(name) => act().patchSection(sectionId, { name })}
-        />
-        <label className={styles.checkRow}>
-          <input
-            id="insp-section-visible"
-            type="checkbox"
-            checked={section.visible}
-            disabled={readOnly}
-            onChange={(e) => act().patchSection(sectionId, { visible: e.target.checked })}
-          />
-          Tampilkan section saat publish
-        </label>
-        <div
-          style={{
-            marginTop: 8,
-            padding: "8px 10px",
-            background: section.isOpening ? "rgba(217, 119, 6, 0.12)" : "rgba(255, 255, 255, 0.03)",
-            borderRadius: 6,
-            border: section.isOpening ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid rgba(255, 255, 255, 0.06)",
-          }}
-        >
-          <label className={styles.checkRow} style={{ margin: 0, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <input
-              id="insp-section-opening"
-              type="checkbox"
-              checked={Boolean(section.isOpening)}
-              disabled={readOnly}
-              onChange={() => act().toggleSectionOpening(sectionId)}
-              data-testid="section-opening-toggle"
-            />
-            <IconSparkle size={13} />
-            <span>Jadikan Section Opening (Section 0 / Cover)</span>
-          </label>
-          <p className={styles.muted} style={{ fontSize: "0.72rem", marginTop: 4, marginBottom: 0 }}>
-            {section.isOpening
-              ? "Section ini adalah Cover Pembuka (#0). Pengunjung harus mengklik layar untuk membukanya dan memicu animasi masuk Section 1."
-              : "Jadikan section ini sebagai kanvas cover pembuka beranimasi sebelum masuk ke isi undangan."}
-          </p>
-        </div>
-      </PanelSection>
-
-      <PanelSection id="insp-section-layout" title="Ukuran & latar">
-        <NumberField
-          id="insp-section-height"
-          label="Tinggi (px)"
-          value={section.baseHeight}
-          min={100}
-          max={4000}
-          disabled={readOnly}
-          onCommit={(baseHeight) => act().patchSection(sectionId, { baseHeight })}
-        />
-        <ColorField
-          id="insp-section-bg"
-          label="Warna latar"
-          value={section.background.color}
-          resolvedHex={resolveColor(section.background.color, tokens, "#ffffff")}
-          tokens={tokens.colors}
-          allowNone
-          disabled={readOnly}
-          onChange={(color) => act().patchSection(sectionId, { background: { color } })}
-        />
-        <SelectField
-          id="insp-section-overflow"
-          label="Konten di luar batas"
-          value={section.overflow}
-          disabled={readOnly}
-          options={[
-            { value: "hidden", label: "Dipotong (hidden)" },
-            { value: "visible", label: "Terlihat (visible)" },
-          ]}
-          onChange={(overflow) => act().patchSection(sectionId, { overflow })}
-        />
-      </PanelSection>
-
-      <PanelSection
-        id="insp-section-transition"
-        title="Transisi scroll section"
-        icon={<IconSparkle size={13} />}
-        count={section.transition && section.transition.type !== "none" ? 1 : undefined}
-      >
-        <SectionTransitionControl section={section} readOnly={readOnly} />
-      </PanelSection>
-
-      <PanelSection id="insp-section-anim" title="Animasi elemen section">
-        <button
-          type="button"
-          className={styles.ghostButton}
-          onClick={() => {
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(
-                new CustomEvent("dib:replay-animation", { detail: { sectionId } }),
-              );
-            }
-          }}
-          title="Putar ulang semua animasi di section ini"
-          data-testid="replay-section-btn"
-        >
-          <IconReplay size={13} />
-          Putar ulang animasi elemen
-        </button>
-        <p className={styles.muted}>Preview animasi elemen diputar langsung di artboard.</p>
-      </PanelSection>
-
-      <PanelSection id="insp-section-actions" title="Tindakan Section">
-        <div className={styles.actionGrid}>
-          <button
-            type="button"
-            className={styles.actionTile}
-            disabled={readOnly}
-            data-testid="section-duplicate-btn"
-            title="Duplikat section ini beserta semua elemennya"
-            onClick={() => act().duplicateSection(sectionId)}
-          >
-            <IconSection size={15} />
-            <span>Duplikat</span>
-          </button>
-          <button
-            type="button"
-            className={styles.actionTile}
-            disabled={readOnly || clipboard.length === 0}
-            data-testid="section-paste-btn"
-            title={
-              clipboard.length === 0
-                ? "Clipboard kosong"
-                : `Tempel ${clipboard.length} elemen ke section ini (Ctrl+V)`
-            }
-            onClick={() => act().paste({ sectionId })}
-          >
-            <IconClipboardPaste size={15} />
-            <span>Tempel ({clipboard.length})</span>
-          </button>
-        </div>
-      </PanelSection>
+      {sectionOrder.map((id) => renderSection(id))}
 
       <p className={styles.footHint}>
         Urutan section = urutan scroll publik. Lebar kanonik 390 px.
@@ -341,6 +416,7 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
     </div>
   );
 }
+
 
 
 // ------------------------------------------------------------------ actions
@@ -472,6 +548,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
         id="insp-multi-opacity-section"
         title="Transparansi & Opasitas"
         icon={<IconOpacity size={14} />}
+        defaultOpen={false}
       >
         <OpacityField
           id="insp-multi-opacity"
@@ -484,6 +561,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
         id="insp-multi-shadow-section"
         title="Efek Bayangan (Shadow)"
         icon={<IconSparkle size={14} />}
+        defaultOpen={false}
       >
         <ShadowControl
           tokens={tokens}
@@ -497,6 +575,17 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
 }
 
 // ------------------------------------------------------------------ element
+
+export const DEFAULT_ELEMENT_PANEL_ORDER = [
+  "insp-general",
+  "insp-transform",
+  "insp-content",
+  "insp-opacity-section",
+  "insp-shadow-section",
+  "insp-animation",
+] as const;
+
+export type ElementPanelSectionId = (typeof DEFAULT_ELEMENT_PANEL_ORDER)[number];
 
 function ElementPanel({
   element,
@@ -518,6 +607,222 @@ function ElementPanel({
   const id = element.id;
   const typeLabel = elementTypeLabel(element);
 
+  const { order: sectionOrder, getDragProps } = usePanelSectionOrder(
+    "dib:element-inspector-order",
+    DEFAULT_ELEMENT_PANEL_ORDER,
+    readOnly,
+  );
+
+  const renderContentSection = () => {
+    if (element.type === "text") {
+      return (
+        <PanelSection
+          key="insp-text"
+          id="insp-text"
+          title="Teks & tipografi"
+          scopeKey={id}
+          defaultOpen={false}
+          dragProps={getDragProps("insp-content")}
+        >
+          <TextPanel element={element} readOnly={readOnly} tokens={tokens} />
+        </PanelSection>
+      );
+    }
+    if (element.type === "shape") {
+      return (
+        <PanelSection
+          key="insp-shape"
+          id="insp-shape"
+          title="Bentuk"
+          scopeKey={id}
+          defaultOpen={false}
+          dragProps={getDragProps("insp-content")}
+        >
+          <ShapePanel element={element} readOnly={readOnly} tokens={tokens} />
+        </PanelSection>
+      );
+    }
+    if (element.type === "image") {
+      return (
+        <PanelSection
+          key="insp-image"
+          id="insp-image"
+          title="Gambar"
+          scopeKey={id}
+          defaultOpen={false}
+          dragProps={getDragProps("insp-content")}
+        >
+          <ImagePanel element={element} readOnly={readOnly} />
+        </PanelSection>
+      );
+    }
+    if (element.type === "widget") {
+      return (
+        <PanelSection
+          key="insp-widget"
+          id="insp-widget"
+          title={`Pengaturan ${typeLabel.toLowerCase()}`}
+          scopeKey={id}
+          defaultOpen={false}
+          dragProps={getDragProps("insp-content")}
+        >
+          <WidgetPanel element={element} readOnly={readOnly} tokens={tokens} />
+        </PanelSection>
+      );
+    }
+    return null;
+  };
+
+  const renderSection = (sectionKey: ElementPanelSectionId) => {
+    switch (sectionKey) {
+      case "insp-general":
+        return (
+          <PanelSection
+            key="insp-general"
+            id="insp-general"
+            title="Umum"
+            scopeKey={id}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-general")}
+          >
+            <TextField
+              id="insp-name"
+              label="Nama layer"
+              value={element.name ?? ""}
+              disabled={readOnly}
+              maxLength={120}
+              onCommit={(name) => act().renameElement(id, name)}
+            />
+          </PanelSection>
+        );
+
+      case "insp-transform":
+        return (
+          <PanelSection
+            key="insp-transform"
+            id="insp-transform"
+            title="Posisi & ukuran"
+            scopeKey={id}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-transform")}
+          >
+            <div className={styles.grid2}>
+              <NumberField
+                id="insp-x"
+                label="X"
+                value={frame.x}
+                disabled={disabled}
+                step={1}
+                onCommit={(x) => act().patchFrame(id, { x })}
+              />
+              <NumberField
+                id="insp-y"
+                label="Y"
+                value={frame.y}
+                disabled={disabled}
+                step={1}
+                onCommit={(y) => act().patchFrame(id, { y })}
+              />
+              <NumberField
+                id="insp-w"
+                label="Lebar"
+                value={frame.w}
+                min={1}
+                disabled={disabled}
+                onCommit={(w) => act().patchFrame(id, { w })}
+              />
+              <NumberField
+                id="insp-h"
+                label="Tinggi"
+                value={frame.h}
+                min={1}
+                disabled={disabled}
+                onCommit={(h) => act().patchFrame(id, { h })}
+              />
+              <NumberField
+                id="insp-rotation"
+                label="Rotasi (°)"
+                value={frame.rotation}
+                min={-360}
+                max={360}
+                disabled={disabled}
+                onCommit={(rotation) => act().patchFrame(id, { rotation })}
+              />
+            </div>
+          </PanelSection>
+        );
+
+      case "insp-opacity-section":
+        return (
+          <PanelSection
+            key="insp-opacity-section"
+            id="insp-opacity-section"
+            title="Transparansi & Opasitas"
+            icon={<IconOpacity size={14} />}
+            scopeKey={id}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-opacity-section")}
+            actions={
+              Math.round(opacity * 100) < 100 ? (
+                <span className={styles.badge}>{Math.round(opacity * 100)}%</span>
+              ) : null
+            }
+          >
+            <OpacityField
+              id="insp-opacity"
+              value={opacity}
+              disabled={disabled}
+              onChange={(newOpacity) => act().patchStyle([id], { opacity: newOpacity })}
+            />
+          </PanelSection>
+        );
+
+      case "insp-shadow-section":
+        return (
+          <PanelSection
+            key="insp-shadow-section"
+            id="insp-shadow-section"
+            title="Efek Bayangan (Shadow)"
+            icon={<IconSparkle size={13} />}
+            count={element.style.shadow ? 1 : undefined}
+            scopeKey={id}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-shadow-section")}
+          >
+            <ShadowControl
+              shadow={element.style.shadow}
+              tokens={tokens}
+              disabled={disabled}
+              onChange={(shadow) => act().patchStyle([id], { shadow })}
+            />
+          </PanelSection>
+        );
+
+      case "insp-content":
+        return renderContentSection();
+
+      case "insp-animation":
+        return (
+          <PanelSection
+            key="insp-animation"
+            id="insp-animation"
+            title="Animasi"
+            icon={<IconSparkle size={13} />}
+            count={
+              (element.animations?.enter ? 1 : 0) +
+              (element.animations?.attention ? 1 : 0) +
+              (element.animations?.exit ? 1 : 0) || undefined
+            }
+            scopeKey={id}
+            defaultOpen={false}
+            dragProps={getDragProps("insp-animation")}
+          >
+            <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
+          </PanelSection>
+        );
+    }
+  };
+
   return (
     <div className={styles.inspStack} data-testid="element-inspector" data-element-id={id}>
       <InspectorHeader
@@ -535,128 +840,7 @@ function ElementPanel({
 
       <ElementActions ids={[id]} readOnly={readOnly} />
 
-      <PanelSection id="insp-general" title="Umum">
-        <TextField
-          id="insp-name"
-          label="Nama layer"
-          value={element.name ?? ""}
-          disabled={readOnly}
-          maxLength={120}
-          onCommit={(name) => act().renameElement(id, name)}
-        />
-      </PanelSection>
-
-      <PanelSection id="insp-transform" title="Posisi & ukuran">
-        <div className={styles.grid2}>
-          <NumberField
-            id="insp-x"
-            label="X"
-            value={frame.x}
-            disabled={disabled}
-            step={1}
-            onCommit={(x) => act().patchFrame(id, { x })}
-          />
-          <NumberField
-            id="insp-y"
-            label="Y"
-            value={frame.y}
-            disabled={disabled}
-            step={1}
-            onCommit={(y) => act().patchFrame(id, { y })}
-          />
-          <NumberField
-            id="insp-w"
-            label="Lebar"
-            value={frame.w}
-            min={1}
-            disabled={disabled}
-            onCommit={(w) => act().patchFrame(id, { w })}
-          />
-          <NumberField
-            id="insp-h"
-            label="Tinggi"
-            value={frame.h}
-            min={1}
-            disabled={disabled}
-            onCommit={(h) => act().patchFrame(id, { h })}
-          />
-          <NumberField
-            id="insp-rotation"
-            label="Rotasi (°)"
-            value={frame.rotation}
-            min={-360}
-            max={360}
-            disabled={disabled}
-            onCommit={(rotation) => act().patchFrame(id, { rotation })}
-          />
-        </div>
-      </PanelSection>
-
-      <PanelSection
-        id="insp-opacity-section"
-        title="Transparansi & Opasitas"
-        icon={<IconOpacity size={14} />}
-        actions={
-          Math.round(opacity * 100) < 100 ? (
-            <span className={styles.badge}>{Math.round(opacity * 100)}%</span>
-          ) : null
-        }
-      >
-        <OpacityField
-          id="insp-opacity"
-          value={opacity}
-          disabled={disabled}
-          onChange={(newOpacity) => act().patchStyle([id], { opacity: newOpacity })}
-        />
-      </PanelSection>
-
-      <PanelSection
-        id="insp-shadow-section"
-        title="Efek Bayangan (Shadow)"
-        icon={<IconSparkle size={13} />}
-        count={element.style.shadow ? 1 : undefined}
-      >
-        <ShadowControl
-          shadow={element.style.shadow}
-          tokens={tokens}
-          disabled={disabled}
-          onChange={(shadow) => act().patchStyle([id], { shadow })}
-        />
-      </PanelSection>
-
-      {element.type === "text" ? (
-        <PanelSection id="insp-text" title="Teks & tipografi">
-          <TextPanel element={element} readOnly={readOnly} tokens={tokens} />
-        </PanelSection>
-      ) : null}
-      {element.type === "shape" ? (
-        <PanelSection id="insp-shape" title="Bentuk">
-          <ShapePanel element={element} readOnly={readOnly} tokens={tokens} />
-        </PanelSection>
-      ) : null}
-      {element.type === "image" ? (
-        <PanelSection id="insp-image" title="Gambar">
-          <ImagePanel element={element} readOnly={readOnly} />
-        </PanelSection>
-      ) : null}
-      {element.type === "widget" ? (
-        <PanelSection id="insp-widget" title={`Pengaturan ${typeLabel.toLowerCase()}`}>
-          <WidgetPanel element={element} readOnly={readOnly} tokens={tokens} />
-        </PanelSection>
-      ) : null}
-
-      <PanelSection
-        id="insp-animation"
-        title="Animasi"
-        icon={<IconSparkle size={13} />}
-        count={
-          (element.animations?.enter ? 1 : 0) +
-          (element.animations?.attention ? 1 : 0) +
-          (element.animations?.exit ? 1 : 0) || undefined
-        }
-      >
-        <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />
-      </PanelSection>
+      {sectionOrder.map((sectionKey) => renderSection(sectionKey))}
     </div>
   );
 }

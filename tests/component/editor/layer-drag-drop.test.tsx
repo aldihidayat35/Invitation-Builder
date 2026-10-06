@@ -160,6 +160,7 @@ describe("LeftPanel Layer Drag and Drop UI", () => {
         <LeftPanel />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^layer/i }));
 
     const list = screen.getByTestId("layer-list");
     expect(list).toBeInTheDocument();
@@ -186,6 +187,7 @@ describe("LeftPanel Layer Drag and Drop UI", () => {
         <LeftPanel />
       </EditorProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: /^layer/i }));
 
     const rowBottom = screen.getByTestId("layer-el_bottom");
 

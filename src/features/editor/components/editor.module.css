@@ -324,14 +324,108 @@
 
 /* Collapsible group shared by both side panels. */
 .pSection {
+  position: relative;
   border-bottom: 1px solid var(--dash-border);
+  transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.pSection[data-dragging="true"] {
+  opacity: 0.35;
+  background: var(--dash-surface-sunken);
+}
+
+.pSection[data-drop-target="above"]::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--dash-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.pSection[data-drop-target="below"]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--dash-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 20;
 }
 
 .pSectionHeader {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 0 8px 0 4px;
+}
+
+.pSectionGrip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 28px;
+  color: var(--dash-muted);
+  cursor: grab;
+  border-radius: 4px;
+  transition: color 120ms ease, background-color 120ms ease;
+  user-select: none;
+}
+
+.pSectionGrip:hover {
+  color: var(--dash-text);
+  background: var(--dash-surface-strong);
+}
+
+.pSectionGrip:active {
+  cursor: grabbing;
+}
+
+.pSectionOrderBtns {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.pSectionHeader:hover .pSectionOrderBtns,
+.pSectionHeader:focus-within .pSectionOrderBtns {
+  opacity: 1;
+}
+
+.pSectionOrderBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dash-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.pSectionOrderBtn:hover:not(:disabled) {
+  color: var(--dash-text);
+  background: var(--dash-surface-strong);
+}
+
+.pSectionOrderBtn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
 }
 
 .pSectionHeading {
