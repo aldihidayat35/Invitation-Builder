@@ -135,6 +135,8 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
   const exitTrack = liveElement.animations?.exit;
   const attentionTrack = liveElement.animations?.attention;
   const motionTrack = liveElement.animations?.motion;
+  const editingMotion = useEditor((s) => s.editingMotion);
+  const isEditingThisMotion = editingMotion?.elementId === element.id;
 
   const currentTrack: AnimationTrack | undefined =
     activeTab === "enter" ? enterTrack : activeTab === "exit" ? exitTrack : attentionTrack;
@@ -242,9 +244,12 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     });
   };
 
-  const handleSelectMotionPreset = (presetId: string) => {
+  const handleToggleCustomMotion = () => {
     if (readOnly) return;
-    if (!presetId) {
+    if (motionTrack?.enabled) {
+      if (isEditingThisMotion) {
+        store.getState().setEditingMotion(null);
+      }
       act().patchElement(element.id, (el) => {
         const next = { ...el.animations };
         delete next.motion;
@@ -254,25 +259,34 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
           animations: hasAny ? next : undefined,
         };
       });
-      return;
+    } else {
+      store.getState().setEditingMotion({ sectionId, elementId: element.id });
     }
+  };
 
-    const newTrack = buildDefaultMotionTrack({ preset: presetId as MotionPreset });
-    act().patchElement(element.id, (el) => ({
-      ...el,
-      animations: {
-        ...el.animations,
-        motion: newTrack,
-      },
-    }));
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("dib:replay-animation", {
-          detail: { elementId: element.id, sectionId, trackType: "motion" },
-        }),
-      );
+  const handleToggleCanvasEdit = () => {
+    if (readOnly) return;
+    if (isEditingThisMotion) {
+      store.getState().setEditingMotion(null);
+    } else {
+      store.getState().setEditingMotion({ sectionId, elementId: element.id });
     }
+  };
+
+  const handleRemoveMotion = () => {
+    if (readOnly) return;
+    if (isEditingThisMotion) {
+      store.getState().setEditingMotion(null);
+    }
+    act().patchElement(element.id, (el) => {
+      const next = { ...el.animations };
+      delete next.motion;
+      const hasAny = Object.keys(next).length > 0;
+      return {
+        ...el,
+        animations: hasAny ? next : undefined,
+      };
+    });
   };
 
   const handleUpdateWaypoint = (index: number, key: "x" | "y", val: number) => {
@@ -392,61 +406,56 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
       {/* ========================================================================= */}
       {activeTab === "motion" ? (
         <div data-testid="motion-tab-content">
-          {/* Preset Grid */}
-          <div
-            className={styles.animGrid}
-            role="group"
-            aria-label="Pilihan Gerakan (Motion Path)"
-          >
-            {/* Box: Tanpa Gerakan */}
-            <button
-              type="button"
-              className={`${styles.animBox} ${!motionTrack?.enabled ? styles.animBoxActive : ""}`}
-              onClick={() => handleSelectMotionPreset("")}
-              disabled={readOnly}
-              aria-pressed={!motionTrack?.enabled}
-              title="Tanpa gerakan untuk objek ini"
-              data-testid="motion-preset-none"
-            >
-              {!motionTrack?.enabled && (
-                <span className={styles.animBoxCheck} aria-hidden="true">
-                  ✓
+          {/* Custom Motion Activation Card */}
+          <div className={styles.motionControlCard}>
+            <div className={styles.motionControlHeader}>
+              <div className={styles.motionControlTitleWrap}>
+                <span className={styles.motionControlTitle}>Gerakan Kustom (Custom Motion)</span>
+                <span className={styles.motionControlSubtitle}>
+                  {motionTrack?.enabled
+                    ? "Jalur gerakan bebas aktif"
+                    : "Atur pergerakan objek dari titik ke titik"}
                 </span>
-              )}
-              <span className={styles.animBoxIcon}>
-                <AnimationPresetIcon presetId="none" size={24} />
-              </span>
-              <span className={styles.animBoxLabel}>Tanpa Gerakan</span>
-            </button>
+              </div>
+              <button
+                type="button"
+                className={motionTrack?.enabled ? styles.motionToggleActiveBtn : styles.motionToggleBtn}
+                onClick={handleToggleCustomMotion}
+                disabled={readOnly}
+                data-testid="toggle-custom-motion-btn"
+              >
+                {motionTrack?.enabled ? "Aktif" : "Aktifkan"}
+              </button>
+            </div>
 
-            {/* Motion Preset Boxes */}
-            {MOTION_PRESET_CONFIGS.map((preset) => {
-              const isSelected = Boolean(
-                motionTrack?.enabled && motionTrack.preset === preset.id,
-              );
-              return (
+            {motionTrack?.enabled && (
+              <div className={styles.motionEditActionWrap}>
                 <button
-                  key={preset.id}
                   type="button"
-                  className={`${styles.animBox} ${isSelected ? styles.animBoxActive : ""}`}
-                  onClick={() => handleSelectMotionPreset(preset.id)}
+                  className={isEditingThisMotion ? styles.motionCanvasEditBtnActive : styles.motionCanvasEditBtn}
+                  onClick={handleToggleCanvasEdit}
                   disabled={readOnly}
-                  aria-pressed={isSelected}
-                  title={`${preset.label} — ${preset.description}`}
-                  data-testid={`motion-preset-${preset.id}`}
+                  data-testid="edit-motion-canvas-btn"
                 >
-                  {isSelected && (
-                    <span className={styles.animBoxCheck} aria-hidden="true">
-                      ✓
-                    </span>
+                  {isEditingThisMotion ? (
+                    <>
+                      <span>✓</span>
+                      <span>Selesai Edit di Canvas</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🎬</span>
+                      <span>Edit Titik di Canvas (Flash / Animate)</span>
+                    </>
                   )}
-                  <span className={styles.animBoxIcon}>
-                    <AnimationPresetIcon presetId={preset.id} size={24} />
-                  </span>
-                  <span className={styles.animBoxLabel}>{preset.label}</span>
                 </button>
-              );
-            })}
+                <p className={styles.motionCanvasHint}>
+                  {isEditingThisMotion
+                    ? "🎯 Mode Animate Aktif: Canvas terkunci untuk objek lain. Klik & geser titik-titik lingkaran di canvas."
+                    : "💡 Klik tombol di atas untuk menggeser langsung titik-titik koordinat pada canvas."}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Configuration controls when motion is enabled */}
@@ -698,7 +707,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                 type="button"
                 className={styles.chipRemove}
                 style={{ alignSelf: "flex-start", marginTop: 4 }}
-                onClick={() => handleSelectMotionPreset("")}
+                onClick={handleRemoveMotion}
                 disabled={readOnly}
                 title="Hapus animasi gerakan elemen ini"
                 data-testid="remove-motion-btn"
@@ -709,8 +718,9 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
             </div>
           ) : (
             <div className={styles.animEmptyNotice}>
-              Belum ada animasi <strong>Gerakan (Motion Path)</strong>. Pilih salah satu kotak
-              arah gerakan di atas untuk membuat objek bergerak.
+              Belum ada animasi <strong>Gerakan (Motion Path)</strong>. Klik tombol{" "}
+              <strong>Aktifkan</strong> di atas untuk membuat objek bergerak dan mengatur jalur
+              geraknya secara visual.
             </div>
           )}
         </div>

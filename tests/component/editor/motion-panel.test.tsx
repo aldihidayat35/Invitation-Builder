@@ -63,10 +63,10 @@ describe("AnimationPanel Motion Feature", () => {
 
     fireEvent.click(motionTab);
     expect(screen.getByTestId("motion-tab-content")).toBeInTheDocument();
-    expect(screen.getByTestId("motion-preset-none")).toBeInTheDocument();
+    expect(screen.getByTestId("toggle-custom-motion-btn")).toBeInTheDocument();
   });
 
-  it("enables motion and updates store when a preset is selected", () => {
+  it("enables custom motion and enters canvas editing mode on click", () => {
     const { doc, element } = makeDocWithElement();
     const store = createEditorStore({ document: doc, revision: 1 });
     store.getState().selectElements(["el_shape_1"]);
@@ -79,14 +79,17 @@ describe("AnimationPanel Motion Feature", () => {
 
     fireEvent.click(screen.getByTestId("anim-tab-motion"));
 
-    // Select "Kiri ke Kanan" preset
-    const leftToRightBtn = screen.getByTestId("motion-preset-leftToRight");
-    fireEvent.click(leftToRightBtn);
+    // Click "Aktifkan"
+    const toggleBtn = screen.getByTestId("toggle-custom-motion-btn");
+    fireEvent.click(toggleBtn);
 
     const updated = store.getState().history.present.sections[0]!.elements[0]!;
     expect(updated.animations?.motion).toBeDefined();
-    expect(updated.animations?.motion?.preset).toBe("leftToRight");
     expect(updated.animations?.motion?.enabled).toBe(true);
+    expect(store.getState().editingMotion).toEqual({
+      sectionId: "sec_1",
+      elementId: "el_shape_1",
+    });
   });
 
   it("allows adjusting curvature (melengkung) via slider", () => {

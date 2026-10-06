@@ -2511,6 +2511,232 @@ textarea.input {
   color: var(--dash-text);
 }
 
+.motionFloatingBar {
+  position: sticky;
+  top: 12px;
+  z-index: 60;
+  margin: 0 auto 12px;
+  max-width: 900px;
+  width: calc(100% - 32px);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.25);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #ffffff;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.motionFloatingLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.motionFloatingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.motionFloatingTarget {
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.motionFloatingHint {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.motionFloatingRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.motionToolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.motionToolbarBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.motionToolbarDoneBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+}
+
+.motionToolbarDoneBtn:hover {
+  background: #059669;
+}
+
+.motionControlCard {
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.motionControlHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.motionControlTitleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.motionControlTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.motionControlSubtitle {
+  font-size: 11px;
+  color: var(--dash-muted);
+}
+
+.motionToggleBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  color: var(--dash-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.motionToggleBtn:hover:not(:disabled) {
+  background: var(--dash-surface-hover);
+  border-color: var(--dash-accent);
+}
+
+.motionToggleActiveBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #10b981;
+  border: 1px solid #059669;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.motionToggleActiveBtn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.motionEditActionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--dash-border);
+}
+
+.motionCanvasEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.motionCanvasEditBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  transform: translateY(-1px);
+}
+
+.motionCanvasEditBtnActive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+}
+
+.motionCanvasEditBtnActive:hover:not(:disabled) {
+  background: #059669;
+}
+
+.motionCanvasHint {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--dash-muted);
+  line-height: 1.4;
+}
+
 /* ------------------------------------------------------------- section transitions */
 
 .sectionTransitionWrap {

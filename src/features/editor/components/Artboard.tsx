@@ -103,6 +103,68 @@ export function Artboard() {
 
   const last = doc.sections.length - 1;
   const artboardMode = useEditor((s) => s.artboardMode);
+  const editingMotion = useEditor((s) => s.editingMotion);
+  const motionElement = useEditor((s) => {
+    if (!s.editingMotion) return null;
+    const sec = s.history.present.sections.find((x) => x.id === s.editingMotion!.sectionId);
+    return sec?.elements.find((e) => e.id === s.editingMotion!.elementId) ?? null;
+  });
+
+  const handleAddWaypoint = () => {
+    if (!editingMotion || !motionElement?.animations?.motion) return;
+    const track = motionElement.animations.motion;
+    if (track.points.length >= 20) return;
+    const pts = [...track.points];
+    const pPrev = pts[pts.length - 2] ?? { x: 0, y: 0 };
+    const pLast = pts[pts.length - 1] ?? { x: 100, y: 0 };
+    const newPt = {
+      x: Math.round((pPrev.x + pLast.x) / 2),
+      y: Math.round((pPrev.y + pLast.y) / 2),
+    };
+    pts.splice(pts.length - 1, 0, newPt);
+    store.getState().patchElement(motionElement.id, (el) => ({
+      ...el,
+      animations: {
+        ...el.animations,
+        motion: {
+          ...el.animations!.motion!,
+          preset: "custom",
+          points: pts,
+        },
+      },
+    }));
+  };
+
+  const handleReverseMotion = () => {
+    if (!editingMotion || !motionElement?.animations?.motion) return;
+    const pts = [...motionElement.animations.motion.points].reverse();
+    store.getState().patchElement(motionElement.id, (el) => ({
+      ...el,
+      animations: {
+        ...el.animations,
+        motion: {
+          ...el.animations!.motion!,
+          preset: "custom",
+          points: pts,
+        },
+      },
+    }));
+  };
+
+  const handleReplayMotion = () => {
+    if (!editingMotion) return;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("dib:replay-animation", {
+          detail: {
+            elementId: editingMotion.elementId,
+            sectionId: editingMotion.sectionId,
+            trackType: "motion",
+          },
+        }),
+      );
+    }
+  };
 
   return (
     <div
@@ -112,6 +174,58 @@ export function Artboard() {
       data-testid="artboard"
       data-zoom={zoom}
     >
+      {editingMotion && motionElement && (
+        <div className={styles.motionFloatingBar} data-testid="motion-floating-bar">
+          <div className={styles.motionFloatingLeft}>
+            <span className={styles.motionFloatingBadge}>🎬 Mode Gerakan (Animate / Flash)</span>
+            <span className={styles.motionFloatingTarget}>
+              Target: <strong>{motionElement.name || motionElement.type}</strong>
+            </span>
+            <span className={styles.motionFloatingHint}>
+              (Canvas dikunci khusus jalur gerak: geser titik bulat di canvas)
+            </span>
+          </div>
+          <div className={styles.motionFloatingRight}>
+            <button
+              type="button"
+              className={styles.motionToolbarBtn}
+              onClick={handleAddWaypoint}
+              title="Tambah titik waypoint baru di jalur"
+              data-testid="artboard-motion-add-btn"
+            >
+              + Tambah Titik
+            </button>
+            <button
+              type="button"
+              className={styles.motionToolbarBtn}
+              onClick={handleReverseMotion}
+              title="Balikkan arah awal & akhir lintasan"
+              data-testid="artboard-motion-reverse-btn"
+            >
+              Balikkan Arah
+            </button>
+            <button
+              type="button"
+              className={styles.motionToolbarBtn}
+              onClick={handleReplayMotion}
+              title="Putar preview animasi gerakan di canvas"
+              data-testid="artboard-motion-replay-btn"
+            >
+              ▶ Putar Preview
+            </button>
+            <button
+              type="button"
+              className={styles.motionToolbarDoneBtn}
+              onClick={() => store.getState().setEditingMotion(null)}
+              title="Selesai dan kembali ke editor normal"
+              data-testid="artboard-motion-done-btn"
+            >
+              ✓ Selesai
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         className={styles.artboardInner}
         data-mode={artboardMode}

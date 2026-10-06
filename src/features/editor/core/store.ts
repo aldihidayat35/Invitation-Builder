@@ -77,6 +77,11 @@ export function getInitialArtboardMode(): ArtboardMode {
   return getStoredArtboardMode() ?? "cards";
 }
 
+export interface MotionEditTarget {
+  readonly sectionId: string;
+  readonly elementId: string;
+}
+
 export interface EditorState {
   readonly history: History<CanonicalDocument>;
   readonly selectedIds: readonly string[];
@@ -89,6 +94,8 @@ export interface EditorState {
   readonly panMode: boolean;
   /** View layout mode for the artboard: separated cards, seamless phone flow, or responsive grid wrap. */
   readonly artboardMode: ArtboardMode;
+  /** Focused motion path editing mode: locks canvas clicks and enables waypoint dragging (Flash/Animate style). */
+  readonly editingMotion: MotionEditTarget | null;
 
   /** Last document known to be persisted on the server, and its revision. */
   readonly savedDocument: CanonicalDocument;
@@ -104,6 +111,7 @@ export interface EditorActions {
   toggleElement(id: string): void;
   clearSelection(): void;
   setActiveSection(id: string | null): void;
+  setEditingMotion(target: MotionEditTarget | null): void;
   // sections
   addSection(afterSectionId?: string): void;
   addOpeningSection(): void;
@@ -197,9 +205,15 @@ function reconcile(state: EditorState, doc: CanonicalDocument): Partial<EditorSt
     activeSectionId = findElement(doc, selectedIds[0]!)!.section.id;
   }
   if (!activeSectionId) activeSectionId = doc.sections[0]?.id ?? null;
+  let editingMotion = state.editingMotion;
+  if (editingMotion && !findElement(doc, editingMotion.elementId)) {
+    editingMotion = null;
+  }
   const same =
-    selectedIds.length === state.selectedIds.length && activeSectionId === state.activeSectionId;
-  return same ? {} : { selectedIds, activeSectionId };
+    selectedIds.length === state.selectedIds.length &&
+    activeSectionId === state.activeSectionId &&
+    editingMotion === state.editingMotion;
+  return same ? {} : { selectedIds, activeSectionId, editingMotion };
 }
 
 export function createEditorStore(init: EditorInit): EditorStore {
@@ -234,6 +248,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       readOnly: init.readOnly ?? false,
       panMode: false,
       artboardMode: init.artboardMode ?? "cards",
+      editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,
       saveStatus: "idle",
@@ -244,32 +259,87 @@ export function createEditorStore(init: EditorInit): EditorStore {
       selectElements(ids) {
         const doc = get().history.present;
         const first = ids.map((id) => findElement(doc, id)).find(Boolean);
-        if (!first) return set({ selectedIds: [] });
+        if (!first) {
+          return set({ selectedIds: [], editingMotion: null });
+        }
         const sectionId = first.section.id;
         const valid = ids.filter((id) => findElement(doc, id)?.section.id === sectionId);
-        set({ selectedIds: valid, activeSectionId: sectionId });
+        const currentMotion = get().editingMotion;
+        const keepMotion = currentMotion && valid.includes(currentMotion.elementId);
+        set({
+          selectedIds: valid,
+          activeSectionId: sectionId,
+          editingMotion: keepMotion ? currentMotion : null,
+        });
       },
       toggleElement(id) {
         const state = get();
         const loc = findElement(state.history.present, id);
         if (!loc) return;
         if (sectionOfSelection(state) !== loc.section.id) {
-          return set({ selectedIds: [id], activeSectionId: loc.section.id });
+          return set({ selectedIds: [id], activeSectionId: loc.section.id, editingMotion: null });
         }
         const has = state.selectedIds.includes(id);
         set({
           selectedIds: has ? state.selectedIds.filter((x) => x !== id) : [...state.selectedIds, id],
           activeSectionId: loc.section.id,
+          editingMotion: null,
         });
       },
       clearSelection() {
-        if (get().selectedIds.length > 0) set({ selectedIds: [] });
+        if (get().selectedIds.length > 0 || get().editingMotion !== null) {
+          set({ selectedIds: [], editingMotion: null });
+        }
       },
       setActiveSection(id) {
         const state = get();
         if (id === state.activeSectionId) return;
         if (id && !findSection(state.history.present, id)) return;
-        set({ activeSectionId: id, selectedIds: [] });
+        set({ activeSectionId: id, selectedIds: [], editingMotion: null });
+      },
+      setEditingMotion(target) {
+        if (!target) {
+          set({ editingMotion: null });
+          return;
+        }
+        const doc = get().history.present;
+        const loc = findElement(doc, target.elementId);
+        if (!loc) {
+          set({ editingMotion: null });
+          return;
+        }
+        // Auto-initialize custom motion track if missing or disabled
+        if (!loc.element.animations?.motion?.enabled) {
+          get().patchElement(target.elementId, (el) => ({
+            ...el,
+            animations: {
+              ...el.animations,
+              motion: {
+                enabled: true,
+                preset: "custom",
+                pathShape: "curved",
+                curviness: 1.0,
+                points: [
+                  { x: -120, y: 0 },
+                  { x: 120, y: 0 },
+                ],
+                durationMs: 2000,
+                delayMs: 0,
+                easing: "ease-in-out",
+                repeat: 0,
+                yoyo: false,
+                autoRotate: false,
+                trigger: "onEnterViewport",
+                once: true,
+              },
+            },
+          }));
+        }
+        set({
+          editingMotion: target,
+          selectedIds: [target.elementId],
+          activeSectionId: target.sectionId,
+        });
       },
 
       // ------------------------------------------------------------- sections

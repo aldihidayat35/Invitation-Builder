@@ -287,6 +287,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const selectedIds = useEditor((s) => s.selectedIds);
   const readOnly = useEditor((s) => s.readOnly);
   const panMode = useEditor((s) => s.panMode);
+  const editingMotion = useEditor((s) => s.editingMotion);
+  const isEditingThisMotion = editingMotion?.sectionId === sectionId;
+  const isEditingAnyMotion = Boolean(editingMotion);
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
@@ -357,7 +360,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   );
   const transformableKey = useMemo(
     () =>
-      readOnly || panMode
+      readOnly || panMode || isEditingAnyMotion
         ? ""
         : selectedHere
             .filter((id) => {
@@ -365,7 +368,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               return el && el.visible && !el.locked;
             })
             .join(","),
-    [selectedHere, elements, readOnly, panMode],
+    [selectedHere, elements, readOnly, panMode, isEditingAnyMotion],
   );
 
   // Attach the transformer to the selected, manipulable nodes.
@@ -441,7 +444,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const handlers = useMemo<ElementHandlers>(
     () => ({
       onPointerDown(id, e) {
-        if (store.getState().panMode) return;
+        if (store.getState().panMode || store.getState().editingMotion) {
+          e.cancelBubble = true;
+          return;
+        }
         e.cancelBubble = true;
         dragRef.current.moved = false;
         const evt = e.evt;
@@ -451,7 +457,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         else if (!state.selectedIds.includes(id)) state.selectElements([id]);
       },
       onClick(id, e) {
-        if (store.getState().panMode) return;
+        if (store.getState().panMode || store.getState().editingMotion) {
+          e.cancelBubble = true;
+          return;
+        }
         const evt = e.evt;
         const additive = evt.shiftKey || evt.ctrlKey || evt.metaKey;
         if (!additive && !dragRef.current.moved && store.getState().selectedIds.length > 1) {
@@ -459,7 +468,11 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
       },
       onContextMenu(id, e) {
-        if (store.getState().panMode) return;
+        if (store.getState().panMode || store.getState().editingMotion) {
+          e.cancelBubble = true;
+          e.evt.preventDefault();
+          return;
+        }
         e.cancelBubble = true;
         e.evt.preventDefault();
         const state = store.getState();
@@ -480,6 +493,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         });
       },
       onDragStart(id) {
+        if (store.getState().panMode || store.getState().editingMotion) return;
         const stage = stageRef.current;
         if (!stage) return;
         const state = store.getState();
@@ -597,22 +611,27 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     return () => window.removeEventListener("dib:replay-animation", handleReplay);
   }, [section, sectionId]);
 
-  const selectedElementWithMotion = useMemo(() => {
-    if (selectedHere.length !== 1 || !section) return null;
-    const el = section.elements.find((x) => x.id === selectedHere[0]);
-    if (el?.animations?.motion?.enabled) return el;
+  const motionElement = useMemo(() => {
+    if (!section) return null;
+    if (isEditingThisMotion && editingMotion) {
+      return section.elements.find((x) => x.id === editingMotion.elementId) ?? null;
+    }
+    if (selectedHere.length === 1) {
+      const el = section.elements.find((x) => x.id === selectedHere[0]);
+      if (el?.animations?.motion?.enabled) return el;
+    }
     return null;
-  }, [selectedHere, section]);
+  }, [section, isEditingThisMotion, editingMotion, selectedHere]);
 
   const motionGuidePoints = useMemo(() => {
-    if (!selectedElementWithMotion?.animations?.motion) return [];
-    const samples = sampleMotionPathPoints(selectedElementWithMotion.animations.motion, 32);
+    if (!motionElement?.animations?.motion?.enabled) return [];
+    const samples = sampleMotionPathPoints(motionElement.animations.motion, 40);
     const flat: number[] = [];
     for (const s of samples) {
       flat.push(s.x, s.y);
     }
     return flat;
-  }, [selectedElementWithMotion]);
+  }, [motionElement]);
 
   if (!section) return null;
 
@@ -631,6 +650,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
       scaleX={zoom}
       scaleY={zoom}
       onMouseDown={(e) => {
+        if (store.getState().editingMotion) return;
         const target = e.target;
         if (target === target.getStage() || target.name() === "bg") {
           if (store.getState().panMode) return;
@@ -640,6 +660,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
       }}
       onTouchStart={(e) => {
+        if (store.getState().editingMotion) return;
         const target = e.target;
         if (target === target.getStage() || target.name() === "bg") {
           store.getState().clearSelection();
@@ -647,7 +668,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
       }}
       onContextMenu={(e) => {
-        if (store.getState().panMode) return;
+        if (store.getState().panMode || store.getState().editingMotion) return;
         e.evt.preventDefault();
         const target = e.target;
         if (target === target.getStage() || target.name() === "bg") {
@@ -683,8 +704,8 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               key={el.id}
               element={el}
               tokens={tokens}
-              draggable={!el.locked && !readOnly && !panMode}
-              selected={selectedHere.includes(el.id)}
+              draggable={!isEditingAnyMotion && !el.locked && !readOnly && !panMode}
+              selected={!isEditingAnyMotion && selectedHere.includes(el.id)}
               handlers={handlers}
               fontRev={fontRev}
             />
@@ -728,10 +749,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           dash={[4, 4]}
           visible={false}
         />
-        {selectedElementWithMotion?.animations?.motion && motionGuidePoints.length >= 4 && (
+        {!isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
           <Group
-            x={selectedElementWithMotion.frame.x + selectedElementWithMotion.frame.w / 2}
-            y={selectedElementWithMotion.frame.y + selectedElementWithMotion.frame.h / 2}
+            x={motionElement.frame.x + motionElement.frame.w / 2}
+            y={motionElement.frame.y + motionElement.frame.h / 2}
           >
             <Line
               points={motionGuidePoints}
@@ -740,7 +761,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               dash={[5 / zoom, 4 / zoom]}
               opacity={0.85}
             />
-            {selectedElementWithMotion.animations.motion.points.map((pt, idx, arr) => (
+            {motionElement.animations.motion.points.map((pt, idx, arr) => (
               <Circle
                 key={idx}
                 x={pt.x}
@@ -754,6 +775,157 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           </Group>
         )}
       </Layer>
+
+      {/* Interactive Motion Guide Layer for Adobe Animate / Flash style waypoint manipulation */}
+      {isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
+        <Layer listening={true}>
+          {/* Subtle focus overlay on background */}
+          <Rect
+            x={0}
+            y={0}
+            width={CANONICAL_BASE_WIDTH}
+            height={section.baseHeight}
+            fill="rgba(15, 23, 42, 0.22)"
+            listening={false}
+          />
+          <Group
+            x={motionElement.frame.x + motionElement.frame.w / 2}
+            y={motionElement.frame.y + motionElement.frame.h / 2}
+          >
+            {/* Glow backing */}
+            <Line
+              points={motionGuidePoints}
+              stroke="rgba(99, 102, 241, 0.35)"
+              strokeWidth={8 / zoom}
+              listening={false}
+            />
+            {/* Main dashed path */}
+            <Line
+              points={motionGuidePoints}
+              stroke="#6366f1"
+              strokeWidth={3 / zoom}
+              dash={[6 / zoom, 4 / zoom]}
+              listening={false}
+            />
+
+            {/* Draggable waypoint handles */}
+            {motionElement.animations.motion.points.map((pt, idx, arr) => {
+              const isStart = idx === 0;
+              const isEnd = idx === arr.length - 1;
+              const pointColor = isStart ? "#10b981" : isEnd ? "#ef4444" : "#6366f1";
+              const labelText = isStart ? "1" : isEnd ? `${arr.length}` : `${idx + 1}`;
+
+              return (
+                <Group
+                  key={`motion-drag-pt-${idx}`}
+                  x={pt.x}
+                  y={pt.y}
+                  draggable={true}
+                  onMouseEnter={(e) => {
+                    const stage = e.target.getStage();
+                    if (stage) stage.container().style.cursor = "grab";
+                  }}
+                  onMouseLeave={(e) => {
+                    const stage = e.target.getStage();
+                    if (stage) stage.container().style.cursor = "default";
+                  }}
+                  onDragStart={(e) => {
+                    const stage = e.target.getStage();
+                    if (stage) stage.container().style.cursor = "grabbing";
+                  }}
+                  onDragMove={(e) => {
+                    const nx = Math.round(e.target.x());
+                    const ny = Math.round(e.target.y());
+                    const targetId = motionElement.id;
+                    store.getState().patchElement(
+                      targetId,
+                      (el) => {
+                        if (!el.animations?.motion) return el;
+                        const pts = [...el.animations.motion.points];
+                        if (pts[idx]) {
+                          pts[idx] = { x: nx, y: ny };
+                        }
+                        return {
+                          ...el,
+                          animations: {
+                            ...el.animations,
+                            motion: {
+                              ...el.animations.motion,
+                              preset: "custom",
+                              points: pts,
+                            },
+                          },
+                        };
+                      },
+                      "motion:drag",
+                    );
+                  }}
+                  onDragEnd={(e) => {
+                    const nx = Math.round(e.target.x());
+                    const ny = Math.round(e.target.y());
+                    const stage = e.target.getStage();
+                    if (stage) stage.container().style.cursor = "grab";
+                    const targetId = motionElement.id;
+                    store.getState().patchElement(
+                      targetId,
+                      (el) => {
+                        if (!el.animations?.motion) return el;
+                        const pts = [...el.animations.motion.points];
+                        if (pts[idx]) {
+                          pts[idx] = { x: nx, y: ny };
+                        }
+                        return {
+                          ...el,
+                          animations: {
+                            ...el.animations,
+                            motion: {
+                              ...el.animations.motion,
+                              preset: "custom",
+                              points: pts,
+                            },
+                          },
+                        };
+                      },
+                    );
+                  }}
+                >
+                  {/* Invisible wide hit circle for easy grab */}
+                  <Circle radius={18 / zoom} fill="transparent" />
+
+                  {/* Outer glow ring */}
+                  <Circle
+                    radius={12 / zoom}
+                    fill={isStart ? "rgba(16, 185, 129, 0.28)" : isEnd ? "rgba(239, 68, 68, 0.28)" : "rgba(99, 102, 241, 0.28)"}
+                    stroke={pointColor}
+                    strokeWidth={2 / zoom}
+                  />
+
+                  {/* Inner solid circle */}
+                  <Circle
+                    radius={7.5 / zoom}
+                    fill={pointColor}
+                    stroke="#ffffff"
+                    strokeWidth={1.5 / zoom}
+                  />
+
+                  {/* Waypoint number */}
+                  <Text
+                    text={labelText}
+                    fontSize={8.5 / zoom}
+                    fontStyle="bold"
+                    fill="#ffffff"
+                    align="center"
+                    verticalAlign="middle"
+                    offsetX={3 / zoom}
+                    offsetY={4 / zoom}
+                    listening={false}
+                  />
+                </Group>
+              );
+            })}
+          </Group>
+        </Layer>
+      )}
     </Stage>
     <ContextMenu
       isOpen={contextMenu.isOpen}
