@@ -33,11 +33,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "leftToRight",
     label: "Kiri ke Kanan",
-    description: "Objek bergerak lurus mendatar dari arah kiri menuju kanan.",
+    description: "Objek bergerak lurus mendatar dari arah kiri menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -140, y: 0 },
-      { x: 140, y: 0 },
+      { x: -180, y: 0 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -45,11 +45,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "rightToLeft",
     label: "Kanan ke Kiri",
-    description: "Objek bergerak lurus mendatar dari arah kanan menuju kiri.",
+    description: "Objek bergerak lurus mendatar dari arah kanan menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 140, y: 0 },
-      { x: -140, y: 0 },
+      { x: 180, y: 0 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -57,11 +57,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "topToBottom",
     label: "Atas ke Bawah",
-    description: "Objek bergerak meluncur turun dari atas ke bawah.",
+    description: "Objek bergerak meluncur turun dari atas menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 0, y: -140 },
-      { x: 0, y: 140 },
+      { x: 0, y: -180 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -69,11 +69,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "bottomToTop",
     label: "Bawah ke Atas",
-    description: "Objek meluncur naik dari bawah ke atas.",
+    description: "Objek meluncur naik dari bawah menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 0, y: 140 },
-      { x: 0, y: -140 },
+      { x: 0, y: 180 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -81,11 +81,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "diagonalDownRight",
     label: "Diagonal Kanan Bawah",
-    description: "Objek meluncur miring dari kiri atas ke kanan bawah.",
+    description: "Objek meluncur miring dari kiri atas menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -120, y: -100 },
-      { x: 120, y: 100 },
+      { x: -140, y: -140 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2200,
@@ -93,11 +93,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "diagonalUpRight",
     label: "Diagonal Kanan Atas",
-    description: "Objek meluncur miring dari kiri bawah ke kanan atas.",
+    description: "Objek meluncur miring dari kiri bawah menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -120, y: 100 },
-      { x: 120, y: -100 },
+      { x: -140, y: 140 },
+      { x: 0, y: 0 },
     ],
     curviness: 0,
     defaultDurationMs: 2200,
@@ -105,12 +105,12 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "arcUp",
     label: "Melengkung ke Atas (Busur)",
-    description: "Objek melintas membentuk lengkungan busur ke arah atas.",
+    description: "Objek melintas membentuk lengkungan busur ke atas menuju tengah objek.",
     pathShape: "arcUp",
     points: [
-      { x: -140, y: 40 },
-      { x: 0, y: -70 },
-      { x: 140, y: 40 },
+      { x: -180, y: 40 },
+      { x: -90, y: -60 },
+      { x: 0, y: 0 },
     ],
     curviness: 1.2,
     defaultDurationMs: 2400,
@@ -118,12 +118,12 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "arcDown",
     label: "Melengkung ke Bawah (Ayunan)",
-    description: "Objek melintas melengkung ke bawah seperti ayunan.",
+    description: "Objek melintas melengkung ke bawah seperti ayunan menuju tengah objek.",
     pathShape: "arcDown",
     points: [
-      { x: -140, y: -40 },
-      { x: 0, y: 70 },
-      { x: 140, y: -40 },
+      { x: -180, y: -40 },
+      { x: -90, y: 60 },
+      { x: 0, y: 0 },
     ],
     curviness: 1.2,
     defaultDurationMs: 2400,
@@ -131,14 +131,13 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "waveHorizontal",
     label: "Gelombang Berayun (Wave)",
-    description: "Objek bergerak menyusuri gelombang berayun naik-turun.",
+    description: "Objek bergerak menyusuri gelombang berayun naik-turun menuju tengah objek.",
     pathShape: "wave",
     points: [
-      { x: -150, y: 0 },
-      { x: -75, y: -45 },
+      { x: -200, y: 0 },
+      { x: -130, y: -40 },
+      { x: -65, y: 40 },
       { x: 0, y: 0 },
-      { x: 75, y: 45 },
-      { x: 150, y: 0 },
     ],
     curviness: 1.4,
     defaultDurationMs: 2800,
@@ -149,11 +148,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek berputar mengitari poros membentuk jalur oval melingkar.",
     pathShape: "circle",
     points: [
-      { x: 0, y: -60 },
+      { x: 0, y: -70 },
       { x: 70, y: 0 },
-      { x: 0, y: 60 },
+      { x: 0, y: 70 },
       { x: -70, y: 0 },
-      { x: 0, y: -60 },
+      { x: 0, y: 0 },
     ],
     curviness: 1.5,
     defaultDurationMs: 3000,
@@ -162,12 +161,12 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
   {
     id: "custom",
     label: "Kustom (Titik-Titik Bebas)",
-    description: "Atur titik-titik koordinat jalur gerakan secara manual sesuai keinginan.",
+    description: "Atur titik-titik koordinat jalur gerakan secara manual menuju tengah objek.",
     pathShape: "curved",
     points: [
-      { x: -100, y: 50 },
-      { x: 0, y: -60 },
-      { x: 100, y: 50 },
+      { x: -150, y: -40 },
+      { x: -70, y: 30 },
+      { x: 0, y: 0 },
     ],
     curviness: 1.0,
     defaultDurationMs: 2500,
@@ -180,14 +179,17 @@ export function getMotionPresetConfig(presetId: MotionPreset): MotionPresetDefin
 }
 
 export function buildDefaultMotionTrack(options: Partial<MotionTrack> = {}): MotionTrack {
-  const presetId = options.preset ?? "leftToRight";
+  const presetId = options.preset ?? "custom";
   const presetDef = getMotionPresetConfig(presetId);
 
   const durationMs = options.durationMs ?? presetDef.defaultDurationMs;
   const delayMs = options.delayMs ?? 0;
   const curviness = options.curviness ?? presetDef.curviness;
   const pathShape = options.pathShape ?? presetDef.pathShape;
-  const points = options.points ?? [...presetDef.points];
+  const points = options.points ? [...options.points] : [...presetDef.points];
+  if (points.length >= 2) {
+    points[points.length - 1] = { x: 0, y: 0 };
+  }
   const repeat = options.repeat ?? presetDef.repeat ?? 0;
   const yoyo = options.yoyo ?? presetDef.yoyo ?? false;
 

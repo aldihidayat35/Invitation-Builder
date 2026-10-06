@@ -320,8 +320,8 @@ export function createEditorStore(init: EditorInit): EditorStore {
                 pathShape: "curved",
                 curviness: 1.0,
                 points: [
-                  { x: -120, y: 0 },
-                  { x: 120, y: 0 },
+                  { x: -160, y: 0 },
+                  { x: 0, y: 0 },
                 ],
                 durationMs: 2000,
                 delayMs: 0,

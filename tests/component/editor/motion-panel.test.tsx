@@ -143,7 +143,7 @@ describe("AnimationPanel Motion Feature", () => {
         curviness: 0,
         points: [
           { x: -100, y: 0 },
-          { x: 100, y: 0 },
+          { x: 0, y: 0 },
         ],
         durationMs: 2000,
         delayMs: 0,
@@ -180,7 +180,8 @@ describe("AnimationPanel Motion Feature", () => {
 
     updated = store.getState().history.present.sections[0]!.elements[0]!;
     expect(updated.animations?.motion?.points[0]!.x).toBe(100);
-    expect(updated.animations?.motion?.points[2]!.x).toBe(-100);
+    expect(updated.animations?.motion?.points[2]!.x).toBe(0);
+    expect(updated.animations?.motion?.points[2]!.y).toBe(0);
   });
 
   it("dispatches replay event on clicking Putar Preview Gerakan", () => {
@@ -228,5 +229,47 @@ describe("AnimationPanel Motion Feature", () => {
     expect(detail.elementId).toBe("el_shape_1");
 
     window.removeEventListener("dib:replay-animation", replayHandler);
+  });
+
+  it("locks the end waypoint to the object center (0, 0) and prevents manual coordinate edit", () => {
+    const { doc, element } = makeDocWithElement({
+      motion: {
+        enabled: true,
+        preset: "custom",
+        pathShape: "curved",
+        curviness: 1,
+        points: [
+          { x: -160, y: 0 },
+          { x: 0, y: 0 },
+        ],
+        durationMs: 2000,
+        delayMs: 0,
+        easing: "ease-in-out",
+        repeat: 0,
+        yoyo: false,
+        autoRotate: false,
+        trigger: "onEnterViewport",
+        once: true,
+      },
+    });
+
+    const store = createEditorStore({ document: doc, revision: 1 });
+    store.getState().selectElements(["el_shape_1"]);
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_1">
+        <AnimationPanel element={element} readOnly={false} sectionId="sec_1" />
+      </EditorProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId("anim-tab-motion"));
+
+    expect(screen.getByText("Titik Akhir (Tengah Objek)")).toBeInTheDocument();
+    expect(screen.getByText(/Terkunci di pusat objek/i)).toBeInTheDocument();
+    // Start waypoint has editable inputs
+    expect(screen.getByLabelText("Geser X (px)")).toBeInTheDocument();
+    // End waypoint does not render coordinate input fields
+    expect(screen.queryByTestId("motion-pt-1-x")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("motion-remove-point-1")).not.toBeInTheDocument();
   });
 });

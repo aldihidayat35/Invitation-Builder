@@ -293,6 +293,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
+  const motionGroupRef = useRef<Konva.Group | null>(null);
   const vGuideRef = useRef<Konva.Line | null>(null);
   const hGuideRef = useRef<Konva.Line | null>(null);
   const dragRef = useRef<{ moved: boolean; origins: Map<string, { x: number; y: number }> }>({
@@ -444,7 +445,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const handlers = useMemo<ElementHandlers>(
     () => ({
       onPointerDown(id, e) {
-        if (store.getState().panMode || store.getState().editingMotion) {
+        if (store.getState().panMode) return;
+        const motion = store.getState().editingMotion;
+        if (motion && id !== motion.elementId) {
           e.cancelBubble = true;
           return;
         }
@@ -453,11 +456,13 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         const evt = e.evt;
         const additive = evt.shiftKey || evt.ctrlKey || evt.metaKey;
         const state = store.getState();
-        if (additive) state.toggleElement(id);
+        if (additive && !motion) state.toggleElement(id);
         else if (!state.selectedIds.includes(id)) state.selectElements([id]);
       },
       onClick(id, e) {
-        if (store.getState().panMode || store.getState().editingMotion) {
+        if (store.getState().panMode) return;
+        const motion = store.getState().editingMotion;
+        if (motion && id !== motion.elementId) {
           e.cancelBubble = true;
           return;
         }
@@ -468,7 +473,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
       },
       onContextMenu(id, e) {
-        if (store.getState().panMode || store.getState().editingMotion) {
+        if (store.getState().panMode) return;
+        const motion = store.getState().editingMotion;
+        if (motion) {
           e.cancelBubble = true;
           e.evt.preventDefault();
           return;
@@ -493,7 +500,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         });
       },
       onDragStart(id) {
-        if (store.getState().panMode || store.getState().editingMotion) return;
+        if (store.getState().panMode) return;
+        const motion = store.getState().editingMotion;
+        if (motion && id !== motion.elementId) return;
         const stage = stageRef.current;
         if (!stage) return;
         const state = store.getState();
@@ -506,6 +515,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         dragRef.current = { moved: false, origins };
       },
       onDragMove(id, e) {
+        if (store.getState().panMode) return;
+        const motion = store.getState().editingMotion;
+        if (motion && id !== motion.elementId) return;
         const stage = stageRef.current;
         const node = e.target;
         const drag = dragRef.current;
@@ -542,6 +554,14 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
         }
         showGuides(snap.guides.vertical[0], snap.guides.horizontal[0]);
+
+        if (motion && id === motion.elementId && motionGroupRef.current) {
+          motionGroupRef.current.position({
+            x: node.x() + node.width() / 2,
+            y: node.y() + node.height() / 2,
+          });
+          motionGroupRef.current.getLayer()?.batchDraw();
+        }
       },
       onDragEnd() {
         const stage = stageRef.current;
@@ -699,17 +719,21 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         />
         {section.elements
           .filter((el) => el.visible)
-          .map((el) => (
-            <ElementNode
-              key={el.id}
-              element={el}
-              tokens={tokens}
-              draggable={!isEditingAnyMotion && !el.locked && !readOnly && !panMode}
-              selected={!isEditingAnyMotion && selectedHere.includes(el.id)}
-              handlers={handlers}
-              fontRev={fontRev}
-            />
-          ))}
+          .map((el) => {
+            const isTarget = isEditingThisMotion && el.id === editingMotion?.elementId;
+            const canDrag = !readOnly && !panMode && !el.locked && (!isEditingAnyMotion || isTarget);
+            return (
+              <ElementNode
+                key={el.id}
+                element={el}
+                tokens={tokens}
+                draggable={canDrag}
+                selected={isTarget || (!isEditingAnyMotion && selectedHere.includes(el.id))}
+                handlers={handlers}
+                fontRev={fontRev}
+              />
+            );
+          })}
         <Transformer
           ref={transformerRef}
           rotateEnabled
@@ -789,6 +813,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
             listening={false}
           />
           <Group
+            ref={motionGroupRef}
             x={motionElement.frame.x + motionElement.frame.w / 2}
             y={motionElement.frame.y + motionElement.frame.h / 2}
           >
@@ -808,12 +833,61 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               listening={false}
             />
 
-            {/* Draggable waypoint handles */}
+            {/* Waypoint handles */}
             {motionElement.animations.motion.points.map((pt, idx, arr) => {
               const isStart = idx === 0;
               const isEnd = idx === arr.length - 1;
-              const pointColor = isStart ? "#10b981" : isEnd ? "#ef4444" : "#6366f1";
-              const labelText = isStart ? "1" : isEnd ? `${arr.length}` : `${idx + 1}`;
+              const pointColor = isStart ? "#10b981" : "#6366f1";
+              const labelText = isStart ? "1" : `${idx + 1}`;
+
+              if (isEnd) {
+                // Red dot (Finish): anchored at the center of the object (0, 0).
+                // It is NOT individually draggable and always stays locked at the object center.
+                // listening={false} ensures clicking or dragging on/near the center grabs and moves the object itself.
+                return (
+                  <Group
+                    key={`motion-drag-pt-${idx}`}
+                    x={0}
+                    y={0}
+                    listening={false}
+                  >
+                    {/* Crosshair target lines at object center */}
+                    <Line
+                      points={[-11 / zoom, 0, 11 / zoom, 0]}
+                      stroke="#ef4444"
+                      strokeWidth={1.5 / zoom}
+                    />
+                    <Line
+                      points={[0, -11 / zoom, 0, 11 / zoom]}
+                      stroke="#ef4444"
+                      strokeWidth={1.5 / zoom}
+                    />
+
+                    {/* Outer target dashed ring */}
+                    <Circle
+                      radius={13 / zoom}
+                      fill="rgba(239, 68, 68, 0.22)"
+                      stroke="#ef4444"
+                      strokeWidth={1.5 / zoom}
+                      dash={[3 / zoom, 3 / zoom]}
+                    />
+
+                    {/* Inner red bullseye circle */}
+                    <Circle
+                      radius={7.5 / zoom}
+                      fill="#ef4444"
+                      stroke="#ffffff"
+                      strokeWidth={1.5 / zoom}
+                    />
+
+                    {/* Center white dot */}
+                    <Circle
+                      radius={2.5 / zoom}
+                      fill="#ffffff"
+                    />
+                  </Group>
+                );
+              }
 
               return (
                 <Group
@@ -845,6 +919,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                         if (pts[idx]) {
                           pts[idx] = { x: nx, y: ny };
                         }
+                        pts[pts.length - 1] = { x: 0, y: 0 };
                         return {
                           ...el,
                           animations: {
@@ -874,6 +949,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                         if (pts[idx]) {
                           pts[idx] = { x: nx, y: ny };
                         }
+                        pts[pts.length - 1] = { x: 0, y: 0 };
                         return {
                           ...el,
                           animations: {
@@ -895,7 +971,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                   {/* Outer glow ring */}
                   <Circle
                     radius={12 / zoom}
-                    fill={isStart ? "rgba(16, 185, 129, 0.28)" : isEnd ? "rgba(239, 68, 68, 0.28)" : "rgba(99, 102, 241, 0.28)"}
+                    fill={isStart ? "rgba(16, 185, 129, 0.28)" : "rgba(99, 102, 241, 0.28)"}
                     stroke={pointColor}
                     strokeWidth={2 / zoom}
                   />

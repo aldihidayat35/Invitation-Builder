@@ -19,7 +19,13 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
     const leftToRight = getMotionPresetConfig("leftToRight");
     expect(leftToRight.pathShape).toBe("linear");
     expect(leftToRight.points[0]!.x).toBeLessThan(0);
-    expect(leftToRight.points[1]!.x).toBeGreaterThan(0);
+    expect(leftToRight.points[1]!.x).toBe(0);
+    expect(leftToRight.points[1]!.y).toBe(0);
+
+    for (const preset of MOTION_PRESET_CONFIGS) {
+      const lastPt = preset.points[preset.points.length - 1]!;
+      expect(lastPt).toEqual({ x: 0, y: 0 });
+    }
 
     const arcUp = getMotionPresetConfig("arcUp");
     expect(arcUp.pathShape).toBe("arcUp");
@@ -48,7 +54,7 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
       pathShape: "linear",
       points: [
         { x: -100, y: 0 },
-        { x: 100, y: 0 },
+        { x: 0, y: 0 },
       ],
     });
 
@@ -57,11 +63,11 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
     expect(start.y).toBe(0);
 
     const mid = getPointOnMotionPath(track, 0.5);
-    expect(mid.x).toBe(0);
+    expect(mid.x).toBe(-50);
     expect(mid.y).toBe(0);
 
     const end = getPointOnMotionPath(track, 1);
-    expect(end.x).toBe(100);
+    expect(end.x).toBe(0);
     expect(end.y).toBe(0);
   });
 
@@ -70,13 +76,13 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
     const pStart = getPointOnMotionPath(topToBottom, 0);
     const pEnd = getPointOnMotionPath(topToBottom, 1);
     expect(pStart.y).toBeLessThan(0);
-    expect(pEnd.y).toBeGreaterThan(0);
+    expect(pEnd.y).toBe(0);
 
     const bottomToTop = buildDefaultMotionTrack({ preset: "bottomToTop" });
     const bStart = getPointOnMotionPath(bottomToTop, 0);
     const bEnd = getPointOnMotionPath(bottomToTop, 1);
     expect(bStart.y).toBeGreaterThan(0);
-    expect(bEnd.y).toBeLessThan(0);
+    expect(bEnd.y).toBe(0);
   });
 
   it("applies curved arch (melengkung) with adjustable curvature", () => {
@@ -111,19 +117,19 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
       preset: "custom",
       pathShape: "curved",
       points: [
+        { x: -100, y: 0 },
+        { x: -50, y: -80 },
         { x: 0, y: 0 },
-        { x: 50, y: -80 },
-        { x: 100, y: 0 },
       ],
       curviness: 1.0,
     });
 
     const start = getPointOnMotionPath(track, 0);
-    expect(start.x).toBe(0);
+    expect(start.x).toBe(-100);
     expect(start.y).toBe(0);
 
     const end = getPointOnMotionPath(track, 1);
-    expect(end.x).toBe(100);
+    expect(end.x).toBe(0);
     expect(end.y).toBe(0);
 
     const samples = sampleMotionPathPoints(track, 10);
@@ -135,14 +141,14 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
       preset: "diagonalDownRight",
       pathShape: "linear",
       points: [
+        { x: -100, y: -100 },
         { x: 0, y: 0 },
-        { x: 100, y: 100 },
       ],
       autoRotate: true,
     });
 
     const mid = getPointOnMotionPath(track, 0.5);
-    // 45 degrees angle for (0,0) -> (100,100)
+    // 45 degrees angle for (-100,-100) -> (0,0)
     expect(mid.rotation).toBeCloseTo(45, 0);
   });
 

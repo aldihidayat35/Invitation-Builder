@@ -29,7 +29,7 @@ function makeDocWithAnimatedElement(): {
         curviness: 1.0,
         points: [
           { x: -100, y: 0 },
-          { x: 100, y: 0 },
+          { x: 0, y: 0 },
         ],
         durationMs: 2000,
         delayMs: 0,
@@ -114,7 +114,8 @@ describe("Artboard Motion Floating Toolbar (Adobe Animate Mode)", () => {
 
     updated = store.getState().history.present.sections[0]!.elements[0]!;
     expect(updated.animations?.motion?.points[0]!.x).toBe(100);
-    expect(updated.animations?.motion?.points[2]!.x).toBe(-100);
+    expect(updated.animations?.motion?.points[2]!.x).toBe(0);
+    expect(updated.animations?.motion?.points[2]!.y).toBe(0);
 
     // Replay preview
     const replayBtn = screen.getByTestId("artboard-motion-replay-btn");

@@ -291,9 +291,11 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
 
   const handleUpdateWaypoint = (index: number, key: "x" | "y", val: number) => {
     if (!motionTrack || readOnly) return;
+    if (index === motionTrack.points.length - 1) return; // End point is locked at (0, 0)
     const pts = [...motionTrack.points];
     if (pts[index]) {
       pts[index] = { ...pts[index], [key]: val };
+      pts[pts.length - 1] = { x: 0, y: 0 };
       patchMotion({
         points: pts,
         preset: "custom",
@@ -305,26 +307,33 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     if (!motionTrack || readOnly) return;
     const pts = [...motionTrack.points];
     if (pts.length >= 20) return;
-    const pPrev = pts[pts.length - 2] ?? { x: 0, y: 0 };
-    const pLast = pts[pts.length - 1] ?? { x: 100, y: 0 };
+    const pPrev = pts[pts.length - 2] ?? { x: -80, y: 0 };
+    const pLast = { x: 0, y: 0 };
     const newPt = {
       x: Math.round((pPrev.x + pLast.x) / 2),
       y: Math.round((pPrev.y + pLast.y) / 2),
     };
     pts.splice(pts.length - 1, 0, newPt);
+    pts[pts.length - 1] = { x: 0, y: 0 };
     patchMotion({ points: pts, preset: "custom" });
   };
 
   const handleRemoveWaypoint = (index: number) => {
     if (!motionTrack || readOnly) return;
     if (motionTrack.points.length <= 2) return;
+    if (index === motionTrack.points.length - 1) return; // Cannot remove end point
     const pts = motionTrack.points.filter((_, i) => i !== index);
+    pts[pts.length - 1] = { x: 0, y: 0 };
     patchMotion({ points: pts, preset: "custom" });
   };
 
   const handleReverseMotion = () => {
     if (!motionTrack || readOnly) return;
-    const reversed = [...motionTrack.points].reverse();
+    const reversed = motionTrack.points.map((p, idx, arr) => {
+      if (idx === arr.length - 1) return { x: 0, y: 0 };
+      return { x: -p.x, y: -p.y };
+    });
+    reversed[reversed.length - 1] = { x: 0, y: 0 };
     patchMotion({ points: reversed, preset: "custom" });
   };
 
@@ -543,7 +552,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                     const label = isStart
                       ? "Titik Awal (Start)"
                       : isEnd
-                        ? "Titik Akhir (Finish)"
+                        ? "Titik Akhir (Tengah Objek)"
                         : `Waypoint ${idx}`;
 
                     return (
@@ -566,28 +575,44 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                             </button>
                           )}
                         </div>
-                        <div className={styles.motionCoordsRow}>
-                          <NumberField
-                            id={`motion-pt-${idx}-x`}
-                            label="Geser X (px)"
-                            value={pt.x}
-                            step={5}
-                            min={-3000}
-                            max={3000}
-                            disabled={readOnly}
-                            onCommit={(x) => handleUpdateWaypoint(idx, "x", x)}
-                          />
-                          <NumberField
-                            id={`motion-pt-${idx}-y`}
-                            label="Geser Y (px)"
-                            value={pt.y}
-                            step={5}
-                            min={-3000}
-                            max={3000}
-                            disabled={readOnly}
-                            onCommit={(y) => handleUpdateWaypoint(idx, "y", y)}
-                          />
-                        </div>
+                        {isEnd ? (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: "var(--text-muted)",
+                              marginTop: 6,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <span style={{ color: "#ef4444", fontWeight: 600 }}>🎯 Tengah Objek (0, 0)</span>
+                            <span>— Terkunci di pusat objek. Geser objek di canvas untuk memindahkan posisi akhir.</span>
+                          </div>
+                        ) : (
+                          <div className={styles.motionCoordsRow}>
+                            <NumberField
+                              id={`motion-pt-${idx}-x`}
+                              label="Geser X (px)"
+                              value={pt.x}
+                              step={5}
+                              min={-3000}
+                              max={3000}
+                              disabled={readOnly}
+                              onCommit={(x) => handleUpdateWaypoint(idx, "x", x)}
+                            />
+                            <NumberField
+                              id={`motion-pt-${idx}-y`}
+                              label="Geser Y (px)"
+                              value={pt.y}
+                              step={5}
+                              min={-3000}
+                              max={3000}
+                              disabled={readOnly}
+                              onCommit={(y) => handleUpdateWaypoint(idx, "y", y)}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}

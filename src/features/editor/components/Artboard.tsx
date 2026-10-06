@@ -115,13 +115,14 @@ export function Artboard() {
     const track = motionElement.animations.motion;
     if (track.points.length >= 20) return;
     const pts = [...track.points];
-    const pPrev = pts[pts.length - 2] ?? { x: 0, y: 0 };
-    const pLast = pts[pts.length - 1] ?? { x: 100, y: 0 };
+    const pPrev = pts[pts.length - 2] ?? { x: -80, y: 0 };
+    const pLast = { x: 0, y: 0 };
     const newPt = {
       x: Math.round((pPrev.x + pLast.x) / 2),
       y: Math.round((pPrev.y + pLast.y) / 2),
     };
     pts.splice(pts.length - 1, 0, newPt);
+    pts[pts.length - 1] = { x: 0, y: 0 };
     store.getState().patchElement(motionElement.id, (el) => ({
       ...el,
       animations: {
@@ -137,7 +138,11 @@ export function Artboard() {
 
   const handleReverseMotion = () => {
     if (!editingMotion || !motionElement?.animations?.motion) return;
-    const pts = [...motionElement.animations.motion.points].reverse();
+    const pts = motionElement.animations.motion.points.map((p, idx, arr) => {
+      if (idx === arr.length - 1) return { x: 0, y: 0 };
+      return { x: -p.x, y: -p.y };
+    });
+    pts[pts.length - 1] = { x: 0, y: 0 };
     store.getState().patchElement(motionElement.id, (el) => ({
       ...el,
       animations: {
