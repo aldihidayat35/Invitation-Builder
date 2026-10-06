@@ -560,6 +560,44 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 0,
     },
   ],
+  video: [
+    {
+      id: "cinematic-frame",
+      label: "Cinematic Modern (16:9)",
+      description: "Format layar lebar 16:9 bernuansa bioskop dengan border halus dan bayangan elegan.",
+      defaultRadius: 16,
+    },
+    {
+      id: "story-portrait",
+      label: "Story Vertikal (9:16)",
+      description: "Format reels/story vertikal dengan sudut membulat modern dan badge video romantis.",
+      defaultRadius: 20,
+    },
+    {
+      id: "vintage-polaroid",
+      label: "Polaroid Vintage",
+      description: "Bingkai polaroid retro klasik dengan batas putih tebal dan ruang catatan di bawah.",
+      defaultRadius: 8,
+    },
+    {
+      id: "arch-luxury",
+      label: "Kubah Lengkung (Arch Luxury)",
+      description: "Kubah arsitektur klasik dengan lengkungan atas mewah bergaris emas elegan.",
+      defaultRadius: 24,
+    },
+    {
+      id: "minimal-glass",
+      label: "Glassmorphism Minimalis",
+      description: "Efek kaca frosted modern dengan refleksi halus, border transparan, dan play button melayang.",
+      defaultRadius: 16,
+    },
+    {
+      id: "gold-ornament",
+      label: "Ornamen Emas Kerajaan",
+      description: "Bingkai ganda klasik kerajaan dengan aksen ornamen sudut bernuansa royal wedding.",
+      defaultRadius: 12,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -586,6 +624,14 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
     "royal-plaque",
     "scalloped-stamp",
     "pointed-cartouche",
+  ]),
+  video: legacy([
+    "cinematic-frame",
+    "story-portrait",
+    "vintage-polaroid",
+    "arch-luxury",
+    "minimal-glass",
+    "gold-ornament",
   ]),
 };
 

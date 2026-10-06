@@ -354,6 +354,25 @@ export function IconOrnamentFrame({ size = 18, color = "currentColor", ...rest }
   );
 }
 
+export function IconVideo({ size = 16, color = "currentColor", ...rest }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <rect x="2" y="4" width="14" height="16" rx="2.5" />
+      <polygon points="22 7 16 12 22 17 22 7" fill={color} />
+    </svg>
+  );
+}
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -366,6 +385,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   timeline: IconTimeline,
   wishes: IconWishes,
   ornamentFrame: IconOrnamentFrame,
+  video: IconVideo,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {

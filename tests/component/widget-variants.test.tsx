@@ -40,6 +40,10 @@ const propsByType: Readonly<Record<string, Readonly<Record<string, unknown>>>> =
     groom: { name: "Rama", fullName: "Rama Pratama, S.T.", parents: "Putra dari Bpk. Bambang" },
     bride: { name: "Alya", fullName: "Alya Putri Saraswati, S.Ked.", parents: "Putri dari Bpk. Hendra" },
   },
+  video: {
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    caption: "Momen Bahagia",
+  },
 };
 
 describe("current widget style variants", () => {

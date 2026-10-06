@@ -1,0 +1,363 @@
+/**
+ * Video Widget Styles & 6 Variants
+ * - cinematic-frame (16:9 Widescreen)
+ * - story-portrait (9:16 Vertical Reels)
+ * - vintage-polaroid (Retro Paper Frame)
+ * - arch-luxury (Royal Dome Arched Top)
+ * - minimal-glass (Frosted Glassmorphism)
+ * - gold-ornament (Royal Corner Accents)
+ */
+
+.videoContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: inherit;
+  user-select: none;
+}
+
+.videoFrameWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b0f19;
+  box-sizing: border-box;
+}
+
+/* Aspect ratio handling when not strictly constrained by parent height */
+.ratio_16_9 {
+  aspect-ratio: 16 / 9;
+}
+.ratio_9_16 {
+  aspect-ratio: 9 / 16;
+}
+.ratio_4_3 {
+  aspect-ratio: 4 / 3;
+}
+.ratio_1_1 {
+  aspect-ratio: 1 / 1;
+}
+
+/* Media Players */
+.videoPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 0;
+  background-color: #000;
+}
+
+.iframePlayer {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background-color: #000;
+}
+
+/* Poster / Cover Image Overlay */
+.posterOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.3s ease;
+}
+
+.posterOverlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+  pointer-events: none;
+}
+
+/* Play Button Overlay */
+.playButtonWrap {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.playButtonCircle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.playButtonCircle:hover {
+  transform: scale(1.1);
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.playButtonCircle:active {
+  transform: scale(0.96);
+}
+
+.playIconSvg {
+  width: 22px;
+  height: 22px;
+  margin-left: 3px; /* visual optic center */
+  fill: currentColor;
+}
+
+/* Floating Badges */
+.badgeTopLeft {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.badgeYouTube {
+  background: rgba(220, 38, 38, 0.85);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Captions */
+.captionBar {
+  padding: 8px 12px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  color: inherit;
+  opacity: 0.88;
+}
+
+/* ==============================================================
+   6 DESIGN VARIANTS
+   ============================================================== */
+
+/* 1. Cinematic Frame (16:9 Widescreen) */
+.variant_cinematic_frame .videoFrameWrapper {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.variant_cinematic_frame .playButtonCircle {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+}
+.variant_cinematic_frame .playButtonCircle:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+}
+
+/* 2. Story Portrait (9:16 Vertical Reels) */
+.variant_story_portrait .videoFrameWrapper {
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+.variant_story_portrait .playButtonCircle {
+  width: 52px;
+  height: 52px;
+  background: #ffffff;
+  color: #e11d48;
+}
+.variant_story_portrait .storyFooter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 14px 12px 14px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.75) 100%);
+  z-index: 6;
+  color: #ffffff;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* 3. Vintage Polaroid */
+.variant_vintage_polaroid {
+  padding: 10px 10px 14px 10px;
+  background: #fdfbf7;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(40, 25, 10, 0.15), 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #ebd9c8;
+}
+.variant_vintage_polaroid .videoFrameWrapper {
+  border-radius: 4px;
+  border: 1px solid #d4c0ab;
+}
+.variant_vintage_polaroid .polaroidCaption {
+  margin-top: 10px;
+  text-align: center;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  color: #4a382c;
+  line-height: 1.3;
+}
+
+/* 4. Arch Luxury (Kubah Lengkung) */
+.variant_arch_luxury .videoFrameWrapper {
+  border-radius: 160px 160px 16px 16px;
+  border: 2px solid #c89b43;
+  box-shadow: 0 12px 32px rgba(180, 131, 62, 0.2), 0 4px 10px rgba(0, 0, 0, 0.15);
+  outline: 1px solid rgba(200, 155, 67, 0.35);
+  outline-offset: -6px;
+}
+.variant_arch_luxury .playButtonCircle {
+  background: #c89b43;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+.variant_arch_luxury .playButtonCircle:hover {
+  background: #e2b963;
+}
+
+/* 5. Minimal Glass (Glassmorphism) */
+.variant_minimal_glass .videoFrameWrapper {
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.variant_minimal_glass .playButtonCircle {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+}
+
+/* 6. Gold Ornament */
+.variant_gold_ornament {
+  padding: 8px;
+  box-sizing: border-box;
+}
+.variant_gold_ornament .videoFrameWrapper {
+  border-radius: 10px;
+  border: 1.5px solid #d4af37;
+  outline: 1px solid rgba(212, 175, 55, 0.4);
+  outline-offset: -5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+.variant_gold_ornament .playButtonCircle {
+  background: #d4af37;
+  color: #ffffff;
+  border: 1.5px solid #fff3c4;
+}
+
+/* Corner Ornaments for gold-ornament variant */
+.goldCorner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  z-index: 7;
+  pointer-events: none;
+  stroke: #d4af37;
+  fill: none;
+}
+.goldCornerTL {
+  top: 2px;
+  left: 2px;
+}
+.goldCornerTR {
+  top: 2px;
+  right: 2px;
+  transform: rotate(90deg);
+}
+.goldCornerBR {
+  bottom: 2px;
+  right: 2px;
+  transform: rotate(180deg);
+}
+.goldCornerBL {
+  bottom: 2px;
+  left: 2px;
+  transform: rotate(270deg);
+}
+
+/* Empty / Placeholder State */
+.emptyPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(145deg, #182234 0%, #0d1320 100%);
+  color: #94a3b8;
+  border-radius: inherit;
+}
+
+.emptyIconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.emptySub {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+}

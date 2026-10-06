@@ -52,7 +52,20 @@ export {
   rsvpWidget,
   timelineWidget,
   wishesWidget,
+  ORNAMENT_FRAME_WIDGET_TYPE,
+  ornamentFrameWidget,
+  VIDEO_WIDGET_TYPE,
+  videoWidget,
 } from "./definitions-p1";
+export {
+  extractYouTubeId,
+  getYouTubeThumbnail,
+  buildYouTubeEmbedUrl,
+  parseVideoSource,
+  parseAspectRatio,
+  type VideoSourceInfo,
+  type YouTubeInfo,
+} from "./video-utils";
 export {
   getDefaultWidgetStyle,
   getGalleryPresentation,

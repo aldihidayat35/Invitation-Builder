@@ -97,7 +97,9 @@ describe("widget registry", () => {
           ? 10
           : definition.type === "ornamentFrame"
             ? 11
-            : 5;
+            : definition.type === "video"
+              ? 6
+              : 5;
       expect(variants).toHaveLength(expectedCount);
       expect(new Set(ids).size).toBe(expectedCount);
       expect(ids).toContain(getDefaultWidgetStyle(definition.type).variant);

@@ -14,6 +14,7 @@ import { TimelineWidget } from "./TimelineWidget";
 import { WishesWidget } from "./WishesWidget";
 import { CoupleProfileWidget } from "./CoupleProfileWidget";
 import { OrnamentFrameWidget } from "./OrnamentFrameWidget";
+import { VideoWidget } from "./VideoWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -132,6 +133,20 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
           ? p.animationSpeed
           : undefined
       }
+      style={style}
+    />
+  ),
+  video: (p, style) => (
+    <VideoWidget
+      url={p.url}
+      sourceType={p.sourceType}
+      poster={p.poster}
+      caption={p.caption}
+      autoplayOnScroll={p.autoplayOnScroll}
+      loop={p.loop}
+      muted={p.muted}
+      showControls={p.showControls}
+      aspectRatio={p.aspectRatio}
       style={style}
     />
   ),

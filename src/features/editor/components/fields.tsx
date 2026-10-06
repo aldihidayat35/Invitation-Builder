@@ -102,6 +102,7 @@ export interface TextFieldProps {
   readonly disabled?: boolean;
   readonly multiline?: boolean;
   readonly maxLength?: number;
+  readonly placeholder?: string;
 }
 
 export function TextField({
@@ -112,6 +113,7 @@ export function TextField({
   disabled,
   multiline,
   maxLength,
+  placeholder,
 }: TextFieldProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const text = draft ?? value;
@@ -122,6 +124,7 @@ export function TextField({
     value: text,
     disabled,
     maxLength,
+    placeholder,
     onBlur: () => {
       if (draft !== null && draft !== value) onCommit(draft);
       setDraft(null);

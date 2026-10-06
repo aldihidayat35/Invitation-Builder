@@ -16,6 +16,7 @@ import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
 import { parseWishItems } from "@/features/widgets/runtime/WishesWidget";
 import { parseCouplePerson } from "@/features/widgets/runtime/CoupleProfileWidget";
 import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
+import { parseVideoSource } from "@/features/widgets/video-utils";
 import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
@@ -3855,6 +3856,274 @@ function OrnamentFrameVisual({
   );
 }
 
+function VideoVisual({
+  element,
+  tokens,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+}) {
+  const { w, h } = element.frame;
+  const { color } = colors(element, tokens);
+  const variant = resolveWidgetStyleVariant("video", element.style.variant).variant.id;
+  const props = (element.props ?? {}) as Record<string, unknown>;
+
+  const sourceInfo = parseVideoSource(props.url);
+  const customPoster = parseFrameImage(props.poster);
+  const posterUrl =
+    customPoster ||
+    (sourceInfo.isYouTube && sourceInfo.thumbnailUrl ? sourceInfo.thumbnailUrl : null);
+  const canvasImage = useCanvasImage(posterUrl);
+
+  const caption = typeof props.caption === "string" ? props.caption.trim() : "";
+  const cx = w / 2;
+  const cy = h / 2;
+
+  // Corner radii per variant
+  let frameRadius: number | number[] = 14;
+  if (variant === "story-portrait") frameRadius = 18;
+  if (variant === "vintage-polaroid") frameRadius = 6;
+  if (variant === "arch-luxury") frameRadius = [Math.min(w / 2, 160), Math.min(w / 2, 160), 14, 14];
+  if (variant === "minimal-glass") frameRadius = 16;
+  if (variant === "gold-ornament") frameRadius = 10;
+
+  // Background style
+  let bgFill = "#0b0f19";
+  let borderStroke: string | undefined = "rgba(255, 255, 255, 0.15)";
+  let borderWidth = 1;
+
+  if (variant === "vintage-polaroid") {
+    bgFill = "#fdfbf7";
+    borderStroke = "#ebd9c8";
+    borderWidth = 1.2;
+  } else if (variant === "arch-luxury") {
+    borderStroke = "#c89b43";
+    borderWidth = 2;
+  } else if (variant === "minimal-glass") {
+    bgFill = "rgba(255, 255, 255, 0.1)";
+    borderStroke = "rgba(255, 255, 255, 0.45)";
+    borderWidth = 1.5;
+  } else if (variant === "gold-ornament") {
+    borderStroke = "#d4af37";
+    borderWidth = 1.8;
+  }
+
+  // Play button styling per variant
+  let playCircleFill = "rgba(255, 255, 255, 0.9)";
+  let playCircleStroke = "rgba(0, 0, 0, 0.15)";
+  let playTriangleFill = "#111827";
+  let playRadius = 24;
+
+  if (variant === "cinematic-frame") {
+    playCircleFill = "rgba(255, 255, 255, 0.22)";
+    playCircleStroke = "rgba(255, 255, 255, 0.65)";
+    playTriangleFill = "#ffffff";
+  } else if (variant === "story-portrait") {
+    playCircleFill = "#ffffff";
+    playTriangleFill = "#e11d48";
+    playRadius = 22;
+  } else if (variant === "arch-luxury") {
+    playCircleFill = "#c89b43";
+    playCircleStroke = "#ffffff";
+    playTriangleFill = "#ffffff";
+  } else if (variant === "minimal-glass") {
+    playCircleFill = "rgba(255, 255, 255, 0.25)";
+    playCircleStroke = "rgba(255, 255, 255, 0.7)";
+    playTriangleFill = "#ffffff";
+  } else if (variant === "gold-ornament") {
+    playCircleFill = "#d4af37";
+    playCircleStroke = "#fff3c4";
+    playTriangleFill = "#ffffff";
+  }
+
+  // Render photo frame inside polaroid
+  const isPolaroid = variant === "vintage-polaroid";
+  const photoW = isPolaroid ? w - 20 : w;
+  const photoH = isPolaroid ? h - 46 : h;
+  const photoX = isPolaroid ? 10 : 0;
+  const photoY = isPolaroid ? 10 : 0;
+  const playCy = isPolaroid ? photoY + photoH / 2 : cy;
+
+  return (
+    <Group width={w} height={h}>
+      {/* Outer Card */}
+      <Rect
+        x={0}
+        y={0}
+        width={w}
+        height={h}
+        fill={bgFill}
+        stroke={borderStroke}
+        strokeWidth={borderWidth}
+        cornerRadius={frameRadius}
+        shadowColor="rgba(0, 0, 0, 0.25)"
+        shadowBlur={variant === "cinematic-frame" ? 16 : 8}
+        shadowOffsetY={4}
+      />
+
+      {/* Polaroid inner photo screen */}
+      {isPolaroid && (
+        <Rect
+          x={photoX}
+          y={photoY}
+          width={photoW}
+          height={photoH}
+          fill="#111622"
+          stroke="#d4c0ab"
+          strokeWidth={1}
+          cornerRadius={4}
+        />
+      )}
+
+      {/* Background Poster Image */}
+      {canvasImage && (
+        <KonvaImage
+          x={photoX}
+          y={photoY}
+          width={photoW}
+          height={photoH}
+          image={canvasImage}
+          cornerRadius={isPolaroid ? 4 : frameRadius}
+          opacity={0.88}
+        />
+      )}
+
+      {/* Dark gradient overlay if canvasImage is present */}
+      {canvasImage && (
+        <Rect
+          x={photoX}
+          y={photoY}
+          width={photoW}
+          height={photoH}
+          fill="rgba(0, 0, 0, 0.35)"
+          cornerRadius={isPolaroid ? 4 : frameRadius}
+        />
+      )}
+
+      {/* Double border accents for luxury / gold */}
+      {variant === "arch-luxury" && (
+        <Rect
+          x={5}
+          y={5}
+          width={w - 10}
+          height={h - 10}
+          stroke="rgba(200, 155, 67, 0.4)"
+          strokeWidth={1}
+          cornerRadius={[Math.min((w - 10) / 2, 155), Math.min((w - 10) / 2, 155), 10, 10]}
+        />
+      )}
+      {variant === "gold-ornament" && (
+        <>
+          <Rect
+            x={5}
+            y={5}
+            width={w - 10}
+            height={h - 10}
+            stroke="rgba(212, 175, 55, 0.45)"
+            strokeWidth={1}
+            cornerRadius={7}
+          />
+          {/* Corner accents */}
+          <Line points={[7, 18, 7, 7, 18, 7]} stroke="#d4af37" strokeWidth={1.8} />
+          <Line points={[w - 18, 7, w - 7, 7, w - 7, 18]} stroke="#d4af37" strokeWidth={1.8} />
+          <Line points={[w - 7, h - 18, w - 7, h - 7, w - 18, h - 7]} stroke="#d4af37" strokeWidth={1.8} />
+          <Line points={[18, h - 7, 7, h - 7, 7, h - 18]} stroke="#d4af37" strokeWidth={1.8} />
+        </>
+      )}
+
+      {/* Top Badge (YouTube / Story) */}
+      {sourceInfo.isYouTube && (
+        <Group x={12} y={12}>
+          <Rect width={72} height={20} fill="#dc2626" cornerRadius={10} />
+          <Text
+            text="YouTube"
+            x={10}
+            y={4}
+            fontSize={11}
+            fontStyle="bold"
+            fill="#ffffff"
+            align="center"
+          />
+        </Group>
+      )}
+      {variant === "story-portrait" && !sourceInfo.isYouTube && (
+        <Group x={12} y={12}>
+          <Rect width={66} height={20} fill="rgba(15, 23, 42, 0.75)" cornerRadius={10} />
+          <Text
+            text="✦ STORY"
+            x={8}
+            y={5}
+            fontSize={10}
+            fontStyle="bold"
+            fill="#ffffff"
+            align="center"
+          />
+        </Group>
+      )}
+
+      {/* Center Play Button */}
+      <Circle
+        x={cx}
+        y={playCy}
+        radius={playRadius}
+        fill={playCircleFill}
+        stroke={playCircleStroke}
+        strokeWidth={1.5}
+        shadowColor="rgba(0, 0, 0, 0.35)"
+        shadowBlur={10}
+        shadowOffsetY={3}
+      />
+      {/* Play Triangle Path */}
+      <Path
+        data="M -4 -8 L 8 0 L -4 8 Z"
+        x={cx + 1}
+        y={playCy}
+        fill={playTriangleFill}
+      />
+
+      {/* Captions */}
+      {isPolaroid && (
+        <Text
+          x={10}
+          y={h - 32}
+          width={w - 20}
+          text={caption || "Our Special Story"}
+          fontFamily="Georgia, serif"
+          fontSize={13}
+          fontStyle="italic"
+          fill="#4a382c"
+          align="center"
+        />
+      )}
+      {variant === "story-portrait" && caption && (
+        <Group y={h - 32}>
+          <Rect x={0} y={0} width={w} height={32} fill="rgba(0, 0, 0, 0.65)" cornerRadius={[0, 0, 18, 18]} />
+          <Text
+            x={12}
+            y={9}
+            width={w - 24}
+            text={caption}
+            fontSize={11}
+            fill="#ffffff"
+            align="center"
+          />
+        </Group>
+      )}
+      {!isPolaroid && variant !== "story-portrait" && caption && (
+        <Text
+          x={12}
+          y={playCy + playRadius + 14}
+          width={w - 24}
+          text={caption}
+          fontSize={12}
+          fill={variant === "minimal-glass" ? "#ffffff" : color}
+          align="center"
+        />
+      )}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -3887,6 +4156,8 @@ export function CurrentWidgetVisual({
       return <CoupleProfileVisual element={element} tokens={tokens} />;
     case "ornamentFrame":
       return <OrnamentFrameVisual element={element} tokens={tokens} />;
+    case "video":
+      return <VideoVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

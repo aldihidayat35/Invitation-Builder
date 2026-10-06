@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Element, ThemeTokens } from "@/lib/schema";
 import {
   defaultWidgetRegistry,
@@ -11,6 +12,7 @@ import {
   type WidgetPropDefinition,
 } from "@/features/widgets";
 import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
+import { extractYouTubeId } from "@/features/widgets/video-utils";
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
@@ -324,6 +326,12 @@ export function WidgetPanel({
             disabled={disabled}
             setProp={setProp}
           />
+        ) : element.widgetType === "video" ? (
+          <VideoPropsControl
+            element={element}
+            disabled={disabled}
+            setProp={setProp}
+          />
         ) : (
           Object.entries(definition.props).map(([name, spec]) => {
             if (name === "layout" && galleryLayoutFollowsVariant) return null;
@@ -551,6 +559,258 @@ function OrnamentFramePropsControl({
   );
 }
 
+function VideoPropsControl({
+  element,
+  disabled,
+  setProp,
+}: {
+  readonly element: WidgetElement;
+  readonly disabled: boolean;
+  readonly setProp: (name: string, value: unknown) => void;
+}) {
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const rawUrl = typeof props.url === "string" ? props.url : "";
+  const sourceType = (props.sourceType as string) || "youtube";
+  const poster = props.poster;
+  const caption = (props.caption as string) || "";
+  const autoplayOnScroll = props.autoplayOnScroll === true;
+  const loop = props.loop !== false;
+  const muted = props.muted !== false;
+  const showControls = props.showControls !== false;
+  const aspectRatio = (props.aspectRatio as string) || "16:9";
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const detectedYtId = extractYouTubeId(rawUrl);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const blobUrl = URL.createObjectURL(file);
+    setProp("url", blobUrl);
+    setProp("sourceType", "upload");
+    if (!caption) {
+      setProp("caption", file.name.replace(/\.[^/.]+$/, ""));
+    }
+  };
+
+  return (
+    <div className={styles.panelStack} data-testid="video-widget-controls">
+      {/* 1. Sumber Video Tabs */}
+      <div className={styles.panelStack}>
+        <p className={styles.fieldLabel}>Sumber Video</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              sourceType === "youtube" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("sourceType", "youtube")}
+          >
+            YouTube
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              sourceType === "upload" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => {
+              setProp("sourceType", "upload");
+              fileInputRef.current?.click();
+            }}
+          >
+            Unggah File
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              sourceType === "direct" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("sourceType", "direct")}
+          >
+            Link MP4
+          </button>
+        </div>
+      </div>
+
+      {/* Hidden file input for direct video upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/ogg,video/quicktime"
+        style={{ display: "none" }}
+        disabled={disabled}
+        onChange={handleFileUpload}
+      />
+
+      {/* 2. URL Input & YouTube Detection Feedback */}
+      <div className={styles.panelStack} data-testid="widget-prop-url">
+        <TextField
+          id={`insp-widget-url-${element.id}`}
+          label={
+            sourceType === "youtube"
+              ? "Link Video YouTube"
+              : sourceType === "upload"
+                ? "File Video / URL"
+                : "URL Video Langsung (MP4 / WebM)"
+          }
+          value={rawUrl}
+          disabled={disabled}
+          placeholder={
+            sourceType === "youtube"
+              ? "https://www.youtube.com/watch?v=..."
+              : "https://domain.com/video.mp4"
+          }
+          onCommit={(val) => setProp("url", val)}
+        />
+
+        {sourceType === "upload" && (
+          <button
+            type="button"
+            className={styles.primaryActionButton}
+            style={{ marginTop: 4, width: "100%", justifyContent: "center" }}
+            disabled={disabled}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            📁 Pilih File Video dari Perangkat
+          </button>
+        )}
+
+        {detectedYtId ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 10px",
+              background: "rgba(220, 38, 38, 0.1)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              borderRadius: 6,
+              fontSize: 12,
+              color: "#ef4444",
+              marginTop: 4,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>✓ YouTube Terdeteksi</span>
+            <span style={{ fontSize: 11, opacity: 0.85 }}>ID: {detectedYtId}</span>
+          </div>
+        ) : null}
+      </div>
+
+      {/* 3. Cover / Poster Thumbnail */}
+      <div className={styles.panelStack} data-testid="widget-prop-poster">
+        <p className={styles.fieldLabel}>Foto Sampul / Poster Video (Opsional)</p>
+        <PhotoFrameImageControl
+          value={poster}
+          disabled={disabled}
+          onChange={(img) => setProp("poster", img)}
+        />
+      </div>
+
+      {/* 4. Judul / Keterangan */}
+      <div className={styles.panelStack} data-testid="widget-prop-caption">
+        <TextField
+          id={`insp-widget-caption-${element.id}`}
+          label="Judul / Keterangan Video"
+          value={caption}
+          disabled={disabled}
+          placeholder="Momen Bahagia Rama & Sinta"
+          onCommit={(val) => setProp("caption", val)}
+        />
+      </div>
+
+      {/* 5. Rasio Video */}
+      <div className={styles.panelStack} data-testid="widget-prop-aspectRatio">
+        <SelectField
+          id={`insp-widget-ratio-${element.id}`}
+          label="Rasio Tampilan Video"
+          value={aspectRatio}
+          options={[
+            { value: "16:9", label: "16:9 (Layar Lebar / YouTube Landscape)" },
+            { value: "9:16", label: "9:16 (Vertikal / Reels & Shorts)" },
+            { value: "4:3", label: "4:3 (Klasik)" },
+            { value: "1:1", label: "1:1 (Persegi / Square)" },
+          ]}
+          disabled={disabled}
+          onChange={(val) => setProp("aspectRatio", val)}
+        />
+      </div>
+
+      {/* 6. Pengaturan Pemutaran (Autoplay, Loop, Muted, Controls) */}
+      <div className={styles.panelStack} style={{ gap: 8 }}>
+        <p className={styles.widgetSectionTitle}>Pengaturan Pemutaran</p>
+
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={autoplayOnScroll}
+            disabled={disabled}
+            onChange={(e) => setProp("autoplayOnScroll", e.target.checked)}
+          />
+          <span>Putar otomatis saat di-scroll ke layar</span>
+        </label>
+
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={loop}
+            disabled={disabled}
+            onChange={(e) => setProp("loop", e.target.checked)}
+          />
+          <span>Putar ulang otomatis (Loop / Auto Replay)</span>
+        </label>
+
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={muted}
+            disabled={disabled}
+            onChange={(e) => setProp("muted", e.target.checked)}
+          />
+          <span>Bisu / Tanpa suara (Muted - Wajib untuk Autoplay)</span>
+        </label>
+
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={showControls}
+            disabled={disabled}
+            onChange={(e) => setProp("showControls", e.target.checked)}
+          />
+          <span>Tampilkan kontrol pemutar (Play/Pause, Durasi)</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function FontPropControl({
   id,
   label,
@@ -670,6 +930,74 @@ function WidgetVariantThumbnail({
         <svg viewBox="0 0 400 260" style={{ width: "100%", height: "100%", overflow: "visible" }}>
           <path d={shape.fullPath} fill="none" stroke="currentColor" strokeWidth={18} />
           <path d={shape.innerFullPath} fill="none" stroke="currentColor" strokeWidth={8} opacity={0.6} />
+        </svg>
+      </span>
+    );
+  }
+
+  if (widgetType === "video") {
+    return (
+      <span
+        className={styles.widgetVariantPreview}
+        data-preview-widget={widgetType}
+        data-preview-variant={variant.id}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px",
+          background: variant.id === "vintage-polaroid" ? "#fdfbf7" : "#0f172a",
+          borderRadius: 6,
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 100 65" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+          {variant.id === "cinematic-frame" && (
+            <>
+              <rect x="2" y="5" width="96" height="55" rx="6" fill="#1e293b" stroke="#475569" strokeWidth="2" />
+              <circle cx="50" cy="32.5" r="10" fill="rgba(255,255,255,0.2)" stroke="#ffffff" strokeWidth="1" />
+              <polygon points="48,28 55,32.5 48,37" fill="#ffffff" />
+            </>
+          )}
+          {variant.id === "story-portrait" && (
+            <>
+              <rect x="30" y="2" width="40" height="61" rx="6" fill="#1e293b" stroke="#e11d48" strokeWidth="1.5" />
+              <circle cx="50" cy="32.5" r="8" fill="#ffffff" />
+              <polygon points="48,29 54,32.5 48,36" fill="#e11d48" />
+            </>
+          )}
+          {variant.id === "vintage-polaroid" && (
+            <>
+              <rect x="15" y="2" width="70" height="61" rx="3" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+              <rect x="20" y="6" width="60" height="42" rx="2" fill="#1e293b" />
+              <circle cx="50" cy="27" r="8" fill="rgba(255,255,255,0.8)" />
+              <polygon points="48,24 53,27 48,30" fill="#1e293b" />
+              <line x1="30" y1="54" x2="70" y2="54" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
+            </>
+          )}
+          {variant.id === "arch-luxury" && (
+            <>
+              <path d="M 20 60 L 20 25 A 30 30 0 0 1 80 25 L 80 60 Z" fill="#1e293b" stroke="#d4af37" strokeWidth="2" />
+              <circle cx="50" cy="34" r="9" fill="#d4af37" stroke="#ffffff" strokeWidth="1" />
+              <polygon points="48,30 54,34 48,38" fill="#ffffff" />
+            </>
+          )}
+          {variant.id === "minimal-glass" && (
+            <>
+              <rect x="8" y="6" width="84" height="53" rx="8" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
+              <circle cx="50" cy="32.5" r="9" fill="rgba(255,255,255,0.25)" stroke="#ffffff" strokeWidth="1" />
+              <polygon points="48,29 54,32.5 48,36" fill="#ffffff" />
+            </>
+          )}
+          {variant.id === "gold-ornament" && (
+            <>
+              <rect x="6" y="5" width="88" height="55" rx="4" fill="#1e293b" stroke="#d4af37" strokeWidth="1.5" />
+              <rect x="10" y="9" width="80" height="47" rx="2" fill="none" stroke="rgba(212,175,55,0.4)" strokeWidth="1" />
+              <circle cx="50" cy="32.5" r="9" fill="#d4af37" />
+              <polygon points="48,29 54,32.5 48,36" fill="#ffffff" />
+            </>
+          )}
         </svg>
       </span>
     );

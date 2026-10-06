@@ -118,6 +118,23 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
       return Math.round((w * 260) / 400);
     }
 
+    case "video": {
+      const ratio = element.props?.aspectRatio;
+      if (variant === "story-portrait" || ratio === "9:16") {
+        return Math.round((w * 16) / 9);
+      }
+      if (variant === "vintage-polaroid") {
+        return Math.round((w * 9) / 16 + 50);
+      }
+      if (ratio === "1:1") {
+        return w;
+      }
+      if (ratio === "4:3") {
+        return Math.round((w * 3) / 4);
+      }
+      return Math.round((w * 9) / 16);
+    }
+
     default:
       return element.frame.h;
   }

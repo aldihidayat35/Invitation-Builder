@@ -472,6 +472,96 @@ export const ornamentFrameWidget: WidgetDefinition = {
   }),
 };
 
+export const VIDEO_WIDGET_TYPE = "video";
+
+export const videoWidget: WidgetDefinition = {
+  type: VIDEO_WIDGET_TYPE,
+  version: 1,
+  label: "Video",
+  defaultFrame: { w: 326, h: 220 },
+  defaultStyle: getDefaultWidgetStyle(VIDEO_WIDGET_TYPE),
+  defaultProps: {
+    sourceType: "youtube",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    autoplayOnScroll: false,
+    loop: true,
+    muted: true,
+    showControls: true,
+    aspectRatio: "16:9",
+    caption: "",
+  },
+  props: {
+    url: defineProp(
+      "url",
+      "URL Video atau YouTube",
+      z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+    ),
+    sourceType: defineProp(
+      "text",
+      "Sumber Video",
+      z.enum(["youtube", "direct", "upload"]).default("youtube"),
+      {
+        control: "select",
+        bindable: false,
+        options: [
+          { value: "youtube", label: "YouTube" },
+          { value: "direct", label: "Link Video Langsung (MP4/WebM)" },
+          { value: "upload", label: "Unggah File Video" },
+        ],
+      },
+    ),
+    poster: defineProp(
+      "url",
+      "Foto Sampul / Poster (Opsional)",
+      z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+    ),
+    caption: defineProp("text", "Judul / Keterangan", z.string().max(120).optional()),
+    autoplayOnScroll: defineProp(
+      "boolean",
+      "Putar otomatis saat di-scroll ke layar",
+      z.boolean().default(false),
+      { bindable: false },
+    ),
+    loop: defineProp(
+      "boolean",
+      "Putar ulang otomatis (Loop / Auto Replay)",
+      z.boolean().default(true),
+      { bindable: false },
+    ),
+    muted: defineProp(
+      "boolean",
+      "Bisu / Tanpa suara (Muted)",
+      z.boolean().default(true),
+      { bindable: false },
+    ),
+    showControls: defineProp(
+      "boolean",
+      "Tampilkan tombol kontrol pemutar",
+      z.boolean().default(true),
+      { bindable: false },
+    ),
+    aspectRatio: defineProp(
+      "text",
+      "Rasio Video",
+      z.enum(["16:9", "9:16", "4:3", "1:1"]).default("16:9"),
+      {
+        control: "select",
+        bindable: false,
+        options: [
+          { value: "16:9", label: "16:9 (Layar Lebar / YouTube)" },
+          { value: "9:16", label: "9:16 (Vertikal / Reels)" },
+          { value: "4:3", label: "4:3 (Klasik)" },
+          { value: "1:1", label: "1:1 (Persegi)" },
+        ],
+      },
+    ),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.caption) || "Video Undangan",
+    subtitle: describeProp(props.url) || "YouTube / File Video",
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
@@ -482,6 +572,7 @@ export const P1_WIDGETS: readonly WidgetDefinition[] = [
   wishesWidget,
   coupleProfileWidget,
   ornamentFrameWidget,
+  videoWidget,
 ];
 
 
