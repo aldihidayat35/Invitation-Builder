@@ -117,8 +117,14 @@ export interface EditorActions {
   patchBaseBackground(patch: Partial<DocumentBackground>): void;
   // elements
   addElement(kind: ElementKind): void;
-  /** Places an uploaded image asset into the active section (FR-EDT-008). */
-  addImage(asset: { assetId: string; width: number; height: number; name?: string }): void;
+  /** Places an uploaded image asset or direct GIF URL into the active section (FR-EDT-008). */
+  addImage(asset: {
+    assetId?: string;
+    url?: string;
+    width: number;
+    height: number;
+    name?: string;
+  }): void;
   /** Inserts a registered widget with its default frame/props (FR-WDG-001). */
   addWidget(widget: Parameters<typeof createWidgetElement>[2]): void;
   addVariable(input: Parameters<typeof addVariableOp>[1]): void;

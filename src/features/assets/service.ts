@@ -127,7 +127,7 @@ export async function initUpload(
   }
   const upload = parsed.data;
   if (!isImageMime(upload.mimeType)) {
-    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF) yang didukung saat ini.");
+    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) yang didukung saat ini.");
   }
 
   const id = randomUUID();

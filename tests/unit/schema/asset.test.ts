@@ -7,6 +7,10 @@ describe("assetUploadInitSchema (FR-AST-001)", () => {
   it("accepts a valid image and audio upload", () => {
     expect(assetUploadInitSchema.safeParse(ok).success).toBe(true);
     expect(
+      assetUploadInitSchema.safeParse({ filename: "sticker.gif", mimeType: "image/gif", bytes: 500 })
+        .success,
+    ).toBe(true);
+    expect(
       assetUploadInitSchema.safeParse({ filename: "a.mp3", mimeType: "audio/mpeg", bytes: 5 })
         .success,
     ).toBe(true);

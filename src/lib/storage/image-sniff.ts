@@ -8,7 +8,10 @@
 import type { AllowedMimeType } from "@/lib/schema";
 
 export interface SniffedImage {
-  readonly mime: Extract<AllowedMimeType, "image/jpeg" | "image/png" | "image/webp" | "image/avif">;
+  readonly mime: Extract<
+    AllowedMimeType,
+    "image/jpeg" | "image/png" | "image/webp" | "image/avif" | "image/gif"
+  >;
   readonly width: number;
   readonly height: number;
 }
@@ -16,6 +19,7 @@ export interface SniffedImage {
 const u32be = (b: Uint8Array, o: number) =>
   ((b[o]! << 24) | (b[o + 1]! << 16) | (b[o + 2]! << 8) | b[o + 3]!) >>> 0;
 const u16be = (b: Uint8Array, o: number) => (b[o]! << 8) | b[o + 1]!;
+const u16le = (b: Uint8Array, o: number) => b[o]! | (b[o + 1]! << 8);
 const u24le = (b: Uint8Array, o: number) => b[o]! | (b[o + 1]! << 8) | (b[o + 2]! << 16);
 const ascii = (b: Uint8Array, o: number, n: number) => String.fromCharCode(...b.subarray(o, o + n));
 
@@ -94,9 +98,22 @@ function sniffAvif(b: Uint8Array): SniffedImage | null {
   return null;
 }
 
+/** GIF87a and GIF89a header parsing. Logical screen width & height are 16-bit little endian. */
+function sniffGif(b: Uint8Array): SniffedImage | null {
+  if (b.length < 10) return null;
+  const sig = ascii(b, 0, 6);
+  if (sig !== "GIF87a" && sig !== "GIF89a") return null;
+  return { mime: "image/gif", width: u16le(b, 6), height: u16le(b, 8) };
+}
+
 /** Returns the real image type and dimensions, or null when the bytes are not a supported image. */
 export function sniffImage(bytes: Uint8Array): SniffedImage | null {
-  const found = sniffPng(bytes) ?? sniffJpeg(bytes) ?? sniffWebp(bytes) ?? sniffAvif(bytes);
+  const found =
+    sniffPng(bytes) ??
+    sniffJpeg(bytes) ??
+    sniffWebp(bytes) ??
+    sniffAvif(bytes) ??
+    sniffGif(bytes);
   if (!found) return null;
   if (!Number.isInteger(found.width) || !Number.isInteger(found.height)) return null;
   if (found.width < 1 || found.height < 1) return null;

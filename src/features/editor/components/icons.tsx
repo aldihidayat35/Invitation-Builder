@@ -570,3 +570,12 @@ export const IconShadowHard = (p: IconProps) => (
     <rect x="4" y="4" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.8} />
   </Svg>
 );
+
+export const IconGif = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <path d="M8.5 9.5H6.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h2v-2.5h-1" />
+    <path d="M12 9.5v5" />
+    <path d="M15 9.5v5M15 9.5h3M15 12h2" />
+  </Svg>
+);

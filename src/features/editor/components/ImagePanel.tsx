@@ -32,6 +32,7 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
   const { style } = element;
   const assetId = "assetId" in element.source ? element.source.assetId : undefined;
   const boundKey = "bind" in element.source ? element.source.bind : undefined;
+  const imgSrc = assetId ? assetUrl(assetId) : undefined;
 
   const setSource = (source: ImageElement["source"]) =>
     store.getState().patchElement(id, (el) => ({ ...el, source }) as Element);
@@ -45,10 +46,10 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
 
   return (
     <div className={styles.panelStack} data-testid="image-inspector">
-      {assetId ? (
+      {imgSrc ? (
         <div className={styles.imagePreview}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- editor preview of a same-origin asset */}
-          <img src={assetUrl(assetId)} alt="" data-testid="image-preview" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- editor preview */}
+          <img src={imgSrc} alt="" data-testid="image-preview" />
         </div>
       ) : (
         <p className={styles.muted}>Terhubung ke variabel: {boundKey}</p>
@@ -60,7 +61,7 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
         data-testid="image-replace"
         onClick={() => setPicking((open) => !open)}
       >
-        {picking ? "Tutup pilihan" : assetId ? "Ganti gambar" : "Pakai aset statis"}
+        {picking ? "Tutup pilihan" : imgSrc ? "Ganti gambar" : "Pakai aset statis"}
       </button>
       {assetId ? (
         <div className={styles.imageActionGrid}>

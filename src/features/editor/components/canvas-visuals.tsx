@@ -214,7 +214,30 @@ export function ImageVisual({
 }) {
   const { w, h } = element.frame;
   const assetId = "assetId" in element.source ? element.source.assetId : null;
-  const image = useCanvasImage(assetId ? assetUrl(assetId) : null);
+  const sourceUrl = assetId ? assetUrl(assetId) : null;
+  const image = useCanvasImage(sourceUrl);
+
+  const isGif = Boolean(
+    sourceUrl &&
+      (sourceUrl.toLowerCase().includes(".gif") ||
+        (element.name && element.name.toLowerCase().includes("gif"))),
+  );
+
+  const [, setFrameTick] = useState(0);
+  useEffect(() => {
+    if (!isGif || !image) return;
+    let animId: number;
+    let last = performance.now();
+    const tick = (now: number) => {
+      if (now - last >= 60) {
+        last = now;
+        setFrameTick((t) => (t + 1) % 10000);
+      }
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, [isGif, image]);
 
   const { fit, focal, radius, flipH, flipV, fade } = element.style;
   const isFlipH = Boolean(flipH);
@@ -241,7 +264,7 @@ export function ImageVisual({
     });
   }, [isFadeActive, image, crop, dest, w, h, fade]);
 
-  if (!assetId) {
+  if (!sourceUrl) {
     const key = "bind" in element.source ? element.source.bind : "";
     return <Placeholder w={w} h={h} title="Gambar" subtitle={key ? `{${key}}` : undefined} />;
   }

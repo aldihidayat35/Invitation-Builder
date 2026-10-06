@@ -16,7 +16,7 @@ const idSchema = z.uuid();
 
 function failure(error: unknown): { ok: false; error: string } {
   const known = error instanceof Error && error.name !== "Error";
-  if (!known) console.error("asset action failed", error);
+  if (!known && process.env.NODE_ENV !== "test") console.error("asset action failed", error);
   return { ok: false, error: describeAssetError(error) };
 }
 
@@ -46,6 +46,20 @@ export async function listAssetsAction(
 ): Promise<ActionResult<AssetSummary[]>> {
   try {
     return { ok: true, data: await searchAssets(workspaceId, search) };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function saveAssetFromUrlAction(
+  workspaceId: string,
+  url: string,
+  suggestedFilename?: string,
+): Promise<ActionResult<AssetSummary>> {
+  if (!idSchema.safeParse(workspaceId).success) return { ok: false, error: "Workspace tidak valid." };
+  try {
+    const { saveAssetFromUrl } = await import("./api");
+    return { ok: true, data: await saveAssetFromUrl(workspaceId, url, suggestedFilename) };
   } catch (error) {
     return failure(error);
   }

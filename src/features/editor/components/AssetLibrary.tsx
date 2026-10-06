@@ -21,6 +21,8 @@ export interface AssetLibraryProps {
   readonly idPrefix?: string;
   /** Additional lock supplied by the embedding control. */
   readonly disabled?: boolean;
+  /** When true (default), hides GIFs to keep gallery distinct from GIF stickers. */
+  readonly excludeGifs?: boolean;
 }
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
@@ -31,6 +33,7 @@ export function AssetLibrary({
   pickLabel,
   idPrefix = "asset",
   disabled = false,
+  excludeGifs = true,
 }: AssetLibraryProps) {
   const workspaceId = useWorkspaceId();
   const readOnly = useEditor((s) => s.readOnly);
@@ -47,12 +50,12 @@ export function AssetLibrary({
     async (query: string) => {
       const result = await listAssetsAction(workspaceId, query || undefined);
       if (result.ok) {
-        setAssets(result.data);
+        setAssets(excludeGifs ? result.data.filter((a) => a.mimeType !== "image/gif") : result.data);
       } else {
         setError(result.error);
       }
     },
-    [workspaceId],
+    [workspaceId, excludeGifs],
   );
 
   // Debounced search; the first run loads the recent list.

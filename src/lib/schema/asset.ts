@@ -6,7 +6,13 @@
  */
 import { z } from "zod";
 
-export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;
+export const IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+] as const;
 export const AUDIO_MIME_TYPES = ["audio/mpeg", "audio/mp4", "audio/ogg"] as const;
 export const ALLOWED_MIME_TYPES = [...IMAGE_MIME_TYPES, ...AUDIO_MIME_TYPES] as const;
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
@@ -25,6 +31,7 @@ export const EXTENSIONS_BY_MIME: Readonly<Record<AllowedMimeType, readonly strin
   "image/png": ["png"],
   "image/webp": ["webp"],
   "image/avif": ["avif"],
+  "image/gif": ["gif"],
   "audio/mpeg": ["mp3"],
   "audio/mp4": ["m4a", "mp4"],
   "audio/ogg": ["ogg", "oga"],

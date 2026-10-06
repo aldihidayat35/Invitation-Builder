@@ -4,7 +4,8 @@ import { assetUrl } from "@/features/assets/urls";
 import { focalToObjectPosition } from "@/lib/image-fit";
 
 export interface PublicImageProps {
-  readonly assetId: string;
+  readonly assetId?: string;
+  readonly src?: string;
   readonly alt: string;
   readonly width: number;
   readonly height: number;
@@ -126,6 +127,7 @@ export function buildCssImageMask(fade?: ImageFade): CSSProperties {
  */
 export function PublicImage({
   assetId,
+  src,
   alt,
   width,
   height,
@@ -143,6 +145,7 @@ export function PublicImage({
   if (flipV) transforms.push("scaleY(-1)");
 
   const maskStyle = buildCssImageMask(fade);
+  const imageSrc = src ?? (assetId ? assetUrl(assetId, { width }) : "");
 
   const style: CSSProperties = {
     display: "block",
@@ -158,7 +161,7 @@ export function PublicImage({
   return (
     // eslint-disable-next-line @next/next/no-img-element -- asset delivery is our own route; variants come later
     <img
-      src={assetUrl(assetId, { width })}
+      src={imageSrc}
       alt={alt}
       width={width}
       height={height}

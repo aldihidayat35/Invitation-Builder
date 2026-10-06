@@ -1,7 +1,7 @@
 /**
  * PRD refs: FR-AST-001 (type/dimension derived from bytes), NFR-SEC-002, FR-EDT-008.
  */
-import { avifBytes, jpegBytes, pngBytes, webpBytes } from "../../helpers/images";
+import { avifBytes, gifBytes, jpegBytes, pngBytes, webpBytes } from "../../helpers/images";
 import { sniffImage } from "@/lib/storage/image-sniff";
 import { fitImage, focalToObjectPosition } from "@/lib/image-fit";
 import { assetUrl } from "@/features/assets/urls";
@@ -12,6 +12,7 @@ describe("sniffImage (FR-AST-001)", () => {
     ["jpeg", jpegBytes(640, 480), "image/jpeg"],
     ["webp", webpBytes(640, 480), "image/webp"],
     ["avif", avifBytes(640, 480), "image/avif"],
+    ["gif", gifBytes(640, 480), "image/gif"],
   ])("detects %s and reads its dimensions", (_name, bytes, mime) => {
     expect(sniffImage(bytes)).toEqual({ mime, width: 640, height: 480 });
   });

@@ -64,3 +64,16 @@ export function avifBytes(width: number, height: number): Uint8Array {
     ...be32(height),
   ]);
 }
+
+const le16 = (n: number) => [n & 255, (n >>> 8) & 255];
+
+export function gifBytes(width: number, height: number): Uint8Array {
+  return pad([
+    ...ascii("GIF89a"),
+    ...le16(width),
+    ...le16(height),
+    0x80,
+    0x00,
+    0x00,
+  ]);
+}

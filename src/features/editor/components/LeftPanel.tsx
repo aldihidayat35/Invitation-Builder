@@ -12,6 +12,7 @@ import {
   IconCircle,
   IconEye,
   IconEyeOff,
+  IconGif,
   IconGripVertical,
   IconImages,
   IconLayers,
@@ -25,6 +26,7 @@ import {
   IconUnlock,
   WidgetIcon,
 } from "./icons";
+import { GifLibrary } from "./gif/GifLibrary";
 import { PanelSection } from "./PanelSection";
 import styles from "./editor.module.css";
 
@@ -112,7 +114,7 @@ export function LeftPanel() {
         </div>
       </PanelSection>
 
-      <PanelSection id="left-media" title="Media" icon={<IconImages size={14} />}>
+      <PanelSection id="left-media" title="Galeri Foto" icon={<IconImages size={14} />}>
         <AssetLibrary
           pickLabel="Tambah ke artboard"
           onPick={(asset) => {
@@ -122,6 +124,22 @@ export function LeftPanel() {
               width: asset.width,
               height: asset.height,
               name: asset.filename,
+            });
+          }}
+        />
+      </PanelSection>
+
+      <PanelSection id="left-gif" title="GIF Animasi & Stiker" icon={<IconGif size={14} />}>
+        <GifLibrary
+          disabled={readOnly || noSection}
+          onPick={(item) => {
+            if (!section) return;
+            store.getState().addImage({
+              assetId: item.assetId,
+              url: item.url,
+              width: item.width ?? 240,
+              height: item.height ?? 240,
+              name: item.name ?? "Stiker Animasi",
             });
           }}
         />

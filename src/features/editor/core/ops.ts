@@ -731,22 +731,31 @@ function insertNewElement(
 /** Max initial width of a freshly inserted image (px, canonical space). */
 export const IMAGE_INSERT_MAX_WIDTH = 300;
 
-/** Places an uploaded asset on the artboard, keeping its aspect ratio. */
+/** Places an uploaded asset or direct image/GIF URL on the artboard, keeping its aspect ratio. */
 export function createImageElement(
   doc: CanonicalDocument,
   sectionId: string,
-  asset: { assetId: string; width: number; height: number; name?: string },
+  asset: {
+    assetId?: string;
+    url?: string;
+    width: number;
+    height: number;
+    name?: string;
+  },
 ): { document: CanonicalDocument; elementId: string | null } {
   return insertNewElement(doc, sectionId, "el_img", (id, section) => {
-    const ratio = asset.height / asset.width;
-    const w = Math.min(IMAGE_INSERT_MAX_WIDTH, asset.width);
+    const rawW = asset.width > 0 ? asset.width : IMAGE_INSERT_MAX_WIDTH;
+    const rawH = asset.height > 0 ? asset.height : IMAGE_INSERT_MAX_WIDTH;
+    const ratio = rawH / rawW;
+    const w = Math.min(IMAGE_INSERT_MAX_WIDTH, rawW);
     const h = Math.max(1, Math.round(w * ratio));
+    const source = asset.assetId ? { assetId: asset.assetId } : { url: asset.url ?? "" };
     return {
       id,
       type: "image",
       name: (asset.name ?? "Gambar").slice(0, 120),
       frame: { ...placement(section, w, h), w, h, rotation: 0 },
-      source: { assetId: asset.assetId },
+      source,
     };
   });
 }
