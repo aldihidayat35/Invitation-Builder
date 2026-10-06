@@ -17,6 +17,7 @@ import { parseWishItems } from "@/features/widgets/runtime/WishesWidget";
 import { parseCouplePerson } from "@/features/widgets/runtime/CoupleProfileWidget";
 import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
 import { parseVideoSource } from "@/features/widgets/video-utils";
+import { parseGifSource } from "@/features/widgets/runtime/GifWidget";
 import { resolveWidgetStyleVariant } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
@@ -4124,6 +4125,149 @@ function VideoVisual({
   );
 }
 
+function GifVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+  const { w, h } = element.frame;
+  const { color } = colors(element, tokens);
+  const variant = element.style?.variant || "clean";
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const caption = typeof props.caption === "string" ? props.caption.trim() : "";
+  const fit = props.fit === "cover" ? "cover" : "contain";
+  const alignment = (props.alignment as string) || "center";
+
+  const resolvedUrl = parseGifSource(props.url, props.assetId) || "https://media.giphy.com/media/l41lO3n0gIuY7vM0E/giphy.gif";
+  const image = useCanvasImage(resolvedUrl);
+
+  const captionH = caption ? 24 : 0;
+  const availH = Math.max(20, h - captionH);
+
+  const isClean = variant === "clean";
+  const isGold = variant === "gold-border";
+  const isGlow = variant === "neon-glow";
+  const isVintage = variant === "vintage-frame";
+  const isPill = variant === "soft-pill";
+
+  const padding = isClean ? 0 : 8;
+  const mediaW = Math.max(10, w - padding * 2);
+  const mediaH = Math.max(10, availH - padding * 2);
+  const mediaX = padding;
+  const mediaY = padding;
+
+  return (
+    <Group listening={false}>
+      {!isClean && (
+        <Rect
+          x={0}
+          y={0}
+          width={w}
+          height={h}
+          cornerRadius={isPill ? 999 : isGold ? 12 : isVintage ? 8 : 14}
+          fill={
+            isGold
+              ? "#fffdf7"
+              : isVintage
+                ? "#faf6ee"
+                : isGlow
+                  ? "rgba(255, 255, 255, 0.9)"
+                  : "#ffffff"
+          }
+          stroke={
+            isGold
+              ? "#d4af37"
+              : isVintage
+                ? "#8b5a2b"
+                : isGlow
+                  ? "rgba(255, 105, 180, 0.6)"
+                  : "rgba(0, 0, 0, 0.08)"
+          }
+          strokeWidth={isGold ? 2 : isVintage ? 2.5 : 1}
+          shadowColor={isGlow ? "#ff69b4" : isGold ? "#d4af37" : "#000000"}
+          shadowBlur={isGlow ? 16 : isGold ? 12 : 8}
+          shadowOpacity={isGlow ? 0.35 : isGold ? 0.2 : 0.08}
+          shadowOffset={{ x: 0, y: isClean ? 0 : 3 }}
+        />
+      )}
+
+      {image ? (
+        (() => {
+          const { crop, dest } = fitImage({
+            boxWidth: mediaW,
+            boxHeight: mediaH,
+            imageWidth: image.naturalWidth || mediaW,
+            imageHeight: image.naturalHeight || mediaH,
+            fit,
+            focal: { x: 0.5, y: 0.5 },
+          });
+
+          let offsetX = 0;
+          if (alignment === "left") {
+            offsetX = 0;
+          } else if (alignment === "right") {
+            offsetX = mediaW - dest.width;
+          } else {
+            offsetX = (mediaW - dest.width) / 2;
+          }
+
+          return (
+            <KonvaImage
+              image={image}
+              crop={crop}
+              x={mediaX + offsetX}
+              y={mediaY + (mediaH - dest.height) / 2}
+              width={dest.width}
+              height={dest.height}
+              cornerRadius={isClean ? 0 : 6}
+            />
+          );
+        })()
+      ) : (
+        <Group x={mediaX} y={mediaY}>
+          <Rect
+            width={mediaW}
+            height={mediaH}
+            fill="rgba(255, 192, 203, 0.15)"
+            cornerRadius={8}
+            stroke="rgba(255, 105, 180, 0.3)"
+            strokeWidth={1}
+            dash={[4, 4]}
+          />
+          <Text
+            x={0}
+            y={mediaH / 2 - 12}
+            width={mediaW}
+            text="✨ GIF"
+            fontSize={14}
+            fontStyle="bold"
+            fill="#db2777"
+            align="center"
+          />
+          <Text
+            x={0}
+            y={mediaH / 2 + 6}
+            width={mediaW}
+            text="Animasi Stiker"
+            fontSize={9.5}
+            fill="#9d174d"
+            align="center"
+          />
+        </Group>
+      )}
+
+      {caption ? (
+        <Text
+          x={6}
+          y={availH + 4}
+          width={w - 12}
+          text={caption}
+          fontSize={11}
+          fontStyle="500"
+          fill={color || "#2b2118"}
+          align={alignment}
+        />
+      ) : null}
+    </Group>
+  );
+}
+
 export function CurrentWidgetVisual({
   element,
   tokens,
@@ -4158,6 +4302,8 @@ export function CurrentWidgetVisual({
       return <OrnamentFrameVisual element={element} tokens={tokens} />;
     case "video":
       return <VideoVisual element={element} tokens={tokens} />;
+    case "gif":
+      return <GifVisual element={element} tokens={tokens} />;
     default:
       return null;
   }

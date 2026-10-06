@@ -56,6 +56,8 @@ export {
   ornamentFrameWidget,
   VIDEO_WIDGET_TYPE,
   videoWidget,
+  GIF_WIDGET_TYPE,
+  gifWidget,
 } from "./definitions-p1";
 export {
   extractYouTubeId,

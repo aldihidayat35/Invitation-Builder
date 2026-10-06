@@ -126,7 +126,10 @@ export interface EditorActions {
     name?: string;
   }): void;
   /** Inserts a registered widget with its default frame/props (FR-WDG-001). */
-  addWidget(widget: Parameters<typeof createWidgetElement>[2]): void;
+  addWidget(
+    widget: Parameters<typeof createWidgetElement>[2],
+    initialProps?: Record<string, unknown>,
+  ): void;
   addVariable(input: Parameters<typeof addVariableOp>[1]): void;
   deleteSelected(): void;
   duplicateSelected(): void;
@@ -389,13 +392,13 @@ export function createEditorStore(init: EditorInit): EditorStore {
           () => (created ? { selectedIds: [created] } : {}),
         );
       },
-      addWidget(widget) {
+      addWidget(widget, initialProps) {
         let created: string | null = null;
         edit(
           (doc, s) => {
             const sectionId = s.activeSectionId ?? doc.sections[0]?.id;
             if (!sectionId) return doc;
-            const result = createWidgetElement(doc, sectionId, widget);
+            const result = createWidgetElement(doc, sectionId, widget, initialProps);
             created = result.elementId;
             return result.document;
           },

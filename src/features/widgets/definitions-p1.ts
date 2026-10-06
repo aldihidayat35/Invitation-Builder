@@ -562,6 +562,74 @@ export const videoWidget: WidgetDefinition = {
   }),
 };
 
+export const GIF_WIDGET_TYPE = "gif";
+
+export const gifWidget: WidgetDefinition = {
+  type: GIF_WIDGET_TYPE,
+  version: 1,
+  label: "Animasi GIF",
+  defaultFrame: { w: 200, h: 200 },
+  defaultStyle: getDefaultWidgetStyle(GIF_WIDGET_TYPE),
+  defaultProps: {
+    url: "https://media.giphy.com/media/l41lO3n0gIuY7vM0E/giphy.gif",
+    caption: "",
+    fit: "contain",
+    loop: true,
+    alignment: "center",
+  },
+  props: {
+    url: defineProp(
+      "url",
+      "URL / Preset GIF Animasi",
+      z.string().optional(),
+    ),
+    assetId: defineProp(
+      "text",
+      "ID Aset Tersimpan di Sistem",
+      z.string().optional(),
+    ),
+    caption: defineProp(
+      "text",
+      "Keterangan / Teks (Opsional)",
+      z.string().max(100).optional(),
+    ),
+    fit: defineProp(
+      "text",
+      "Kesesuaian Tampilan",
+      z.enum(["contain", "cover"]).default("contain"),
+      {
+        control: "select",
+        options: [
+          { value: "contain", label: "Pas di Dalam (Contain)" },
+          { value: "cover", label: "Penuhi Bidang (Cover)" },
+        ],
+      },
+    ),
+    loop: defineProp(
+      "boolean",
+      "Putar Terus Menerus (Loop)",
+      z.boolean().default(true),
+    ),
+    alignment: defineProp(
+      "text",
+      "Posisi Perataan",
+      z.enum(["center", "left", "right"]).default("center"),
+      {
+        control: "select",
+        options: [
+          { value: "center", label: "Tengah (Center)" },
+          { value: "left", label: "Kiri (Left)" },
+          { value: "right", label: "Kanan (Right)" },
+        ],
+      },
+    ),
+  },
+  placeholder: (props) => ({
+    title: describeProp(props.caption) || "Animasi GIF",
+    subtitle: describeProp(props.url) || "Stiker Animasi",
+  }),
+};
+
 export const P1_WIDGETS: readonly WidgetDefinition[] = [
   rsvpWidget,
   galleryWidget,
@@ -573,6 +641,7 @@ export const P1_WIDGETS: readonly WidgetDefinition[] = [
   coupleProfileWidget,
   ornamentFrameWidget,
   videoWidget,
+  gifWidget,
 ];
 
 

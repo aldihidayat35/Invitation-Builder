@@ -15,6 +15,7 @@ import { WishesWidget } from "./WishesWidget";
 import { CoupleProfileWidget } from "./CoupleProfileWidget";
 import { OrnamentFrameWidget } from "./OrnamentFrameWidget";
 import { VideoWidget } from "./VideoWidget";
+import { GifWidget } from "./GifWidget";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -147,6 +148,17 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       muted={p.muted}
       showControls={p.showControls}
       aspectRatio={p.aspectRatio}
+      style={style}
+    />
+  ),
+  gif: (p, style) => (
+    <GifWidget
+      url={p.url}
+      assetId={p.assetId}
+      caption={p.caption}
+      fit={p.fit}
+      loop={p.loop}
+      alignment={p.alignment}
       style={style}
     />
   ),

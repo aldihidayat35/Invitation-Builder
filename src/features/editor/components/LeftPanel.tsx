@@ -134,13 +134,22 @@ export function LeftPanel() {
           disabled={readOnly || noSection}
           onPick={(item) => {
             if (!section) return;
-            store.getState().addImage({
-              assetId: item.assetId,
-              url: item.url,
-              width: item.width ?? 240,
-              height: item.height ?? 240,
-              name: item.name ?? "Stiker Animasi",
-            });
+            const gifDef = defaultWidgetRegistry.resolve("gif");
+            if (gifDef.kind === "known") {
+              store.getState().addWidget(gifDef.definition, {
+                url: item.url,
+                assetId: item.assetId,
+                caption: item.name ?? "",
+              });
+            } else {
+              store.getState().addImage({
+                assetId: item.assetId,
+                url: item.url,
+                width: item.width ?? 240,
+                height: item.height ?? 240,
+                name: item.name ?? "Stiker Animasi",
+              });
+            }
           }}
         />
       </PanelSection>

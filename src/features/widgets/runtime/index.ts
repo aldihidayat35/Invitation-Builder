@@ -13,5 +13,6 @@ export { TimelineWidget, parseTimelineEvents, type TimelineEventItem } from "./T
 export { WishesWidget, parseWishItems, type WishItem } from "./WishesWidget";
 export { CoupleProfileWidget, parseCouplePerson, type CouplePerson } from "./CoupleProfileWidget";
 export { VideoWidget, type VideoWidgetProps } from "./VideoWidget";
+export { GifWidget, parseGifSource, type GifWidgetProps } from "./GifWidget";
 export { PublicContextProvider, usePublicContext, type PublicContextValue } from "./PublicContext";
 

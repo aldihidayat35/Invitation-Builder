@@ -772,6 +772,7 @@ export function createWidgetElement(
     defaultProps: Readonly<Record<string, unknown>>;
     defaultStyle?: Readonly<{ variant: string; radius?: number }>;
   },
+  initialProps?: Record<string, unknown>,
 ): { document: CanonicalDocument; elementId: string | null } {
   return insertNewElement(doc, sectionId, "el_widget", (id, section) => {
     const { w, h } = widget.defaultFrame;
@@ -782,7 +783,10 @@ export function createWidgetElement(
       frame: { ...placement(section, w, h), w, h, rotation: 0 },
       widgetType: widget.type,
       widgetVersion: widget.version,
-      props: structuredClone(widget.defaultProps),
+      props: {
+        ...structuredClone(widget.defaultProps),
+        ...(initialProps ? structuredClone(initialProps) : {}),
+      },
       ...(widget.defaultStyle && { style: structuredClone(widget.defaultStyle) }),
     };
   });

@@ -97,7 +97,7 @@ describe("widget registry", () => {
           ? 10
           : definition.type === "ornamentFrame"
             ? 11
-            : definition.type === "video"
+            : definition.type === "video" || definition.type === "gif"
               ? 6
               : 5;
       expect(variants).toHaveLength(expectedCount);

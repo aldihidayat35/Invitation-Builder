@@ -135,6 +135,11 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
       return Math.round((w * 9) / 16);
     }
 
+    case "gif": {
+      const hasCaption = typeof props.caption === "string" && props.caption.trim().length > 0;
+      return Math.round(element.frame.h + (hasCaption ? 28 : 0));
+    }
+
     default:
       return element.frame.h;
   }

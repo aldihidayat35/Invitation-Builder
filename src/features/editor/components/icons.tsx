@@ -373,6 +373,15 @@ export function IconVideo({ size = 16, color = "currentColor", ...rest }: IconPr
   );
 }
 
+export const IconGif = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <path d="M8.5 9.5H6.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h2v-2.5h-1" />
+    <path d="M12 9.5v5" />
+    <path d="M15 9.5v5M15 9.5h3M15 12h2" />
+  </Svg>
+);
+
 const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   map: IconMapPin,
   countdown: IconClock,
@@ -386,6 +395,7 @@ const WIDGET_ICONS: Readonly<Record<string, (p: IconProps) => ReactNode>> = {
   wishes: IconWishes,
   ornamentFrame: IconOrnamentFrame,
   video: IconVideo,
+  gif: IconGif,
 };
 
 export function WidgetIcon({ type, ...rest }: IconProps & { readonly type: string }) {
@@ -568,14 +578,5 @@ export const IconShadowHard = (p: IconProps) => (
   <Svg {...p}>
     <rect x="8" y="8" width="12" height="12" rx="1.5" fill="currentColor" stroke="none" opacity={0.4} />
     <rect x="4" y="4" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.8} />
-  </Svg>
-);
-
-export const IconGif = (p: IconProps) => (
-  <Svg {...p}>
-    <rect x="3" y="4" width="18" height="16" rx="3" />
-    <path d="M8.5 9.5H6.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h2v-2.5h-1" />
-    <path d="M12 9.5v5" />
-    <path d="M15 9.5v5M15 9.5h3M15 12h2" />
   </Svg>
 );

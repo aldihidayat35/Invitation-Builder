@@ -1719,6 +1719,8 @@ export function WidgetVisual({
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
     case "video":
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+    case "gif":
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
     default: {
       const { w, h } = element.frame;
       const resolved = defaultWidgetRegistry.resolve(element.widgetType);

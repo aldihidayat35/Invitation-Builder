@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Element, ThemeTokens } from "@/lib/schema";
 import {
   defaultWidgetRegistry,
@@ -13,6 +13,7 @@ import {
 } from "@/features/widgets";
 import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
 import { extractYouTubeId } from "@/features/widgets/video-utils";
+import { parseGifSource } from "@/features/widgets/runtime/GifWidget";
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
 import { BindingControl } from "./BindingControl";
 import { GalleryItemsControl } from "./GalleryItemsControl";
@@ -21,8 +22,11 @@ import { PhotoFrameImageControl } from "./PhotoFrameImageControl";
 import { TimelineEventsControl } from "./TimelineEventsControl";
 import { WishesItemsControl } from "./WishesItemsControl";
 import { CouplePersonControl } from "./CouplePersonControl";
-import { useEditorStore } from "./EditorProvider";
-import { IconCheck, IconZap } from "./icons";
+import { GifLibrary, type GifItemPick } from "./gif/GifLibrary";
+import { saveAssetFromUrlAction } from "@/features/assets/actions";
+import { uploadAssetFile } from "@/features/assets/upload";
+import { useEditorStore, useWorkspaceId } from "./EditorProvider";
+import { IconCheck, IconGif, IconSparkle, IconZap } from "./icons";
 import {
   ColorField,
   FieldRow,
@@ -328,6 +332,12 @@ export function WidgetPanel({
           />
         ) : element.widgetType === "video" ? (
           <VideoPropsControl
+            element={element}
+            disabled={disabled}
+            setProp={setProp}
+          />
+        ) : element.widgetType === "gif" ? (
+          <GifPropsControl
             element={element}
             disabled={disabled}
             setProp={setProp}
@@ -811,6 +821,447 @@ function VideoPropsControl({
   );
 }
 
+function GifPropsControl({
+  element,
+  disabled,
+  setProp,
+}: {
+  readonly element: WidgetElement;
+  readonly disabled: boolean;
+  readonly setProp: (name: string, value: unknown) => void;
+}) {
+  const workspaceId = useWorkspaceId();
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const url = typeof props.url === "string" ? props.url : "";
+  const assetId = typeof props.assetId === "string" ? props.assetId : "";
+  const caption = typeof props.caption === "string" ? props.caption : "";
+  const fit = (props.fit as string) || "contain";
+  const loop = props.loop !== false;
+  const alignment = (props.alignment as string) || "center";
+
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [savingToSystem, setSavingToSystem] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resolvedSrc = parseGifSource(url, assetId) || "https://media.giphy.com/media/l41lO3n0gIuY7vM0E/giphy.gif";
+  const isSavedInSystem = Boolean(assetId);
+
+  // Upload local GIF file to workspace assets
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".gif") && file.type !== "image/gif") {
+      setStatusMessage({ type: "error", text: "Hanya berkas format .gif yang didukung." });
+      return;
+    }
+
+    try {
+      const res = await uploadAssetFile(workspaceId, file);
+      if (res.ok) {
+        setProp("assetId", res.asset.id);
+        setProp("url", undefined);
+        if (!caption) {
+          setProp("caption", file.name.replace(/\.[^/.]+$/, ""));
+        }
+        setStatusMessage({ type: "success", text: "Berkas GIF berhasil diunggah & disimpan ke sistem!" });
+        setTimeout(() => setStatusMessage(null), 4000);
+      } else {
+        setStatusMessage({ type: "error", text: res.error });
+      }
+    } catch {
+      setStatusMessage({ type: "error", text: "Gagal mengunggah berkas GIF." });
+    }
+  };
+
+  // Save current preset/external URL into workspace system assets for repeat reuse
+  const handleSaveToSystem = async () => {
+    if (!url || isSavedInSystem) return;
+    setSavingToSystem(true);
+    setStatusMessage(null);
+    try {
+      const res = await saveAssetFromUrlAction(
+        workspaceId,
+        url,
+        caption ? `${caption}.gif` : "animasi-undangan.gif",
+      );
+      if (res.ok) {
+        setProp("assetId", res.data.id);
+        setStatusMessage({ type: "success", text: "Stiker berhasil disimpan ke sistem! Bisa dipakai berulang." });
+        setTimeout(() => setStatusMessage(null), 4000);
+      } else {
+        setStatusMessage({ type: "error", text: res.error });
+      }
+    } catch {
+      setStatusMessage({ type: "error", text: "Gagal menyimpan stiker GIF ke sistem." });
+    } finally {
+      setSavingToSystem(false);
+    }
+  };
+
+  const handlePickFromLibrary = (item: GifItemPick) => {
+    if (item.assetId) {
+      setProp("assetId", item.assetId);
+      setProp("url", undefined);
+    } else if (item.url) {
+      setProp("url", item.url);
+      setProp("assetId", undefined);
+    }
+    if (item.name && !caption) {
+      setProp("caption", item.name);
+    }
+    setShowLibrary(false);
+  };
+
+  return (
+    <div className={styles.panelStack} data-testid="gif-widget-controls">
+      {/* 1. Preview Banner & Stiker Aktif */}
+      <div className={styles.panelStack}>
+        <p className={styles.fieldLabel}>Animasi / Stiker Aktif</p>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: 10,
+            background: "rgba(255, 240, 245, 0.4)",
+            border: "1px solid rgba(244, 114, 182, 0.3)",
+            borderRadius: 10,
+          }}
+        >
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 8,
+              background: "#ffffff",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              flexShrink: 0,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolvedSrc}
+              alt={caption || "GIF Preview"}
+              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            />
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              {isSavedInSystem ? (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    background: "#ecfdf5",
+                    color: "#059669",
+                    border: "1px solid #a7f3d0",
+                  }}
+                >
+                  ⭐ Tersimpan di Sistem
+                </span>
+              ) : (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    border: "1px solid #fde68a",
+                  }}
+                >
+                  Stiker Koleksi / URL
+                </span>
+              )}
+            </div>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                color: "#1e293b",
+              }}
+              title={caption || "Animasi GIF"}
+            >
+              {caption || "Animasi GIF"}
+            </p>
+          </div>
+        </div>
+
+        {/* Feedback message */}
+        {statusMessage && (
+          <div
+            style={{
+              padding: "6px 10px",
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 500,
+              background: statusMessage.type === "success" ? "#ecfdf5" : "#fef2f2",
+              color: statusMessage.type === "success" ? "#065f46" : "#991b1b",
+              border: statusMessage.type === "success" ? "1px solid #a7f3d0" : "1px solid #fecaca",
+            }}
+          >
+            {statusMessage.text}
+          </div>
+        )}
+
+        {/* Action Buttons: Ganti Stiker, Simpan ke Sistem, Unggah */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <button
+            type="button"
+            className={styles.primaryActionButton}
+            style={{ width: "100%", justifyContent: "center" }}
+            disabled={disabled}
+            onClick={() => setShowLibrary((prev) => !prev)}
+            data-testid="gif-open-library-btn"
+          >
+            <IconSparkle size={13} />
+            <span>{showLibrary ? "Tutup Galeri Stiker" : "Pilih / Ganti Stiker GIF"}</span>
+          </button>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <button
+              type="button"
+              className={styles.widgetVariantCard}
+              style={{ padding: "7px 8px", fontSize: 11, textAlign: "center", justifyContent: "center" }}
+              disabled={disabled}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="gif-upload-file-btn"
+            >
+              📁 Unggah .gif
+            </button>
+
+            {!isSavedInSystem && url ? (
+              <button
+                type="button"
+                className={styles.widgetVariantCard}
+                style={{
+                  padding: "7px 8px",
+                  fontSize: 11,
+                  textAlign: "center",
+                  justifyContent: "center",
+                  borderColor: "#d97706",
+                  color: "#92400e",
+                }}
+                disabled={disabled || savingToSystem}
+                onClick={handleSaveToSystem}
+                title="Simpan animasi ini ke koleksi aset sistem agar dapat digunakan berulang di undangan lain"
+                data-testid="gif-save-system-btn"
+              >
+                {savingToSystem ? "Menyimpan..." : "💾 Simpan ke Sistem"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.widgetVariantCard}
+                style={{ padding: "7px 8px", fontSize: 11, textAlign: "center", justifyContent: "center" }}
+                disabled={disabled}
+                onClick={() => {
+                  setProp("url", "");
+                  setProp("assetId", "");
+                }}
+                title="Gunakan stiker bawaan pernikahan"
+              >
+                🔄 Reset Bawaan
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".gif,image/gif"
+          style={{ display: "none" }}
+          disabled={disabled}
+          onChange={handleFileUpload}
+        />
+      </div>
+
+      {/* Embedded / Expandable Stiker Library Drawer */}
+      {showLibrary && (
+        <div
+          style={{
+            border: "1px solid rgba(0, 0, 0, 0.1)",
+            borderRadius: 10,
+            padding: 10,
+            background: "#ffffff",
+            maxHeight: 380,
+            overflowY: "auto",
+          }}
+          data-testid="gif-embedded-library"
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Koleksi Stiker &amp; Animasi</span>
+            <button
+              type="button"
+              style={{
+                fontSize: 11,
+                border: "none",
+                background: "transparent",
+                color: "#64748b",
+                cursor: "pointer",
+              }}
+              onClick={() => setShowLibrary(false)}
+            >
+              ✕ Tutup
+            </button>
+          </div>
+          <GifLibrary onPick={handlePickFromLibrary} disabled={disabled} />
+        </div>
+      )}
+
+      {/* 2. Direct URL Input */}
+      <div className={styles.panelStack} data-testid="widget-prop-url">
+        <TextField
+          id={`insp-widget-url-${element.id}`}
+          label="Link / URL Animasi GIF"
+          value={url}
+          disabled={disabled}
+          placeholder="https://media.giphy.com/media/.../giphy.gif"
+          onCommit={(val) => {
+            setProp("url", val);
+            setProp("assetId", undefined);
+          }}
+        />
+      </div>
+
+      {/* 3. Judul / Keterangan (Caption) */}
+      <div className={styles.panelStack} data-testid="widget-prop-caption">
+        <TextField
+          id={`insp-widget-caption-${element.id}`}
+          label="Keterangan / Teks (Opsional)"
+          value={caption}
+          disabled={disabled}
+          placeholder="Contoh: Sepasang Cincin Bahagia"
+          onCommit={(val) => setProp("caption", val)}
+        />
+      </div>
+
+      {/* 4. Kesesuaian Tampilan (Object Fit) */}
+      <div className={styles.panelStack} data-testid="widget-prop-fit">
+        <p className={styles.fieldLabel}>Kesesuaian Tampilan (Fit)</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              fit === "contain" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("fit", "contain")}
+            data-testid="gif-fit-contain"
+          >
+            Pas di Dalam (Contain)
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              fit === "cover" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("fit", "cover")}
+            data-testid="gif-fit-cover"
+          >
+            Penuhi Bidang (Cover)
+          </button>
+        </div>
+      </div>
+
+      {/* 5. Perataan Posisi (Alignment) */}
+      <div className={styles.panelStack} data-testid="widget-prop-alignment">
+        <p className={styles.fieldLabel}>Posisi Perataan</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              alignment === "left" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 4px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("alignment", "left")}
+            data-testid="gif-align-left"
+          >
+            Kiri
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              alignment === "center" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 4px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("alignment", "center")}
+            data-testid="gif-align-center"
+          >
+            Tengah
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              alignment === "right" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ padding: "8px 4px", textAlign: "center", fontSize: 11 }}
+            disabled={disabled}
+            onClick={() => setProp("alignment", "right")}
+            data-testid="gif-align-right"
+          >
+            Kanan
+          </button>
+        </div>
+      </div>
+
+      {/* 6. Putar Terus Menerus (Loop) */}
+      <div className={styles.panelStack} data-testid="widget-prop-loop">
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={loop}
+            disabled={disabled}
+            onChange={(e) => setProp("loop", e.target.checked)}
+            data-testid="gif-loop-checkbox"
+          />
+          <span>Putar stiker terus menerus (Loop Animation)</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function FontPropControl({
   id,
   label,
@@ -996,6 +1447,74 @@ function WidgetVariantThumbnail({
               <rect x="10" y="9" width="80" height="47" rx="2" fill="none" stroke="rgba(212,175,55,0.4)" strokeWidth="1" />
               <circle cx="50" cy="32.5" r="9" fill="#d4af37" />
               <polygon points="48,29 54,32.5 48,36" fill="#ffffff" />
+            </>
+          )}
+        </svg>
+      </span>
+    );
+  }
+
+  if (widgetType === "gif") {
+    return (
+      <span
+        className={styles.widgetVariantPreview}
+        data-preview-widget={widgetType}
+        data-preview-variant={variant.id}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px",
+          background:
+            variant.id === "vintage-frame"
+              ? "#faf6ee"
+              : variant.id === "gold-border"
+                ? "#fffbf2"
+                : "#ffffff",
+          borderRadius: 6,
+          border: "1px solid rgba(0,0,0,0.08)",
+        }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 100 65" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+          {variant.id === "clean" && (
+            <>
+              <rect x="15" y="8" width="70" height="49" rx="4" fill="none" stroke="#cbd5e1" strokeDasharray="3 3" />
+              <text x="50" y="38" fontSize="18" textAnchor="middle" dominantBaseline="central">✨</text>
+            </>
+          )}
+          {variant.id === "floating-badge" && (
+            <>
+              <rect x="12" y="6" width="76" height="53" rx="8" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" />
+              <circle cx="50" cy="32.5" r="14" fill="#fdf2f8" />
+              <text x="50" y="37" fontSize="13" textAnchor="middle" dominantBaseline="central">🎀</text>
+            </>
+          )}
+          {variant.id === "gold-border" && (
+            <>
+              <rect x="10" y="5" width="80" height="55" rx="6" fill="#fffdfa" stroke="#d4af37" strokeWidth="2" />
+              <rect x="14" y="9" width="72" height="47" rx="4" fill="none" stroke="rgba(212,175,55,0.4)" strokeDasharray="3 2" />
+              <text x="50" y="37" fontSize="13" textAnchor="middle" dominantBaseline="central">💍</text>
+            </>
+          )}
+          {variant.id === "neon-glow" && (
+            <>
+              <rect x="12" y="6" width="76" height="53" rx="8" fill="#ffffff" stroke="#ec4899" strokeWidth="2" />
+              <circle cx="50" cy="32.5" r="14" fill="#fce7f3" stroke="#f472b6" />
+              <text x="50" y="38" fontSize="13" textAnchor="middle" dominantBaseline="central">💖</text>
+            </>
+          )}
+          {variant.id === "vintage-frame" && (
+            <>
+              <rect x="10" y="5" width="80" height="55" rx="4" fill="#faf6ee" stroke="#8b5a2b" strokeWidth="3" />
+              <rect x="15" y="10" width="70" height="45" fill="none" stroke="#8b5a2b" strokeWidth="1" />
+              <text x="50" y="37" fontSize="13" textAnchor="middle" dominantBaseline="central">🕊️</text>
+            </>
+          )}
+          {variant.id === "soft-pill" && (
+            <>
+              <rect x="10" y="14" width="80" height="37" rx="18.5" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5" />
+              <text x="50" y="37" fontSize="13" textAnchor="middle" dominantBaseline="central">🎉</text>
             </>
           )}
         </svg>

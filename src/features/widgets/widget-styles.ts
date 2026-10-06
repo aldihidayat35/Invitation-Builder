@@ -598,6 +598,44 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 12,
     },
   ],
+  gif: [
+    {
+      id: "clean",
+      label: "Stiker Bebas (Clean)",
+      description: "Animasi stiker transparan murni tanpa bingkai atau latar belakang.",
+      defaultRadius: 0,
+    },
+    {
+      id: "floating-badge",
+      label: "Lencana Melayang (Floating)",
+      description: "Kartu melayang dengan bayangan lembut berkelas dan sudut membulat.",
+      defaultRadius: 16,
+    },
+    {
+      id: "gold-border",
+      label: "Bingkai Emas Pernikahan",
+      description: "Bingkai aksen emas mewah berkilau khas kartu undangan premium.",
+      defaultRadius: 12,
+    },
+    {
+      id: "neon-glow",
+      label: "Kilau Cahaya Magis (Glow)",
+      description: "Pendaran kilau cahaya magis romantis di sekitar stiker animasi.",
+      defaultRadius: 16,
+    },
+    {
+      id: "vintage-frame",
+      label: "Pigura Klasik (Vintage)",
+      description: "Pigura klasik nostalgia dengan latar belakang lembut dan garis ganda.",
+      defaultRadius: 8,
+    },
+    {
+      id: "soft-pill",
+      label: "Kapsul Halus (Pill)",
+      description: "Bentuk kapsul modern dengan sudut bulat penuh yang ramah dan dinamis.",
+      defaultRadius: 999,
+    },
+  ],
 };
 
 const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyleVariant[]>> = {
@@ -632,6 +670,14 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
     "arch-luxury",
     "minimal-glass",
     "gold-ornament",
+  ]),
+  gif: legacy([
+    "clean",
+    "floating-badge",
+    "gold-border",
+    "neon-glow",
+    "vintage-frame",
+    "soft-pill",
   ]),
 };
 
