@@ -9,7 +9,6 @@ import {
   findResellerProfileBySlug,
   findResellerProfileByUserId,
   listCreditTransactions,
-  listResellers,
 } from "@/lib/db/repositories/resellers";
 import { findUserByEmail, listUsersByReseller } from "@/lib/db/repositories/users";
 import { seedDev } from "@/lib/db/seed";

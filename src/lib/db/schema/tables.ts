@@ -370,12 +370,61 @@ export const creditTransactions = pgTable(
   ],
 );
 
+export const bankAccounts = pgTable("bank_accounts", {
+  id: id(),
+  bankName: text("bank_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  accountHolder: text("account_holder").notNull(),
+  qrCodeUrl: text("qr_code_url"),
+  instructions: text("instructions"),
+  isActive: pgBoolean("is_active").notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const topupRequests = pgTable(
+  "topup_requests",
+  {
+    id: id(),
+    resellerId: uuid("reseller_id")
+      .notNull()
+      .references(() => resellerProfiles.id),
+    creditAmount: integer("credit_amount").notNull(),
+    amountPaid: integer("amount_paid").notNull(),
+    bankAccountId: uuid("bank_account_id").references(() => bankAccounts.id),
+    senderBank: text("sender_bank").notNull(),
+    senderAccountName: text("sender_account_name").notNull(),
+    proofFileUrl: text("proof_file_url").notNull(),
+    notes: text("notes"),
+    status: text("status").notNull().default("pending"),
+    rejectionReason: text("rejection_reason"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("topup_requests_reseller_idx").on(t.resellerId, t.createdAt),
+    index("topup_requests_status_idx").on(t.status, t.createdAt),
+    check("topup_requests_credit_amount_positive", sql`${t.creditAmount} > 0`),
+    check("topup_requests_amount_paid_positive", sql`${t.amountPaid} > 0`),
+    check(
+      "topup_requests_status_valid",
+      sql`${t.status} in ('pending', 'approved', 'rejected', 'cancelled')`,
+    ),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
 export type NewResellerProfile = typeof resellerProfiles.$inferInsert;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type NewBankAccount = typeof bankAccounts.$inferInsert;
+export type TopupRequest = typeof topupRequests.$inferSelect;
+export type NewTopupRequest = typeof topupRequests.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
@@ -388,4 +437,5 @@ export type GuestRow = typeof guests.$inferSelect;
 export type RsvpRow = typeof rsvps.$inferSelect;
 export type AssetRow = typeof assets.$inferSelect;
 export type AuditLogRow = typeof auditLogs.$inferSelect;
+
 

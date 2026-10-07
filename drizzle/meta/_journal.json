@@ -29,6 +29,13 @@
       "when": 1791361270338,
       "tag": "0003_mean_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791370000000,
+      "tag": "0004_manual_transfer_and_bank_accounts",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,7 @@ import { getDb } from "@/lib/db/client";
 import { findResellerProfileByUserId } from "@/lib/db/repositories/resellers";
 import { listMemberships, type Membership } from "@/lib/db/repositories/workspaces";
 import type { ResellerProfile } from "@/lib/db/schema";
+import type { SystemRole } from "@/lib/schema/domain";
 import { login, logout, validateSession, type SessionUser } from "./sessions";
 
 export const SESSION_COOKIE = "session";
@@ -50,6 +51,11 @@ export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   return user;
+}
+
+/** Returns the system role of a session user. */
+export function getActorRole(user: SessionUser): SystemRole {
+  return user.systemRole;
 }
 
 /** Owner-only (Super Admin) guard. Redirects non-owners to main dashboard. */

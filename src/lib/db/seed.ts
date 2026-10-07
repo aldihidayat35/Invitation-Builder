@@ -4,7 +4,10 @@
  */
 import { assertPasswordPolicy, hashPassword } from "../auth/password";
 import { createEmptyDocument } from "../schema/document";
-import { createResellerWithProfile, findResellerProfileBySlug } from "./repositories/resellers";
+import {
+  createResellerClient,
+  createResellerWithProfile,
+} from "./repositories/resellers";
 import { findTemplateByName, insertTemplate } from "./repositories/templates";
 import {
   findUserByEmail,
@@ -20,12 +23,15 @@ export const DEV_WORKSPACE_SLUG = "dev-workspace";
 export const DEV_TEMPLATE_NAME = "Empty Template";
 export const DEMO_RESELLER_EMAIL = "reseller@example.test";
 export const DEMO_RESELLER_SLUG = "mitra-berkah";
+export const DEMO_CLIENT_EMAIL = "client@example.test";
+export const DEMO_CLIENT_SLUG = "klien-berkah";
 
 export interface SeedResult {
   userId: string;
   workspaceId: string;
   templateId: string;
   resellerUserId?: string;
+  clientUserId?: string;
 }
 
 export interface SeedOptions {
@@ -89,6 +95,32 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     } else {
       resellerUserId = existingReseller.id;
     }
+
+    let clientUserId: string | undefined;
+    if (resellerUserId) {
+      const existingClient = await findUserByEmail(db, DEMO_CLIENT_EMAIL);
+      if (!existingClient) {
+        const clientRes = await createResellerClient(db, {
+          resellerUserId,
+          clientName: "Demo Client",
+          clientEmail: DEMO_CLIENT_EMAIL,
+          passwordHash: options.password ? await hashPassword(options.password) : null,
+          workspaceName: "Demo Client Workspace",
+          workspaceSlug: DEMO_CLIENT_SLUG,
+        });
+        clientUserId = clientRes.clientUser.id;
+      } else {
+        clientUserId = existingClient.id;
+      }
+    }
+
+    return {
+      userId: user.id,
+      workspaceId: workspace.id,
+      templateId: template.id,
+      resellerUserId,
+      clientUserId,
+    };
   }
 
   return { userId: user.id, workspaceId: workspace.id, templateId: template.id, resellerUserId };

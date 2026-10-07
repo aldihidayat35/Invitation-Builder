@@ -45,6 +45,9 @@ export type AssetStatus = (typeof ASSET_STATUSES)[number];
 export const RSVP_RESPONSES = ["attending", "not_attending"] as const;
 export type RsvpResponse = (typeof RSVP_RESPONSES)[number];
 
+export const TOPUP_REQUEST_STATUSES = ["pending", "approved", "rejected", "cancelled"] as const;
+export type TopupRequestStatus = (typeof TOPUP_REQUEST_STATUSES)[number];
+
 /** Audit actions (FR-AUD-001). Stored as text; validated in code. */
 export const AUDIT_ACTIONS = [
   "auth.login",
@@ -67,5 +70,10 @@ export const AUDIT_ACTIONS = [
   "reseller.update",
   "reseller.credit_adjust",
   "reseller.client_create",
+  "bank_account.create",
+  "bank_account.update",
+  "bank_account.delete",
+  "topup_request.approve",
+  "topup_request.reject",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

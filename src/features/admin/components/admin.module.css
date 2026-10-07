@@ -1,0 +1,779 @@
+/* Modern, rich styling for Super Admin Reseller & Credit Management */
+
+.page {
+  padding: 32px 40px;
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 700px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dash-accent);
+  margin: 0;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 14px;
+  color: var(--dash-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- Stat Cards Grid ---------- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--dash-shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--dash-shadow-md);
+  border-color: var(--dash-border-strong);
+}
+
+.statTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 750;
+  color: var(--dash-text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.statSub {
+  font-size: 12px;
+  color: var(--dash-subtle);
+}
+
+/* ---------- Table Container Card ---------- */
+.card {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 0;
+  color: var(--dash-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.countBadge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--dash-surface-sunken);
+  color: var(--dash-muted);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchInput {
+  padding: 7px 12px;
+  font-size: 13px;
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  min-width: 240px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 12px 20px;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dash-subtle);
+  background: var(--dash-surface-strong);
+  border-bottom: 1px solid var(--dash-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dash-border);
+  color: var(--dash-text);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: var(--dash-surface-strong);
+}
+
+/* ---------- Cell Components ---------- */
+.agencyInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.agencyAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--dash-accent), #4f46e5);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex: none;
+  text-transform: uppercase;
+}
+
+.agencyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agencyName {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--dash-text);
+}
+
+.agencySlug {
+  font-size: 12px;
+  color: var(--dash-muted);
+  font-family: monospace;
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ownerName {
+  font-weight: 550;
+}
+
+.ownerEmail {
+  font-size: 12px;
+  color: var(--dash-muted);
+}
+
+.whatsappLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #16a34a;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.whatsappLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badgeActive {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.badgeInactive {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  border: 1px solid rgba(180, 35, 24, 0.2);
+}
+
+.quotaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+
+.quotaPillZero {
+  background: var(--dash-warning-soft);
+  color: var(--dash-warning);
+}
+
+/* ---------- Buttons ---------- */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-on-accent);
+  background: var(--dash-accent);
+  border: 1px solid var(--dash-accent);
+  border-radius: var(--dash-radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--dash-accent-hover);
+  border-color: var(--dash-accent-hover);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--dash-text);
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--dash-surface-strong);
+  border-color: var(--dash-text);
+}
+
+.btnSm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Modal Overlay & Dialog ---------- */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.modalDialog {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.18s ease-out;
+}
+
+.modalHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--dash-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--dash-surface-strong);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--dash-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.closeButton:hover {
+  background: var(--dash-surface-sunken);
+  color: var(--dash-text);
+}
+
+.modalBody {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(85dvh - 120px);
+  overflow-y: auto;
+}
+
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--dash-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: var(--dash-surface-strong);
+}
+
+/* ---------- Forms in Modals ---------- */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.fieldHint {
+  font-size: 12px;
+  color: var(--dash-muted);
+}
+
+.inputControl {
+  padding: 9px 12px;
+  font-size: 14px;
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+
+.inputControl:focus {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
+}
+
+.chipsContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.presetChip {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--dash-border-strong);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.presetChip:hover {
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+
+.presetChipActive {
+  background: var(--dash-accent);
+  color: var(--dash-on-accent);
+  border-color: var(--dash-accent);
+}
+
+.creditSummaryBox {
+  background: var(--dash-surface-strong);
+  border: 1px dashed var(--dash-border-strong);
+  border-radius: var(--dash-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.formError {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  padding: 10px 14px;
+  border-radius: var(--dash-radius-sm);
+  font-size: 13px;
+  font-weight: 550;
+  border: 1px solid rgba(180, 35, 24, 0.2);
+}
+
+.formSuccess {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+  padding: 10px 14px;
+  border-radius: var(--dash-radius-sm);
+  font-size: 13px;
+  font-weight: 550;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* ---------- Transactions Table Styles ---------- */
+.txTypeBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.txGrant {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+}
+
+.txTopup {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.txDeduct {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+}
+
+.txRefund {
+  background: #fdf4e3;
+  color: #b45309;
+}
+
+.txManual {
+  background: var(--dash-surface-sunken);
+  color: var(--dash-muted);
+}
+
+.amountPositive {
+  color: var(--dash-success);
+  font-weight: 700;
+}
+
+.amountNegative {
+  color: var(--dash-danger);
+  font-weight: 700;
+}
+
+.emptyState {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--dash-muted);
+}
+
+.emptyIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--dash-surface-sunken);
+  color: var(--dash-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Top-up Request & Proof Verification Styles ---------- */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  line-height: 1;
+}
+
+.statusPending {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid rgba(194, 65, 12, 0.2);
+}
+
+.statusApproved {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.statusRejected {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  border: 1px solid rgba(180, 35, 24, 0.2);
+}
+
+.proofThumbnailButton {
+  background: transparent;
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius-sm);
+  padding: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.proofThumbnailButton:hover {
+  border-color: var(--dash-accent);
+  transform: scale(1.02);
+}
+
+.proofThumbnailImg {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.proofModalImage {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border);
+}
+
+.btnApprove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-success);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.btnApprove:hover {
+  filter: brightness(1.1);
+}
+
+.btnReject {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-surface-sunken);
+  color: var(--dash-danger);
+  border: 1px solid rgba(180, 35, 24, 0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnReject:hover {
+  background: var(--dash-danger-soft);
+}
+
+.tabList {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--dash-border);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.tabButton {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--dash-muted);
+  border-radius: var(--dash-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tabButton:hover {
+  color: var(--dash-text);
+  background: var(--dash-surface-sunken);
+}
+
+.tabButtonActive {
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+

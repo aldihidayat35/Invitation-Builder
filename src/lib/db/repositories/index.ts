@@ -6,4 +6,6 @@ export * from "./audit";
 export * from "./assets";
 export * from "./invitations";
 export * from "./resellers";
+export * from "./bank-accounts";
+export * from "./topup-requests";
 

@@ -58,3 +58,29 @@ export const IconPlus = () => (
     <path d="M12 5v14M5 12h14" />
   </Svg>
 );
+export const IconUsers = () => (
+  <Svg>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </Svg>
+);
+export const IconCoins = () => (
+  <Svg>
+    <circle cx="8" cy="8" r="6" />
+    <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+    <path d="M7 6h2v4H7M14 12h2v4h-2" />
+  </Svg>
+);
+export const IconReceipt = () => (
+  <Svg>
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+    <path d="M8 7h8M8 11h8M8 15h5" />
+  </Svg>
+);
+export const IconBank = () => (
+  <Svg>
+    <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3 2 10h20L12 3Z" />
+  </Svg>
+);
+

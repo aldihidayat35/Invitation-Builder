@@ -1,6 +1,16 @@
 import { logoutAction } from "@/app/(dashboard)/login/actions";
 import { getWorkspaceContext } from "@/lib/auth/server";
-import { IconFlask, IconHome, IconInvitation, IconLogout, IconTemplate } from "./nav-icons";
+import {
+  IconBank,
+  IconCoins,
+  IconFlask,
+  IconHome,
+  IconInvitation,
+  IconLogout,
+  IconReceipt,
+  IconTemplate,
+  IconUsers,
+} from "./nav-icons";
 import { NavLink } from "./nav-link";
 import styles from "./shell.module.css";
 
@@ -67,6 +77,50 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               </NavLink>
             </li>
           </ul>
+
+          {user.systemRole === "owner" ? (
+            <>
+              <p className={styles.navGroup}>Super Admin</p>
+              <ul className={styles.navList}>
+                <li>
+                  <NavLink
+                    href="/dashboard/admin/resellers"
+                    icon={<IconUsers />}
+                    hint="Kelola mitra reseller & lisensi"
+                  >
+                    Mitra Reseller
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/admin/topup-requests"
+                    icon={<IconReceipt />}
+                    hint="Verifikasi bukti transfer manual"
+                  >
+                    Verifikasi Top-up
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/admin/bank-accounts"
+                    icon={<IconBank />}
+                    hint="Rekening tujuan transfer manual"
+                  >
+                    Rekening Bank
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/admin/transactions"
+                    icon={<IconCoins />}
+                    hint="Riwayat mutasi kredit & audit ledger"
+                  >
+                    Mutasi Kuota
+                  </NavLink>
+                </li>
+              </ul>
+            </>
+          ) : null}
           {process.env.NODE_ENV !== "production" ? (
             <>
               <p className={styles.navGroup}>Pengembang</p>

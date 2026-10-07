@@ -3,6 +3,7 @@ import type { CreditTransactionType } from "../../schema/domain";
 import {
   creditTransactions,
   resellerProfiles,
+  topupRequests,
   users,
   workspaceMembers,
   workspaces,
@@ -272,4 +273,83 @@ export async function listCreditTransactions(
     .where(eq(creditTransactions.resellerId, resellerProfileId))
     .orderBy(desc(creditTransactions.createdAt))
     .limit(limit);
+}
+
+/** Lists all credit ledger transactions across all resellers with profiles for Super Admin audit. */
+export async function listAllCreditTransactions(
+  db: Database,
+  limit: number = 100,
+): Promise<
+  Array<{
+    transaction: CreditTransaction;
+    reseller: ResellerProfile;
+    user: User;
+  }>
+> {
+  const rows = await db
+    .select({
+      transaction: creditTransactions,
+      reseller: resellerProfiles,
+      user: users,
+    })
+    .from(creditTransactions)
+    .innerJoin(resellerProfiles, eq(creditTransactions.resellerId, resellerProfiles.id))
+    .innerJoin(users, eq(resellerProfiles.userId, users.id))
+    .orderBy(desc(creditTransactions.createdAt))
+    .limit(limit);
+
+  return rows;
+}
+
+/** Toggles active status of a reseller agency profile. */
+export async function updateResellerStatus(
+  db: Database,
+  resellerProfileId: string,
+  isActive: boolean,
+): Promise<ResellerProfile> {
+  const [updated] = await db
+    .update(resellerProfiles)
+    .set({ isActive })
+    .where(eq(resellerProfiles.id, resellerProfileId))
+    .returning();
+  if (!updated) throw new Error(`Reseller profile not found: ${resellerProfileId}`);
+  return updated;
+}
+
+/** Aggregates platform-wide reseller and quota statistics for the Owner dashboard. */
+export async function getAdminResellerStats(db: Database): Promise<{
+  totalResellers: number;
+  activeResellers: number;
+  totalQuota: number;
+  totalTransactions: number;
+  pendingTopups: number;
+}> {
+  const [resellersRow] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      active: sql<number>`count(case when ${resellerProfiles.isActive} then 1 end)::int`,
+      totalQuota: sql<number>`coalesce(sum(${resellerProfiles.creditQuota}), 0)::int`,
+    })
+    .from(resellerProfiles);
+
+  const [txRow] = await db
+    .select({
+      totalTx: sql<number>`count(*)::int`,
+    })
+    .from(creditTransactions);
+
+  const [topupRow] = await db
+    .select({
+      pending: sql<number>`count(*)::int`,
+    })
+    .from(topupRequests)
+    .where(eq(topupRequests.status, "pending"));
+
+  return {
+    totalResellers: resellersRow?.total ?? 0,
+    activeResellers: resellersRow?.active ?? 0,
+    totalQuota: resellersRow?.totalQuota ?? 0,
+    totalTransactions: txRow?.totalTx ?? 0,
+    pendingTopups: topupRow?.pending ?? 0,
+  };
 }
