@@ -270,7 +270,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       readOnly: init.readOnly ?? false,
       panMode: false,
       artboardMode: init.artboardMode ?? "cards",
-      theme: init.theme ?? getInitialEditorTheme(),
+      theme: init.theme ?? "light",
       editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,

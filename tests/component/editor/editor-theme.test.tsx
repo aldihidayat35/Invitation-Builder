@@ -51,7 +51,16 @@ describe("Editor Dual Theme (Light vs Netflix Dark Neon)", () => {
 
     const rawDoc = fullDocument();
     const doc = canonicalDocumentSchema.parse(rawDoc);
+    // SSR-safe default: createEditorStore defaults to "light" to match server render
     const store = createEditorStore({ document: doc, revision: 1 });
+    expect(store.getState().theme).toBe("light");
+
+    // Explicit theme initialization
+    const customStore = createEditorStore({ document: doc, revision: 1, theme: "dark" });
+    expect(customStore.getState().theme).toBe("dark");
+
+    // Synchronizing from localStorage after mount
+    store.getState().syncThemeFromStorage();
     expect(store.getState().theme).toBe("dark");
 
     store.getState().setTheme("light");
