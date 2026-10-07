@@ -375,3 +375,87 @@
     transform: translateY(0);
   }
 }
+
+/* Netflix Dark Neon Support */
+:global(.shell[data-theme="dark"]) .card {
+  background: #16171e;
+  border-color: #242632;
+}
+
+:global(.shell[data-theme="dark"]) .card:hover {
+  border-color: #e50914;
+  box-shadow: 0 4px 16px rgba(229, 9, 20, 0.35);
+}
+
+:global(.shell[data-theme="dark"]) .thumbWrap {
+  background: #090a0d;
+  border-color: #1f212a;
+}
+
+:global(.shell[data-theme="dark"]) .cardFooter {
+  background: #16171e;
+}
+
+:global(.shell[data-theme="dark"]) .cardTitle {
+  color: #f3f4f8;
+}
+
+:global(.shell[data-theme="dark"]) .categoryBtn {
+  background: #090a0d;
+  border-color: #242632;
+  color: #9aa1b2;
+}
+
+:global(.shell[data-theme="dark"]) .categoryBtn:hover {
+  color: #ffffff;
+  border-color: #e50914;
+}
+
+:global(.shell[data-theme="dark"]) .categoryBtnActive {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%) !important;
+  color: #ffffff !important;
+  border-color: #e50914 !important;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
+}
+
+:global(.shell[data-theme="dark"]) .urlBtn {
+  background: #16171e;
+  border-color: #242632;
+  color: #f3f4f8;
+}
+
+:global(.shell[data-theme="dark"]) .urlBtn:hover:not(:disabled) {
+  border-color: #e50914;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.35);
+}
+
+:global(.shell[data-theme="dark"]) .urlCard {
+  background: #090a0d;
+  border-color: #242632;
+}
+
+:global(.shell[data-theme="dark"]) .urlInput,
+:global(.shell[data-theme="dark"]) .searchInput {
+  background: #131418;
+  border-color: #242632;
+  color: #ffffff;
+}
+
+:global(.shell[data-theme="dark"]) .urlInput:focus,
+:global(.shell[data-theme="dark"]) .searchInput:focus {
+  border-color: #e50914;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.45);
+}
+
+:global(.shell[data-theme="dark"]) .submitUrlBtn {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.45);
+}
+
+:global(.shell[data-theme="dark"]) .emptyState {
+  background: #090a0d;
+  border-color: #242632;
+  color: #9aa1b2;
+}
+

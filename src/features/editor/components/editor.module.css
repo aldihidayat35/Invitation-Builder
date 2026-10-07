@@ -5183,4 +5183,596 @@ textarea.input {
   color: #fca5a5;
 }
 
+/* ==========================================================================
+   THEME TOGGLE CONTROLS (TopBar)
+   ========================================================================== */
+
+.themeToggleGroup {
+  display: inline-flex;
+  align-items: center;
+  background: var(--dash-surface-sunken, #f1f5f9);
+  border: 1px solid var(--dash-border, #e2e8f0);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.themeToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dash-muted, #64748b);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.themeToggleBtn:hover {
+  color: var(--dash-text, #0f172a);
+}
+
+.themeToggleBtn[data-active="true"] {
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #0f172a);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.neonDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e50914;
+  box-shadow: 0 0 8px #e50914, 0 0 14px rgba(229, 9, 20, 0.6);
+  animation: neonPulse 2s infinite ease-in-out;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px #e50914, 0 0 12px rgba(229, 9, 20, 0.5);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.15);
+    box-shadow: 0 0 10px #e50914, 0 0 18px rgba(229, 9, 20, 0.8);
+  }
+}
+
+/* ==========================================================================
+   ASSET LIBRARY & MEDIA GALLERY STYLES
+   ========================================================================== */
+
+.categoryTabs {
+  display: flex;
+  gap: 4px;
+  background: var(--dash-surface-sunken, #f1f5f9);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border, #e2e8f0);
+}
+
+.categoryTabBtn {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dash-muted, #64748b);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.categoryTabBtn:hover {
+  color: var(--dash-text, #0f172a);
+}
+
+.categoryTabBtn[data-active="true"] {
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #0f172a);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.videoThumbFrame {
+  position: relative;
+  width: 100%;
+  height: 76px;
+  background: var(--dash-surface-sunken, #f8fafc);
+  border: 1px solid var(--dash-border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.videoBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);
+}
+
+.playOverlayBtn {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  fontSize: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+.gifThumbFrame {
+  position: relative;
+  width: 100%;
+  height: 76px;
+  background: #fdf4ff;
+  border: 1px solid #f5d0fe;
+  overflow: hidden;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gifBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #fdf4ff;
+  color: #9333ea;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  border: 1px solid #f0abfc;
+  box-shadow: 0 1px 2px rgba(147, 51, 234, 0.12);
+}
+
+/* ==========================================================================
+   NETFLIX DARK NEON THEME
+   Obsidian surfaces, cinematic backdrop, crisp typography, and 
+   Netflix crimson neon glowing highlights.
+   ========================================================================== */
+
+.shell[data-theme="dark"],
+:global(:root[data-editor-theme="dark"]),
+:global(body[data-editor-theme="dark"]) {
+  color-scheme: dark;
+
+  /* Netflix obsidian dark surfaces */
+  --dash-bg: #0b0c0f;
+  --dash-surface: #131418;
+  --dash-surface-strong: #191b22;
+  --dash-surface-sunken: #08090c;
+  --dash-border: #242632;
+  --dash-border-strong: #383c4e;
+  --dash-text: #f3f4f8;
+  --dash-muted: #9aa1b2;
+  --dash-subtle: #6b7280;
+
+  /* Netflix Signature Crimson Neon Accents */
+  --dash-accent: #e50914;
+  --dash-accent-hover: #ff1f2a;
+  --dash-accent-soft: rgba(229, 9, 20, 0.16);
+  --dash-on-accent: #ffffff;
+
+  --dash-success: #10b981;
+  --dash-success-soft: rgba(16, 185, 129, 0.16);
+  --dash-warning: #f59e0b;
+  --dash-warning-soft: rgba(245, 158, 11, 0.16);
+  --dash-danger: #ef4444;
+  --dash-danger-soft: rgba(239, 68, 68, 0.16);
+
+  --dash-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --dash-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+/* Shell & Background */
+.shell[data-theme="dark"] {
+  background: #0b0c0f;
+}
+
+/* TopBar in Netflix Dark Neon */
+.shell[data-theme="dark"] .topBar {
+  background: #121317;
+  border-bottom: 1px solid #232530;
+  box-shadow: 0 1px 0 rgba(229, 9, 20, 0.22), 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.shell[data-theme="dark"] .back {
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .back:hover {
+  color: #ffffff;
+  border-color: rgba(229, 9, 20, 0.4);
+}
+
+.shell[data-theme="dark"] .templateName {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .toolButton {
+  background: #181920;
+  border-color: #262833;
+  color: #f3f4f8;
+}
+
+.shell[data-theme="dark"] .toolButton:hover:not(:disabled) {
+  border-color: #e50914;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.4);
+}
+
+.shell[data-theme="dark"] .zoomLabel {
+  color: #f3f4f8;
+}
+
+/* Artboard Mode Switch in Header */
+.shell[data-theme="dark"] .navbarModeSwitch {
+  background: #14151a;
+  border-color: #262833;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.shell[data-theme="dark"] .navbarMeta {
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .navbarModePillGroup {
+  background: #090a0d;
+  border-color: #1f212a;
+}
+
+.shell[data-theme="dark"] .navbarModeBtn {
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .navbarModeBtn:hover {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .navbarModeBtn[data-active="true"] {
+  background: linear-gradient(135deg, #e50914 0%, #bd0710 100%);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.65);
+}
+
+/* Theme Toggle in Dark Mode */
+.shell[data-theme="dark"] .themeToggleGroup {
+  background: #090a0d;
+  border-color: #242632;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.shell[data-theme="dark"] .themeToggleBtn {
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .themeToggleBtn:hover {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .themeToggleBtn[data-active="true"] {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.65), 0 0 20px rgba(229, 9, 20, 0.25);
+}
+
+/* Save Status & Preview Button */
+.shell[data-theme="dark"] .saveStatus {
+  background: #14151a;
+  border-color: #262833;
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .saveStatus[data-status="saved"] {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+.shell[data-theme="dark"] .saveStatus[data-status="saving"] {
+  color: #e50914;
+  border-color: rgba(229, 9, 20, 0.4);
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.35);
+}
+
+.shell[data-theme="dark"] .previewButton {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  color: #ffffff;
+  border: 1px solid #ff2b36;
+  box-shadow: 0 0 12px rgba(229, 9, 20, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.shell[data-theme="dark"] .previewButton:hover {
+  background: linear-gradient(135deg, #ff1f2a 0%, #cf0913 100%);
+  box-shadow: 0 0 18px rgba(229, 9, 20, 0.8), 0 4px 12px rgba(0, 0, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Artboard Canvas Area in Netflix Dark Neon */
+.shell[data-theme="dark"] .artboardScroll {
+  background-color: #08090c;
+  background-image:
+    radial-gradient(rgba(229, 9, 20, 0.08) 1px, transparent 1px),
+    radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px, 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+
+.shell[data-theme="dark"] .cardFrame {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.shell[data-theme="dark"] .cardFrame[data-active="true"] {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 0 2px #e50914, 0 0 18px rgba(229, 9, 20, 0.55);
+}
+
+.shell[data-theme="dark"] .cardHeader {
+  background: #14151a;
+  border-bottom: 1px solid #242632;
+}
+
+.shell[data-theme="dark"] .cardTitle {
+  color: #ffffff;
+}
+
+/* Left Panel & Inspector in Netflix Dark */
+.shell[data-theme="dark"] .side,
+.shell[data-theme="dark"] .inspectorWrap {
+  background: #121317;
+  border-color: #232530;
+}
+
+.shell[data-theme="dark"] .sideHeader,
+.shell[data-theme="dark"] .inspHeader {
+  background: #121317;
+  border-bottom: 1px solid #232530;
+}
+
+.shell[data-theme="dark"] .sideHeaderTitle,
+.shell[data-theme="dark"] .inspHeaderTitle {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .inspHeaderIcon {
+  background: rgba(229, 9, 20, 0.16);
+  color: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.35);
+}
+
+.shell[data-theme="dark"] .pSection {
+  border-bottom: 1px solid #20222b;
+}
+
+.shell[data-theme="dark"] .pSectionHeader {
+  color: #f3f4f8;
+}
+
+.shell[data-theme="dark"] .pSectionHeader:hover {
+  background: #181a22;
+}
+
+.shell[data-theme="dark"] .treeRow {
+  color: #d1d5db;
+}
+
+.shell[data-theme="dark"] .treeRow:hover {
+  background: #181a22;
+}
+
+.shell[data-theme="dark"] .treeRow[data-selected="true"] {
+  background: rgba(229, 9, 20, 0.16);
+  color: #ffffff;
+  border-left: 2px solid #e50914;
+  box-shadow: inset 0 0 12px rgba(229, 9, 20, 0.15);
+}
+
+.shell[data-theme="dark"] .treeRow[data-active-section="true"] {
+  background: rgba(229, 9, 20, 0.1);
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .treeKind {
+  background: #1a1c24;
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .treeRow[data-selected="true"] .treeKind {
+  background: #e50914;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
+}
+
+.shell[data-theme="dark"] .tabButton {
+  color: #9aa1b2;
+  border-bottom-color: transparent;
+}
+
+.shell[data-theme="dark"] .tabButton:hover {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .tabButton[aria-selected="true"] {
+  color: #ffffff;
+  border-bottom-color: #e50914;
+  box-shadow: 0 2px 10px rgba(229, 9, 20, 0.6);
+}
+
+/* Form Controls & Inputs */
+.shell[data-theme="dark"] .input,
+.shell[data-theme="dark"] .select,
+.shell[data-theme="dark"] .textarea {
+  background: #090a0d;
+  border-color: #242632;
+  color: #f3f4f8;
+}
+
+.shell[data-theme="dark"] .input:focus,
+.shell[data-theme="dark"] .select:focus,
+.shell[data-theme="dark"] .textarea:focus {
+  border-color: #e50914;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.45);
+}
+
+.shell[data-theme="dark"] .fieldLabel {
+  color: #d1d5db;
+}
+
+.shell[data-theme="dark"] .fieldHelp {
+  color: #6b7280;
+}
+
+.shell[data-theme="dark"] .primaryActionButton {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  color: #ffffff;
+  border-color: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+}
+
+.shell[data-theme="dark"] .primaryActionButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff1f2a 0%, #cf0913 100%);
+  box-shadow: 0 0 16px rgba(229, 9, 20, 0.65);
+}
+
+.shell[data-theme="dark"] .widgetVariantCard {
+  background: #16171e;
+  border-color: #242632;
+  color: #f3f4f8;
+}
+
+.shell[data-theme="dark"] .widgetVariantCard:hover:not(:disabled) {
+  border-color: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.35);
+}
+
+.shell[data-theme="dark"] .widgetVariantCardActive {
+  background: #1c1518;
+  border-color: #e50914;
+  box-shadow: 0 0 12px rgba(229, 9, 20, 0.5);
+}
+
+/* Resizer with Neon Glow */
+.shell[data-theme="dark"] .resizer:hover::after,
+.shell[data-theme="dark"] .resizer:focus-visible::after,
+:global(body[data-panel-resizing]) .shell[data-theme="dark"] .resizer::after {
+  background: #e50914;
+  box-shadow: 0 0 10px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+}
+
+/* Media Gallery & Thumbnails in Dark Mode */
+.shell[data-theme="dark"] .categoryTabs {
+  background: #090a0d;
+  border-color: #242632;
+}
+
+.shell[data-theme="dark"] .categoryTabBtn {
+  color: #9aa1b2;
+}
+
+.shell[data-theme="dark"] .categoryTabBtn:hover {
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .categoryTabBtn[data-active="true"] {
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
+}
+
+.shell[data-theme="dark"] .assetItem {
+  background: #16171e;
+  border-color: #242632;
+  color: #f3f4f8;
+}
+
+.shell[data-theme="dark"] .assetItem:hover:not(:disabled) {
+  border-color: #e50914;
+  box-shadow: 0 0 12px rgba(229, 9, 20, 0.4);
+}
+
+.shell[data-theme="dark"] .assetThumb {
+  background: #090a0d;
+  border-color: #1d1f28;
+}
+
+.shell[data-theme="dark"] .videoThumbFrame {
+  background: #090a0d;
+  border-color: #242632;
+}
+
+.shell[data-theme="dark"] .videoBadge {
+  background: rgba(229, 9, 20, 0.2);
+  color: #ff3844;
+  border-color: rgba(229, 9, 20, 0.45);
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.35);
+}
+
+.shell[data-theme="dark"] .playOverlayBtn {
+  background: rgba(18, 19, 24, 0.88);
+  color: #e50914;
+  border: 1px solid rgba(229, 9, 20, 0.55);
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
+}
+
+.shell[data-theme="dark"] .gifThumbFrame {
+  background: #16101c;
+  border-color: #2f173d;
+}
+
+.shell[data-theme="dark"] .gifBadge {
+  background: rgba(147, 51, 234, 0.2);
+  color: #c084fc;
+  border-color: rgba(147, 51, 234, 0.4);
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.3);
+}
+
+/* Modals & Popovers in Dark Mode */
+.shell[data-theme="dark"] .modalCard {
+  background: #131418;
+  border-color: #262834;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(229, 9, 20, 0.2);
+}
+
+.shell[data-theme="dark"] .modalHeader {
+  border-bottom: 1px solid #232530;
+}
+
+.shell[data-theme="dark"] .modalFooter {
+  border-top: 1px solid #232530;
+}
+
+
 

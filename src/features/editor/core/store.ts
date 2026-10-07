@@ -59,8 +59,10 @@ import {
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error" | "conflict";
 export type ArtboardMode = "cards" | "seamless" | "grid";
+export type EditorTheme = "light" | "dark";
 
 export const ARTBOARD_MODE_STORAGE_KEY = "dib_artboard_mode";
+export const EDITOR_THEME_STORAGE_KEY = "dib_editor_theme";
 
 export function getStoredArtboardMode(): ArtboardMode | null {
   if (typeof window === "undefined") return null;
@@ -75,6 +77,21 @@ export function getStoredArtboardMode(): ArtboardMode | null {
 
 export function getInitialArtboardMode(): ArtboardMode {
   return getStoredArtboardMode() ?? "cards";
+}
+
+export function getStoredEditorTheme(): EditorTheme | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = window.localStorage.getItem(EDITOR_THEME_STORAGE_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function getInitialEditorTheme(): EditorTheme {
+  return getStoredEditorTheme() ?? "light";
 }
 
 export interface MotionEditTarget {
@@ -94,6 +111,8 @@ export interface EditorState {
   readonly panMode: boolean;
   /** View layout mode for the artboard: separated cards, seamless phone flow, or responsive grid wrap. */
   readonly artboardMode: ArtboardMode;
+  /** Color theme for editor: 'light' (clean) or 'dark' (Netflix Dark with neon accents). */
+  readonly theme: EditorTheme;
   /** Focused motion path editing mode: locks canvas clicks and enables waypoint dragging (Flash/Animate style). */
   readonly editingMotion: MotionEditTarget | null;
 
@@ -171,6 +190,8 @@ export interface EditorActions {
   setPanMode(active: boolean): void;
   setArtboardMode(mode: ArtboardMode): void;
   syncArtboardModeFromStorage(): void;
+  setTheme(theme: EditorTheme): void;
+  syncThemeFromStorage(): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -188,6 +209,7 @@ export interface EditorInit {
   readonly revision: number;
   readonly readOnly?: boolean;
   readonly artboardMode?: ArtboardMode;
+  readonly theme?: EditorTheme;
 }
 
 export const isDirty = (s: Pick<EditorState, "history" | "savedDocument">): boolean =>
@@ -248,6 +270,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       readOnly: init.readOnly ?? false,
       panMode: false,
       artboardMode: init.artboardMode ?? "cards",
+      theme: init.theme ?? getInitialEditorTheme(),
       editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,
@@ -675,6 +698,30 @@ export function createEditorStore(init: EditorInit): EditorStore {
         const saved = getStoredArtboardMode();
         if (saved && saved !== get().artboardMode) {
           set({ artboardMode: saved });
+        }
+      },
+      setTheme(theme) {
+        if (get().theme !== theme) {
+          set({ theme });
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem(EDITOR_THEME_STORAGE_KEY, theme);
+              document.documentElement.setAttribute("data-editor-theme", theme);
+              document.body.setAttribute("data-editor-theme", theme);
+            } catch {
+              // ignore
+            }
+          }
+        }
+      },
+      syncThemeFromStorage() {
+        const saved = getStoredEditorTheme();
+        if (saved && saved !== get().theme) {
+          set({ theme: saved });
+          if (typeof document !== "undefined") {
+            document.documentElement.setAttribute("data-editor-theme", saved);
+            document.body.setAttribute("data-editor-theme", saved);
+          }
         }
       },
 

@@ -135,17 +135,7 @@ export function AssetLibrary({
       </label>
 
       {/* Category filter tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 4,
-          background: "#f1f5f9",
-          padding: 3,
-          borderRadius: 8,
-          border: "1px solid #e2e8f0",
-        }}
-        data-testid={`${idPrefix}-category-tabs`}
-      >
+      <div className={styles.categoryTabs} data-testid={`${idPrefix}-category-tabs`}>
         {(
           [
             { id: "all", label: "Semua" },
@@ -159,20 +149,9 @@ export function AssetLibrary({
             <button
               key={tab.id}
               type="button"
+              className={styles.categoryTabBtn}
+              data-active={isActive}
               data-testid={`${idPrefix}-tab-${tab.id}`}
-              style={{
-                flex: 1,
-                padding: "5px 4px",
-                fontSize: 11,
-                fontWeight: isActive ? 600 : 500,
-                borderRadius: 6,
-                background: isActive ? "#ffffff" : "transparent",
-                color: isActive ? "#0f172a" : "#64748b",
-                border: "none",
-                cursor: "pointer",
-                boxShadow: isActive ? "0 1px 3px rgba(0, 0, 0, 0.08)" : "none",
-                transition: "all 0.15s ease",
-              }}
               onClick={() => setActiveCategory(tab.id)}
             >
               {tab.label}
@@ -223,20 +202,7 @@ export function AssetLibrary({
                   onClick={() => onPick(asset)}
                 >
                   {isVideo ? (
-                    <div
-                      style={{
-                        position: "relative",
-                        width: "100%",
-                        height: 76,
-                        background: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        borderRadius: 6,
-                      }}
-                    >
+                    <div className={styles.videoThumbFrame}>
                       <video
                         src={assetUrl(asset.id)}
                         preload="metadata"
@@ -248,61 +214,15 @@ export function AssetLibrary({
                           pointerEvents: "none",
                         }}
                       />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 4,
-                          left: 4,
-                          background: "#eff6ff",
-                          color: "#2563eb",
-                          padding: "2px 5px",
-                          borderRadius: 4,
-                          fontSize: 9,
-                          fontWeight: 700,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 3,
-                          border: "1px solid #bfdbfe",
-                          boxShadow: "0 1px 2px rgba(37, 99, 235, 0.12)",
-                        }}
-                      >
+                      <div className={styles.videoBadge}>
                         <span style={{ fontSize: 8 }}>▶</span> VIDEO
                       </div>
-                      <div
-                        style={{
-                          position: "absolute",
-                          width: 26,
-                          height: 26,
-                          borderRadius: "50%",
-                          background: "rgba(255, 255, 255, 0.88)",
-                          backdropFilter: "blur(4px)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#2563eb",
-                          fontSize: 10,
-                          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
-                          pointerEvents: "none",
-                        }}
-                      >
+                      <div className={styles.playOverlayBtn}>
                         ▶
                       </div>
                     </div>
                   ) : isGif ? (
-                    <div
-                      style={{
-                        position: "relative",
-                        width: "100%",
-                        height: 76,
-                        background: "#fdf4ff",
-                        border: "1px solid #f5d0fe",
-                        overflow: "hidden",
-                        borderRadius: 6,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <div className={styles.gifThumbFrame}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         className={styles.assetThumb}
@@ -317,21 +237,7 @@ export function AssetLibrary({
                           padding: 2,
                         }}
                       />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 4,
-                          left: 4,
-                          background: "#fdf4ff",
-                          color: "#9333ea",
-                          padding: "2px 5px",
-                          borderRadius: 4,
-                          fontSize: 9,
-                          fontWeight: 700,
-                          border: "1px solid #f0abfc",
-                          boxShadow: "0 1px 2px rgba(147, 51, 234, 0.12)",
-                        }}
-                      >
+                      <div className={styles.gifBadge}>
                         GIF
                       </div>
                     </div>

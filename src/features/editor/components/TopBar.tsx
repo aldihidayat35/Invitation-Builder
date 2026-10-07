@@ -30,6 +30,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const autosaver = useAutosaver();
   const doc = useEditor(selectDoc);
   const artboardMode = useEditor((s) => s.artboardMode);
+  const theme = useEditor((s) => s.theme);
   const canUndo = useEditor(selectCanUndo);
   const canRedo = useEditor(selectCanRedo);
   const zoom = useEditor((s) => s.zoom);
@@ -168,6 +169,37 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
       <span className={styles.spacer} />
 
       {readOnly ? <span className={styles.badge}>Read-only</span> : null}
+
+      {/* Pilihan Tema: Light vs Netflix Dark Neon */}
+      <div className={styles.themeToggleGroup} role="group" aria-label="Tema Editor">
+        <button
+          type="button"
+          className={styles.themeToggleBtn}
+          data-active={theme === "light"}
+          data-testid="theme-toggle-light"
+          onClick={() => store.getState().setTheme("light")}
+          title="Tema Cerah (Light)"
+        >
+          <span aria-hidden="true" style={{ fontSize: 12 }}>☀️</span>
+          <span>Light</span>
+        </button>
+        <button
+          type="button"
+          className={styles.themeToggleBtn}
+          data-active={theme === "dark"}
+          data-testid="theme-toggle-dark"
+          onClick={() => store.getState().setTheme("dark")}
+          title="Tema Gelap Netflix Neon"
+        >
+          {theme === "dark" ? (
+            <span className={styles.neonDot} aria-hidden="true" />
+          ) : (
+            <span aria-hidden="true" style={{ fontSize: 12 }}>🎬</span>
+          )}
+          <span>Dark Neon</span>
+        </button>
+      </div>
+
       <span
         className={styles.saveStatus}
         data-testid="save-status"

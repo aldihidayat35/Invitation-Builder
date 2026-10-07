@@ -746,10 +746,10 @@ function VideoPropsControl({
             style={{
               marginTop: 8,
               padding: 10,
-              background: "#ffffff",
+              background: "var(--dash-surface, #ffffff)",
               borderRadius: 10,
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+              border: "1px solid var(--dash-border, #e2e8f0)",
+              boxShadow: "var(--dash-shadow-sm)",
             }}
             data-testid="video-asset-library-container"
           >

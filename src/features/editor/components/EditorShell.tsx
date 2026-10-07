@@ -8,7 +8,7 @@ import { createPreviewBroadcaster } from "../core/preview-sync";
 import { createEditorStore } from "../core/store";
 import { isEditableTarget, isPanKey, resolveShortcut } from "../core/shortcuts";
 import { Artboard } from "./Artboard";
-import { EditorProvider, useAutosaver, useEditorStore } from "./EditorProvider";
+import { EditorProvider, useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
 import { Inspector } from "./Inspector";
 import { LeftPanel } from "./LeftPanel";
 import { PanelResizer } from "./PanelResizer";
@@ -55,9 +55,10 @@ export function EditorShell(props: EditorShellProps) {
     preloadEditorFonts();
   }, []);
 
-  // Synchronize stored artboard mode after mount to prevent SSR hydration mismatch
+  // Synchronize stored artboard mode and theme after mount to prevent SSR hydration mismatch
   useEffect(() => {
     store.getState().syncArtboardModeFromStorage();
+    store.getState().syncThemeFromStorage();
   }, [store]);
 
   // Realtime Live Preview Cross-Tab Broadcaster (120ms debounce)
@@ -109,6 +110,7 @@ function EditorFrame({
 }) {
   const store = useEditorStore();
   const autosaver = useAutosaver();
+  const theme = useEditor((s) => s.theme);
   const widths = useSyncExternalStore(
     panelLayoutStore.subscribe,
     panelLayoutStore.getSnapshot,
@@ -118,6 +120,19 @@ function EditorFrame({
     "--left-w": `${widths.left}px`,
     "--right-w": `${widths.right}px`,
   } as CSSProperties;
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-editor-theme", theme);
+      document.body.setAttribute("data-editor-theme", theme);
+    }
+    return () => {
+      if (typeof document !== "undefined") {
+        document.documentElement.removeAttribute("data-editor-theme");
+        document.body.removeAttribute("data-editor-theme");
+      }
+    };
+  }, [theme]);
 
   // Keyboard shortcuts (PRD Lampiran A).
   useEffect(() => {
@@ -191,7 +206,7 @@ function EditorFrame({
   }, [store, autosaver]);
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-theme={theme} data-testid="editor-shell">
       <link rel="stylesheet" href={getAllCuratedGoogleFontsUrl()} />
       <TopBar
         templateId={templateId}
