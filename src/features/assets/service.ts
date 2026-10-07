@@ -286,8 +286,10 @@ export async function getDeliverableAsset(
 ): Promise<DeliverableAsset | null> {
   if (!idSchema.safeParse(assetId).success) return null;
   const row = await findAssetById(db, assetId);
-  if (!row || row.status !== "ready" || !isImageMime(row.mimeType)) return null;
-  const bytes = await storage.read(row.storageKey, ASSET_LIMITS.imageMaxBytes);
+  if (!row || row.status !== "ready") return null;
+  if (!isImageMime(row.mimeType) && !isVideoMime(row.mimeType)) return null;
+  const maxBytes = maxBytesForMime(row.mimeType as AllowedMimeType);
+  const bytes = await storage.read(row.storageKey, maxBytes);
   if (!bytes) return null;
   return { bytes, mimeType: row.mimeType };
 }

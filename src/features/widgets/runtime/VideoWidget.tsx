@@ -124,7 +124,13 @@ export function VideoWidget({
     setHasInteracted(true);
     setIsPlaying(true);
     if (videoRef.current) {
-      void videoRef.current.play();
+      videoRef.current.play().catch((err) => {
+        console.warn("Direct play failed, falling back to muted:", err);
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          void videoRef.current.play();
+        }
+      });
     }
   };
 
@@ -262,7 +268,7 @@ export function VideoWidget({
               loop={shouldLoop}
               muted={isMuted}
               playsInline
-              preload="metadata"
+              preload="auto"
               className={styles.videoPlayer}
               data-testid="html5-video-player"
             />
