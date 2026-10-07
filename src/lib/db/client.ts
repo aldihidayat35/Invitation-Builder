@@ -20,8 +20,10 @@ async function open(url: string): Promise<Database> {
     }
     const dataDir = url.slice("pglite://".length) || undefined;
     if (dataDir) mkdirSync(dirname(dataDir), { recursive: true });
-    const { connectPglite } = await import("./pglite");
-    return (await connectPglite(dataDir)).db;
+    const { connectPglite, migratePglite } = await import("./pglite");
+    const conn = await connectPglite(dataDir);
+    await migratePglite(conn);
+    return conn.db;
   }
   return connectPostgres(url).db;
 }
