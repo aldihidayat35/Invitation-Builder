@@ -14,6 +14,7 @@ import {
 import {
   getSellerOrderStats,
   listOrdersBySeller,
+  getOrderTrends,
 } from "@/lib/db/repositories/orders";
 import { listUsersByReseller } from "@/lib/db/repositories/users";
 import type {
@@ -44,6 +45,13 @@ export async function getResellerOverview(): Promise<ResellerOverviewStats> {
   };
 }
 
+/** Fetches order volume trends for the authenticated reseller's storefront. */
+export async function getResellerOrderTrends(days: number = 14) {
+  const { profile } = await requireReseller();
+  const db = await getDb();
+  return getOrderTrends(db, { sellerId: profile.id, days });
+}
+
 /** Lists all customer orders received via this seller's storefront. */
 export async function getResellerOrders(limit: number = 100): Promise<ResellerOrderItem[]> {
   const { profile } = await requireReseller();
@@ -56,6 +64,8 @@ export async function getResellerOrders(limit: number = 100): Promise<ResellerOr
     customerEmail: o.customerEmail,
     customerWhatsapp: o.customerWhatsapp,
     groomBrideNames: o.groomBrideNames,
+    eventDate: o.eventDate,
+    eventLocation: o.eventLocation,
     status: o.status,
     notes: o.notes,
     adminNotes: o.adminNotes,

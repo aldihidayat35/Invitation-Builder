@@ -17,6 +17,8 @@ export interface ResellerOrderItem {
   customerEmail: string;
   customerWhatsapp: string;
   groomBrideNames?: string | null;
+  eventDate?: Date | null;
+  eventLocation?: string | null;
   templateTitle?: string | null;
   invitationSlug?: string | null;
   status: CustomerOrderStatus;

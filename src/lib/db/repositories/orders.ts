@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import type { CustomerOrderStatus } from "../../schema/domain";
 import {
   customerOrders,
@@ -193,4 +193,123 @@ export async function getGlobalOrderStats(db: Database): Promise<{
     inProgressOrders: row?.inProgressCount ?? 0,
     completedOrders: row?.completedCount ?? 0,
   };
+}
+
+/** Computes daily order volume trends for the last N days. */
+export async function getOrderTrends(
+  db: Database,
+  options: { sellerId?: string; days?: number } = {},
+): Promise<Array<{ date: string; label: string; count: number; value: number }>> {
+  const days = options.days ?? 14;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const conditions = [gte(customerOrders.createdAt, since)];
+  if (options.sellerId) {
+    conditions.push(eq(customerOrders.sellerId, options.sellerId));
+  }
+
+  const rows = await db
+    .select({
+      day: sql<string>`to_char(date_trunc('day', ${customerOrders.createdAt}), 'YYYY-MM-DD')`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(customerOrders)
+    .where(and(...conditions))
+    .groupBy(sql`date_trunc('day', ${customerOrders.createdAt})`)
+    .orderBy(sql`date_trunc('day', ${customerOrders.createdAt})`);
+
+  const countMap = new Map<string, number>();
+  for (const r of rows) {
+    countMap.set(r.day, r.count);
+  }
+
+  // Generate continuous timeline of days
+  const result: Array<{ date: string; label: string; count: number; value: number }> = [];
+  const formatter = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" });
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const dateStr = d.toISOString().slice(0, 10);
+    const count = countMap.get(dateStr) ?? 0;
+    result.push({
+      date: dateStr,
+      label: formatter.format(d),
+      count,
+      value: count,
+    });
+  }
+
+  return result;
+}
+
+/** Computes monthly order/invitation volume trends for a given year (Jan - Dec). */
+export async function getMonthlyOrderTrends(
+  db: Database,
+  options: { year?: number; sellerId?: string; workspaceId?: string } = {},
+): Promise<Array<{ month: number; label: string; count: number; value: number }>> {
+  const year = options.year ?? new Date().getFullYear();
+  const startOfYear = new Date(year, 0, 1);
+  const endOfYear = new Date(year, 11, 31, 23, 59, 59);
+
+  const monthCounts = new Map<number, number>();
+
+  if (options.workspaceId) {
+    // Workspace-level: count invitations created per month
+    const rows = await db
+      .select({
+        monthNum: sql<number>`extract(month from ${invitations.createdAt})::int`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.workspaceId, options.workspaceId),
+          gte(invitations.createdAt, startOfYear),
+          lte(invitations.createdAt, endOfYear),
+        ),
+      )
+      .groupBy(sql`extract(month from ${invitations.createdAt})`);
+
+    for (const r of rows) {
+      monthCounts.set(r.monthNum, r.count);
+    }
+  } else {
+    // Platform or Seller-level: count customer orders
+    const conditions = [
+      gte(customerOrders.createdAt, startOfYear),
+      lte(customerOrders.createdAt, endOfYear),
+    ];
+    if (options.sellerId) {
+      conditions.push(eq(customerOrders.sellerId, options.sellerId));
+    }
+
+    const rows = await db
+      .select({
+        monthNum: sql<number>`extract(month from ${customerOrders.createdAt})::int`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(customerOrders)
+      .where(and(...conditions))
+      .groupBy(sql`extract(month from ${customerOrders.createdAt})`);
+
+    for (const r of rows) {
+      monthCounts.set(r.monthNum, r.count);
+    }
+  }
+
+  const MONTH_NAMES = [
+    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+    "Jul", "Ags", "Sep", "Okt", "Nov", "Des",
+  ];
+
+  return MONTH_NAMES.map((label, idx) => {
+    const month = idx + 1;
+    const count = monthCounts.get(month) ?? 0;
+    return {
+      month,
+      label,
+      count,
+      value: count,
+    };
+  });
 }
