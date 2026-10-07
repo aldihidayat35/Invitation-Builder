@@ -124,11 +124,11 @@ export function VideoWidget({
     setHasInteracted(true);
     setIsPlaying(true);
     if (videoRef.current) {
-      videoRef.current.play().catch((err) => {
+      videoRef.current.play()?.catch((err) => {
         console.warn("Direct play failed, falling back to muted:", err);
         if (videoRef.current) {
           videoRef.current.muted = true;
-          void videoRef.current.play();
+          void videoRef.current.play()?.catch(() => {});
         }
       });
     }

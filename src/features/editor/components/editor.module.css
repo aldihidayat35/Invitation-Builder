@@ -1045,6 +1045,15 @@
   box-shadow: 0 8px 24px -4px rgba(124, 58, 237, 0.16), 0 3px 8px -2px rgba(16, 24, 40, 0.06);
 }
 
+.sectionCard[data-editing-motion="true"] {
+  z-index: 40 !important;
+}
+
+.canvasFrame[data-editing-motion="true"] {
+  overflow: visible !important;
+  z-index: 40 !important;
+}
+
 /* Seamless Phone Mode */
 .artboardInner[data-mode="seamless"] {
   gap: 0;

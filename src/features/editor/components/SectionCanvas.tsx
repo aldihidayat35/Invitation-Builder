@@ -46,6 +46,9 @@ interface ElementNodeProps {
   readonly selected: boolean;
   readonly handlers: ElementHandlers;
   readonly fontRev: number;
+  readonly isMotionTarget?: boolean;
+  readonly isOutsideSection?: boolean;
+  readonly zoom?: number;
 }
 
 interface ElementHandlers {
@@ -167,6 +170,9 @@ const ElementNode = memo(function ElementNode({
   selected,
   handlers,
   fontRev,
+  isMotionTarget = false,
+  isOutsideSection = false,
+  zoom = 1,
 }: ElementNodeProps) {
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
@@ -183,12 +189,16 @@ const ElementNode = memo(function ElementNode({
     return cleanup;
   }, [loopTrack]);
 
+  const effectiveOpacity = isMotionTarget && isOutsideSection
+    ? styleOpacity(element) * 0.72
+    : styleOpacity(element);
+
   return (
     <Group
       id={element.id}
       name="element"
       {...attrs}
-      opacity={styleOpacity(element)}
+      opacity={effectiveOpacity}
       draggable={draggable}
       onMouseDown={(e) => handlers.onPointerDown(element.id, e)}
       onTouchStart={(e) => handlers.onPointerDown(element.id, e)}
@@ -212,6 +222,42 @@ const ElementNode = memo(function ElementNode({
       <Group ref={innerRef} x={w / 2} y={h / 2} offsetX={w / 2} offsetY={h / 2}>
         <Visual element={element} tokens={tokens} fontRev={fontRev} />
       </Group>
+
+      {/* Off-canvas styling indicator when motion target is placed outside frame */}
+      {isMotionTarget && isOutsideSection && (
+        <Group listening={false}>
+          <Rect
+            width={w}
+            height={h}
+            stroke="#f59e0b"
+            strokeWidth={2 / zoom}
+            dash={[5 / zoom, 3 / zoom]}
+            strokeScaleEnabled={false}
+            fill="rgba(245, 158, 11, 0.08)"
+          />
+          <Group x={Math.max(0, (w - 110) / 2)} y={-22 / zoom}>
+            <Rect
+              width={110}
+              height={18 / zoom}
+              fill="#f59e0b"
+              cornerRadius={4 / zoom}
+              shadowColor="#000"
+              shadowBlur={4}
+              shadowOpacity={0.25}
+            />
+            <Text
+              width={110}
+              text="✦ Di Luar Layar"
+              fontSize={10 / zoom}
+              fill="#ffffff"
+              fontStyle="bold"
+              align="center"
+              y={3 / zoom}
+            />
+          </Group>
+        </Group>
+      )}
+
       {selected && element.locked ? (
         <Rect
           width={w}
@@ -278,6 +324,7 @@ export interface SectionCanvasProps {
 
 export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const store = useEditorStore();
+  const theme = useEditor((s) => s.theme);
   const section: Section | undefined = useEditor((s) =>
     s.history.present.sections.find((x) => x.id === sectionId),
   );
@@ -371,6 +418,62 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
             .join(","),
     [selectedHere, elements, readOnly, panMode, isEditingAnyMotion],
   );
+
+  const motionElement = useMemo(() => {
+    if (!section) return null;
+    if (isEditingThisMotion && editingMotion) {
+      return section.elements.find((x) => x.id === editingMotion.elementId) ?? null;
+    }
+    if (selectedHere.length === 1) {
+      const el = section.elements.find((x) => x.id === selectedHere[0]);
+      if (el?.animations?.motion?.enabled) return el;
+    }
+    return null;
+  }, [section, isEditingThisMotion, editingMotion, selectedHere]);
+
+  const motionGuidePoints = useMemo(() => {
+    if (!motionElement?.animations?.motion?.enabled) return [];
+    const samples = sampleMotionPathPoints(motionElement.animations.motion, 40);
+    const flat: number[] = [];
+    for (const s of samples) {
+      flat.push(s.x, s.y);
+    }
+    return flat;
+  }, [motionElement]);
+
+  const bleedX = useMemo(() => {
+    if (!isEditingThisMotion || !motionElement) return 0;
+    let maxExt = 600;
+    const ocx = motionElement.frame.x + motionElement.frame.w / 2;
+    if (motionElement.frame.x < 0) maxExt = Math.max(maxExt, Math.abs(motionElement.frame.x) + 250);
+    if (motionElement.frame.x + motionElement.frame.w > CANONICAL_BASE_WIDTH) {
+      maxExt = Math.max(maxExt, motionElement.frame.x + motionElement.frame.w - CANONICAL_BASE_WIDTH + 250);
+    }
+    const pts = motionElement.animations?.motion?.points ?? [];
+    for (const pt of pts) {
+      const px = ocx + pt.x;
+      if (px < 0) maxExt = Math.max(maxExt, Math.abs(px) + 250);
+      if (px > CANONICAL_BASE_WIDTH) maxExt = Math.max(maxExt, px - CANONICAL_BASE_WIDTH + 250);
+    }
+    return Math.ceil(maxExt);
+  }, [isEditingThisMotion, motionElement]);
+
+  const bleedY = useMemo(() => {
+    if (!isEditingThisMotion || !motionElement) return 0;
+    let maxExt = 500;
+    const ocy = motionElement.frame.y + motionElement.frame.h / 2;
+    if (motionElement.frame.y < 0) maxExt = Math.max(maxExt, Math.abs(motionElement.frame.y) + 250);
+    if (motionElement.frame.y + motionElement.frame.h > baseHeight) {
+      maxExt = Math.max(maxExt, motionElement.frame.y + motionElement.frame.h - baseHeight + 250);
+    }
+    const pts = motionElement.animations?.motion?.points ?? [];
+    for (const pt of pts) {
+      const py = ocy + pt.y;
+      if (py < 0) maxExt = Math.max(maxExt, Math.abs(py) + 250);
+      if (py > baseHeight) maxExt = Math.max(maxExt, py - baseHeight + 250);
+    }
+    return Math.ceil(maxExt);
+  }, [isEditingThisMotion, motionElement, baseHeight]);
 
   // Attach the transformer to the selected, manipulable nodes.
   useEffect(() => {
@@ -488,8 +591,8 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
         const stage = stageRef.current;
         const pointerPos = stage?.getPointerPosition();
-        const canvasX = pointerPos ? round2(pointerPos.x / zoom) : 0;
-        const canvasY = pointerPos ? round2(pointerPos.y / zoom) : 0;
+        const canvasX = pointerPos ? round2((pointerPos.x / zoom) - bleedX) : 0;
+        const canvasY = pointerPos ? round2((pointerPos.y / zoom) - bleedY) : 0;
         setContextMenu({
           isOpen: true,
           x: e.evt.clientX,
@@ -555,12 +658,23 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         }
         showGuides(snap.guides.vertical[0], snap.guides.horizontal[0]);
 
-        if (motion && id === motion.elementId && motionGroupRef.current) {
-          motionGroupRef.current.position({
-            x: node.x() + node.width() / 2,
-            y: node.y() + node.height() / 2,
-          });
-          motionGroupRef.current.getLayer()?.batchDraw();
+        if (motion && id === motion.elementId) {
+          const isNodeOutside =
+            node.x() + node.width() / 2 < 0 ||
+            node.x() + node.width() / 2 > CANONICAL_BASE_WIDTH ||
+            node.y() + node.height() / 2 < 0 ||
+            node.y() + node.height() / 2 > baseHeight;
+          const targetEl = section?.elements.find((x) => x.id === id);
+          const baseOp = targetEl ? styleOpacity(targetEl) : 1;
+          node.opacity(isNodeOutside ? baseOp * 0.72 : baseOp);
+
+          if (motionGroupRef.current) {
+            motionGroupRef.current.position({
+              x: node.x() + node.width() / 2,
+              y: node.y() + node.height() / 2,
+            });
+            motionGroupRef.current.getLayer()?.batchDraw();
+          }
         }
       },
       onDragEnd() {
@@ -574,7 +688,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         // `click` fires after dragend; keep `moved` until then, reset on next drag start.
       },
     }),
-    [store, section, hideGuides, showGuides, commitNodes],
+    [store, section, hideGuides, showGuides, commitNodes, bleedX, bleedY, zoom],
   );
 
   useEffect(() => {
@@ -631,27 +745,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     return () => window.removeEventListener("dib:replay-animation", handleReplay);
   }, [section, sectionId]);
 
-  const motionElement = useMemo(() => {
-    if (!section) return null;
-    if (isEditingThisMotion && editingMotion) {
-      return section.elements.find((x) => x.id === editingMotion.elementId) ?? null;
-    }
-    if (selectedHere.length === 1) {
-      const el = section.elements.find((x) => x.id === selectedHere[0]);
-      if (el?.animations?.motion?.enabled) return el;
-    }
-    return null;
-  }, [section, isEditingThisMotion, editingMotion, selectedHere]);
 
-  const motionGuidePoints = useMemo(() => {
-    if (!motionElement?.animations?.motion?.enabled) return [];
-    const samples = sampleMotionPathPoints(motionElement.animations.motion, 40);
-    const flat: number[] = [];
-    for (const s of samples) {
-      flat.push(s.x, s.y);
-    }
-    return flat;
-  }, [motionElement]);
 
   if (!section) return null;
 
@@ -663,356 +757,504 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   return (
     <>
-      <Stage
-        ref={stageRef}
-      width={CANONICAL_BASE_WIDTH * zoom}
-      height={section.baseHeight * zoom}
-      scaleX={zoom}
-      scaleY={zoom}
-      onMouseDown={(e) => {
-        if (store.getState().editingMotion) return;
-        const target = e.target;
-        if (target === target.getStage() || target.name() === "bg") {
-          if (store.getState().panMode) return;
-          const state = store.getState();
-          state.clearSelection();
-          state.setActiveSection(sectionId);
-        }
-      }}
-      onTouchStart={(e) => {
-        if (store.getState().editingMotion) return;
-        const target = e.target;
-        if (target === target.getStage() || target.name() === "bg") {
-          store.getState().clearSelection();
-          store.getState().setActiveSection(sectionId);
-        }
-      }}
-      onContextMenu={(e) => {
-        if (store.getState().panMode || store.getState().editingMotion) return;
-        e.evt.preventDefault();
-        const target = e.target;
-        if (target === target.getStage() || target.name() === "bg") {
-          const state = store.getState();
-          state.clearSelection();
-          state.setActiveSection(sectionId);
-          const stage = stageRef.current;
-          const pointerPos = stage?.getPointerPosition();
-          const canvasX = pointerPos ? round2(pointerPos.x / zoom) : 0;
-          const canvasY = pointerPos ? round2(pointerPos.y / zoom) : 0;
-          setContextMenu({
-            isOpen: true,
-            x: e.evt.clientX,
-            y: e.evt.clientY,
-            canvasX,
-            canvasY,
-            elementId: undefined,
-          });
-        }
-      }}
-    >
-      <Layer opacity={section.visible ? 1 : 0.4}>
-        <Rect
-          name="bg"
-          width={CANONICAL_BASE_WIDTH}
-          height={section.baseHeight}
-          fill={background}
-        />
-        {section.elements
-          .filter((el) => el.visible)
-          .map((el) => {
-            const isTarget = isEditingThisMotion && el.id === editingMotion?.elementId;
-            const canDrag = !readOnly && !panMode && !el.locked && (!isEditingAnyMotion || isTarget);
-            return (
-              <ElementNode
-                key={el.id}
-                element={el}
-                tokens={tokens}
-                draggable={canDrag}
-                selected={isTarget || (!isEditingAnyMotion && selectedHere.includes(el.id))}
-                handlers={handlers}
-                fontRev={fontRev}
-              />
-            );
-          })}
-        <Transformer
-          ref={transformerRef}
-          rotateEnabled
-          flipEnabled={false}
-          keepRatio={false}
-          rotationSnaps={[0, 45, 90, 135, 180, -135, -90, -45]}
-          rotationSnapTolerance={4}
-          borderStroke={ACCENT}
-          anchorStroke={ACCENT}
-          anchorFill="#ffffff"
-          anchorSize={10}
-          anchorCornerRadius={3}
-          borderStrokeWidth={1.5}
-          boundBoxFunc={(oldBox, newBox) =>
-            newBox.width < MIN_BOX || newBox.height < MIN_BOX ? oldBox : newBox
-          }
-          onTransformEnd={() => {
-            const nodes = transformerRef.current?.nodes() ?? [];
-            if (nodes.length > 0) commitNodes(nodes);
+      <div
+        style={{
+          position: isEditingThisMotion ? "absolute" : "relative",
+          left: isEditingThisMotion ? -bleedX * zoom : 0,
+          top: isEditingThisMotion ? -bleedY * zoom : 0,
+          width: (CANONICAL_BASE_WIDTH + (isEditingThisMotion ? bleedX * 2 : 0)) * zoom,
+          height: (section.baseHeight + (isEditingThisMotion ? bleedY * 2 : 0)) * zoom,
+          pointerEvents: "auto",
+        }}
+      >
+        <Stage
+          ref={stageRef}
+          width={(CANONICAL_BASE_WIDTH + (isEditingThisMotion ? bleedX * 2 : 0)) * zoom}
+          height={(section.baseHeight + (isEditingThisMotion ? bleedY * 2 : 0)) * zoom}
+          scaleX={zoom}
+          scaleY={zoom}
+          onMouseDown={(e) => {
+            if (store.getState().editingMotion) return;
+            const target = e.target;
+            if (target === target.getStage() || target.name() === "bg") {
+              if (store.getState().panMode) return;
+              const state = store.getState();
+              state.clearSelection();
+              state.setActiveSection(sectionId);
+            }
           }}
-        />
-      </Layer>
-      <Layer listening={false}>
-        <Line
-          ref={vGuideRef}
-          points={[0, 0, 0, 0]}
-          stroke={ACCENT}
-          strokeWidth={1 / zoom}
-          dash={[4, 4]}
-          visible={false}
-        />
-        <Line
-          ref={hGuideRef}
-          points={[0, 0, 0, 0]}
-          stroke={ACCENT}
-          strokeWidth={1 / zoom}
-          dash={[4, 4]}
-          visible={false}
-        />
-        {!isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
-          <Group
-            x={motionElement.frame.x + motionElement.frame.w / 2}
-            y={motionElement.frame.y + motionElement.frame.h / 2}
-          >
-            <Line
-              points={motionGuidePoints}
-              stroke="#6366f1"
-              strokeWidth={2 / zoom}
-              dash={[5 / zoom, 4 / zoom]}
-              opacity={0.85}
+          onTouchStart={(e) => {
+            if (store.getState().editingMotion) return;
+            const target = e.target;
+            if (target === target.getStage() || target.name() === "bg") {
+              store.getState().clearSelection();
+              store.getState().setActiveSection(sectionId);
+            }
+          }}
+          onContextMenu={(e) => {
+            if (store.getState().panMode || store.getState().editingMotion) return;
+            e.evt.preventDefault();
+            const target = e.target;
+            if (target === target.getStage() || target.name() === "bg") {
+              const state = store.getState();
+              state.clearSelection();
+              state.setActiveSection(sectionId);
+              const stage = stageRef.current;
+              const pointerPos = stage?.getPointerPosition();
+              const canvasX = pointerPos ? round2((pointerPos.x / zoom) - bleedX) : 0;
+              const canvasY = pointerPos ? round2((pointerPos.y / zoom) - bleedY) : 0;
+              setContextMenu({
+                isOpen: true,
+                x: e.evt.clientX,
+                y: e.evt.clientY,
+                canvasX,
+                canvasY,
+                elementId: undefined,
+              });
+            }
+          }}
+        >
+          <Layer opacity={section.visible ? 1 : 0.4} x={bleedX} y={bleedY}>
+            {/* Dimmed workspace backdrop covering the off-screen bleed area in motion mode */}
+            {isEditingThisMotion && (
+              <Group listening={false}>
+                <Rect
+                  x={-bleedX}
+                  y={-bleedY}
+                  width={CANONICAL_BASE_WIDTH + bleedX * 2}
+                  height={section.baseHeight + bleedY * 2}
+                  fill={theme === "dark" ? "#07080b" : "#f1f5f9"}
+                  opacity={0.88}
+                />
+                <Text
+                  x={-bleedX + 16}
+                  y={-bleedY + 16}
+                  text="✦ WORKSPACE OFF-SCREEN (Motion Path Canvas)"
+                  fontSize={11 / zoom}
+                  fill={theme === "dark" ? "#94a3b8" : "#64748b"}
+                  fontStyle="bold"
+                />
+                <Text
+                  x={-bleedX + 16}
+                  y={-bleedY + 34}
+                  text="Objek & Waypoint di luar batas frame tetap terlihat dan dapat digeser bebas"
+                  fontSize={10 / zoom}
+                  fill={theme === "dark" ? "#64748b" : "#94a3b8"}
+                />
+              </Group>
+            )}
+            <Rect
+              name="bg"
+              x={0}
+              y={0}
+              width={CANONICAL_BASE_WIDTH}
+              height={section.baseHeight}
+              fill={background}
+              shadowColor="rgba(0, 0, 0, 0.35)"
+              shadowBlur={isEditingThisMotion ? 20 : 0}
+              shadowOffset={{ x: 0, y: isEditingThisMotion ? 4 : 0 }}
+              shadowOpacity={isEditingThisMotion ? 0.25 : 0}
             />
-            {motionElement.animations.motion.points.map((pt, idx, arr) => (
-              <Circle
-                key={idx}
-                x={pt.x}
-                y={pt.y}
-                radius={(idx === 0 || idx === arr.length - 1 ? 5 : 3.5) / zoom}
-                fill={idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#ef4444" : "#818cf8"}
-                stroke="#ffffff"
-                strokeWidth={1.5 / zoom}
-              />
-            ))}
-          </Group>
-        )}
-      </Layer>
-
-      {/* Interactive Motion Guide Layer for Adobe Animate / Flash style waypoint manipulation */}
-      {isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
-        <Layer listening={true}>
-          {/* Subtle focus overlay on background */}
-          <Rect
-            x={0}
-            y={0}
-            width={CANONICAL_BASE_WIDTH}
-            height={section.baseHeight}
-            fill="rgba(15, 23, 42, 0.22)"
-            listening={false}
-          />
-          <Group
-            ref={motionGroupRef}
-            x={motionElement.frame.x + motionElement.frame.w / 2}
-            y={motionElement.frame.y + motionElement.frame.h / 2}
-          >
-            {/* Glow backing */}
-            <Line
-              points={motionGuidePoints}
-              stroke="rgba(99, 102, 241, 0.35)"
-              strokeWidth={8 / zoom}
-              listening={false}
-            />
-            {/* Main dashed path */}
-            <Line
-              points={motionGuidePoints}
-              stroke="#6366f1"
-              strokeWidth={3 / zoom}
-              dash={[6 / zoom, 4 / zoom]}
-              listening={false}
-            />
-
-            {/* Waypoint handles */}
-            {motionElement.animations.motion.points.map((pt, idx, arr) => {
-              const isStart = idx === 0;
-              const isEnd = idx === arr.length - 1;
-              const pointColor = isStart ? "#10b981" : "#6366f1";
-              const labelText = isStart ? "1" : `${idx + 1}`;
-
-              if (isEnd) {
-                // Red dot (Finish): anchored at the center of the object (0, 0).
-                // It is NOT individually draggable and always stays locked at the object center.
-                // listening={false} ensures clicking or dragging on/near the center grabs and moves the object itself.
+            {/* Clear luminous boundary frame around the active section */}
+            {isEditingThisMotion && (
+              <Group listening={false}>
+                <Rect
+                  x={0}
+                  y={0}
+                  width={CANONICAL_BASE_WIDTH}
+                  height={section.baseHeight}
+                  stroke="#6366f1"
+                  strokeWidth={2 / zoom}
+                  dash={[8 / zoom, 6 / zoom]}
+                />
+                <Text
+                  x={6 / zoom}
+                  y={-18 / zoom}
+                  text={`📱 FRAME SECTION (${CANONICAL_BASE_WIDTH} × ${section.baseHeight})`}
+                  fontSize={10.5 / zoom}
+                  fill="#6366f1"
+                  fontStyle="bold"
+                />
+              </Group>
+            )}
+            {section.elements
+              .filter((el) => el.visible)
+              .map((el) => {
+                const isTarget = isEditingThisMotion && el.id === editingMotion?.elementId;
+                const canDrag = !readOnly && !panMode && !el.locked && (!isEditingAnyMotion || isTarget);
+                const isOutsideSection =
+                  el.frame.x + el.frame.w / 2 < 0 ||
+                  el.frame.x + el.frame.w / 2 > CANONICAL_BASE_WIDTH ||
+                  el.frame.y + el.frame.h / 2 < 0 ||
+                  el.frame.y + el.frame.h / 2 > section.baseHeight;
                 return (
-                  <Group
-                    key={`motion-drag-pt-${idx}`}
-                    x={0}
-                    y={0}
-                    listening={false}
-                  >
-                    {/* Crosshair target lines at object center */}
-                    <Line
-                      points={[-11 / zoom, 0, 11 / zoom, 0]}
-                      stroke="#ef4444"
-                      strokeWidth={1.5 / zoom}
-                    />
-                    <Line
-                      points={[0, -11 / zoom, 0, 11 / zoom]}
-                      stroke="#ef4444"
-                      strokeWidth={1.5 / zoom}
-                    />
-
-                    {/* Outer target dashed ring */}
-                    <Circle
-                      radius={13 / zoom}
-                      fill="rgba(239, 68, 68, 0.22)"
-                      stroke="#ef4444"
-                      strokeWidth={1.5 / zoom}
-                      dash={[3 / zoom, 3 / zoom]}
-                    />
-
-                    {/* Inner red bullseye circle */}
-                    <Circle
-                      radius={7.5 / zoom}
-                      fill="#ef4444"
-                      stroke="#ffffff"
-                      strokeWidth={1.5 / zoom}
-                    />
-
-                    {/* Center white dot */}
-                    <Circle
-                      radius={2.5 / zoom}
-                      fill="#ffffff"
-                    />
-                  </Group>
-                );
-              }
-
-              return (
-                <Group
-                  key={`motion-drag-pt-${idx}`}
-                  x={pt.x}
-                  y={pt.y}
-                  draggable={true}
-                  onMouseEnter={(e) => {
-                    const stage = e.target.getStage();
-                    if (stage) stage.container().style.cursor = "grab";
-                  }}
-                  onMouseLeave={(e) => {
-                    const stage = e.target.getStage();
-                    if (stage) stage.container().style.cursor = "default";
-                  }}
-                  onDragStart={(e) => {
-                    const stage = e.target.getStage();
-                    if (stage) stage.container().style.cursor = "grabbing";
-                  }}
-                  onDragMove={(e) => {
-                    const nx = Math.round(e.target.x());
-                    const ny = Math.round(e.target.y());
-                    const targetId = motionElement.id;
-                    store.getState().patchElement(
-                      targetId,
-                      (el) => {
-                        if (!el.animations?.motion) return el;
-                        const pts = [...el.animations.motion.points];
-                        if (pts[idx]) {
-                          pts[idx] = { x: nx, y: ny };
-                        }
-                        pts[pts.length - 1] = { x: 0, y: 0 };
-                        return {
-                          ...el,
-                          animations: {
-                            ...el.animations,
-                            motion: {
-                              ...el.animations.motion,
-                              preset: "custom",
-                              points: pts,
-                            },
-                          },
-                        };
-                      },
-                      "motion:drag",
-                    );
-                  }}
-                  onDragEnd={(e) => {
-                    const nx = Math.round(e.target.x());
-                    const ny = Math.round(e.target.y());
-                    const stage = e.target.getStage();
-                    if (stage) stage.container().style.cursor = "grab";
-                    const targetId = motionElement.id;
-                    store.getState().patchElement(
-                      targetId,
-                      (el) => {
-                        if (!el.animations?.motion) return el;
-                        const pts = [...el.animations.motion.points];
-                        if (pts[idx]) {
-                          pts[idx] = { x: nx, y: ny };
-                        }
-                        pts[pts.length - 1] = { x: 0, y: 0 };
-                        return {
-                          ...el,
-                          animations: {
-                            ...el.animations,
-                            motion: {
-                              ...el.animations.motion,
-                              preset: "custom",
-                              points: pts,
-                            },
-                          },
-                        };
-                      },
-                    );
-                  }}
-                >
-                  {/* Invisible wide hit circle for easy grab */}
-                  <Circle radius={18 / zoom} fill="transparent" />
-
-                  {/* Outer glow ring */}
-                  <Circle
-                    radius={12 / zoom}
-                    fill={isStart ? "rgba(16, 185, 129, 0.28)" : "rgba(99, 102, 241, 0.28)"}
-                    stroke={pointColor}
-                    strokeWidth={2 / zoom}
+                  <ElementNode
+                    key={el.id}
+                    element={el}
+                    tokens={tokens}
+                    draggable={canDrag}
+                    selected={isTarget || (!isEditingAnyMotion && selectedHere.includes(el.id))}
+                    handlers={handlers}
+                    fontRev={fontRev}
+                    isMotionTarget={isTarget}
+                    isOutsideSection={isOutsideSection}
+                    zoom={zoom}
                   />
-
-                  {/* Inner solid circle */}
+                );
+              })}
+            <Transformer
+              ref={transformerRef}
+              rotateEnabled
+              flipEnabled={false}
+              keepRatio={false}
+              rotationSnaps={[0, 45, 90, 135, 180, -135, -90, -45]}
+              rotationSnapTolerance={4}
+              borderStroke={ACCENT}
+              anchorStroke={ACCENT}
+              anchorFill="#ffffff"
+              anchorSize={10}
+              anchorCornerRadius={3}
+              borderStrokeWidth={1.5}
+              boundBoxFunc={(oldBox, newBox) =>
+                newBox.width < MIN_BOX || newBox.height < MIN_BOX ? oldBox : newBox
+              }
+              onTransformEnd={() => {
+                const nodes = transformerRef.current?.nodes() ?? [];
+                if (nodes.length > 0) commitNodes(nodes);
+              }}
+            />
+          </Layer>
+          <Layer listening={false} x={bleedX} y={bleedY}>
+            <Line
+              ref={vGuideRef}
+              points={[0, 0, 0, 0]}
+              stroke={ACCENT}
+              strokeWidth={1 / zoom}
+              dash={[4, 4]}
+              visible={false}
+            />
+            <Line
+              ref={hGuideRef}
+              points={[0, 0, 0, 0]}
+              stroke={ACCENT}
+              strokeWidth={1 / zoom}
+              dash={[4, 4]}
+              visible={false}
+            />
+            {!isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
+              <Group
+                x={motionElement.frame.x + motionElement.frame.w / 2}
+                y={motionElement.frame.y + motionElement.frame.h / 2}
+              >
+                <Line
+                  points={motionGuidePoints}
+                  stroke="#6366f1"
+                  strokeWidth={2 / zoom}
+                  dash={[5 / zoom, 4 / zoom]}
+                  opacity={0.85}
+                />
+                {motionElement.animations.motion.points.map((pt, idx, arr) => (
                   <Circle
-                    radius={7.5 / zoom}
-                    fill={pointColor}
+                    key={idx}
+                    x={pt.x}
+                    y={pt.y}
+                    radius={(idx === 0 || idx === arr.length - 1 ? 5 : 3.5) / zoom}
+                    fill={idx === 0 ? "#10b981" : idx === arr.length - 1 ? "#ef4444" : "#818cf8"}
                     stroke="#ffffff"
                     strokeWidth={1.5 / zoom}
                   />
+                ))}
+              </Group>
+            )}
+          </Layer>
 
-                  {/* Waypoint number */}
-                  <Text
-                    text={labelText}
-                    fontSize={8.5 / zoom}
-                    fontStyle="bold"
-                    fill="#ffffff"
-                    align="center"
-                    verticalAlign="middle"
-                    offsetX={3 / zoom}
-                    offsetY={4 / zoom}
-                    listening={false}
-                  />
-                </Group>
-              );
-            })}
-          </Group>
-        </Layer>
-      )}
-    </Stage>
-    <ContextMenu
-      isOpen={contextMenu.isOpen}
-      x={contextMenu.x}
-      y={contextMenu.y}
-      canvasX={contextMenu.canvasX}
-      canvasY={contextMenu.canvasY}
-      sectionId={sectionId}
-      elementId={contextMenu.elementId}
-      onClose={() => setContextMenu((prev) => ({ ...prev, isOpen: false }))}
-    />
+          {/* Interactive Motion Guide Layer for Adobe Animate / Flash style waypoint manipulation */}
+          {isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
+            <Layer listening={true} x={bleedX} y={bleedY}>
+              {/* Subtle focus overlay on canvas background */}
+              <Rect
+                x={0}
+                y={0}
+                width={CANONICAL_BASE_WIDTH}
+                height={section.baseHeight}
+                fill="rgba(15, 23, 42, 0.18)"
+                listening={false}
+              />
+              <Group
+                ref={motionGroupRef}
+                x={motionElement.frame.x + motionElement.frame.w / 2}
+                y={motionElement.frame.y + motionElement.frame.h / 2}
+              >
+                {/* Glow backing */}
+                <Line
+                  points={motionGuidePoints}
+                  stroke="rgba(99, 102, 241, 0.35)"
+                  strokeWidth={8 / zoom}
+                  listening={false}
+                />
+                {/* Main dashed path */}
+                <Line
+                  points={motionGuidePoints}
+                  stroke="#6366f1"
+                  strokeWidth={3 / zoom}
+                  dash={[6 / zoom, 4 / zoom]}
+                  listening={false}
+                />
+
+                {/* Waypoint handles */}
+                {motionElement.animations.motion.points.map((pt, idx, arr) => {
+                  const isStart = idx === 0;
+                  const isEnd = idx === arr.length - 1;
+                  const objectCenterX = motionElement.frame.x + motionElement.frame.w / 2;
+                  const objectCenterY = motionElement.frame.y + motionElement.frame.h / 2;
+                  const absolutePtX = objectCenterX + pt.x;
+                  const absolutePtY = objectCenterY + pt.y;
+                  const isPtOutside =
+                    absolutePtX < 0 ||
+                    absolutePtX > CANONICAL_BASE_WIDTH ||
+                    absolutePtY < 0 ||
+                    absolutePtY > section.baseHeight;
+
+                  if (isEnd) {
+                    // Red dot (Finish): anchored at the center of the object (0, 0).
+                    // It is NOT individually draggable and always stays locked at the object center.
+                    // listening={false} ensures clicking or dragging on/near the center grabs and moves the object itself.
+                    return (
+                      <Group
+                        key={`motion-drag-pt-${idx}`}
+                        x={0}
+                        y={0}
+                        listening={false}
+                      >
+                        {/* Crosshair target lines at object center */}
+                        <Line
+                          points={[-11 / zoom, 0, 11 / zoom, 0]}
+                          stroke="#ef4444"
+                          strokeWidth={1.5 / zoom}
+                        />
+                        <Line
+                          points={[0, -11 / zoom, 0, 11 / zoom]}
+                          stroke="#ef4444"
+                          strokeWidth={1.5 / zoom}
+                        />
+
+                        {/* Outer target dashed ring */}
+                        <Circle
+                          radius={13 / zoom}
+                          fill="rgba(239, 68, 68, 0.22)"
+                          stroke="#ef4444"
+                          strokeWidth={1.5 / zoom}
+                          dash={[3 / zoom, 3 / zoom]}
+                        />
+
+                        {/* Inner red bullseye circle */}
+                        <Circle
+                          radius={7.5 / zoom}
+                          fill="#ef4444"
+                          stroke="#ffffff"
+                          strokeWidth={1.5 / zoom}
+                        />
+
+                        {/* Center white dot */}
+                        <Circle
+                          radius={2.5 / zoom}
+                          fill="#ffffff"
+                        />
+
+                        {/* If target object itself is outside the screen, show indicator */}
+                        {isPtOutside && (
+                          <Group x={16 / zoom} y={-10 / zoom}>
+                            <Rect
+                              width={94 / zoom}
+                              height={16 / zoom}
+                              fill="#ef4444"
+                              cornerRadius={3 / zoom}
+                            />
+                            <Text
+                              width={94 / zoom}
+                              text="🎯 Akhir (Luar Layar)"
+                              fontSize={8.5 / zoom}
+                              fill="#ffffff"
+                              fontStyle="bold"
+                              align="center"
+                              y={3 / zoom}
+                            />
+                          </Group>
+                        )}
+                      </Group>
+                    );
+                  }
+
+                  // Color for start or intermediate waypoints:
+                  // Distinct colors when outside vs inside frame ("warnanya agak sedikit berbeda jika yang di dalam layar dan yang di luar layar")
+                  const pointColor = isStart
+                    ? isPtOutside
+                      ? "#f59e0b" // warm amber for start off-canvas
+                      : "#10b981" // emerald green for start on-canvas
+                    : isPtOutside
+                      ? "#ec4899" // vibrant pink-rose for intermediate off-canvas
+                      : "#6366f1"; // indigo for intermediate on-canvas
+
+                  const labelText = isStart ? "1" : `${idx + 1}`;
+
+                  return (
+                    <Group
+                      key={`motion-drag-pt-${idx}`}
+                      x={pt.x}
+                      y={pt.y}
+                      draggable={true}
+                      onMouseEnter={(e) => {
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = "grab";
+                      }}
+                      onMouseLeave={(e) => {
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = "default";
+                      }}
+                      onDragStart={(e) => {
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = "grabbing";
+                      }}
+                      onDragMove={(e) => {
+                        const nx = Math.round(e.target.x());
+                        const ny = Math.round(e.target.y());
+                        const targetId = motionElement.id;
+                        store.getState().patchElement(
+                          targetId,
+                          (el) => {
+                            if (!el.animations?.motion) return el;
+                            const pts = [...el.animations.motion.points];
+                            if (pts[idx]) {
+                              pts[idx] = { x: nx, y: ny };
+                            }
+                            pts[pts.length - 1] = { x: 0, y: 0 };
+                            return {
+                              ...el,
+                              animations: {
+                                ...el.animations,
+                                motion: {
+                                  ...el.animations.motion,
+                                  preset: "custom",
+                                  points: pts,
+                                },
+                              },
+                            };
+                          },
+                          "motion:drag",
+                        );
+                      }}
+                      onDragEnd={(e) => {
+                        const nx = Math.round(e.target.x());
+                        const ny = Math.round(e.target.y());
+                        const stage = e.target.getStage();
+                        if (stage) stage.container().style.cursor = "grab";
+                        const targetId = motionElement.id;
+                        store.getState().patchElement(
+                          targetId,
+                          (el) => {
+                            if (!el.animations?.motion) return el;
+                            const pts = [...el.animations.motion.points];
+                            if (pts[idx]) {
+                              pts[idx] = { x: nx, y: ny };
+                            }
+                            pts[pts.length - 1] = { x: 0, y: 0 };
+                            return {
+                              ...el,
+                              animations: {
+                                ...el.animations,
+                                motion: {
+                                  ...el.animations.motion,
+                                  preset: "custom",
+                                  points: pts,
+                                },
+                              },
+                            };
+                          },
+                        );
+                      }}
+                    >
+                      {/* Invisible wide hit circle for easy grab */}
+                      <Circle radius={20 / zoom} fill="transparent" />
+
+                      {/* Outer glow / dash ring */}
+                      <Circle
+                        radius={(isPtOutside ? 15 : 12) / zoom}
+                        fill={
+                          isStart
+                            ? isPtOutside
+                              ? "rgba(245, 158, 11, 0.25)"
+                              : "rgba(16, 185, 129, 0.28)"
+                            : isPtOutside
+                              ? "rgba(236, 72, 153, 0.25)"
+                              : "rgba(99, 102, 241, 0.28)"
+                        }
+                        stroke={pointColor}
+                        strokeWidth={isPtOutside ? 1.5 / zoom : 2 / zoom}
+                        dash={isPtOutside ? [3 / zoom, 2 / zoom] : undefined}
+                      />
+
+                      {/* Inner solid circle */}
+                      <Circle
+                        radius={7.5 / zoom}
+                        fill={pointColor}
+                        stroke="#ffffff"
+                        strokeWidth={1.5 / zoom}
+                      />
+
+                      {/* Waypoint number */}
+                      <Text
+                        text={labelText}
+                        fontSize={8.5 / zoom}
+                        fontStyle="bold"
+                        fill="#ffffff"
+                        align="center"
+                        verticalAlign="middle"
+                        offsetX={3 / zoom}
+                        offsetY={4 / zoom}
+                        listening={false}
+                      />
+
+                      {/* If waypoint is outside frame, show an explicit off-screen indicator badge */}
+                      {isPtOutside && (
+                        <Group x={12 / zoom} y={-10 / zoom} listening={false}>
+                          <Rect
+                            width={(isStart ? 105 : 90) / zoom}
+                            height={16 / zoom}
+                            fill={isStart ? "#f59e0b" : "#ec4899"}
+                            cornerRadius={3 / zoom}
+                            shadowColor="#000"
+                            shadowBlur={3}
+                            shadowOpacity={0.2}
+                          />
+                          <Text
+                            width={(isStart ? 105 : 90) / zoom}
+                            text={isStart ? "✦ Awal (Luar Layar)" : `✦ Titik ${idx + 1} (Luar)`}
+                            fontSize={8.5 / zoom}
+                            fill="#ffffff"
+                            fontStyle="bold"
+                            align="center"
+                            y={3 / zoom}
+                          />
+                        </Group>
+                      )}
+                    </Group>
+                  );
+                })}
+              </Group>
+            </Layer>
+          )}
+        </Stage>
+      </div>
+      <ContextMenu
+        isOpen={contextMenu.isOpen}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        canvasX={contextMenu.canvasX}
+        canvasY={contextMenu.canvasY}
+        sectionId={sectionId}
+        elementId={contextMenu.elementId}
+        onClose={() => setContextMenu((prev) => ({ ...prev, isOpen: false }))}
+      />
     </>
   );
 }

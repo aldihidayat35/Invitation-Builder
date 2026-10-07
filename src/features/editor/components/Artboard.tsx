@@ -253,6 +253,7 @@ export function Artboard() {
 
         {doc.sections.map((section, index) => {
           const active = section.id === activeSectionId;
+          const isMotionSection = editingMotion?.sectionId === section.id;
           const sectionWidth = CANONICAL_BASE_WIDTH * zoom;
           const hasOpening = doc.sections.some((s) => s.isOpening);
           const displayNumber = section.isOpening ? 0 : hasOpening ? index : index + 1;
@@ -264,8 +265,9 @@ export function Artboard() {
                 className={styles.sectionCard}
                 data-testid={`section-${section.id}`}
                 data-active={active}
+                data-editing-motion={isMotionSection ? "true" : undefined}
                 aria-label={sectionLabel(doc, section.id)}
-                style={{ width: sectionWidth }}
+                style={{ width: sectionWidth, zIndex: isMotionSection ? 40 : undefined }}
               >
                 <div className={styles.sectionHead} data-active={active}>
                   <div className={styles.sectionHeadLeft}>
@@ -362,9 +364,13 @@ export function Artboard() {
                   className={styles.canvasFrame}
                   data-active={active}
                   data-testid={`canvas-${section.id}`}
+                  data-editing-motion={isMotionSection ? "true" : undefined}
                   style={{
+                    position: "relative",
                     width: sectionWidth,
                     height: section.baseHeight * zoom,
+                    overflow: isMotionSection ? "visible" : "hidden",
+                    zIndex: isMotionSection ? 40 : undefined,
                     ...(previewState?.sectionId === section.id
                       ? getSectionTransitionStyles(section.transition, previewState.visible)
                       : {}),
