@@ -20,8 +20,14 @@ import {
   type Actor,
   type Capability,
 } from "@/lib/auth/authorization";
+import { InsufficientQuotaError } from "@/lib/auth/errors";
 import { generateGuestTokenId } from "@/lib/db/guest-token";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
+import {
+  deductResellerQuota,
+  findAffiliatedResellerProfile,
+  hasInvitationQuotaDeduction,
+} from "@/lib/db/repositories/resellers";
 import {
   archiveGuestRow,
   archiveInvitationRow,
@@ -74,6 +80,8 @@ import type {
   SaveDataResult,
   SnapshotSummary,
 } from "./types";
+
+export { InsufficientQuotaError } from "@/lib/auth/errors";
 
 export class PublishBlockedError extends Error {
   constructor(readonly missing: readonly string[]) {
@@ -567,7 +575,29 @@ export async function publishInvitation(
   ).filter((issue) => issue.code !== "unknown_key");
   if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
 
+  // Check reseller quota affiliation & eligibility
+  const affiliatedProfile = await findAffiliatedResellerProfile(db, row.workspaceId, actor.userId);
+  if (affiliatedProfile) {
+    const alreadyDeducted = await hasInvitationQuotaDeduction(db, row.id);
+    if (!alreadyDeducted && affiliatedProfile.creditQuota < 1) {
+      throw new InsufficientQuotaError();
+    }
+  }
+
   return db.transaction(async (tx) => {
+    // Atomically enforce and deduct quota inside the transaction if not yet deducted
+    if (affiliatedProfile) {
+      const alreadyDeducted = await hasInvitationQuotaDeduction(tx, row.id);
+      if (!alreadyDeducted) {
+        await deductResellerQuota(tx, {
+          resellerProfileId: affiliatedProfile.id,
+          invitationId: row.id,
+          invitationTitle: row.title,
+          actorUserId: actor.userId,
+        });
+      }
+    }
+
     const revisionNo = await nextRevisionNo(tx, row.id);
     const snapshot = await insertPublishedSnapshot(tx, {
       invitationId: row.id,

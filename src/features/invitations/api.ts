@@ -124,6 +124,7 @@ export async function getPublic(slug: string, guestToken?: string) {
 
 export {
   GuestNotFoundError,
+  InsufficientQuotaError,
   InvitationArchivedError,
   InvitationInputError,
   InvitationNotFoundError,
@@ -142,6 +143,7 @@ export function describeInvitationError(error: unknown): string {
     error instanceof service.TemplateNotPublishedError ||
     error instanceof service.PublishBlockedError ||
     error instanceof service.RevisionNotFoundError ||
+    error instanceof service.InsufficientQuotaError ||
     error instanceof ForbiddenError
   ) {
     return error.message;

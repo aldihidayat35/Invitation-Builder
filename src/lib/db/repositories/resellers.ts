@@ -1,4 +1,5 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { InsufficientQuotaError } from "../../auth/errors";
 import type { CreditTransactionType } from "../../schema/domain";
 import {
   creditTransactions,
@@ -383,3 +384,131 @@ export async function getAdminResellerStats(db: Database): Promise<{
     pendingTopups: topupRow?.pending ?? 0,
   };
 }
+
+/**
+ * Resolves the ResellerProfile affiliated with a workspace (or actor).
+ * Returns undefined if the workspace/actor belongs to a direct platform client or owner.
+ */
+export async function findAffiliatedResellerProfile(
+  db: Database,
+  workspaceId: string,
+  actorUserId?: string,
+): Promise<ResellerProfile | undefined> {
+  // 1. Look up the workspace owner
+  const [owner] = await db
+    .select({
+      id: users.id,
+      systemRole: users.systemRole,
+      resellerId: users.resellerId,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.role, "owner")))
+    .limit(1);
+
+  if (owner) {
+    if (owner.systemRole === "reseller") {
+      return findResellerProfileByUserId(db, owner.id);
+    }
+    if (owner.resellerId) {
+      return findResellerProfileByUserId(db, owner.resellerId);
+    }
+  }
+
+  // 2. Fallback to actor if owner check did not reveal reseller affiliation
+  if (actorUserId) {
+    const [actorUser] = await db
+      .select({
+        id: users.id,
+        systemRole: users.systemRole,
+        resellerId: users.resellerId,
+      })
+      .from(users)
+      .where(eq(users.id, actorUserId))
+      .limit(1);
+
+    if (actorUser) {
+      if (actorUser.systemRole === "reseller") {
+        return findResellerProfileByUserId(db, actorUser.id);
+      }
+      if (actorUser.resellerId) {
+        return findResellerProfileByUserId(db, actorUser.resellerId);
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/** Checks whether an invitation has already had quota deducted. */
+export async function hasInvitationQuotaDeduction(
+  db: Database,
+  invitationId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: creditTransactions.id })
+    .from(creditTransactions)
+    .where(
+      and(
+        eq(creditTransactions.referenceId, invitationId),
+        eq(creditTransactions.type, "publish_deduct"),
+      ),
+    )
+    .limit(1);
+  return Boolean(row);
+}
+
+/**
+ * Atomically deducts 1 credit from a reseller profile for publishing an invitation.
+ * Throws InsufficientQuotaError if current quota < 1.
+ */
+export async function deductResellerQuota(
+  db: Database,
+  input: {
+    resellerProfileId: string;
+    invitationId: string;
+    invitationTitle: string;
+    actorUserId?: string;
+  },
+): Promise<{ profile: ResellerProfile; transaction: CreditTransaction }> {
+  const [updatedProfile] = await db
+    .update(resellerProfiles)
+    .set({ creditQuota: sql`${resellerProfiles.creditQuota} - 1` })
+    .where(
+      and(
+        eq(resellerProfiles.id, input.resellerProfileId),
+        gte(resellerProfiles.creditQuota, 1),
+      ),
+    )
+    .returning();
+
+  if (!updatedProfile) {
+    throw new InsufficientQuotaError(
+      "Saldo kuota undangan agensi Anda tidak mencukupi (0 kredit). Silakan lakukan pengajuan Top-Up Transfer Manual melalui menu Kuota Agensi.",
+    );
+  }
+
+  const balanceAfter = updatedProfile.creditQuota;
+  const balanceBefore = balanceAfter + 1;
+
+  const [txRow] = await db
+    .insert(creditTransactions)
+    .values({
+      resellerId: input.resellerProfileId,
+      type: "publish_deduct",
+      amount: -1,
+      balanceBefore,
+      balanceAfter,
+      referenceId: input.invitationId,
+      notes: `Publikasi undangan: ${input.invitationTitle}`,
+      performedBy: input.actorUserId ?? null,
+    })
+    .returning();
+
+  if (!txRow) {
+    throw new Error("Failed to record credit transaction ledger");
+  }
+
+  return { profile: updatedProfile, transaction: txRow };
+}
+

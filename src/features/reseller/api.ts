@@ -3,10 +3,12 @@ import "server-only";
 import { requireReseller } from "@/lib/auth/server";
 import { assertPasswordPolicy, hashPassword } from "@/lib/auth/password";
 import { getDb } from "@/lib/db/client";
+import type { Database } from "@/lib/db/types";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { listBankAccounts } from "@/lib/db/repositories/bank-accounts";
 import {
   createResellerClient,
+  findResellerProfileByUserId,
   listCreditTransactions,
   updateResellerBranding,
   type UpdateResellerBrandingInput,
@@ -251,3 +253,18 @@ export async function updateAgencyBranding(input: UpdateResellerBrandingInput) {
 
   return updated;
 }
+
+/** Fetches agency branding details for client display (white-label badge & support). */
+export async function getClientAgencyBranding(resellerUserId: string, dbOverride?: Database) {
+  const db = dbOverride ?? (await getDb());
+  const profile = await findResellerProfileByUserId(db, resellerUserId);
+  if (!profile || !profile.isActive) return null;
+  return {
+    agencyName: profile.agencyName,
+    whatsappContact: profile.whatsappContact,
+    logoUrl: profile.logoUrl,
+    brandColor: profile.brandColor,
+    customDomain: profile.customDomain,
+  };
+}
+

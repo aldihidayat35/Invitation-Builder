@@ -1,4 +1,5 @@
 import { logoutAction } from "@/app/(dashboard)/login/actions";
+import { getClientAgencyBranding } from "@/features/reseller/api";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import {
   IconBank,
@@ -17,6 +18,9 @@ import styles from "./shell.module.css";
 /** Authenticated dashboard shell. `getWorkspaceContext` verifies the session (DB) or redirects to /login. */
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   const { user, active } = await getWorkspaceContext();
+  const agencyBranding = user.resellerId
+    ? await getClientAgencyBranding(user.resellerId)
+    : null;
   const initials = user.name
     .split(/\s+/)
     .filter(Boolean)
@@ -192,6 +196,39 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
             </>
           ) : null}
         </nav>
+
+        {agencyBranding ? (
+          <div className={styles.agencyBadge} data-testid="agency-white-label-badge">
+            <div className={styles.agencyBadgeHeader}>
+              {agencyBranding.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={agencyBranding.logoUrl}
+                  alt={agencyBranding.agencyName}
+                  className={styles.agencyLogo}
+                />
+              ) : (
+                <span className={styles.agencyBrandIcon} aria-hidden="true">
+                  {agencyBranding.agencyName.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <div className={styles.agencyInfo}>
+                <span className={styles.agencyManagedLabel}>Dikelola oleh</span>
+                <strong className={styles.agencyName}>{agencyBranding.agencyName}</strong>
+              </div>
+            </div>
+            <a
+              href={`https://wa.me/${agencyBranding.whatsappContact.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.agencySupportLink}
+              title="Hubungi Customer Support via WhatsApp"
+            >
+              <span>💬 Bantuan CS</span>
+              <small>{agencyBranding.whatsappContact}</small>
+            </a>
+          </div>
+        ) : null}
 
         <div className={styles.account}>
           <div className={styles.user} id="current-user">
