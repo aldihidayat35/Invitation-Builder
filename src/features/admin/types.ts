@@ -44,3 +44,15 @@ export interface ActionState {
   message?: string;
 }
 
+export interface AdminTopupFinancialRecap {
+  totalApprovedRevenue: number;
+  totalPendingRevenue: number;
+  totalApprovedCredits: number;
+  totalPendingCredits: number;
+  totalPendingCount: number;
+  totalApprovedCount: number;
+  totalRejectedCount: number;
+  totalRequestsCount: number;
+}
+
+

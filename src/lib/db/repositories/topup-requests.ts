@@ -259,3 +259,42 @@ export async function getPendingTopupCount(db: Database): Promise<number> {
 
   return row?.count ?? 0;
 }
+
+export interface TopupFinancialRecap {
+  totalApprovedRevenue: number;
+  totalPendingRevenue: number;
+  totalApprovedCredits: number;
+  totalPendingCredits: number;
+  totalPendingCount: number;
+  totalApprovedCount: number;
+  totalRejectedCount: number;
+  totalRequestsCount: number;
+}
+
+/** Aggregates financial and volume statistics for manual top-up requests. */
+export async function getTopupFinancialRecap(db: Database): Promise<TopupFinancialRecap> {
+  const [row] = await db
+    .select({
+      approvedRevenue: sql<number>`coalesce(sum(case when ${topupRequests.status} = 'approved' then ${topupRequests.amountPaid} else 0 end), 0)::bigint`,
+      pendingRevenue: sql<number>`coalesce(sum(case when ${topupRequests.status} = 'pending' then ${topupRequests.amountPaid} else 0 end), 0)::bigint`,
+      approvedCredits: sql<number>`coalesce(sum(case when ${topupRequests.status} = 'approved' then ${topupRequests.creditAmount} else 0 end), 0)::int`,
+      pendingCredits: sql<number>`coalesce(sum(case when ${topupRequests.status} = 'pending' then ${topupRequests.creditAmount} else 0 end), 0)::int`,
+      pendingCount: sql<number>`count(case when ${topupRequests.status} = 'pending' then 1 end)::int`,
+      approvedCount: sql<number>`count(case when ${topupRequests.status} = 'approved' then 1 end)::int`,
+      rejectedCount: sql<number>`count(case when ${topupRequests.status} = 'rejected' then 1 end)::int`,
+      totalCount: sql<number>`count(*)::int`,
+    })
+    .from(topupRequests);
+
+  return {
+    totalApprovedRevenue: Number(row?.approvedRevenue ?? 0),
+    totalPendingRevenue: Number(row?.pendingRevenue ?? 0),
+    totalApprovedCredits: Number(row?.approvedCredits ?? 0),
+    totalPendingCredits: Number(row?.pendingCredits ?? 0),
+    totalPendingCount: Number(row?.pendingCount ?? 0),
+    totalApprovedCount: Number(row?.approvedCount ?? 0),
+    totalRejectedCount: Number(row?.rejectedCount ?? 0),
+    totalRequestsCount: Number(row?.totalCount ?? 0),
+  };
+}
+

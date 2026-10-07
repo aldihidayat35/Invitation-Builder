@@ -7,16 +7,18 @@ import {
   type ResellerBankAccountItem,
   type TopupPackage,
 } from "../types";
+import { buildWhatsAppConfirmationUrl } from "../whatsapp";
 import { BankAccountsInfoBox } from "./BankAccountsInfoBox";
 import { TopupPackageSelector } from "./TopupPackageSelector";
 import styles from "./reseller.module.css";
 
 interface TopupRequestFormProps {
   bankAccounts: ResellerBankAccountItem[];
+  agencyName?: string;
   action: (_prev: ActionState, formData: FormData) => Promise<ActionState>;
 }
 
-export function TopupRequestForm({ bankAccounts, action }: TopupRequestFormProps) {
+export function TopupRequestForm({ bankAccounts, agencyName, action }: TopupRequestFormProps) {
   const [selectedPackage, setSelectedPackage] = useState<TopupPackage>(TOPUP_PACKAGES[1]!); // default growth
   const [state, formAction, isPending] = useActionState(action, {});
 
@@ -43,7 +45,63 @@ export function TopupRequestForm({ bankAccounts, action }: TopupRequestFormProps
 
           {state.error ? <div className={styles.formError}>{state.error}</div> : null}
           {state.ok && state.message ? (
-            <div className={styles.formSuccess}>{state.message}</div>
+            <div
+              style={{
+                padding: 16,
+                borderRadius: "var(--dash-radius)",
+                background: "#25d36615",
+                border: "1px solid #25d36650",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 24 }}>✅</span>
+                <div>
+                  <strong style={{ color: "#128c7e", fontSize: 15, display: "block" }}>
+                    Permohonan Berhasil Dikirimkan!
+                  </strong>
+                  <span style={{ fontSize: 13, color: "var(--dash-text)" }}>{state.message}</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+                <a
+                  href={buildWhatsAppConfirmationUrl({
+                    agencyName: agencyName ?? "Agensi Reseller",
+                    creditAmount: selectedPackage.creditAmount,
+                    amountPaid: selectedPackage.price,
+                    senderBank: "Bank Pengirim",
+                    senderAccountName: "Nama Pengirim",
+                    destinationBank: bankAccounts[0]
+                      ? `${bankAccounts[0].bankName} (${bankAccounts[0].accountNumber})`
+                      : undefined,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: "#25d366",
+                    color: "#ffffff",
+                    padding: "10px 18px",
+                    borderRadius: "var(--dash-radius-sm)",
+                    fontWeight: 650,
+                    fontSize: 14,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                  }}
+                  id="btn-whatsapp-confirm"
+                >
+                  <span style={{ fontSize: 16 }}>💬</span> Konfirmasi Cepat ke Admin via WhatsApp
+                </a>
+                <span style={{ fontSize: 12, color: "var(--dash-muted)" }}>
+                  Kirim pesan WhatsApp otomatis ke Owner untuk verifikasi instan.
+                </span>
+              </div>
+            </div>
           ) : null}
 
           <div className={styles.formRow}>

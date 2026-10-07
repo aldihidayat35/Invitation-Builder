@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ResellerTopupPage() {
-  await requireReseller();
+  const { profile } = await requireReseller();
   const { bankAccounts } = await getResellerTopupInfo();
 
   return (
@@ -38,7 +38,11 @@ export default async function ResellerTopupPage() {
         </div>
       </header>
 
-      <TopupRequestForm bankAccounts={bankAccounts} action={submitTopupAction} />
+      <TopupRequestForm
+        bankAccounts={bankAccounts}
+        agencyName={profile.agencyName}
+        action={submitTopupAction}
+      />
     </div>
   );
 }

@@ -23,14 +23,17 @@ import {
 } from "@/lib/db/repositories/resellers";
 import {
   approveTopupRequest as repoApproveTopup,
+  getTopupFinancialRecap as repoGetFinancialRecap,
   listTopupRequests as repoListTopupRequests,
   rejectTopupRequest as repoRejectTopup,
 } from "@/lib/db/repositories/topup-requests";
 import type { BankAccount } from "@/lib/db/schema";
+import type { Database } from "@/lib/db/types";
 import type { CreditTransactionType, TopupRequestStatus } from "@/lib/schema/domain";
 import type {
   AdminResellerItem,
   AdminStats,
+  AdminTopupFinancialRecap,
   AdminTopupRequestItem,
   AdminTransactionItem,
 } from "./types";
@@ -243,6 +246,17 @@ export async function getAdminTopupRequests(
   await requireOwner();
   const db = await getDb();
   return repoListTopupRequests(db, status, limit);
+}
+
+/** Fetches financial and volume recap for top-up requests. */
+export async function getAdminTopupFinancialRecap(
+  dbOverride?: Database,
+): Promise<AdminTopupFinancialRecap> {
+  if (!dbOverride) {
+    await requireOwner();
+  }
+  const db = dbOverride ?? (await getDb());
+  return repoGetFinancialRecap(db);
 }
 
 /** Atomically approves a manual transfer top-up request. */

@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import type { ActionState, AdminTopupRequestItem } from "../types";
+import type { ActionState, AdminTopupFinancialRecap, AdminTopupRequestItem } from "../types";
 import { ProofPreviewModal } from "./ProofPreviewModal";
 import { RejectTopupModal } from "./RejectTopupModal";
 import { TopupRequestsTable } from "./TopupRequestsTable";
 
 interface TopupRequestsManagerProps {
   items: AdminTopupRequestItem[];
+  recap?: AdminTopupFinancialRecap;
   approveAction: (requestId: string) => Promise<void>;
   rejectAction: (_prev: ActionState, formData: FormData) => Promise<ActionState>;
 }
 
 export function TopupRequestsManager({
   items,
+  recap,
   approveAction,
   rejectAction,
 }: TopupRequestsManagerProps) {
@@ -37,6 +39,7 @@ export function TopupRequestsManager({
     <>
       <TopupRequestsTable
         items={items}
+        recap={recap}
         onViewProof={(item) => setSelectedProof(item)}
         onApprove={handleApprove}
         onReject={(item) => setSelectedForReject(item)}

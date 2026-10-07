@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { AdminTopupRequestItem } from "../types";
+import { downloadCsvFile, generateCsv } from "@/lib/csv/exporter";
+import type { AdminTopupFinancialRecap, AdminTopupRequestItem } from "../types";
 import styles from "./admin.module.css";
 
 interface TopupRequestsTableProps {
   items: AdminTopupRequestItem[];
+  recap?: AdminTopupFinancialRecap;
   onViewProof: (item: AdminTopupRequestItem) => void;
   onApprove: (item: AdminTopupRequestItem) => void;
   onReject: (item: AdminTopupRequestItem) => void;
@@ -13,6 +15,7 @@ interface TopupRequestsTableProps {
 
 export function TopupRequestsTable({
   items,
+  recap,
   onViewProof,
   onApprove,
   onReject,
@@ -24,40 +27,124 @@ export function TopupRequestsTable({
     return item.request.status === filter;
   });
 
+  const handleExportCsv = () => {
+    const headers = [
+      "Tanggal Permohonan",
+      "ID Permohonan",
+      "Nama Agensi",
+      "Email Reseller",
+      "Nominal Transfer (Rp)",
+      "Kredit Kuota",
+      "Bank Pengirim",
+      "Nama Pengirim",
+      "Rekening Tujuan",
+      "Status",
+      "Catatan / Alasan Ditolak",
+      "Tanggal Review",
+    ];
+
+    const rows = filteredItems.map((item) => [
+      new Date(item.request.createdAt).toISOString(),
+      item.request.id,
+      item.reseller.agencyName,
+      item.user.email,
+      item.request.amountPaid,
+      item.request.creditAmount,
+      item.request.senderBank,
+      item.request.senderAccountName,
+      item.bankAccount ? `${item.bankAccount.bankName} - ${item.bankAccount.accountNumber}` : "-",
+      item.request.status,
+      item.request.rejectionReason || item.request.notes || "-",
+      item.request.reviewedAt ? new Date(item.request.reviewedAt).toISOString() : "-",
+    ]);
+
+    const csv = generateCsv(headers, rows);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCsvFile(`rekapitulasi-topup-manual-${dateStr}.csv`, csv);
+  };
+
   return (
-    <div className={styles.tableCard}>
-      <div className={styles.tableToolbar} style={{ justifyContent: "space-between" }}>
-        <div className={styles.tabList} style={{ borderBottom: "none", margin: 0, padding: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {recap ? (
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Dana Masuk (Disetujui)</span>
+            <strong className={styles.statValue} style={{ color: "var(--dash-success, #10b981)" }}>
+              Rp {recap.totalApprovedRevenue.toLocaleString("id-ID")}
+            </strong>
+            <span className={styles.statSub}>
+              +{recap.totalApprovedCredits} kredit diterbitkan ({recap.totalApprovedCount} approved)
+            </span>
+          </div>
+
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Menunggu Verifikasi</span>
+            <strong className={styles.statValue} style={{ color: "var(--dash-warning, #f59e0b)" }}>
+              Rp {recap.totalPendingRevenue.toLocaleString("id-ID")}
+            </strong>
+            <span className={styles.statSub}>
+              {recap.totalPendingCount} permohonan antre verifikasi
+            </span>
+          </div>
+
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Total Permohonan</span>
+            <strong className={styles.statValue}>{recap.totalRequestsCount}</strong>
+            <span className={styles.statSub}>
+              {recap.totalApprovedCount} disetujui · {recap.totalRejectedCount} ditolak
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      <div className={styles.tableCard}>
+        <div className={styles.tableToolbar} style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div className={styles.tabList} style={{ borderBottom: "none", margin: 0, padding: 0 }}>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${filter === "all" ? styles.tabButtonActive : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              Semua ({items.length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${filter === "pending" ? styles.tabButtonActive : ""}`}
+              onClick={() => setFilter("pending")}
+            >
+              Menunggu Verifikasi ({items.filter((i) => i.request.status === "pending").length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${filter === "approved" ? styles.tabButtonActive : ""}`}
+              onClick={() => setFilter("approved")}
+            >
+              Disetujui ({items.filter((i) => i.request.status === "approved").length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabButton} ${filter === "rejected" ? styles.tabButtonActive : ""}`}
+              onClick={() => setFilter("rejected")}
+            >
+              Ditolak ({items.filter((i) => i.request.status === "rejected").length})
+            </button>
+          </div>
+
           <button
             type="button"
-            className={`${styles.tabButton} ${filter === "all" ? styles.tabButtonActive : ""}`}
-            onClick={() => setFilter("all")}
+            onClick={handleExportCsv}
+            className={styles.btnSecondary}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "6px 12px" }}
+            title="Unduh seluruh baris yang difilter ke file CSV"
           >
-            Semua ({items.length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${filter === "pending" ? styles.tabButtonActive : ""}`}
-            onClick={() => setFilter("pending")}
-          >
-            Menunggu Verifikasi ({items.filter((i) => i.request.status === "pending").length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${filter === "approved" ? styles.tabButtonActive : ""}`}
-            onClick={() => setFilter("approved")}
-          >
-            Disetujui ({items.filter((i) => i.request.status === "approved").length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${filter === "rejected" ? styles.tabButtonActive : ""}`}
-            onClick={() => setFilter("rejected")}
-          >
-            Ditolak ({items.filter((i) => i.request.status === "rejected").length})
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Ekspor CSV ({filteredItems.length})
           </button>
         </div>
-      </div>
 
       <div className={styles.tableResponsive}>
         <table className={styles.table}>
@@ -220,5 +307,7 @@ export function TopupRequestsTable({
         </table>
       </div>
     </div>
-  );
+  </div>
+);
 }
+

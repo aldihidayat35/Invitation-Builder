@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAdminTopupRequests } from "@/features/admin/api";
+import { getAdminTopupFinancialRecap, getAdminTopupRequests } from "@/features/admin/api";
 import { TopupRequestsManager } from "@/features/admin/components/TopupRequestsManager";
 import styles from "@/features/admin/components/admin.module.css";
 import { requireOwner } from "@/lib/auth/server";
@@ -13,7 +13,10 @@ export const metadata: Metadata = {
 
 export default async function TopupRequestsAdminPage() {
   await requireOwner();
-  const requests = await getAdminTopupRequests();
+  const [requests, recap] = await Promise.all([
+    getAdminTopupRequests(),
+    getAdminTopupFinancialRecap(),
+  ]);
 
   return (
     <div className={styles.page}>
@@ -46,6 +49,7 @@ export default async function TopupRequestsAdminPage() {
 
       <TopupRequestsManager
         items={requests}
+        recap={recap}
         approveAction={approveTopupAction}
         rejectAction={rejectTopupAction}
       />

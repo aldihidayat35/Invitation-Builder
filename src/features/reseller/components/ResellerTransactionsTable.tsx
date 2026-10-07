@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { downloadCsvFile, generateCsv } from "@/lib/csv/exporter";
 import type { ResellerTopupRequestItem } from "../types";
+import { buildWhatsAppConfirmationUrl } from "../whatsapp";
 import styles from "./reseller.module.css";
 
 interface ResellerTransactionsTableProps {
@@ -16,39 +18,112 @@ export function ResellerTransactionsTable({
 }: ResellerTransactionsTableProps) {
   const [activeTab, setActiveTab] = useState<"requests" | "ledger">("requests");
 
+  const handleExportCsv = () => {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    if (activeTab === "requests") {
+      const headers = [
+        "Tanggal Pengajuan",
+        "ID Permohonan",
+        "Nominal Transfer (Rp)",
+        "Kuota Diminta",
+        "Bank Pengirim",
+        "Atas Nama Pengirim",
+        "Rekening Tujuan",
+        "Status Verifikasi",
+        "Catatan / Alasan Penolakan",
+      ];
+      const rows = requests.map((r) => [
+        new Date(r.createdAt).toISOString(),
+        r.id,
+        r.amountPaid,
+        r.creditAmount,
+        r.senderBank,
+        r.senderAccountName,
+        r.bankAccount ? `${r.bankAccount.bankName} - ${r.bankAccount.accountNumber}` : "-",
+        r.status,
+        r.rejectionReason || r.notes || "-",
+      ]);
+      const csv = generateCsv(headers, rows);
+      downloadCsvFile(`riwayat-pengajuan-topup-${dateStr}.csv`, csv);
+    } else {
+      const headers = [
+        "Tanggal & Waktu",
+        "ID Transaksi",
+        "Tipe Mutasi",
+        "Perubahan Kuota",
+        "Saldo Sebelum",
+        "Saldo Sesudah",
+        "Referensi / ID Undangan",
+        "Keterangan",
+      ];
+      const rows = transactions.map((t) => [
+        new Date(t.createdAt).toISOString(),
+        t.id,
+        t.type,
+        t.amount > 0 ? `+${t.amount}` : t.amount,
+        t.balanceBefore,
+        t.balanceAfter,
+        t.referenceId || "-",
+        t.notes || "-",
+      ]);
+      const csv = generateCsv(headers, rows);
+      downloadCsvFile(`buku-mutasi-kuota-${dateStr}.csv`, csv);
+    }
+  };
+
   return (
     <div className={styles.tableCard}>
       <div
         style={{
           display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           borderBottom: "1px solid var(--dash-border)",
           padding: "12px 16px",
           gap: 12,
+          flexWrap: "wrap",
         }}
       >
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("requests")}
+            className={styles.btnSecondary}
+            style={{
+              background: activeTab === "requests" ? "var(--dash-accent-soft)" : "transparent",
+              color: activeTab === "requests" ? "var(--dash-accent)" : "var(--dash-muted)",
+              borderColor: activeTab === "requests" ? "var(--dash-accent)" : "transparent",
+            }}
+          >
+            Status Pengajuan Top-Up ({requests.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("ledger")}
+            className={styles.btnSecondary}
+            style={{
+              background: activeTab === "ledger" ? "var(--dash-accent-soft)" : "transparent",
+              color: activeTab === "ledger" ? "var(--dash-accent)" : "var(--dash-muted)",
+              borderColor: activeTab === "ledger" ? "var(--dash-accent)" : "transparent",
+            }}
+          >
+            Buku Mutasi Kuota ({transactions.length})
+          </button>
+        </div>
+
         <button
           type="button"
-          onClick={() => setActiveTab("requests")}
+          onClick={handleExportCsv}
           className={styles.btnSecondary}
-          style={{
-            background: activeTab === "requests" ? "var(--dash-accent-soft)" : "transparent",
-            color: activeTab === "requests" ? "var(--dash-accent)" : "var(--dash-muted)",
-            borderColor: activeTab === "requests" ? "var(--dash-accent)" : "transparent",
-          }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "6px 12px" }}
+          title="Unduh seluruh data tab aktif ke file CSV"
         >
-          Status Pengajuan Top-Up ({requests.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("ledger")}
-          className={styles.btnSecondary}
-          style={{
-            background: activeTab === "ledger" ? "var(--dash-accent-soft)" : "transparent",
-            color: activeTab === "ledger" ? "var(--dash-accent)" : "var(--dash-muted)",
-            borderColor: activeTab === "ledger" ? "var(--dash-accent)" : "transparent",
-          }}
-        >
-          Buku Mutasi Kuota ({transactions.length})
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Ekspor CSV ({activeTab === "requests" ? requests.length : transactions.length})
         </button>
       </div>
 
@@ -63,13 +138,14 @@ export function ResellerTransactionsTable({
                 <th>Pengirim</th>
                 <th>Bukti Transfer</th>
                 <th>Status Verifikasi</th>
+                <th>Aksi</th>
                 <th>Catatan / Keterangan</th>
               </tr>
             </thead>
             <tbody>
               {requests.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className={styles.emptyState}>
                       <strong>Belum ada riwayat pengajuan top-up</strong>
                       <span>Silakan ajukan permohonan melalui menu Top-up Kuota.</span>
@@ -144,6 +220,46 @@ export function ResellerTransactionsTable({
                         <span className={`${styles.statusBadge} ${styles.statusRejected}`}>
                           ✕ Ditolak
                         </span>
+                      )}
+                    </td>
+
+                    <td>
+                      {r.status === "pending" ? (
+                        <a
+                          href={buildWhatsAppConfirmationUrl({
+                            agencyName: "Agensi Reseller",
+                            requestId: r.id,
+                            creditAmount: r.creditAmount,
+                            amountPaid: r.amountPaid,
+                            senderBank: r.senderBank,
+                            senderAccountName: r.senderAccountName,
+                            destinationBank: r.bankAccount
+                              ? `${r.bankAccount.bankName} (${r.bankAccount.accountNumber})`
+                              : undefined,
+                            proofUrl: r.proofFileUrl,
+                          })}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.btnSecondary}
+                          style={{
+                            fontSize: 12,
+                            padding: "4px 8px",
+                            background: "#25d36615",
+                            borderColor: "#25d36650",
+                            color: "#128c7e",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            whiteSpace: "nowrap",
+                          }}
+                          title="Konfirmasi via WhatsApp ke Admin"
+                        >
+                          💬 Konfirmasi WA
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "var(--dash-muted)" }}>-</span>
                       )}
                     </td>
 

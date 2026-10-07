@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { downloadCsvFile, generateCsv } from "@/lib/csv/exporter";
 import type { AdminTransactionItem } from "../types";
 import styles from "./admin.module.css";
 
@@ -56,6 +57,40 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     }
   };
 
+  const handleExportCsv = () => {
+    const headers = [
+      "Tanggal & Waktu",
+      "ID Transaksi",
+      "Nama Agensi",
+      "Email Reseller",
+      "Tipe Mutasi",
+      "Perubahan Kuota",
+      "Saldo Sebelum",
+      "Saldo Sesudah",
+      "Referensi / Invoice",
+      "Keterangan",
+      "Operator",
+    ];
+
+    const rows = filtered.map((item) => [
+      new Date(item.transaction.createdAt).toISOString(),
+      item.transaction.id,
+      item.reseller.agencyName,
+      item.user.email,
+      item.transaction.type,
+      item.transaction.amount > 0 ? `+${item.transaction.amount}` : item.transaction.amount,
+      item.transaction.balanceBefore,
+      item.transaction.balanceAfter,
+      item.transaction.referenceId || "-",
+      item.transaction.notes || "-",
+      item.transaction.performedBy || "-",
+    ]);
+
+    const csv = generateCsv(headers, rows);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCsvFile(`mutasi-kuota-semua-reseller-${dateStr}.csv`, csv);
+  };
+
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
@@ -88,6 +123,21 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             <option value="unpublish_refund">Refund (unpublish_refund)</option>
             <option value="manual_adjustment">Koreksi Manual (manual_adjustment)</option>
           </select>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className={styles.btnSecondary}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "7px 14px" }}
+            title="Unduh seluruh data mutasi yang difilter ke file CSV"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Ekspor CSV ({filtered.length})
+          </button>
         </div>
       </div>
 
