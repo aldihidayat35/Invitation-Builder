@@ -23,7 +23,7 @@ const EXPECTED_TABLES = [
   "workspace_members",
   "workspaces",
   "reseller_profiles",
-  "credit_transactions",
+  "customer_orders",
 ];
 
 beforeAll(async () => {

@@ -200,3 +200,13 @@ export async function findTemplateVersion(
     .limit(1);
   return row;
 }
+
+/** Lists active templates available in the public catalog for customer order selection. */
+export async function listPublicTemplates(db: Database): Promise<TemplateRow[]> {
+  return db
+    .select()
+    .from(templates)
+    .where(ne(templates.status, "archived"))
+    .orderBy(desc(templates.createdAt))
+    .limit(50);
+}

@@ -90,36 +90,18 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
                   <NavLink
                     href="/dashboard/admin/resellers"
                     icon={<IconUsers />}
-                    hint="Kelola mitra reseller & lisensi"
+                    hint="Kelola mitra seller & toko"
                   >
-                    Mitra Reseller
+                    Mitra Seller
                   </NavLink>
                 </li>
                 <li>
                   <NavLink
-                    href="/dashboard/admin/topup-requests"
+                    href="/dashboard/admin/orders"
                     icon={<IconReceipt />}
-                    hint="Verifikasi bukti transfer manual"
+                    hint="Olah data & terbitkan undangan customer"
                   >
-                    Verifikasi Top-up
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    href="/dashboard/admin/bank-accounts"
-                    icon={<IconBank />}
-                    hint="Rekening tujuan transfer manual"
-                  >
-                    Rekening Bank
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    href="/dashboard/admin/transactions"
-                    icon={<IconCoins />}
-                    hint="Riwayat mutasi kredit & audit ledger"
-                  >
-                    Mutasi Kuota
+                    Pesanan Masuk
                   </NavLink>
                 </li>
               </ul>
@@ -128,52 +110,43 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
           {user.systemRole === "reseller" ? (
             <>
-              <p className={styles.navGroup}>Portal Reseller</p>
+              <p className={styles.navGroup}>Portal Seller</p>
               <ul className={styles.navList}>
                 <li>
                   <NavLink
                     href="/dashboard/reseller"
                     exact
                     icon={<IconHome />}
-                    hint="Ringkasan agensi & saldo kuota"
+                    hint="Ringkasan toko & statistik"
                   >
-                    Ringkasan Agensi
+                    Ringkasan Toko
                   </NavLink>
                 </li>
                 <li>
                   <NavLink
-                    href="/dashboard/reseller/topup"
-                    icon={<IconCoins />}
-                    hint="Beli paket kuota grosir via transfer"
-                  >
-                    Beli Kuota (Top-Up)
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    href="/dashboard/reseller/transactions"
+                    href="/dashboard/reseller/orders"
                     icon={<IconReceipt />}
-                    hint="Status permohonan & buku mutasi"
+                    hint="Pantau status pesanan customer"
                   >
-                    Riwayat Kuota
+                    Pesanan Customer
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller/storefront"
+                    icon={<IconTemplate />}
+                    hint="Etalase publik & domain khusus"
+                  >
+                    Website Toko
                   </NavLink>
                 </li>
                 <li>
                   <NavLink
                     href="/dashboard/reseller/clients"
                     icon={<IconUsers />}
-                    hint="Daftar klien & buat akun klien"
+                    hint="Daftar klien & akun klien"
                   >
                     Klien Agensi
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    href="/dashboard/reseller/branding"
-                    icon={<IconTemplate />}
-                    hint="Logo, nama brand & kontak WA"
-                  >
-                    Branding Agensi
                   </NavLink>
                 </li>
               </ul>

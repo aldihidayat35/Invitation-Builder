@@ -27,7 +27,7 @@ import {
 } from "drizzle-orm/pg-core";
 import {
   assetStatusEnum,
-  creditTransactionTypeEnum,
+  customerOrderStatusEnum,
   guestStatusEnum,
   invitationStatusEnum,
   rsvpResponseEnum,
@@ -329,7 +329,6 @@ export const resellerProfiles = pgTable(
     slug: text("slug").notNull(),
     whatsappContact: text("whatsapp_contact").notNull(),
     logoUrl: text("logo_url"),
-    creditQuota: integer("credit_quota").notNull().default(0),
     customDomain: text("custom_domain"),
     brandColor: text("brand_color").notNull().default("#3b82f6"),
     hideWatermark: pgBoolean("hide_watermark").notNull().default(true),
@@ -341,77 +340,34 @@ export const resellerProfiles = pgTable(
     uniqueIndex("reseller_profiles_user_uq").on(t.userId),
     uniqueIndex("reseller_profiles_slug_uq").on(t.slug),
     check("reseller_profiles_slug_format", sql`${t.slug} ~ ${SLUG_SQL}`),
-    check("reseller_profiles_credit_quota_non_negative", sql`${t.creditQuota} >= 0`),
   ],
 );
 
-export const creditTransactions = pgTable(
-  "credit_transactions",
+export const customerOrders = pgTable(
+  "customer_orders",
   {
     id: id(),
-    resellerId: uuid("reseller_id")
+    sellerId: uuid("seller_id")
       .notNull()
       .references(() => resellerProfiles.id),
-    type: creditTransactionTypeEnum("type").notNull(),
-    amount: integer("amount").notNull(),
-    balanceBefore: integer("balance_before").notNull(),
-    balanceAfter: integer("balance_after").notNull(),
-    referenceId: text("reference_id"),
+    clientUserId: uuid("client_user_id").references(() => users.id),
+    invitationId: uuid("invitation_id").references(() => invitations.id),
+    templateId: uuid("template_id").references(() => templates.id),
+    customerName: text("customer_name").notNull(),
+    customerEmail: text("customer_email").notNull(),
+    customerWhatsapp: text("customer_whatsapp").notNull(),
+    groomBrideNames: text("groom_bride_names"),
+    eventDate: timestamp("event_date", { withTimezone: true }),
+    eventLocation: text("event_location"),
     notes: text("notes"),
-    performedBy: uuid("performed_by").references(() => users.id),
-    createdAt: createdAt(),
-  },
-  (t) => [
-    index("credit_transactions_reseller_idx").on(t.resellerId, t.createdAt),
-    check(
-      "credit_transactions_balances_valid",
-      sql`${t.balanceBefore} + ${t.amount} = ${t.balanceAfter}`,
-    ),
-  ],
-);
-
-export const bankAccounts = pgTable("bank_accounts", {
-  id: id(),
-  bankName: text("bank_name").notNull(),
-  accountNumber: text("account_number").notNull(),
-  accountHolder: text("account_holder").notNull(),
-  qrCodeUrl: text("qr_code_url"),
-  instructions: text("instructions"),
-  isActive: pgBoolean("is_active").notNull().default(true),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
-
-export const topupRequests = pgTable(
-  "topup_requests",
-  {
-    id: id(),
-    resellerId: uuid("reseller_id")
-      .notNull()
-      .references(() => resellerProfiles.id),
-    creditAmount: integer("credit_amount").notNull(),
-    amountPaid: integer("amount_paid").notNull(),
-    bankAccountId: uuid("bank_account_id").references(() => bankAccounts.id),
-    senderBank: text("sender_bank").notNull(),
-    senderAccountName: text("sender_account_name").notNull(),
-    proofFileUrl: text("proof_file_url").notNull(),
-    notes: text("notes"),
-    status: text("status").notNull().default("pending"),
-    rejectionReason: text("rejection_reason"),
-    reviewedBy: uuid("reviewed_by").references(() => users.id),
-    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    status: customerOrderStatusEnum("status").notNull().default("new"),
+    adminNotes: text("admin_notes"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
-    index("topup_requests_reseller_idx").on(t.resellerId, t.createdAt),
-    index("topup_requests_status_idx").on(t.status, t.createdAt),
-    check("topup_requests_credit_amount_positive", sql`${t.creditAmount} > 0`),
-    check("topup_requests_amount_paid_positive", sql`${t.amountPaid} > 0`),
-    check(
-      "topup_requests_status_valid",
-      sql`${t.status} in ('pending', 'approved', 'rejected', 'cancelled')`,
-    ),
+    index("customer_orders_seller_idx").on(t.sellerId, t.createdAt),
+    index("customer_orders_status_idx").on(t.status, t.createdAt),
   ],
 );
 
@@ -419,12 +375,8 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
 export type NewResellerProfile = typeof resellerProfiles.$inferInsert;
-export type CreditTransaction = typeof creditTransactions.$inferSelect;
-export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
-export type BankAccount = typeof bankAccounts.$inferSelect;
-export type NewBankAccount = typeof bankAccounts.$inferInsert;
-export type TopupRequest = typeof topupRequests.$inferSelect;
-export type NewTopupRequest = typeof topupRequests.$inferInsert;
+export type CustomerOrder = typeof customerOrders.$inferSelect;
+export type NewCustomerOrder = typeof customerOrders.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;

@@ -15,7 +15,7 @@ import type { PreviewGuestSelection } from "./service";
 
 async function context(): Promise<{ db: Database; actor: Actor }> {
   const user = await requireUser();
-  return { db: await getDb(), actor: { userId: user.id } };
+  return { db: await getDb(), actor: { userId: user.id, systemRole: user.systemRole } };
 }
 
 export async function permissionsFor(workspaceId: string) {
@@ -124,7 +124,6 @@ export async function getPublic(slug: string, guestToken?: string) {
 
 export {
   GuestNotFoundError,
-  InsufficientQuotaError,
   InvitationArchivedError,
   InvitationInputError,
   InvitationNotFoundError,
@@ -143,7 +142,6 @@ export function describeInvitationError(error: unknown): string {
     error instanceof service.TemplateNotPublishedError ||
     error instanceof service.PublishBlockedError ||
     error instanceof service.RevisionNotFoundError ||
-    error instanceof service.InsufficientQuotaError ||
     error instanceof ForbiddenError
   ) {
     return error.message;

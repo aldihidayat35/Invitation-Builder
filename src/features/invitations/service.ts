@@ -20,14 +20,9 @@ import {
   type Actor,
   type Capability,
 } from "@/lib/auth/authorization";
-import { InsufficientQuotaError } from "@/lib/auth/errors";
+import { ForbiddenError } from "@/lib/auth/errors";
 import { generateGuestTokenId } from "@/lib/db/guest-token";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
-import {
-  deductResellerQuota,
-  findAffiliatedResellerProfile,
-  hasInvitationQuotaDeduction,
-} from "@/lib/db/repositories/resellers";
 import {
   archiveGuestRow,
   archiveInvitationRow,
@@ -81,7 +76,6 @@ import type {
   SnapshotSummary,
 } from "./types";
 
-export { InsufficientQuotaError } from "@/lib/auth/errors";
 
 export class PublishBlockedError extends Error {
   constructor(readonly missing: readonly string[]) {
@@ -191,6 +185,9 @@ async function loadAuthorized(
   invitationId: string,
   capability: Capability,
 ): Promise<InvitationRow> {
+  if (actor.systemRole === "reseller" && capability.endsWith(":write")) {
+    throw new ForbiddenError("Reseller/Seller tidak memiliki akses untuk mengubah data undangan.");
+  }
   if (!uuidSchema.safeParse(invitationId).success) throw new InvitationNotFoundError(invitationId);
   const row = await findInvitationById(db, invitationId);
   if (!row) throw new InvitationNotFoundError(invitationId);
@@ -238,6 +235,9 @@ export async function invitationPermissions(
   actor: Actor,
   workspaceId: string,
 ): Promise<{ write: boolean }> {
+  if (actor.systemRole === "reseller") {
+    return { write: false };
+  }
   const role = await findRole(db, actor, workspaceId);
   return { write: role ? roleCan(role, "invitation:write") : false };
 }
@@ -575,28 +575,7 @@ export async function publishInvitation(
   ).filter((issue) => issue.code !== "unknown_key");
   if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
 
-  // Check reseller quota affiliation & eligibility
-  const affiliatedProfile = await findAffiliatedResellerProfile(db, row.workspaceId, actor.userId);
-  if (affiliatedProfile) {
-    const alreadyDeducted = await hasInvitationQuotaDeduction(db, row.id);
-    if (!alreadyDeducted && affiliatedProfile.creditQuota < 1) {
-      throw new InsufficientQuotaError();
-    }
-  }
-
   return db.transaction(async (tx) => {
-    // Atomically enforce and deduct quota inside the transaction if not yet deducted
-    if (affiliatedProfile) {
-      const alreadyDeducted = await hasInvitationQuotaDeduction(tx, row.id);
-      if (!alreadyDeducted) {
-        await deductResellerQuota(tx, {
-          resellerProfileId: affiliatedProfile.id,
-          invitationId: row.id,
-          invitationTitle: row.title,
-          actorUserId: actor.userId,
-        });
-      }
-    }
 
     const revisionNo = await nextRevisionNo(tx, row.id);
     const snapshot = await insertPublishedSnapshot(tx, {

@@ -23,13 +23,3 @@ export class ForbiddenError extends Error {
   }
 }
 
-/** Reseller quota depletion error when attempting to publish an invitation. */
-export class InsufficientQuotaError extends Error {
-  constructor(
-    message = "Saldo kuota undangan agensi Anda tidak mencukupi (0 kredit). Silakan lakukan pengajuan Top-Up Transfer Manual melalui menu Kuota Agensi.",
-  ) {
-    super(message);
-    this.name = "InsufficientQuotaError";
-  }
-}
-

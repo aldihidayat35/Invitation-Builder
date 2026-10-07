@@ -6,7 +6,7 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 import {
   ASSET_STATUSES,
-  CREDIT_TRANSACTION_TYPES,
+  CUSTOMER_ORDER_STATUSES,
   GUEST_STATUSES,
   INVITATION_STATUSES,
   RSVP_RESPONSES,
@@ -18,9 +18,9 @@ import {
 
 export const workspaceRoleEnum = pgEnum("workspace_role", WORKSPACE_ROLES);
 export const systemRoleEnum = pgEnum("system_role", SYSTEM_ROLES);
-export const creditTransactionTypeEnum = pgEnum(
-  "credit_transaction_type",
-  CREDIT_TRANSACTION_TYPES,
+export const customerOrderStatusEnum = pgEnum(
+  "customer_order_status",
+  CUSTOMER_ORDER_STATUSES,
 );
 export const userStatusEnum = pgEnum("user_status", USER_STATUSES);
 export const templateStatusEnum = pgEnum("template_status", TEMPLATE_STATUSES);

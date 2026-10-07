@@ -1,18 +1,14 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createMigratedDb } from "../helpers/db";
-import { makeUser } from "../helpers/world";
 import { createResellerWithProfile } from "@/lib/db/repositories/resellers";
-import { createBankAccount } from "@/lib/db/repositories/bank-accounts";
 import {
-  createTopupRequest,
-  approveTopupRequest,
-  rejectTopupRequest,
-  getTopupFinancialRecap,
-} from "@/lib/db/repositories/topup-requests";
-import { getAdminTopupFinancialRecap } from "@/features/admin/api";
+  createCustomerOrder,
+  getGlobalOrderStats,
+  updateCustomerOrder,
+} from "@/lib/db/repositories/orders";
 import { escapeCsvCell, generateCsv } from "@/lib/csv/exporter";
-import { buildWhatsAppConfirmationUrl } from "@/features/reseller/whatsapp";
+import { buildCustomerOrderWhatsAppUrl } from "@/features/reseller/whatsapp";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 const db = () => conn.db;
@@ -25,7 +21,7 @@ afterAll(async () => {
   await conn.close();
 });
 
-describe("Phase 5: Optimasi Notifikasi & Analitik Rekapitulasi Manual", () => {
+describe("Phase 5: CSV Exporter, WhatsApp Notifications & Order Analytics", () => {
   describe("1. RFC 4180 CSV Exporter with UTF-8 BOM", () => {
     it("escapes cells correctly according to RFC 4180", () => {
       expect(escapeCsvCell(null)).toBe("");
@@ -46,10 +42,10 @@ describe("Phase 5: Optimasi Notifikasi & Analitik Rekapitulasi Manual", () => {
     });
 
     it("generates CSV with optional UTF-8 BOM prefix and CRLF line breaks", () => {
-      const headers = ["ID", "Nama Mitra", "Nominal", "Catatan"];
+      const headers = ["ID", "Nama Mitra", "Pelanggan", "Catatan"];
       const rows = [
-        ["REQ-01", "Berkah Wedding", 500000, "Transfer BCA"],
-        ["REQ-02", "Cahaya, Media", 1000000, 'Struk "valid"'],
+        ["ORD-01", "Berkah Wedding", "Rian Syahputra", "Adat Sunda"],
+        ["ORD-02", "Cahaya, Media", "Budi, Santoso", 'Request "lagu"'],
       ];
 
       // Standard CSV without BOM
@@ -64,22 +60,24 @@ describe("Phase 5: Optimasi Notifikasi & Analitik Rekapitulasi Manual", () => {
       const lines = contentWithoutBom.split("\r\n");
 
       expect(lines).toHaveLength(3);
-      expect(lines[0]).toBe("ID,Nama Mitra,Nominal,Catatan");
-      expect(lines[1]).toBe("REQ-01,Berkah Wedding,500000,Transfer BCA");
-      expect(lines[2]).toBe('REQ-02,"Cahaya, Media",1000000,"Struk ""valid"""');
+      expect(lines[0]).toBe("ID,Nama Mitra,Pelanggan,Catatan");
+      expect(lines[1]).toBe("ORD-01,Berkah Wedding,Rian Syahputra,Adat Sunda");
+      expect(lines[2]).toBe('ORD-02,"Cahaya, Media","Budi, Santoso","Request ""lagu"""');
     });
   });
 
-  describe("2. WhatsApp Confirmation URL Generator", () => {
-    it("normalizes Indonesian phone numbers and encodes confirmation message", () => {
-      const url = buildWhatsAppConfirmationUrl({
-        ownerPhone: "0812-3456-7890",
+  describe("2. WhatsApp Order Booking URL Generator", () => {
+    it("normalizes Indonesian phone numbers and encodes customer order message", () => {
+      const url = buildCustomerOrderWhatsAppUrl({
+        sellerPhone: "0812-3456-7890",
         agencyName: "Kharisma Wedding",
-        amountPaid: 750000,
-        creditAmount: 75,
-        senderBank: "BCA",
-        senderAccountName: "Budi Santoso",
-        transferDate: "2026-10-07",
+        customerName: "Rian Syahputra",
+        customerWhatsapp: "0899112233",
+        groomBrideNames: "Rian & Aisyah",
+        templateTitle: "Royal Blossom",
+        eventDate: "2026-12-25",
+        eventLocation: "Bandung",
+        notes: "Tema adat Sunda",
       });
 
       // Target number should be formatted as 6281234567890
@@ -88,136 +86,58 @@ describe("Phase 5: Optimasi Notifikasi & Analitik Rekapitulasi Manual", () => {
       const params = new URL(url).searchParams;
       const text = params.get("text") ?? "";
 
-      expect(text).toContain("*KONFIRMASI TOP-UP SALDO RESELLER*");
-      expect(text).toContain("Kharisma Wedding");
-      expect(text).toContain("750.000");
-      expect(text).toContain("75 Kredit");
-      expect(text).toContain("BCA");
-      expect(text).toContain("Budi Santoso");
-      expect(text).toContain("2026-10-07");
-    });
-
-    it("handles international format phone numbers starting with +62", () => {
-      const url = buildWhatsAppConfirmationUrl({
-        ownerPhone: "+62 856-7890-1234",
-        agencyName: "Indah Organizer",
-        amountPaid: 1000000,
-        creditAmount: 100,
-        senderBank: "Mandiri",
-        senderAccountName: "Siti Rahma",
-      });
-
-      expect(url.startsWith("https://wa.me/6285678901234?text=")).toBe(true);
+      expect(text).toContain("*PESANAN BARU WEBSITE UNDANGAN - KHARISMA WEDDING*");
+      expect(text).toContain("Rian Syahputra");
+      expect(text).toContain("0899112233");
+      expect(text).toContain("Rian & Aisyah");
+      expect(text).toContain("Royal Blossom");
+      expect(text).toContain("2026-12-25");
+      expect(text).toContain("Bandung");
+      expect(text).toContain("Tema adat Sunda");
     });
   });
 
-  describe("3. Financial Recap & Analytics Engine", () => {
-    it("aggregates revenue, credit counts, and status breakdowns accurately", async () => {
-      // 1. Setup Owner and Bank Account
-      const ownerUser = await makeUser(db(), "phase5-owner");
-      const bank = await createBankAccount(db(), {
-        bankName: "BCA",
-        accountNumber: "8881234567",
-        accountHolder: "PT Digital Undangan",
+  describe("3. Order Analytics & Pipeline Engine", () => {
+    it("aggregates total, new, in-progress, and completed order statistics accurately", async () => {
+      const reseller = await createResellerWithProfile(db(), {
+        email: "analytics-seller@test.com",
+        name: "Analytics Seller",
+        agencyName: "Analytics Agency",
+        slug: "analytics-agency",
+        whatsappContact: "0812333444",
       });
 
-      // 2. Setup Resellers
-      const r1 = await createResellerWithProfile(db(), {
-        email: "reseller1@phase5.com",
-        name: "Reseller One",
-        agencyName: "Agency Satu",
-        slug: "agency-satu-p5",
-        whatsappContact: "0811111111",
-        initialCredits: 0,
+      // Order 1: new
+      await createCustomerOrder(db(), {
+        sellerId: reseller.profile.id,
+        customerName: "Customer 1",
+        customerEmail: "c1@test.com",
+        customerWhatsapp: "081111",
       });
 
-      const r2 = await createResellerWithProfile(db(), {
-        email: "reseller2@phase5.com",
-        name: "Reseller Two",
-        agencyName: "Agency Dua",
-        slug: "agency-dua-p5",
-        whatsappContact: "0822222222",
-        initialCredits: 0,
+      // Order 2: in_progress
+      const o2 = await createCustomerOrder(db(), {
+        sellerId: reseller.profile.id,
+        customerName: "Customer 2",
+        customerEmail: "c2@test.com",
+        customerWhatsapp: "082222",
       });
+      await updateCustomerOrder(db(), o2.id, { status: "in_progress" });
 
-      // 3. Create requests
-      // Request 1: Pending (Rp 500.000, 50 credits)
-      await createTopupRequest(db(), {
-        resellerId: r1.profile.id,
-        bankAccountId: bank.id,
-        amountPaid: 500000,
-        creditAmount: 50,
-        senderBank: "BCA",
-        senderAccountName: "Pengirim 1",
-        proofFileUrl: "/uploads/proof1.png",
+      // Order 3: completed
+      const o3 = await createCustomerOrder(db(), {
+        sellerId: reseller.profile.id,
+        customerName: "Customer 3",
+        customerEmail: "c3@test.com",
+        customerWhatsapp: "083333",
       });
+      await updateCustomerOrder(db(), o3.id, { status: "completed" });
 
-      // Request 2: Approved (Rp 1.000.000, 100 credits)
-      const req2 = await createTopupRequest(db(), {
-        resellerId: r1.profile.id,
-        bankAccountId: bank.id,
-        amountPaid: 1000000,
-        creditAmount: 100,
-        senderBank: "BRI",
-        senderAccountName: "Pengirim 1",
-        proofFileUrl: "/uploads/proof2.png",
-      });
-      await approveTopupRequest(db(), {
-        requestId: req2.id,
-        reviewedBy: ownerUser.id,
-      });
-
-      // Request 3: Rejected (Rp 200.000, 20 credits)
-      const req3 = await createTopupRequest(db(), {
-        resellerId: r2.profile.id,
-        bankAccountId: bank.id,
-        amountPaid: 200000,
-        creditAmount: 20,
-        senderBank: "BSI",
-        senderAccountName: "Pengirim 2",
-        proofFileUrl: "/uploads/proof3.png",
-      });
-      await rejectTopupRequest(db(), {
-        requestId: req3.id,
-        reviewedBy: ownerUser.id,
-        rejectionReason: "Bukti transfer buram",
-      });
-
-      // Request 4: Approved (Rp 1.500.000, 150 credits)
-      const req4 = await createTopupRequest(db(), {
-        resellerId: r2.profile.id,
-        bankAccountId: bank.id,
-        amountPaid: 1500000,
-        creditAmount: 150,
-        senderBank: "Mandiri",
-        senderAccountName: "Pengirim 2",
-        proofFileUrl: "/uploads/proof4.png",
-      });
-      await approveTopupRequest(db(), {
-        requestId: req4.id,
-        reviewedBy: ownerUser.id,
-      });
-
-      // 4. Calculate Financial Recap directly from Repository
-      const repoRecap = await getTopupFinancialRecap(db());
-
-      expect(repoRecap.totalRequestsCount).toBe(4);
-      expect(repoRecap.totalPendingCount).toBe(1);
-      expect(repoRecap.totalApprovedCount).toBe(2);
-      expect(repoRecap.totalRejectedCount).toBe(1);
-
-      // Revenue: Approved = 1.000.000 + 1.500.000 = 2.500.000
-      expect(repoRecap.totalApprovedRevenue).toBe(2500000);
-
-      // Revenue: Pending = 500.000
-      expect(repoRecap.totalPendingRevenue).toBe(500000);
-
-      // Credits: Approved = 100 + 150 = 250
-      expect(repoRecap.totalApprovedCredits).toBe(250);
-
-      // 5. Test getAdminTopupFinancialRecap from Feature Layer
-      const adminRecap = await getAdminTopupFinancialRecap(db());
-      expect(adminRecap).toEqual(repoRecap);
+      const stats = await getGlobalOrderStats(db());
+      expect(stats.totalOrders).toBeGreaterThanOrEqual(3);
+      expect(stats.newOrders).toBeGreaterThanOrEqual(1);
+      expect(stats.inProgressOrders).toBeGreaterThanOrEqual(1);
+      expect(stats.completedOrders).toBeGreaterThanOrEqual(1);
     });
   });
 });

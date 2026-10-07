@@ -6,13 +6,11 @@ import styles from "./admin.module.css";
 
 interface ResellersTableProps {
   resellers: AdminResellerItem[];
-  onSelectForTopup: (item: AdminResellerItem) => void;
   onToggleStatus: (profileId: string, nextStatus: boolean) => Promise<void>;
 }
 
 export function ResellersTable({
   resellers,
-  onSelectForTopup,
   onToggleStatus,
 }: ResellersTableProps) {
   const [search, setSearch] = useState("");
@@ -28,7 +26,8 @@ export function ResellersTable({
         item.profile.agencyName.toLowerCase().includes(q) ||
         item.profile.slug.toLowerCase().includes(q) ||
         item.user.name.toLowerCase().includes(q) ||
-        item.user.email.toLowerCase().includes(q);
+        item.user.email.toLowerCase().includes(q) ||
+        (item.profile.customDomain && item.profile.customDomain.toLowerCase().includes(q));
 
       const matchStatus =
         statusFilter === "all" ||
@@ -63,14 +62,14 @@ export function ResellersTable({
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>
-          Daftar Mitra Agensi Reseller
+          Daftar Mitra Seller & Storefront
           <span className={styles.countBadge}>{filtered.length} mitra</span>
         </h2>
 
         <div className={styles.toolbar}>
           <input
             type="search"
-            placeholder="Cari agensi, admin, atau email…"
+            placeholder="Cari seller, domain, atau email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={styles.searchInput}
@@ -95,12 +94,12 @@ export function ResellersTable({
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Agensi / Brand</th>
+              <th>Mitra Seller / Brand</th>
               <th>Admin & Kontak</th>
-              <th>Sisa Kuota</th>
+              <th>Website Khusus Seller</th>
               <th>Status Akun</th>
               <th>Terdaftar</th>
-              <th style={{ textAlign: "right" }}>Aksi Manajemen</th>
+              <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -116,9 +115,9 @@ export function ResellersTable({
                       </svg>
                     </div>
                     <div>
-                      <strong>Tidak ada data reseller ditemukan</strong>
+                      <strong>Tidak ada data seller ditemukan</strong>
                       <p style={{ margin: "4px 0 0 0", fontSize: 13 }}>
-                        {search ? "Coba ganti kata kunci pencarian Anda." : "Belum ada mitra reseller terdaftar."}
+                        {search ? "Coba ganti kata kunci pencarian Anda." : "Belum ada mitra seller terdaftar."}
                       </p>
                     </div>
                   </div>
@@ -141,11 +140,11 @@ export function ResellersTable({
                     <td>
                       <div className={styles.agencyInfo}>
                         <div className={styles.agencyAvatar} aria-hidden="true">
-                          {initials || "AG"}
+                          {initials || "SL"}
                         </div>
                         <div className={styles.agencyDetails}>
                           <span className={styles.agencyName}>{item.profile.agencyName}</span>
-                          <span className={styles.agencySlug}>/{item.profile.slug}</span>
+                          <span className={styles.agencySlug}>ID: {item.profile.slug}</span>
                         </div>
                       </div>
                     </td>
@@ -170,16 +169,27 @@ export function ResellersTable({
                     </td>
 
                     <td>
-                      <div
-                        className={`${styles.quotaPill} ${
-                          item.profile.creditQuota === 0 ? styles.quotaPillZero : ""
-                        }`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                          <circle cx="8" cy="8" r="6" />
-                          <path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h2v4H7M14 12h2v4h-2" />
-                        </svg>
-                        <span>{item.profile.creditQuota} kredit</span>
+                      <div>
+                        <a
+                          href={`/seller/${item.profile.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontWeight: 500,
+                            color: "var(--dash-primary)",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          /seller/{item.profile.slug} ↗
+                        </a>
+                        {item.profile.customDomain ? (
+                          <div style={{ fontSize: "0.8rem", color: "var(--dash-text-muted)", marginTop: "0.2rem" }}>
+                            🌐 {item.profile.customDomain}
+                          </div>
+                        ) : null}
                       </div>
                     </td>
 
@@ -203,17 +213,15 @@ export function ResellersTable({
 
                     <td style={{ textAlign: "right" }}>
                       <div className={styles.actionsCell} style={{ justifyContent: "flex-end" }}>
-                        <button
-                          type="button"
-                          className={`${styles.btnPrimary} ${styles.btnSm}`}
-                          onClick={() => onSelectForTopup(item)}
-                          id={`btn-topup-${item.profile.slug}`}
+                        <a
+                          href={`/seller/${item.profile.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${styles.btnSecondary} ${styles.btnSm}`}
+                          style={{ textDecoration: "none" }}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                            <path d="M12 5v14M5 12h14" />
-                          </svg>
-                          Top-Up
-                        </button>
+                          Lihat Toko
+                        </a>
 
                         <button
                           type="button"

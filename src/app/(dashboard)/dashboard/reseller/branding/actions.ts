@@ -6,10 +6,11 @@ import { updateAgencyBranding } from "@/features/reseller/api";
 import type { ActionState } from "@/features/reseller/types";
 
 const brandingSchema = z.object({
-  agencyName: z.string().trim().min(2, "Nama agensi minimal 2 karakter"),
+  agencyName: z.string().trim().min(2, "Nama toko minimal 2 karakter"),
   whatsappContact: z.string().trim().min(8, "Nomor WhatsApp minimal 8 digit"),
   logoUrl: z.string().trim().optional(),
-  brandColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Format warna heksadesimal tidak valid"),
+  brandColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Format warna heksadesimal tidak valid").optional(),
+  customDomain: z.string().trim().optional(),
 });
 
 function field(formData: FormData, key: string): string {
@@ -25,11 +26,12 @@ export async function updateBrandingAction(
     agencyName: field(formData, "agencyName"),
     whatsappContact: field(formData, "whatsappContact"),
     logoUrl: field(formData, "logoUrl"),
-    brandColor: field(formData, "brandColor") || "#3b82f6",
+    brandColor: field(formData, "brandColor") || "#84633f",
+    customDomain: field(formData, "customDomain"),
   });
 
   if (!parseResult.success) {
-    return { error: parseResult.error.issues[0]?.message ?? "Data branding tidak valid" };
+    return { error: parseResult.error.issues[0]?.message ?? "Data toko tidak valid" };
   }
 
   try {
@@ -38,14 +40,16 @@ export async function updateBrandingAction(
       whatsappContact: parseResult.data.whatsappContact,
       logoUrl: parseResult.data.logoUrl || null,
       brandColor: parseResult.data.brandColor,
+      customDomain: parseResult.data.customDomain || null,
     });
 
     revalidatePath("/dashboard/reseller");
+    revalidatePath("/dashboard/reseller/storefront");
     revalidatePath("/dashboard/reseller/branding");
-    return { ok: true, message: "Pengaturan identitas agensi berhasil disimpan." };
+    return { ok: true, message: "Pengaturan website toko & identitas seller berhasil disimpan." };
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Gagal menyimpan pengaturan branding",
+      error: err instanceof Error ? err.message : "Gagal menyimpan pengaturan toko",
     };
   }
 }

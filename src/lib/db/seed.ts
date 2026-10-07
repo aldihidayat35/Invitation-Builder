@@ -88,7 +88,6 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
         agencyName: "Mitra Berkah Wedding",
         slug: DEMO_RESELLER_SLUG,
         whatsappContact: "6281234567890",
-        initialCredits: 20,
         performedBy: user.id,
       });
       resellerUserId = res.user.id;

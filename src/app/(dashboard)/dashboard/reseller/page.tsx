@@ -6,8 +6,8 @@ import styles from "@/features/reseller/components/reseller.module.css";
 import { requireReseller } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
-  title: "Portal Agensi Reseller",
-  description: "Dashboard pengelolaan kuota undangan, klien, dan agensi reseller.",
+  title: "Portal Mitra Seller",
+  description: "Dashboard pengelolaan toko online seller, pesanan customer, dan klien.",
 };
 
 export default async function ResellerDashboardPage() {
@@ -18,28 +18,30 @@ export default async function ResellerDashboardPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Mitra Agensi · Layer 2</p>
+          <p className={styles.eyebrow}>Mitra Seller · Storefront & Order Intake</p>
           <h1 className={styles.title}>{stats.agencyName}</h1>
           <p className={styles.lead}>
-            Kelola saldo kuota penerbitan undangan, pantau seluruh klien agensi, dan beli paket
-            kuota grosir via transfer manual langsung ke Owner.
+            Kelola website toko seller Anda, terima formulir pemesanan customer, dan pantau status
+            pembuatan website undangan yang diproses oleh Admin.
           </p>
         </div>
 
         <div className={styles.headerActions}>
-          <Link
-            href="/dashboard/reseller/topup"
+          <a
+            href={`/seller/${stats.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className={styles.btnPrimary}
             style={{ textDecoration: "none" }}
           >
-            + Beli Kuota (Top-Up)
-          </Link>
+            Buka Website Toko ↗
+          </a>
           <Link
-            href="/dashboard/reseller/clients"
+            href="/dashboard/reseller/orders"
             className={styles.btnSecondary}
             style={{ textDecoration: "none" }}
           >
-            Kelola Klien
+            Pesanan Customer
           </Link>
         </div>
       </header>
@@ -55,37 +57,48 @@ export default async function ResellerDashboardPage() {
         }}
       >
         <div className={styles.bankBox}>
-          <h3 className={styles.bankBoxTitle}>Alur Beli Kuota Grosir via Transfer Manual</h3>
-          <ol style={{ fontSize: 13, color: "var(--dash-muted)", paddingLeft: 18, lineHeight: 1.6, margin: 0 }}>
-            <li>Pilih paket kuota undangan sesuai kebutuhan agensi Anda.</li>
-            <li>Transfer nominal ke rekening bank atau QRIS resmi milik Owner.</li>
-            <li>Unggah screenshot atau foto struk bukti transfer pada formulir konfirmasi.</li>
-            <li>Owner memverifikasi mutasi rekening dan menyetujui kuota Anda.</li>
-          </ol>
+          <h3 className={styles.bankBoxTitle}>Website & Domain Khusus Seller</h3>
+          <p style={{ fontSize: 13, color: "var(--dash-muted)", margin: 0, lineHeight: 1.6 }}>
+            Setiap seller memiliki website toko mandiri sebagai identitas dan sarana melayani calon pengantin:
+          </p>
+          <ul style={{ fontSize: 13, color: "var(--dash-muted)", paddingLeft: 18, lineHeight: 1.6, margin: "8px 0" }}>
+            <li>Tautan Toko Publik: <code>/seller/{stats.slug}</code></li>
+            {stats.customDomain ? (
+              <li>Domain Khusus Anda: <code>{stats.customDomain}</code></li>
+            ) : (
+              <li>Dukungan Custom Domain mandiri (misal: <code>undangan.tokosaya.com</code>).</li>
+            )}
+            <li>Etalase katalog tema desain dan formulir booking online.</li>
+          </ul>
           <div style={{ marginTop: 8 }}>
             <Link
-              href="/dashboard/reseller/topup"
+              href="/dashboard/reseller/storefront"
               className={styles.btnPrimary}
               style={{ textDecoration: "none", display: "inline-flex" }}
             >
-              Mulai Top-Up Sekarang →
+              Atur Toko & Domain Khusus →
             </Link>
           </div>
         </div>
 
         <div className={styles.bankBox}>
-          <h3 className={styles.bankBoxTitle}>Identitas & White-Label Agensi</h3>
+          <h3 className={styles.bankBoxTitle}>Alur Pemesanan & Otoritas Penuh Admin</h3>
           <p style={{ fontSize: 13, color: "var(--dash-muted)", margin: 0, lineHeight: 1.6 }}>
-            Klien Anda dapat melihat logo agensi dan menghubungi customer service Anda secara
-            langsung tanpa mengetahui platform penyedia utama.
+            Ketentuan pengelolaan data platform:
           </p>
+          <ol style={{ fontSize: 13, color: "var(--dash-muted)", paddingLeft: 18, lineHeight: 1.6, margin: "8px 0" }}>
+            <li>Calon pengantin memilih desain dan mengisi formulir di website toko seller Anda.</li>
+            <li>Pesanan otomatis masuk ke sistem dan dikonfirmasi langsung ke WhatsApp Anda.</li>
+            <li>Admin mengolah data, mendesain kanvas, dan menerbitkan link undangan live.</li>
+            <li>Seller memantau progres pesanan hingga undangan customer siap dibagikan.</li>
+          </ol>
           <div style={{ marginTop: 8 }}>
             <Link
-              href="/dashboard/reseller/branding"
+              href="/dashboard/reseller/orders"
               className={styles.btnSecondary}
               style={{ textDecoration: "none", display: "inline-flex" }}
             >
-              Atur Branding & Logo Agensi →
+              Pantau Daftar Pesanan Masuk →
             </Link>
           </div>
         </div>

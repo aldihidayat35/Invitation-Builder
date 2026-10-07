@@ -1,59 +1,64 @@
 /**
- * WhatsApp message URL generator for manual transfer top-up confirmation.
+ * WhatsApp message URL generator for customer order intake on seller storefront.
  */
 
-export interface WhatsAppTopupConfirmationParams {
-  adminPhone?: string;
-  ownerPhone?: string;
+export interface WhatsAppCustomerOrderParams {
+  sellerPhone: string;
   agencyName: string;
-  requestId?: string;
-  creditAmount: number;
-  amountPaid: number;
-  senderBank: string;
-  senderAccountName: string;
-  transferDate?: string;
-  destinationBank?: string;
-  proofUrl?: string;
+  orderId?: string;
+  customerName: string;
+  customerWhatsapp: string;
+  templateTitle?: string;
+  groomBrideNames?: string;
+  eventDate?: string;
+  eventLocation?: string;
+  notes?: string;
 }
 
 /**
- * Builds a direct `https://wa.me/...` URL with a formatted Indonesian confirmation message.
+ * Builds a direct `https://wa.me/...` URL with a formatted Indonesian order inquiry message.
  */
-export function buildWhatsAppConfirmationUrl(params: WhatsAppTopupConfirmationParams): string {
-  const defaultPhone = process.env.NEXT_PUBLIC_OWNER_WHATSAPP || "6281234567890";
-  const rawPhone = (params.ownerPhone || params.adminPhone || defaultPhone).trim();
+export function buildCustomerOrderWhatsAppUrl(params: WhatsAppCustomerOrderParams): string {
+  const rawPhone = (params.sellerPhone || "6281234567890").trim();
   let cleanPhone = rawPhone.replace(/\D/g, "");
   if (cleanPhone.startsWith("0")) {
     cleanPhone = "62" + cleanPhone.slice(1);
   }
 
   const lines: string[] = [
-    "*KONFIRMASI TOP-UP SALDO RESELLER*",
-    "Halo Admin / Owner Invitation Studio,",
+    `*PESANAN BARU WEBSITE UNDANGAN - ${params.agencyName.toUpperCase()}*`,
+    `Halo ${params.agencyName}, saya ingin mengonfirmasi pemesanan website undangan digital:`,
     "",
-    "Saya ingin konfirmasi pengajuan Top-Up Kuota Undangan:",
-    `• Agensi: ${params.agencyName}`,
+    `• Nama Pemesan: ${params.customerName}`,
+    `• WhatsApp Pemesan: ${params.customerWhatsapp}`,
   ];
 
-  if (params.requestId) {
-    lines.push(`• ID Pengajuan: #${params.requestId.slice(0, 8)}`);
-  }
-  lines.push(`• Paket Kuota: +${params.creditAmount} Kredit`);
-  lines.push(`• Nominal Transfer: Rp ${params.amountPaid.toLocaleString("id-ID")}`);
-  lines.push(`• Pengirim: ${params.senderBank} a.n. ${params.senderAccountName}`);
-  if (params.transferDate) {
-    lines.push(`• Tanggal Transfer: ${params.transferDate}`);
+  if (params.groomBrideNames) {
+    lines.push(`• Nama Mempelai: ${params.groomBrideNames}`);
   }
 
-  if (params.destinationBank) {
-    lines.push(`• Rekening Tujuan: ${params.destinationBank}`);
+  if (params.templateTitle) {
+    lines.push(`• Desain Tema Pilihan: ${params.templateTitle}`);
   }
-  if (params.proofUrl) {
-    lines.push(`• Link Bukti Transfer: ${params.proofUrl}`);
+
+  if (params.eventDate) {
+    lines.push(`• Tanggal Acara: ${params.eventDate}`);
+  }
+
+  if (params.eventLocation) {
+    lines.push(`• Lokasi Acara: ${params.eventLocation}`);
+  }
+
+  if (params.notes) {
+    lines.push(`• Catatan Khusus: ${params.notes}`);
+  }
+
+  if (params.orderId) {
+    lines.push(`• Kode Referensi: #${params.orderId.slice(0, 8)}`);
   }
 
   lines.push("");
-  lines.push("Mohon dicek mutasi bank dan diverifikasi. Terima kasih!");
+  lines.push("Mohon info langkah selanjutnya dan estimasi pengerjaan. Terima kasih!");
 
   const text = lines.join("\n");
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;

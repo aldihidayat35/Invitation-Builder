@@ -41,6 +41,7 @@ export function roleCan(role: WorkspaceRole, capability: Capability): boolean {
 
 export interface Actor {
   readonly userId: string;
+  readonly systemRole?: string;
 }
 
 /** Resolves the actor's role in the workspace, or undefined for non-members. */
@@ -59,6 +60,16 @@ export async function requireCapability(
   workspaceId: string,
   capability: Capability,
 ): Promise<WorkspaceRole> {
+  if (
+    actor.systemRole === "reseller" &&
+    (capability === "invitation:write" ||
+      capability === "template:write" ||
+      capability === "template:publish")
+  ) {
+    throw new ForbiddenError(
+      "Seller tidak memiliki hak akses untuk mengubah data website undangan yang menjadi kewenangan Admin.",
+    );
+  }
   const role = await findRole(db, actor, workspaceId);
   if (!role) throw new ForbiddenError("Anda bukan anggota workspace ini.");
   if (!roleCan(role, capability)) throw new ForbiddenError();

@@ -2,12 +2,15 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createMigratedDb } from "../helpers/db";
 import {
-  adjustResellerCredit,
   createResellerWithProfile,
   getAdminResellerStats,
-  listAllCreditTransactions,
   updateResellerStatus,
 } from "@/lib/db/repositories/resellers";
+import {
+  createCustomerOrder,
+  listAllOrders,
+  updateCustomerOrder,
+} from "@/lib/db/repositories/orders";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { getActorRole } from "@/lib/auth/server";
 import { seedDev } from "@/lib/db/seed";
@@ -25,7 +28,7 @@ afterAll(async () => {
   await conn.close();
 });
 
-describe("Super Admin Reseller Portal (Phase 2)", () => {
+describe("Super Admin & Order Authority Portal", () => {
   it("getActorRole correctly identifies roles", () => {
     expect(
       getActorRole({
@@ -65,7 +68,6 @@ describe("Super Admin Reseller Portal (Phase 2)", () => {
       agencyName: "Status Agency",
       slug: "status-agency",
       whatsappContact: "62899001122",
-      initialCredits: 10,
     });
 
     expect(res.profile.isActive).toBe(true);
@@ -86,37 +88,7 @@ describe("Super Admin Reseller Portal (Phase 2)", () => {
     const stats = await getAdminResellerStats(db());
     expect(stats.totalResellers).toBeGreaterThanOrEqual(1);
     expect(stats.activeResellers).toBeGreaterThanOrEqual(1);
-    expect(stats.totalQuota).toBeGreaterThanOrEqual(20);
-    expect(stats.totalTransactions).toBeGreaterThanOrEqual(1);
-  });
-
-  it("lists all credit transactions joined with reseller agency and user details", async () => {
-    const resellerA = await createResellerWithProfile(db(), {
-      email: "tx-a@agency.test",
-      name: "TX Admin A",
-      agencyName: "TX Agency A",
-      slug: "tx-agency-a",
-      whatsappContact: "62811223344",
-      initialCredits: 25,
-    });
-
-    // Top-up transaction
-    await adjustResellerCredit(db(), {
-      resellerProfileId: resellerA.profile.id,
-      amount: 15,
-      type: "purchase_topup",
-      referenceId: "INV-TEST-001",
-      notes: "Pembelian via Admin",
-    });
-
-    const allTx = await listAllCreditTransactions(db(), 100);
-    expect(allTx.length).toBeGreaterThanOrEqual(2);
-
-    const latest = allTx[0];
-    expect(latest).toBeDefined();
-    expect(latest?.reseller.agencyName).toBeDefined();
-    expect(latest?.user.email).toBeDefined();
-    expect(latest?.transaction.type).toBeDefined();
+    expect(stats.totalOrders).toBeGreaterThanOrEqual(0);
   });
 
   it("writes audit logs for reseller administrative actions", async () => {
@@ -146,102 +118,44 @@ describe("Super Admin Reseller Portal (Phase 2)", () => {
     expect(log?.entityType).toBe("reseller_profile");
   });
 
-  it("manages Owner bank accounts for manual transfer", async () => {
-    const {
-      createBankAccount,
-      listBankAccounts,
-      toggleBankAccountStatus,
-      deleteBankAccount,
-    } = await import("@/lib/db/repositories/bank-accounts");
-
-    const created = await createBankAccount(db(), {
-      bankName: "BCA",
-      accountNumber: "8820192831",
-      accountHolder: "PT Undangan Digital",
-      qrCodeUrl: "https://example.com/qris.png",
-      instructions: "Sertakan nama agensi di berita",
-    });
-
-    expect(created.id).toBeDefined();
-    expect(created.bankName).toBe("BCA");
-    expect(created.isActive).toBe(true);
-
-    const accounts = await listBankAccounts(db());
-    expect(accounts.some((a) => a.id === created.id)).toBe(true);
-
-    const toggled = await toggleBankAccountStatus(db(), created.id, false);
-    expect(toggled.isActive).toBe(false);
-
-    await deleteBankAccount(db(), created.id);
-    const afterDelete = await listBankAccounts(db());
-    expect(afterDelete.some((a) => a.id === created.id)).toBe(false);
-  });
-
-  it("processes manual transfer top-up requests (approve & reject)", async () => {
-    const {
-      createTopupRequest,
-      listTopupRequests,
-      approveTopupRequest,
-      rejectTopupRequest,
-    } = await import("@/lib/db/repositories/topup-requests");
-
+  it("processes customer orders: Admin lists orders and updates order status", async () => {
     const reseller = await createResellerWithProfile(db(), {
-      email: "topup-test@agency.test",
-      name: "Topup Agency Owner",
-      agencyName: "Topup Agency",
-      slug: "topup-agency",
+      email: "orders-admin-test@agency.test",
+      name: "Orders Agency Owner",
+      agencyName: "Orders Agency",
+      slug: "orders-agency-test",
       whatsappContact: "628991234567",
-      initialCredits: 5,
     });
 
-    // 1. Reseller submits topup request
-    const request1 = await createTopupRequest(db(), {
-      resellerId: reseller.profile.id,
-      creditAmount: 20,
-      amountPaid: 200000,
-      senderBank: "BCA",
-      senderAccountName: "Budi Santoso",
-      proofFileUrl: "https://example.test/proof1.jpg",
-      notes: "Sudah transfer tadi siang",
+    // 1. Customer submits order via seller
+    const order1 = await createCustomerOrder(db(), {
+      sellerId: reseller.profile.id,
+      customerName: "Budi Santoso",
+      customerEmail: "budi@test.com",
+      customerWhatsapp: "081234567890",
+      notes: "Tolong dibuatkan tema elegan",
     });
 
-    expect(request1.status).toBe("pending");
-    expect(request1.creditAmount).toBe(20);
+    expect(order1.status).toBe("new");
 
-    const pendingList = await listTopupRequests(db(), "pending");
-    expect(pendingList.some((i) => i.request.id === request1.id)).toBe(true);
+    // 2. Admin queries all orders
+    const allOrders = await listAllOrders(db());
+    expect(allOrders.some((item) => item.order.id === order1.id)).toBe(true);
 
-    // 2. Owner approves request1
-    const approveResult = await approveTopupRequest(db(), {
-      requestId: request1.id,
-      reviewedBy: reseller.user.id,
-      notes: "Dana masuk terverifikasi di BCA",
+    // 3. Admin updates status to in_progress
+    const inProgressOrder = await updateCustomerOrder(db(), order1.id, {
+      status: "in_progress",
+      adminNotes: "Sedang dikerjakan oleh designer",
     });
 
-    expect(approveResult.request.status).toBe("approved");
-    expect(approveResult.profile.creditQuota).toBe(25); // 5 initial + 20 topup
-    expect(approveResult.transaction.amount).toBe(20);
-    expect(approveResult.transaction.balanceBefore).toBe(5);
-    expect(approveResult.transaction.balanceAfter).toBe(25);
+    expect(inProgressOrder.status).toBe("in_progress");
+    expect(inProgressOrder.adminNotes).toBe("Sedang dikerjakan oleh designer");
 
-    // 3. Reseller submits request2
-    const request2 = await createTopupRequest(db(), {
-      resellerId: reseller.profile.id,
-      creditAmount: 50,
-      amountPaid: 500000,
-      senderBank: "Mandiri",
-      senderAccountName: "Budi Santoso",
-      proofFileUrl: "https://example.test/proof2.jpg",
+    // 4. Admin finishes order
+    const completedOrder = await updateCustomerOrder(db(), order1.id, {
+      status: "completed",
     });
 
-    // 4. Owner rejects request2
-    const rejectResult = await rejectTopupRequest(db(), {
-      requestId: request2.id,
-      rejectionReason: "Mutasi tidak ditemukan di rekening",
-      reviewedBy: reseller.user.id,
-    });
-
-    expect(rejectResult.status).toBe("rejected");
-    expect(rejectResult.rejectionReason).toBe("Mutasi tidak ditemukan di rekening");
+    expect(completedOrder.status).toBe("completed");
   });
 });

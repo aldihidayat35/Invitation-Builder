@@ -1,19 +1,15 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
-import { InsufficientQuotaError } from "../../auth/errors";
-import type { CreditTransactionType } from "../../schema/domain";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
-  creditTransactions,
   resellerProfiles,
-  topupRequests,
   users,
   workspaceMembers,
   workspaces,
-  type CreditTransaction,
   type ResellerProfile,
   type User,
   type Workspace,
 } from "../schema";
 import type { Database } from "../types";
+import { getGlobalOrderStats } from "./orders";
 
 export interface CreateResellerInput {
   email: string;
@@ -23,17 +19,8 @@ export interface CreateResellerInput {
   slug: string;
   whatsappContact: string;
   logoUrl?: string | null;
-  initialCredits?: number;
+  customDomain?: string | null;
   performedBy?: string;
-}
-
-export interface AdjustCreditInput {
-  resellerProfileId: string;
-  amount: number;
-  type: CreditTransactionType;
-  referenceId?: string | null;
-  notes?: string | null;
-  performedBy?: string | null;
 }
 
 export interface CreateResellerClientInput {
@@ -81,6 +68,18 @@ export async function findResellerProfileBySlug(
   return row;
 }
 
+export async function findResellerProfileByCustomDomain(
+  db: Database,
+  customDomain: string,
+): Promise<ResellerProfile | undefined> {
+  const [row] = await db
+    .select()
+    .from(resellerProfiles)
+    .where(eq(resellerProfiles.customDomain, customDomain))
+    .limit(1);
+  return row;
+}
+
 /** Atomically provisions a Reseller user, their dedicated agency workspace, and profile. */
 export async function createResellerWithProfile(
   db: Database,
@@ -114,7 +113,6 @@ export async function createResellerWithProfile(
       role: "owner",
     });
 
-    const initialCredits = Math.max(0, input.initialCredits ?? 0);
     const [profile] = await tx
       .insert(resellerProfiles)
       .values({
@@ -123,77 +121,12 @@ export async function createResellerWithProfile(
         slug: input.slug.trim().toLowerCase(),
         whatsappContact: input.whatsappContact.trim(),
         logoUrl: input.logoUrl ?? null,
-        creditQuota: initialCredits,
+        customDomain: input.customDomain ?? null,
       })
       .returning();
     if (!profile) throw new Error("createResellerWithProfile: failed to insert profile");
 
-    if (initialCredits > 0) {
-      await tx.insert(creditTransactions).values({
-        resellerId: profile.id,
-        type: "owner_grant",
-        amount: initialCredits,
-        balanceBefore: 0,
-        balanceAfter: initialCredits,
-        notes: "Initial grant on reseller provisioning",
-        performedBy: input.performedBy ?? null,
-      });
-    }
-
     return { user, profile, workspace };
-  });
-}
-
-/** Atomically adjusts a reseller's credit quota and writes to the audit ledger. */
-export async function adjustResellerCredit(
-  db: Database,
-  input: AdjustCreditInput,
-): Promise<{ profile: ResellerProfile; transaction: CreditTransaction }> {
-  return db.transaction(async (tx) => {
-    const [profile] = await tx
-      .select()
-      .from(resellerProfiles)
-      .where(eq(resellerProfiles.id, input.resellerProfileId))
-      .limit(1);
-
-    if (!profile) {
-      throw new Error(`Reseller profile not found: ${input.resellerProfileId}`);
-    }
-
-    const balanceBefore = profile.creditQuota;
-    const balanceAfter = balanceBefore + input.amount;
-
-    if (balanceAfter < 0) {
-      throw new Error(
-        `Insufficient credit quota: current balance is ${balanceBefore}, cannot deduct ${Math.abs(input.amount)}`,
-      );
-    }
-
-    const [updatedProfile] = await tx
-      .update(resellerProfiles)
-      .set({ creditQuota: balanceAfter })
-      .where(eq(resellerProfiles.id, profile.id))
-      .returning();
-
-    if (!updatedProfile) throw new Error("adjustResellerCredit: failed to update quota");
-
-    const [transaction] = await tx
-      .insert(creditTransactions)
-      .values({
-        resellerId: profile.id,
-        type: input.type,
-        amount: input.amount,
-        balanceBefore,
-        balanceAfter,
-        referenceId: input.referenceId ?? null,
-        notes: input.notes ?? null,
-        performedBy: input.performedBy ?? null,
-      })
-      .returning();
-
-    if (!transaction) throw new Error("adjustResellerCredit: failed to insert transaction ledger");
-
-    return { profile: updatedProfile, transaction };
   });
 }
 
@@ -262,46 +195,6 @@ export async function listResellers(
   return rows;
 }
 
-/** Lists all credit ledger transactions for a specific reseller profile. */
-export async function listCreditTransactions(
-  db: Database,
-  resellerProfileId: string,
-  limit: number = 50,
-): Promise<CreditTransaction[]> {
-  return db
-    .select()
-    .from(creditTransactions)
-    .where(eq(creditTransactions.resellerId, resellerProfileId))
-    .orderBy(desc(creditTransactions.createdAt))
-    .limit(limit);
-}
-
-/** Lists all credit ledger transactions across all resellers with profiles for Super Admin audit. */
-export async function listAllCreditTransactions(
-  db: Database,
-  limit: number = 100,
-): Promise<
-  Array<{
-    transaction: CreditTransaction;
-    reseller: ResellerProfile;
-    user: User;
-  }>
-> {
-  const rows = await db
-    .select({
-      transaction: creditTransactions,
-      reseller: resellerProfiles,
-      user: users,
-    })
-    .from(creditTransactions)
-    .innerJoin(resellerProfiles, eq(creditTransactions.resellerId, resellerProfiles.id))
-    .innerJoin(users, eq(resellerProfiles.userId, users.id))
-    .orderBy(desc(creditTransactions.createdAt))
-    .limit(limit);
-
-  return rows;
-}
-
 /** Toggles active status of a reseller agency profile. */
 export async function updateResellerStatus(
   db: Database,
@@ -346,42 +239,29 @@ export async function updateResellerBranding(
   return updated;
 }
 
-
-/** Aggregates platform-wide reseller and quota statistics for the Owner dashboard. */
+/** Aggregates platform-wide reseller and order statistics for the Owner dashboard. */
 export async function getAdminResellerStats(db: Database): Promise<{
   totalResellers: number;
   activeResellers: number;
-  totalQuota: number;
-  totalTransactions: number;
-  pendingTopups: number;
+  totalOrders: number;
+  newOrders: number;
+  completedOrders: number;
 }> {
   const [resellersRow] = await db
     .select({
       total: sql<number>`count(*)::int`,
       active: sql<number>`count(case when ${resellerProfiles.isActive} then 1 end)::int`,
-      totalQuota: sql<number>`coalesce(sum(${resellerProfiles.creditQuota}), 0)::int`,
     })
     .from(resellerProfiles);
 
-  const [txRow] = await db
-    .select({
-      totalTx: sql<number>`count(*)::int`,
-    })
-    .from(creditTransactions);
-
-  const [topupRow] = await db
-    .select({
-      pending: sql<number>`count(*)::int`,
-    })
-    .from(topupRequests)
-    .where(eq(topupRequests.status, "pending"));
+  const orderStats = await getGlobalOrderStats(db);
 
   return {
     totalResellers: resellersRow?.total ?? 0,
     activeResellers: resellersRow?.active ?? 0,
-    totalQuota: resellersRow?.totalQuota ?? 0,
-    totalTransactions: txRow?.totalTx ?? 0,
-    pendingTopups: topupRow?.pending ?? 0,
+    totalOrders: orderStats.totalOrders,
+    newOrders: orderStats.newOrders,
+    completedOrders: orderStats.completedOrders,
   };
 }
 
@@ -439,76 +319,3 @@ export async function findAffiliatedResellerProfile(
 
   return undefined;
 }
-
-/** Checks whether an invitation has already had quota deducted. */
-export async function hasInvitationQuotaDeduction(
-  db: Database,
-  invitationId: string,
-): Promise<boolean> {
-  const [row] = await db
-    .select({ id: creditTransactions.id })
-    .from(creditTransactions)
-    .where(
-      and(
-        eq(creditTransactions.referenceId, invitationId),
-        eq(creditTransactions.type, "publish_deduct"),
-      ),
-    )
-    .limit(1);
-  return Boolean(row);
-}
-
-/**
- * Atomically deducts 1 credit from a reseller profile for publishing an invitation.
- * Throws InsufficientQuotaError if current quota < 1.
- */
-export async function deductResellerQuota(
-  db: Database,
-  input: {
-    resellerProfileId: string;
-    invitationId: string;
-    invitationTitle: string;
-    actorUserId?: string;
-  },
-): Promise<{ profile: ResellerProfile; transaction: CreditTransaction }> {
-  const [updatedProfile] = await db
-    .update(resellerProfiles)
-    .set({ creditQuota: sql`${resellerProfiles.creditQuota} - 1` })
-    .where(
-      and(
-        eq(resellerProfiles.id, input.resellerProfileId),
-        gte(resellerProfiles.creditQuota, 1),
-      ),
-    )
-    .returning();
-
-  if (!updatedProfile) {
-    throw new InsufficientQuotaError(
-      "Saldo kuota undangan agensi Anda tidak mencukupi (0 kredit). Silakan lakukan pengajuan Top-Up Transfer Manual melalui menu Kuota Agensi.",
-    );
-  }
-
-  const balanceAfter = updatedProfile.creditQuota;
-  const balanceBefore = balanceAfter + 1;
-
-  const [txRow] = await db
-    .insert(creditTransactions)
-    .values({
-      resellerId: input.resellerProfileId,
-      type: "publish_deduct",
-      amount: -1,
-      balanceBefore,
-      balanceAfter,
-      referenceId: input.invitationId,
-      notes: `Publikasi undangan: ${input.invitationTitle}`,
-      performedBy: input.actorUserId ?? null,
-    })
-    .returning();
-
-  if (!txRow) {
-    throw new Error("Failed to record credit transaction ledger");
-  }
-
-  return { profile: updatedProfile, transaction: txRow };
-}
-

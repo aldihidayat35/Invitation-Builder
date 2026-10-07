@@ -8,11 +8,10 @@ import {
   updateResellerBranding,
 } from "@/lib/db/repositories/resellers";
 import {
-  createTopupRequest,
-  listResellerTopupRequests,
-} from "@/lib/db/repositories/topup-requests";
+  createCustomerOrder,
+  listOrdersBySeller,
+} from "@/lib/db/repositories/orders";
 import { listUsersByReseller } from "@/lib/db/repositories/users";
-import { createBankAccount } from "@/lib/db/repositories/bank-accounts";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 const db = () => conn.db;
@@ -25,41 +24,31 @@ afterAll(async () => {
   await conn.close();
 });
 
-describe("Reseller Agency Portal (Phase 3)", () => {
-  it("provisions reseller with initial credit and queries profile", async () => {
+describe("Reseller Agency Portal & Storefront Orders", () => {
+  it("provisions reseller and queries profile", async () => {
     const res = await createResellerWithProfile(db(), {
       email: "reseller-p3@agency.test",
       name: "Reseller P3",
       agencyName: "Berkah Agency P3",
       slug: "berkah-agency-p3",
       whatsappContact: "628123456789",
-      initialCredits: 30,
     });
 
     expect(res.user.systemRole).toBe("reseller");
-    expect(res.profile.creditQuota).toBe(30);
 
     const fetched = await findResellerProfileByUserId(db(), res.user.id);
     expect(fetched).toBeDefined();
     expect(fetched?.agencyName).toBe("Berkah Agency P3");
   });
 
-  it("submits manual transfer top-up request and isolates by reseller", async () => {
-    // 1. Create bank account
-    const bank = await createBankAccount(db(), {
-      bankName: "BCA",
-      accountNumber: "123456789",
-      accountHolder: "Owner",
-    });
-
-    // 2. Create 2 separate resellers
+  it("submits customer order requests and isolates by reseller", async () => {
+    // 1. Create 2 separate resellers
     const resellerA = await createResellerWithProfile(db(), {
       email: "agency-a@test.com",
       name: "Agency A",
       agencyName: "Agency A",
       slug: "agency-a",
       whatsappContact: "6281111111",
-      initialCredits: 10,
     });
 
     const resellerB = await createResellerWithProfile(db(), {
@@ -68,44 +57,38 @@ describe("Reseller Agency Portal (Phase 3)", () => {
       agencyName: "Agency B",
       slug: "agency-b",
       whatsappContact: "6282222222",
-      initialCredits: 5,
     });
 
-    // 3. Reseller A submits topup request
-    const reqA = await createTopupRequest(db(), {
-      resellerId: resellerA.profile.id,
-      creditAmount: 25,
-      amountPaid: 325000,
-      bankAccountId: bank.id,
-      senderBank: "BCA",
-      senderAccountName: "Owner Agency A",
-      proofFileUrl: "https://example.com/proof-a.jpg",
-      notes: "Paket Agensi 25 Undangan",
+    // 2. Customer submits order via Storefront A
+    const orderA = await createCustomerOrder(db(), {
+      sellerId: resellerA.profile.id,
+      customerName: "Customer A",
+      customerEmail: "cust-a@test.com",
+      customerWhatsapp: "6281234444",
+      notes: "Paket Tema Elegant",
     });
 
-    expect(reqA.status).toBe("pending");
+    expect(orderA.status).toBe("new");
 
-    // 4. Reseller B submits topup request
-    const reqB = await createTopupRequest(db(), {
-      resellerId: resellerB.profile.id,
-      creditAmount: 10,
-      amountPaid: 150000,
-      bankAccountId: bank.id,
-      senderBank: "Mandiri",
-      senderAccountName: "Owner Agency B",
-      proofFileUrl: "https://example.com/proof-b.jpg",
+    // 3. Customer submits order via Storefront B
+    const orderB = await createCustomerOrder(db(), {
+      sellerId: resellerB.profile.id,
+      customerName: "Customer B",
+      customerEmail: "cust-b@test.com",
+      customerWhatsapp: "6285678888",
     });
 
-    // 5. Query topup requests for Reseller A only
-    const requestsA = await listResellerTopupRequests(db(), resellerA.profile.id);
-    expect(requestsA.length).toBe(1);
-    expect(requestsA[0]?.request.id).toBe(reqA.id);
-    expect(requestsA[0]?.bankAccount?.bankName).toBe("BCA");
+    // 4. Query customer orders for Reseller A only
+    const ordersA = await listOrdersBySeller(db(), resellerA.profile.id);
+    expect(ordersA.length).toBe(1);
+    expect(ordersA[0]?.id).toBe(orderA.id);
+    expect(ordersA[0]?.customerName).toBe("Customer A");
 
     // Query for Reseller B only
-    const requestsB = await listResellerTopupRequests(db(), resellerB.profile.id);
-    expect(requestsB.length).toBe(1);
-    expect(requestsB[0]?.request.id).toBe(reqB.id);
+    const ordersB = await listOrdersBySeller(db(), resellerB.profile.id);
+    expect(ordersB.length).toBe(1);
+    expect(ordersB[0]?.id).toBe(orderB.id);
+    expect(ordersB[0]?.customerName).toBe("Customer B");
   });
 
   it("creates clients under reseller and enforces agency affiliation", async () => {
@@ -115,7 +98,6 @@ describe("Reseller Agency Portal (Phase 3)", () => {
       agencyName: "Agency Clients",
       slug: "agency-clients",
       whatsappContact: "6283333333",
-      initialCredits: 10,
     });
 
     // Create client 1
@@ -153,7 +135,6 @@ describe("Reseller Agency Portal (Phase 3)", () => {
       agencyName: "Branding Agency Old",
       slug: "branding-agency",
       whatsappContact: "6284444444",
-      initialCredits: 10,
     });
 
     const updated = await updateResellerBranding(db(), reseller.profile.id, {
@@ -161,11 +142,13 @@ describe("Reseller Agency Portal (Phase 3)", () => {
       whatsappContact: "6289999999",
       logoUrl: "https://example.com/new-logo.png",
       brandColor: "#10b981",
+      customDomain: "undangan.brandingnew.com",
     });
 
     expect(updated.agencyName).toBe("Branding Agency New");
     expect(updated.whatsappContact).toBe("6289999999");
     expect(updated.logoUrl).toBe("https://example.com/new-logo.png");
     expect(updated.brandColor).toBe("#10b981");
+    expect(updated.customDomain).toBe("undangan.brandingnew.com");
   });
 });

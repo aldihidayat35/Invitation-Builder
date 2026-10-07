@@ -1,41 +1,37 @@
-import type { BankAccount, CreditTransaction, ResellerProfile, TopupRequest, User } from "@/lib/db/schema";
+import type { CustomerOrderStatus } from "@/lib/schema/domain";
+import type { ResellerProfile, User } from "@/lib/db/schema";
 
 export interface AdminResellerItem {
   profile: ResellerProfile;
   user: User;
 }
 
-export interface AdminTransactionItem {
-  transaction: CreditTransaction;
-  reseller: ResellerProfile;
-  user: User;
-}
-
-export interface AdminTopupRequestItem {
-  request: TopupRequest;
-  reseller: ResellerProfile;
-  user: User;
-  bankAccount: BankAccount | null;
-}
-
-export interface AdminBankAccountItem {
+export interface AdminOrderItem {
   id: string;
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
-  qrCodeUrl: string | null;
-  instructions: string | null;
-  isActive: boolean;
+  sellerId: string;
+  sellerName: string;
+  customerName: string;
+  customerEmail: string;
+  customerWhatsapp: string;
+  groomBrideNames?: string | null;
+  templateId?: string | null;
+  templateTitle?: string | null;
+  invitationId?: string | null;
+  invitationSlug?: string | null;
+  eventDate?: Date | null;
+  eventLocation?: string | null;
+  notes?: string | null;
+  adminNotes?: string | null;
+  status: CustomerOrderStatus;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface AdminStats {
   totalResellers: number;
   activeResellers: number;
-  totalQuota: number;
-  totalTransactions: number;
-  pendingTopups: number;
+  totalOrders: number;
+  newOrders: number;
+  completedOrders: number;
 }
 
 export interface ActionState {
@@ -43,16 +39,3 @@ export interface ActionState {
   error?: string;
   message?: string;
 }
-
-export interface AdminTopupFinancialRecap {
-  totalApprovedRevenue: number;
-  totalPendingRevenue: number;
-  totalApprovedCredits: number;
-  totalPendingCredits: number;
-  totalPendingCount: number;
-  totalApprovedCount: number;
-  totalRejectedCount: number;
-  totalRequestsCount: number;
-}
-
-

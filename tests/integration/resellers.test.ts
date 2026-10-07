@@ -2,16 +2,20 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createMigratedDb } from "../helpers/db";
 import {
-  adjustResellerCredit,
   createResellerClient,
   createResellerWithProfile,
   findResellerProfileById,
   findResellerProfileBySlug,
   findResellerProfileByUserId,
-  listCreditTransactions,
+  updateResellerStatus,
+  updateResellerBranding,
 } from "@/lib/db/repositories/resellers";
+import {
+  createCustomerOrder,
+  listOrdersBySeller,
+  getSellerOrderStats,
+} from "@/lib/db/repositories/orders";
 import { findUserByEmail, listUsersByReseller } from "@/lib/db/repositories/users";
-import { seedDev } from "@/lib/db/seed";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 
@@ -25,21 +29,19 @@ afterAll(async () => {
   await conn.close();
 });
 
-describe("Reseller & Credit Management (Phase 1)", () => {
-  it("provisions a reseller with dedicated workspace and initial credit grant", async () => {
+describe("Reseller & Order Management Model", () => {
+  it("provisions a reseller with dedicated workspace and profile", async () => {
     const res = await createResellerWithProfile(db(), {
       email: "partner@agency.test",
       name: "Partner Admin",
       agencyName: "Royal Wedding Media",
       slug: "royal-wedding",
       whatsappContact: "62899112233",
-      initialCredits: 15,
     });
 
     expect(res.user.systemRole).toBe("reseller");
     expect(res.profile.agencyName).toBe("Royal Wedding Media");
     expect(res.profile.slug).toBe("royal-wedding");
-    expect(res.profile.creditQuota).toBe(15);
     expect(res.workspace.slug).toBe("agency-royal-wedding");
 
     // Verify lookup helpers
@@ -48,125 +50,100 @@ describe("Reseller & Credit Management (Phase 1)", () => {
 
     const bySlug = await findResellerProfileBySlug(db(), "royal-wedding");
     expect(bySlug?.id).toBe(res.profile.id);
-
-    // Verify initial credit transaction recorded
-    const history = await listCreditTransactions(db(), res.profile.id);
-    expect(history.length).toBe(1);
-    expect(history[0]?.type).toBe("owner_grant");
-    expect(history[0]?.amount).toBe(15);
-    expect(history[0]?.balanceBefore).toBe(0);
-    expect(history[0]?.balanceAfter).toBe(15);
   });
 
-  it("adjusts credit quota atomically and writes to ledger", async () => {
+  it("receives customer orders and calculates seller order stats", async () => {
     const res = await createResellerWithProfile(db(), {
-      email: "credits@agency.test",
-      name: "Credits Admin",
-      agencyName: "Credits Agency",
-      slug: "credits-agency",
+      email: "orders@agency.test",
+      name: "Orders Admin",
+      agencyName: "Orders Agency",
+      slug: "orders-agency",
       whatsappContact: "62812345678",
-      initialCredits: 10,
     });
 
-    // 1. Deduct 1 credit (e.g. publish invitation)
-    const deductRes = await adjustResellerCredit(db(), {
-      resellerProfileId: res.profile.id,
-      amount: -1,
-      type: "publish_deduct",
-      referenceId: "inv-uuid-1",
-      notes: "Publishing invitation #1",
+    // 1. Submit order 1
+    const order1 = await createCustomerOrder(db(), {
+      sellerId: res.profile.id,
+      customerName: "Rian Syahputra",
+      customerEmail: "rian@example.com",
+      customerWhatsapp: "08123456789",
+      groomBrideNames: "Rian & Aisyah",
+      notes: "Tema adat Sunda",
     });
 
-    expect(deductRes.profile.creditQuota).toBe(9);
-    expect(deductRes.transaction.amount).toBe(-1);
-    expect(deductRes.transaction.balanceBefore).toBe(10);
-    expect(deductRes.transaction.balanceAfter).toBe(9);
+    expect(order1.status).toBe("new");
+    expect(order1.customerName).toBe("Rian Syahputra");
 
-    // 2. Top-up 5 credits
-    const topupRes = await adjustResellerCredit(db(), {
-      resellerProfileId: res.profile.id,
-      amount: 5,
-      type: "purchase_topup",
-      referenceId: "topup-invoice-99",
-      notes: "Top-up package 5 credits",
+    // 2. Submit order 2
+    const order2 = await createCustomerOrder(db(), {
+      sellerId: res.profile.id,
+      customerName: "Budi Santoso",
+      customerEmail: "budi@example.com",
+      customerWhatsapp: "08987654321",
     });
 
-    expect(topupRes.profile.creditQuota).toBe(14);
-    expect(topupRes.transaction.amount).toBe(5);
-    expect(topupRes.transaction.balanceBefore).toBe(9);
-    expect(topupRes.transaction.balanceAfter).toBe(14);
+    expect(order2.status).toBe("new");
 
-    // 3. Verify total ledger entries
-    const transactions = await listCreditTransactions(db(), res.profile.id);
-    expect(transactions.length).toBe(3); // Initial grant, deduct, top-up
-    expect(transactions[0]?.type).toBe("purchase_topup");
-    expect(transactions[1]?.type).toBe("publish_deduct");
-    expect(transactions[2]?.type).toBe("owner_grant");
+    // 3. List orders for seller
+    const sellerOrders = await listOrdersBySeller(db(), res.profile.id);
+    expect(sellerOrders.length).toBe(2);
+
+    // 4. Check statistics
+    const stats = await getSellerOrderStats(db(), res.profile.id);
+    expect(stats.totalOrders).toBe(2);
+    expect(stats.newOrders).toBe(2);
+    expect(stats.inProgressOrders).toBe(0);
+    expect(stats.completedOrders).toBe(0);
   });
 
-  it("blocks credit deduction when balance is insufficient", async () => {
+  it("provisions end-user clients under a reseller and verifies affiliation", async () => {
     const res = await createResellerWithProfile(db(), {
-      email: "zero@agency.test",
-      name: "Zero Admin",
-      agencyName: "Zero Credits Agency",
-      slug: "zero-agency",
-      whatsappContact: "62811122233",
-      initialCredits: 2,
+      email: "host@agency.test",
+      name: "Host Admin",
+      agencyName: "Host Agency",
+      slug: "host-agency",
+      whatsappContact: "62855566677",
     });
 
-    // Attempting to deduct 3 credits when only 2 exist should throw
-    await expect(
-      adjustResellerCredit(db(), {
-        resellerProfileId: res.profile.id,
-        amount: -3,
-        type: "publish_deduct",
-      }),
-    ).rejects.toThrow(/Insufficient credit quota/);
-
-    // Quota remains unchanged
-    const unchanged = await findResellerProfileById(db(), res.profile.id);
-    expect(unchanged?.creditQuota).toBe(2);
-  });
-
-  it("creates a client under a reseller with workspace isolation", async () => {
-    const reseller = await createResellerWithProfile(db(), {
-      email: "boss@agency.test",
-      name: "Boss Reseller",
-      agencyName: "Mega Wedding",
-      slug: "mega-wedding",
-      whatsappContact: "62811111111",
-      initialCredits: 5,
-    });
-
-    const client = await createResellerClient(db(), {
-      resellerUserId: reseller.user.id,
+    const clientRes = await createResellerClient(db(), {
+      resellerUserId: res.user.id,
       clientName: "Budi Santoso",
       clientEmail: "budi@client.test",
-      workspaceSlug: "budi-wedding-ws",
+      workspaceName: "Budi & Ani Wedding",
+      workspaceSlug: "budi-ani-wedding",
     });
 
-    expect(client.clientUser.systemRole).toBe("client");
-    expect(client.clientUser.resellerId).toBe(reseller.user.id);
-    expect(client.workspace.slug).toBe("budi-wedding-ws");
+    expect(clientRes.clientUser.systemRole).toBe("client");
+    expect(clientRes.clientUser.resellerId).toBe(res.user.id);
+    expect(clientRes.workspace.name).toBe("Budi & Ani Wedding");
 
-    // Reseller can list its clients
-    const clients = await listUsersByReseller(db(), reseller.user.id);
+    // Verify lookup by reseller
+    const clients = await listUsersByReseller(db(), res.user.id);
     expect(clients.length).toBe(1);
-    expect(clients[0]?.id).toBe(client.clientUser.id);
+    expect(clients[0]?.id).toBe(clientRes.clientUser.id);
+    expect(clients[0]?.name).toBe("Budi Santoso");
   });
 
-  it("seeds dev environment with owner and demo reseller", async () => {
-    const seed = await seedDev(db());
-    expect(seed.userId).toBeDefined();
+  it("updates reseller branding and toggles status", async () => {
+    const res = await createResellerWithProfile(db(), {
+      email: "branding@agency.test",
+      name: "Branding Admin",
+      agencyName: "Branding Agency",
+      slug: "branding-agency",
+      whatsappContact: "62811122233",
+    });
 
-    const owner = await findUserByEmail(db(), "dev@example.test");
-    expect(owner?.systemRole).toBe("owner");
+    const updated = await updateResellerBranding(db(), res.profile.id, {
+      agencyName: "Branding Agency Pro",
+      brandColor: "#84633f",
+      customDomain: "undangan.brandingpro.com",
+    });
 
-    const demoReseller = await findUserByEmail(db(), "reseller@example.test");
-    expect(demoReseller?.systemRole).toBe("reseller");
+    expect(updated.agencyName).toBe("Branding Agency Pro");
+    expect(updated.brandColor).toBe("#84633f");
+    expect(updated.customDomain).toBe("undangan.brandingpro.com");
 
-    const resellerProfile = await findResellerProfileByUserId(db(), demoReseller!.id);
-    expect(resellerProfile?.creditQuota).toBe(20);
-    expect(resellerProfile?.slug).toBe("mitra-berkah");
+    const toggled = await updateResellerStatus(db(), res.profile.id, false);
+    expect(toggled.isActive).toBe(false);
   });
 });

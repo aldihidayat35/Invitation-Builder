@@ -430,6 +430,9 @@ export async function templatePermissions(
   actor: Actor,
   workspaceId: string,
 ): Promise<{ write: boolean; publish: boolean; archive: boolean }> {
+  if (actor.systemRole === "reseller") {
+    return { write: false, publish: false, archive: false };
+  }
   const role = await findRole(db, actor, workspaceId);
   return {
     write: role ? roleCan(role, "template:write") : false,

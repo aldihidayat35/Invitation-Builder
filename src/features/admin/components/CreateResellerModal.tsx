@@ -166,19 +166,18 @@ function CreateResellerDialog({
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel} htmlFor="field-credits">
-                Alokasi Kuota Awal
+              <label className={styles.fieldLabel} htmlFor="field-domain">
+                Domain Khusus Seller (Opsional)
               </label>
               <input
-                id="field-credits"
-                name="initialCredits"
-                type="number"
-                min="0"
-                defaultValue={10}
+                id="field-domain"
+                name="customDomain"
+                type="text"
+                placeholder="misal: undangan.tokosaya.com"
                 className={styles.inputControl}
                 disabled={isPending}
               />
-              <span className={styles.fieldHint}>Saldo kuota undangan published yang langsung diberikan.</span>
+              <span className={styles.fieldHint}>Website / domain khusus untuk identitas seller melayani customer.</span>
             </div>
           </div>
 

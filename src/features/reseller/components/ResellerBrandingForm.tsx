@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { ActionState } from "../types";
 import styles from "./reseller.module.css";
 
@@ -18,9 +18,61 @@ interface ResellerBrandingProfileProps {
 
 export function ResellerBrandingForm({ initialData, action }: ResellerBrandingProfileProps) {
   const [state, formAction, isPending] = useActionState(action, {});
+  const [copied, setCopied] = useState(false);
+
+  const storefrontUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/seller/${initialData.slug}`
+    : `/seller/${initialData.slug}`;
+
+  const handleCopyLink = () => {
+    if (typeof navigator !== "undefined") {
+      navigator.clipboard.writeText(storefrontUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
 
   return (
-    <div className={styles.formCard} style={{ maxWidth: 640 }}>
+    <div className={styles.formCard} style={{ maxWidth: 680 }}>
+      {/* Storefront Link Banner */}
+      <div style={{
+        padding: "1.25rem",
+        marginBottom: "1.5rem",
+        borderRadius: "8px",
+        background: "var(--dash-card-bg)",
+        border: "1px solid var(--dash-border)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div>
+            <div style={{ fontWeight: 600, color: "var(--dash-text)", fontSize: "0.95rem" }}>
+              Website Toko / Etalase Publik Seller Anda
+            </div>
+            <div style={{ fontSize: "0.85rem", color: "var(--dash-text-muted)", marginTop: "0.2rem" }}>
+              {storefrontUrl}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className={styles.btnSecondary}
+              style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}
+            >
+              {copied ? "Tersalin!" : "Salin Link"}
+            </button>
+            <a
+              href={`/seller/${initialData.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.btnPrimary}
+              style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem", textDecoration: "none" }}
+            >
+              Lihat Website Toko ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
       <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {state.error ? <div className={styles.formError}>{state.error}</div> : null}
         {state.ok && state.message ? (
@@ -29,7 +81,7 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
 
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Nama Agensi / Brand <span style={{ color: "var(--dash-danger)" }}>*</span>
+            Nama Toko / Brand Seller <span style={{ color: "var(--dash-danger)" }}>*</span>
           </label>
           <input
             type="text"
@@ -41,7 +93,7 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Slug Agensi (ID URL Unik)</label>
+          <label className={styles.label}>Slug URL Toko (ID Publik)</label>
           <input
             type="text"
             disabled
@@ -50,13 +102,13 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
             style={{ opacity: 0.7, cursor: "not-allowed" }}
           />
           <span style={{ fontSize: 11, color: "var(--dash-muted)" }}>
-            Slug bersifat permanen dan tidak dapat diubah setelah pembuatan.
+            Slug digunakan untuk alamat web toko Anda: <code>/seller/{initialData.slug}</code>
           </span>
         </div>
 
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Nomor WhatsApp Customer Service <span style={{ color: "var(--dash-danger)" }}>*</span>
+            Nomor WhatsApp Melayani Customer <span style={{ color: "var(--dash-danger)" }}>*</span>
           </label>
           <input
             type="text"
@@ -67,12 +119,26 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
             className={styles.inputControl}
           />
           <span style={{ fontSize: 11, color: "var(--dash-muted)" }}>
-            Nomor kontak ini akan ditampilkan ke klien Anda jika mereka butuh bantuan.
+            Pesanan customer di website toko akan otomatis diarahkan untuk konfirmasi ke WhatsApp ini.
           </span>
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>URL Logo Agensi (Opsional)</label>
+          <label className={styles.label}>Domain Khusus Seller (Custom Domain - Opsional)</label>
+          <input
+            type="text"
+            name="customDomain"
+            defaultValue={initialData.customDomain || ""}
+            placeholder="undangan.tokosaya.com"
+            className={styles.inputControl}
+          />
+          <span style={{ fontSize: 11, color: "var(--dash-muted)" }}>
+            Jika Anda memiliki domain sendiri, masukkan nama domain di sini (tanpa https://).
+          </span>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>URL Logo Toko / Brand (Opsional)</label>
           <input
             type="url"
             name="logoUrl"
@@ -83,23 +149,23 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Warna Aksen Brand Agensi</label>
+          <label className={styles.label}>Warna Aksen Identitas Brand</label>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="color"
               name="brandColor"
-              defaultValue={initialData.brandColor || "#3b82f6"}
+              defaultValue={initialData.brandColor || "#84633f"}
               style={{ width: 44, height: 44, padding: 0, border: "none", cursor: "pointer" }}
             />
             <span style={{ fontSize: 13, color: "var(--dash-muted)" }}>
-              Digunakan pada tema dan portal klien agensi Anda.
+              Digunakan pada header website toko dan formulir pemesanan customer Anda.
             </span>
           </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
           <button type="submit" className={styles.btnPrimary} disabled={isPending}>
-            {isPending ? "Menyimpan Perubahan..." : "Simpan Pengaturan Branding"}
+            {isPending ? "Menyimpan Perubahan..." : "Simpan Pengaturan Toko"}
           </button>
         </div>
       </form>

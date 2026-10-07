@@ -15,16 +15,15 @@ export type SystemRole = (typeof SYSTEM_ROLES)[number];
 export const USER_STATUSES = ["active", "disabled"] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
 
-/** Reseller credit transaction ledger types. */
-export const CREDIT_TRANSACTION_TYPES = [
-  "owner_grant",
-  "purchase_topup",
-  "publish_deduct",
-  "unpublish_refund",
-  "manual_adjustment",
+/** Customer order pipeline: new → in_review → in_progress → completed | cancelled. */
+export const CUSTOMER_ORDER_STATUSES = [
+  "new",
+  "in_review",
+  "in_progress",
+  "completed",
+  "cancelled",
 ] as const;
-export type CreditTransactionType = (typeof CREDIT_TRANSACTION_TYPES)[number];
-
+export type CustomerOrderStatus = (typeof CUSTOMER_ORDER_STATUSES)[number];
 
 /** Template: draft → published/versioned → archived (Lampiran B). */
 export const TEMPLATE_STATUSES = ["draft", "published", "archived"] as const;
@@ -44,9 +43,6 @@ export type AssetStatus = (typeof ASSET_STATUSES)[number];
 
 export const RSVP_RESPONSES = ["attending", "not_attending"] as const;
 export type RsvpResponse = (typeof RSVP_RESPONSES)[number];
-
-export const TOPUP_REQUEST_STATUSES = ["pending", "approved", "rejected", "cancelled"] as const;
-export type TopupRequestStatus = (typeof TOPUP_REQUEST_STATUSES)[number];
 
 /** Audit actions (FR-AUD-001). Stored as text; validated in code. */
 export const AUDIT_ACTIONS = [
@@ -68,12 +64,9 @@ export const AUDIT_ACTIONS = [
   "guest.import",
   "reseller.create",
   "reseller.update",
-  "reseller.credit_adjust",
   "reseller.client_create",
-  "bank_account.create",
-  "bank_account.update",
-  "bank_account.delete",
-  "topup_request.approve",
-  "topup_request.reject",
+  "order.create",
+  "order.update_status",
+  "order.assign_invitation",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

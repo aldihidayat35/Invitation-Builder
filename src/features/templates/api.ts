@@ -14,7 +14,7 @@ import type { Actor } from "@/lib/auth/authorization";
 
 async function context(): Promise<{ db: Database; actor: Actor }> {
   const user = await requireUser();
-  return { db: await getDb(), actor: { userId: user.id } };
+  return { db: await getDb(), actor: { userId: user.id, systemRole: user.systemRole } };
 }
 
 export async function listLibrary(workspaceId: string, options: { archived?: boolean } = {}) {

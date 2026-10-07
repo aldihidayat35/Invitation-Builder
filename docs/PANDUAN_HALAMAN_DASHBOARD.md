@@ -1,280 +1,215 @@
-# Panduan Lengkap Halaman Dashboard Aplikasi Digital Invitation Builder
+# Panduan Lengkap Halaman Dashboard & Arsitektur Sistem Digital Invitation Builder
 
-Dokumen ini mendeskripsikan secara menyeluruh setiap rute, antarmuka, hak akses (RBAC), alur kerja, serta fitur yang tersedia pada seluruh halaman dashboard aplikasi.
+Dokumen ini mendeskripsikan secara menyeluruh setiap rute, antarmuka, hak akses (RBAC), alur kerja pemesanan (*order pipeline*), etalase toko seller (*storefront*), serta ketentuan pengelolaan data sesuai mandat Pemilik Platform (Owner).
+
+---
+
+## Ketentuan Akses & Pengelolaan Data (Mandat Owner)
+
+1. **Admin memiliki akses penuh** untuk mengelola, mendesain di kanvas visual, mengubah data mempelai, dan menerbitkan (*publish*) website undangan customer.
+2. **Seller berperan sebagai pihak kedua** yang membantu proses pemesanan (*order intake & assistance*), tetapi **TIDAK memiliki akses untuk mengubah data website undangan** yang menjadi kewenangan mutlak Admin (*strictly read-only / locked* bagi seller).
+3. **Perubahan data tertentu hanya dapat dilakukan oleh Admin** untuk menjaga keamanan, integritas visual, dan keakuratan data customer.
+4. **Setiap seller memiliki website toko publik / domain khusus** (`/seller/[slug]` atau custom domain) sebagai identitas resmi agensi dan sarana melayani pemesanan langsung dari calon pengantin.
+5. **Website undangan yang dibuat untuk customer tetap menjadi bagian dari sistem utama platform** (`/i/[slug]`) dan dikelola berdasarkan hak akses masing-masing pihak.
+6. **Sistem kredit kuota, ledger koin, top-up manual, dan rekening bank platform telah dihapus sepenuhnya** dari sistem demi efisiensi operasional dan kepastian layanan terpusat.
 
 ---
 
 ## Daftar Isi
 1. [Struktur Peran Pengguna & Hirarki Akses (RBAC)](#1-struktur-peran-pengguna--hirarki-akses-rbac)
-2. [Halaman Umum & Klien (Client / Workspace User)](#2-halaman-umum--klien-client--workspace-user)
+2. [Pipa Alur Kerja Pemesanan (Order Flow Lifecycle)](#2-pipa-alur-kerja-pemesanan-order-flow-lifecycle)
+3. [Etalase Toko Publik Seller (/seller/[slug])](#3-etalase-toko-publik-seller-sellerslug)
+4. [Halaman Umum & Workspace (/dashboard/*)](#4-halaman-umum--workspace-dashboard)
    - [/dashboard — Ringkasan Workspace](#dashboard--ringkasan-workspace)
-   - [/dashboard/templates — Katalog Template](#dashboardtemplates--katalog-template)
-   - [/dashboard/templates/[id] — Detail & Penerbitan Template](#dashboardtemplatesid--detail--penerbitan-template)
-   - [/editor/[id] — Visual Canvas Editor (Canva-like)](#editorid--visual-canvas-editor-canva-like)
-   - [/dashboard/invitations — Daftar Undangan Klien](#dashboardinvitations--daftar-undangan-klien)
-   - [/dashboard/invitations/[id] — Detail & Data Mempelai](#dashboardinvitationsid--detail--data-mempelai)
-   - [/dashboard/invitations/[id]/preview — Pratinjau Undangan](#dashboardinvitationsidpreview--pratinjau-undangan)
+   - [/dashboard/templates — Katalog Template Desain](#dashboardtemplates--katalog-template-desain)
+   - [/dashboard/templates/[id] — Detail & Kontrol Versi Template](#dashboardtemplatesid--detail--kontrol-versi-template)
+   - [/editor/[id] — Visual Canvas Editor (Canva-like Engine)](#editorid--visual-canvas-editor-canva-like-engine)
+   - [/dashboard/invitations — Daftar Website Undangan](#dashboardinvitations--daftar-website-undangan)
+   - [/dashboard/invitations/[id] — Detail & Data Mempelai (Admin Exclusive Write)](#dashboardinvitationsid--detail--data-mempelai-admin-exclusive-write)
+   - [/dashboard/invitations/[id]/preview — Pratinjau Undangan Interaktif](#dashboardinvitationsidpreview--pratinjau-undangan-interaktif)
    - [/dashboard/invitations/[id]/rsvp — Manajemen Tamu & RSVP](#dashboardinvitationsidrsvp--manajemen-tamu--rsvp)
-3. [Portal Mitra Reseller (/dashboard/reseller/*)](#3-portal-mitra-reseller-dashboardreseller)
-   - [/dashboard/reseller — Ringkasan Agensi & Kuota](#dashboardreseller--ringkasan-agensi--kuota)
-   - [/dashboard/reseller/topup — Beli Kuota (Top-Up Manual)](#dashboardresellertopup--beli-kuota-top-up-manual)
-   - [/dashboard/reseller/transactions — Riwayat & Mutasi Kuota](#dashboardresellertransactions--riwayat--mutasi-kuota)
-   - [/dashboard/reseller/clients — Manajemen Klien Agensi](#dashboardresellerclients--manajemen-klien-agensi)
-   - [/dashboard/reseller/branding — Kustomisasi White-Label Agensi](#dashboardresellerbranding--kustomisasi-white-label-agensi)
-4. [Portal Super Admin / Owner (/dashboard/admin/*)](#4-portal-super-admin--owner-dashboardadmin)
-   - [/dashboard/admin/resellers — Manajemen Mitra Reseller](#dashboardadminresellers--manajemen-mitra-reseller)
-   - [/dashboard/admin/topup-requests — Verifikasi Top-Up & Rekap Finansial](#dashboardadmintopup-requests--verifikasi-top-up--rekap-finansial)
-   - [/dashboard/admin/bank-accounts — Manajemen Rekening Bank Platform](#dashboardadminbank-accounts--manajemen-rekening-bank-platform)
-   - [/dashboard/admin/transactions — Audit Ledger Platform](#dashboardadmintransactions--audit-ledger-platform)
-5. [Menu Khusus Pengembang (Development Only)](#5-menu-khusus-pengembang-development-only)
-   - [/dashboard/playground — Engine Playground](#dashboardplayground--engine-playground)
-6. [Tabel Matriks Hak Akses Antar Peran](#6-tabel-matriks-hak-akses-antar-peran)
+5. [Portal Mitra Reseller / Seller (/dashboard/reseller/*)](#5-portal-mitra-reseller--seller-dashboardreseller)
+   - [/dashboard/reseller — Ringkasan Performa & Pesanan Masuk](#dashboardreseller--ringkasan-performa--pesanan-masuk)
+   - [/dashboard/reseller/orders — Manajemen Pesanan Customer Masuk](#dashboardresellerorders--manajemen-pesanan-customer-masuk)
+   - [/dashboard/reseller/storefront — Tautan & Konfigurasi Toko Publik](#dashboardresellerstorefront--tautan--konfigurasi-toko-publik)
+   - [/dashboard/reseller/clients — Daftar Klien Pasangan Pengantin](#dashboardresellerclients--daftar-klien-pasangan-pengantin)
+   - [/dashboard/reseller/branding — Kustomisasi White-Label & Domain Toko](#dashboardresellerbranding--kustomisasi-white-label--domain-toko)
+6. [Portal Super Admin / Owner (/dashboard/admin/*)](#6-portal-super-admin--owner-dashboardadmin)
+   - [/dashboard/admin/orders — Pusat Pipa Pesanan Seluruh Platform](#dashboardadminorders--pusat-pipa-pesanan-seluruh-platform)
+   - [/dashboard/admin/resellers — Manajemen Mitra Seller & Domain](#dashboardadminresellers--manajemen-mitra-seller--domain)
+7. [Tabel Matriks Hak Akses Antar Peran](#7-tabel-matriks-hak-akses-antar-peran)
 
 ---
 
 ## 1. Struktur Peran Pengguna & Hirarki Akses (RBAC)
 
-Aplikasi menerapkan sistem multi-tenant terisolasi dengan 3 tingkat hak akses (*role*):
+Platform memisahkan tanggung jawab secara tegas (*Separation of Concerns*):
 
 ```mermaid
 graph TD
-    Owner["Super Admin / Platform Owner (owner)"] -->|Kelola Mitra & Verifikasi Saldo| Reseller["Mitra Reseller / Agency Owner (reseller)"]
-    Reseller -->|Buat Akun & Pasang Branding| Client["Klien Pasangan Pengantin (client)"]
-    Owner -.->|Akses Langsung Tanpa Kuota| DirectUser["Direct Platform User (member)"]
+    Admin["Super Admin / Platform Owner (owner)"] -->|Otoritas Penuh Desain & Penerbitan Undangan| MainSystem["Platform Undangan (/i/[slug])"]
+    Seller["Mitra Seller (reseller)"] -->|Memiliki Website Toko & Terima Booking| Storefront["Toko Seller (/seller/[slug])"]
+    Customer["Calon Pengantin (Customer)"] -->|Kirim Pesanan & Hubungi Seller| Storefront
+    Storefront -->|Tercatat di Pipa Pesanan| Admin
+    Admin -->|Proses Pesanan & Hubungkan Undangan| Customer
+    Seller -.->|Terkunci: Dilarang Mengubah Undangan (Admin Authority Lock)| MainSystem
 ```
 
 1. **Super Admin / Platform Owner (`owner`)**:
-   - Memiliki kendali penuh platform, persetujuan transfer pembayaran kuota manual, manajemen rekening pembayaran, serta audit keuangan platform.
-2. **Mitra Reseller (`reseller`)**:
-   - Agensi pernikahan / digital creator yang membeli kuota grosir (*credit system*), membuat workspace untuk klien mereka, dan menerapkan *white-label branding* agensi sendiri.
-3. **Klien Reseller (`client`)**:
-   - Pasangan calon pengantin yang terafiliasi dengan agensi reseller tertentu. Mengedit undangan pernikahan mereka sendiri dengan logo dan nama agensi reseller terpampang pada dashboard.
+   - Memiliki wewenang mutlak atas seluruh template desain, visual editor, manipulasi data undangan, dan penerbitan website undangan customer.
+   - Mengelola dan memproses seluruh antrean pesanan dari semua seller.
+2. **Mitra Seller (`reseller`)**:
+   - Berperan sebagai garda depan pemasaran dan asisten pemesanan customer.
+   - Memiliki website toko online publik (`/seller/[slug]` atau custom domain) untuk menjangkau calon pengantin.
+   - Dapat melihat antrean pesanan customer yang masuk lewat tokonya.
+   - **Terkunci secara ketat (*Admin Authority Lock*)**: Tidak memiliki izin untuk mengedit atau menerbitkan data website undangan customer.
+3. **Klien Pasangan Pengantin (`client` / customer)**:
+   - Pasangan calon pengantin yang memesan melalui seller atau platform utama.
 
 ---
 
-## 2. Halaman Umum & Klien (Client / Workspace User)
+## 2. Pipa Alur Kerja Pemesanan (Order Flow Lifecycle)
+
+1. **Eksplorasi Katalog**: Customer mengunjungi website toko seller (`/seller/[slug]`). Customer melihat katalog template premium, informasi paket, dan kontak WhatsApp seller.
+2. **Pengisian Booking**: Customer mengisi form booking (nama mempelai, tanggal akad/resepsi, lokasi, kontak WhatsApp, catatan khusus, dan tema yang dipilih).
+3. **Pencatatan Pesanan**:
+   - Pesanan tersimpan di database dalam tabel `customer_orders` dengan status awal `new` dan terafiliasi dengan ID seller.
+   - Customer diarahkan ke WhatsApp seller dengan pesan resmi yang telah terformat otomatis.
+4. **Pemrosesan oleh Admin**:
+   - Admin melihat pesanan di `/dashboard/admin/orders`.
+   - Admin mengubah status menjadi `in_progress`, membuat atau menduplikasi website undangan di visual editor, dan mengisi data mempelai sesuai instruksi.
+5. **Penerbitan & Penyelesaian**:
+   - Admin menerbitkan (*publish*) website undangan di `/dashboard/invitations/[id]`.
+   - Admin menautkan `invitationId` ke pesanan dan menandai status sebagai `completed`.
+   - Customer menerima tautan undangan resmi platform (`/i/[slug]`) dengan identitas agensi seller tetap terjaga (*white-label*).
+
+---
+
+## 3. Etalase Toko Publik Seller (`/seller/[slug]`)
+
+- **Akses**: Publik (Bebas diakses calon pengantin tanpa login).
+- **Tujuan**: Halaman etalase toko mandiri bagi setiap seller sebagai sarana branding dan penerimaan order digital.
+- **Fitur Utama**:
+  - **Identitas Agensi**: Menampilkan logo agensi, nama brand seller, dan tombol kontak WhatsApp resmi.
+  - **Katalog Tema Desain**: Grid kartu tema undangan aktif lengkap dengan thumbnail preview.
+  - **Formulir Pemesanan Interaktif**: Form input data calon pengantin dengan validasi real-time.
+  - **Redirect WhatsApp Otomatis**: Menghubungkan langsung pembeli ke nomor WhatsApp seller dengan teks konfirmasi yang rapi.
+  - **Dukungan Domain Khusus**: Dapat diakses via domain kustom milik seller (contoh: `undangan.agensiku.com`).
+
+---
+
+## 4. Halaman Umum & Workspace (`/dashboard/*`)
 
 ### `/dashboard` — Ringkasan Workspace
-- **Akses**: Semua Pengguna yang Terotentikasi.
-- **Tujuan**: Halaman beranda utama yang memberikan ringkasan status operasional undangan dan template di workspace aktif saat ini.
-- **Fitur Utama**:
-  - **Banner Branding Agensi**: Jika pengguna adalah klien reseller, bagian atas dashboard secara otomatis menampilkan logo, nama agensi, dan tombol WhatsApp kontak bantuan dari reseller yang menaunginya.
-  - **Kartu Metrik Singkat**: Menampilkan jumlah total template, undangan yang sedang disusun (*draft*), dan undangan yang sudah berstatus aktif/terbit (*published*).
-  - **Langkah Kerja (Quick Start Guide)**: Petunjuk alur kerja interaktif mulai dari memilih template, melengkapi data mempelai, hingga menerbitkan tautan undangan.
+- **Akses**: Semua pengguna terotentikasi.
+- **Fitur**: Ringkasan template aktif, undangan tersimpan, dan panduan langkah kerja.
 
----
+### `/dashboard/templates` — Katalog Template Desain
+- **Akses**: Semua pengguna terotentikasi.
+- **Fitur**: Menampilkan pustaka desain undangan. Admin memiliki tombol edit kanvas dan publikasi template; Seller memiliki akses pratinjau.
 
-### `/dashboard/templates` — Katalog Template
-- **Akses**: Semua Pengguna yang Terotentikasi.
-- **Tujuan**: Menampilkan seluruh pustaka desain template undangan pernikahan yang dapat diduplikasi atau diedit.
-- **Fitur Utama**:
-  - **Daftar Kartu Desain**: Menampilkan *thumbnail*, judul, kategori tema (elegan, modern, floral, adat), dan status publikasi masing-masing template.
-  - **Filter & Pencarian**: Memfilter template berdasarkan tema atau status (*draft* vs *published*).
-  - **Aksi Cepat**: Tombol **"Buka Editor"** untuk mendesain di kanvas dan tombol **"Gunakan Desain"** untuk menduplikasi template menjadi undangan baru.
+### `/dashboard/templates/[id]` — Detail & Kontrol Versi Template
+- **Akses**: Admin / Workspace Owner.
+- **Fitur**: Pengaturan variabel dinamis, skema metadata, dan rilis versi desain (*version control*).
 
----
+### `/editor/[id]` — Visual Canvas Editor (Canva-like Engine)
+- **Akses**: Khusus Admin / Desainer Platform.
+- **Fitur**: Kanvas visual interaktif, manipulasi elemen multi-layer, animasi frame, tipografi Google Fonts, pemilihan palet warna tema, pengaturan opening screen, galeri media, dan transisi layar.
 
-### `/dashboard/templates/[id]` — Detail & Penerbitan Template
-- **Akses**: Pemilik Workspace / Pembuat Template.
-- **Tujuan**: Mengelola metadata, struktur variabel data dinamis, dan kontrol versi template.
-- **Fitur Utama**:
-  - **Inspeksi Variabel Binding**: Meninjau variabel data dinamis yang digunakan pada template (misal: nama mempelai pria, nama mempelai wanita, tanggal akad, lokasi resepsi).
-  - **Validasi Skema Dokumen**: Tombol validasi apakah susunan layout dan format JSON dokumen memenuhi standar engine undangan.
-  - **Penerbitan Template**: Mengubah status template menjadi *published* agar siap digunakan untuk membuat undangan massal.
+### `/dashboard/invitations` — Daftar Website Undangan
+- **Akses**: Semua anggota workspace.
+- **Fitur**: Menampilkan daftar seluruh website undangan yang dibuat di workspace.
 
----
+### `/dashboard/invitations/[id]` — Detail & Data Mempelai (Admin Exclusive Write)
+- **Akses**: Admin memiliki izin edit & terbit (*write & publish*); Seller berstatus *read-only*.
+- **Fitur**:
+  - Formulir pengisian data spesifik mempelai (nama lengkap, nama panggilan, orang tua, waktu akad/resepsi, lokasi Google Maps, rekening amplop digital).
+  - Tombol **"Terbitkan Undangan"** (*Publish*) bebas kuota bagi Admin.
 
-### `/editor/[id]` — Visual Canvas Editor (Canva-like)
-- **Akses**: Pemilik Template / Undangan yang sedang diedit.
-- **Tujuan**: Studio kanvas grafis interaktif bebas kode (*drag-and-drop*) untuk merancang layout undangan mobile.
-- **Fitur Utama**:
-  - **Artboard Mobile Responsive**: Kanvas 9:16 mobile viewport dengan pembagian *section* (Cover, Profil Mempelai, Acara Akad/Resepsi, Cerita Cinta, Galeri, dsb.).
-  - **Panel Layer & Elemen**: Menambah teks tipografi, foto galeri, ornamen/bingkai, musik latar belakang, animasi masuk GSAP, dan transisi antar-seksi.
-  - **Inspector Toolbar**: Mengatur font Google Fonts, warna palet HSL/Hex, efek bayangan (*shadow*), rotasi, transparansi (*opacity*), dan cropping gambar.
-  - **Data-Binding Engine**: Menghubungkan elemen teks tertentu dengan variabel sistem (contoh: teks langsung terhubung ke `{couple.groom.fullName}`).
-
----
-
-### `/dashboard/invitations` — Daftar Undangan Klien
-- **Akses**: Semua Pengguna yang Terotentikasi.
-- **Tujuan**: Mengelola portofolio seluruh undangan digital pasangan yang telah dibuat di dalam workspace.
-- **Fitur Utama**:
-  - **Tabel Daftar Undangan**: Memuat judul undangan, slug URL publik, nama pasangan mempelai, dan badge status (*Draft*, *Ready*, *Published*).
-  - **Tombol "Buat Undangan Baru"**: Alur pembuatan undangan baru berbasis template yang sudah ada.
-  - **Navigasi Langsung**: Tautan cepat untuk membuka visual editor, membuka konfigurasi tamu/RSVP, atau melihat halaman live publik.
-
----
-
-### `/dashboard/invitations/[id]` — Detail & Data Mempelai
-- **Akses**: Pemilik Undangan / Klien Bersangkutan.
-- **Tujuan**: Formulir terstruktur pengisian konten utama pernikahan tanpa perlu membuka kanvas visual.
-- **Fitur Utama**:
-  - **Form Data Mempelai Pria & Wanita**: Nama lengkap, nama panggilan, nama orang tua, akun media sosial, dan foto profil.
-  - **Form Rangkaian Acara**: Waktu & tanggal akad nikah, resepsi, countdown timer, nama gedung/venue, alamat lengkap, dan embed Google Maps.
-  - **Pengaturan URL Publik (Slug)**: Menyesuaikan tautan undangan (contoh: `/u/rama-shinta`).
-  - **Penerbitan Undangan (Publishing)**:
-    - *Bagi Klien Reseller*: Sistem memvalidasi saldo kuota reseller agensi induk. Jika kuota mencukupi, sistem memotong **1 Kredit Kuota** secara atomik dan menerbitkan undangan.
-    - *Bagi Direct Platform User*: Undangan langsung terbit tanpa pemotongan kuota.
-
----
-
-### `/dashboard/invitations/[id]/preview` — Pratinjau Undangan
-- **Akses**: Pemilik Undangan.
-- **Tujuan**: Memeriksa tampilan akhir undangan tepat seperti yang akan dilihat oleh tamu undangan pada smartphone sebelum tautan dibagikan.
-- **Fitur Utama**:
-  - **Mobile Frame Simulator**: Menampilkan hasil render HTML DOM murni dengan animasi seksi, transisi layar buka (*opening screen*), tombol interaktif buka undangan, dan audio player musik otomatis.
-
----
+### `/dashboard/invitations/[id]/preview` — Pratinjau Undangan Interaktif
+- **Akses**: Semua pengguna dengan akses baca.
+- **Fitur**: Simulator smartphone menampilkan hasil render HTML DOM murni dengan animasi pembuka, musik latar, dan transisi seksi.
 
 ### `/dashboard/invitations/[id]/rsvp` — Manajemen Tamu & RSVP
-- **Akses**: Pemilik Undangan.
-- **Tujuan**: Pusat pengelolaan daftar tamu undangan, pembagian sesi kehadiran, pembuatan link personalisasi nama tamu, serta rekap konfirmasi kehadiran dan ucapan.
-- **Fitur Utama**:
-  - **Daftar Tamu & Personalisasi URL**: Menghasilkan tautan unik per tamu (contoh: `/u/rama-shinta?to=Budi+Santoso`).
-  - **Fitur Impor CSV Tamu**: Upload file CSV nama tamu massal dengan pendeteksi duplikasi otomatis.
-  - **Rekapitulasi Kehadiran (RSVP)**: Statistik jumlah tamu yang Hadir, Ragu-ragu, dan Tidak Hadir beserta jumlah anggota rombongan (*pax*).
-  - **Buku Tamu & Ucapan Doa**: Moderasi ucapan selamat dan doa restu yang dikirimkan oleh para tamu melalui halaman undangan publik.
+- **Akses**: Pemilik undangan / Admin.
+- **Fitur**: Manajemen daftar nama tamu, impor CSV massal, pembagian sesi, pembuatan tautan personal (`?to=Nama+Tamu`), serta moderasi ucapan doa restu.
 
 ---
 
-## 3. Portal Mitra Reseller (`/dashboard/reseller/*`)
+## 5. Portal Mitra Reseller / Seller (`/dashboard/reseller/*`)
 
 Menu ini khusus ditampilkan bagi pengguna dengan peran `reseller`.
 
-### `/dashboard/reseller` — Ringkasan Agensi & Kuota
-- **Akses**: Khusus Mitra Reseller.
-- **Tujuan**: Dasbor eksekutif untuk memantau performa agensi, saldo kuota yang tersisa, dan aktivitas klien.
-- **Fitur Utama**:
-  - **Widget Saldo Kuota**: Menampilkan sisa kredit undangan aktif dengan indikator peringatan jika kuota menipis.
-  - **Metrik Performa**: Jumlah total klien terdaftar, jumlah undangan yang berhasil dipublikasikan, dan total permohonan top-up.
-  - **Aksi Cepat Reseller**: Tombol instan ke menu *Beli Kuota*, *Tambah Klien*, dan *Atur Branding Agensi*.
+### `/dashboard/reseller` — Ringkasan Performa & Pesanan Masuk
+- **Akses**: Mitra Reseller.
+- **Fitur**:
+  - Kartu metrik: Total Pesanan Masuk, Pesanan Baru, Sedang Diproses, dan Pesanan Selesai.
+  - Link langsung ke etalase toko publik (`/seller/[slug]`).
+  - Navigasi cepat ke manajemen pesanan dan pengaturan branding.
+
+### `/dashboard/reseller/orders` — Manajemen Pesanan Customer Masuk
+- **Akses**: Mitra Reseller.
+- **Fitur**:
+  - Tabel pesanan customer yang masuk khusus melalui toko seller bersangkutan.
+  - Informasi lengkap: nama customer, calon pengantin, tanggal acara, kontak WhatsApp, catatan, dan status pengerjaan oleh Admin.
+  - Badge informasi hak akses: Menegaskan bahwa pembuatan dan penerbitan website undangan dikerjakan langsung oleh Admin platform.
+
+### `/dashboard/reseller/storefront` — Tautan & Konfigurasi Toko Publik
+- **Akses**: Mitra Reseller.
+- **Fitur**:
+  - Pratinjau link website toko publik seller.
+  - Petunjuk integrasi custom domain atau sub-domain pribadi.
+
+### `/dashboard/reseller/clients` — Daftar Klien Pasangan Pengantin
+- **Akses**: Mitra Reseller.
+- **Fitur**: Daftar akun pasangan pengantin yang terdaftar di bawah naungan agensi seller.
+
+### `/dashboard/reseller/branding` — Kustomisasi White-Label & Domain Toko
+- **Akses**: Mitra Reseller.
+- **Fitur**:
+  - Pengaturan nama agensi dan upload logo toko.
+  - Nomor WhatsApp resmi layanan pelanggan.
+  - Konfigurasi domain khusus (*custom domain*) untuk etalase toko publik seller.
 
 ---
 
-### `/dashboard/reseller/topup` — Beli Kuota (Top-Up Manual)
-- **Akses**: Khusus Mitra Reseller.
-- **Tujuan**: Pembelian paket kuota grosir sistem manual transfer tanpa payment gateway pihak ketiga.
-- **Fitur Utama**:
-  - **Informasi Rekening Resmi Platform**: Menampilkan daftar rekening bank milik Super Admin / Owner (BCA, Mandiri, BRI, BSI) lengkap dengan nomor rekening, atas nama, dan kode QRIS.
-  - **Pilihan Paket Kuota**: Pilihan paket kredit fleksibel (contoh: 10, 25, 50, atau 100 kredit undangan).
-  - **Formulir Pengajuan Transfer**: Input nominal transfer, bank pengirim, nama rekening pengirim, dan unggah file struk/bukti transfer.
-  - **Tombol Instan Konfirmasi WhatsApp**: Setelah formulir terkirim, tombol **"💬 Konfirmasi via WhatsApp Sekarang"** otomatis muncul untuk mengirimkan pesan konfirmasi berformat resmi ke nomor Owner platform secara langsung.
-
----
-
-### `/dashboard/reseller/transactions` — Riwayat & Mutasi Kuota
-- **Akses**: Khusus Mitra Reseller.
-- **Tujuan**: Transparansi buku kas kuota kredit reseller dan pelacakan status pengajuan top-up.
-- **Fitur Utama**:
-  - **Status Permohonan Top-Up**: Daftar permohonan dengan status *Pending (Menunggu Review)*, *Approved (Disetujui)*, atau *Rejected (Ditolak beserta alasan penolakan)*.
-  - **Tombol Konfirmasi Ulang WhatsApp**: Tombol aksi cepat untuk mem-follow up pengajuan yang masih berstatus pending ke nomor Owner.
-  - **Buku Ledger Kredit**: Riwayat setiap kredit yang masuk (*owner_grant*, *topup*) dan kredit yang keluar (*invitation_publish* mencantumkan ID undangan terkait).
-  - **Ekspor CSV**: Mengunduh seluruh riwayat permohonan dan mutasi kredit ke file CSV berstandar RFC 4180 dengan UTF-8 BOM untuk Microsoft Excel.
-
----
-
-### `/dashboard/reseller/clients` — Manajemen Klien Agensi
-- **Akses**: Khusus Mitra Reseller.
-- **Tujuan**: Mendaftarkan akun pasangan pengantin di bawah naungan agensi reseller.
-- **Fitur Utama**:
-  - **Form Tambah Klien**: Membuat akun klien baru (Nama Klien, Email, Password awal) yang secara otomatis membuatkan workspace terisolasi berelasi ke reseller bersangkutan.
-  - **Tabel Klien Agensi**: Daftar seluruh pasangan yang dinaungi beserta tanggal pendaftaran dan status undangan mereka.
-  - **Isolasi Data Multi-Tenant**: Reseller hanya dapat melihat klien miliknya sendiri; data antar-reseller diproteksi secara ketat.
-
----
-
-### `/dashboard/reseller/branding` — Kustomisasi White-Label Agensi
-- **Akses**: Khusus Mitra Reseller.
-- **Tujuan**: Menghilangkan atribusi platform utama dan menggantinya dengan identitas agensi milik reseller.
-- **Fitur Utama**:
-  - **Pengaturan Nama Brand Agensi**: Mengganti nama yang muncul di header dashboard klien.
-  - **Unggah Logo Agensi**: Menampilkan logo agensi pada bilah navigasi dan kartu informasi klien.
-  - **Nomor Kontak WhatsApp Layanan Pelanggan**: Nomor kontak yang akan dihubungi oleh klien jika mereka membutuhkan bantuan saat menyusun undangan.
-
----
-
-## 4. Portal Super Admin / Owner (`/dashboard/admin/*`)
+## 6. Portal Super Admin / Owner (`/dashboard/admin/*`)
 
 Menu ini khusus ditampilkan bagi pengguna dengan peran platform `owner`.
 
-### `/dashboard/admin/resellers` — Manajemen Mitra Reseller
-- **Akses**: Khusus Super Admin / Owner.
-- **Tujuan**: Mengelola kemitraan B2B dengan seluruh agensi reseller undangan.
-- **Fitur Utama**:
-  - **Daftar Seluruh Agensi**: Tabel interaktif mencantumkan nama agensi, nama pemilik, email login, nomor kontak WhatsApp, sisa saldo kuota kredit, dan status keaktifan.
-  - **Tombol Tambah Mitra Reseller**: Formulir pendaftaran mitra baru lengkap dengan alokasi saldo kredit awal.
-  - **Penyesuaian Kuota (Manual Credit Adjustment)**: Tombol untuk menambah (*grant*) atau mengoreksi kuota reseller secara langsung beserta catatan mutasi.
-  - **Toggle Status Akun**: Mengaktifkan atau menonaktifkan (*suspend*) akses agensi tertentu.
+### `/dashboard/admin/orders` — Pusat Pipa Pesanan Seluruh Platform
+- **Akses**: Super Admin / Owner.
+- **Fitur**:
+  - Tabel antrean seluruh pesanan customer dari seluruh seller di platform.
+  - Filter status pesanan: *Semua*, *Baru (New)*, *Diproses (In Progress)*, *Selesai (Completed)*, *Dibatalkan (Cancelled)*.
+  - Modal aksi pembaruan status: Memperbarui tahapan kerja, menambahkan catatan internal admin, dan menautkan ID undangan resmi yang telah selesai dibuat.
+  - Akses langsung untuk menghubungi WhatsApp customer atau seller terkait.
+
+### `/dashboard/admin/resellers` — Manajemen Mitra Seller & Domain
+- **Akses**: Super Admin / Owner.
+- **Fitur**:
+  - Tabel seluruh mitra seller: nama pemilik, nama agensi, slug etalase toko, custom domain, kontak WhatsApp, dan status aktif.
+  - Tombol tambah mitra seller baru (nama, email, password, slug, domain).
+  - Tautan langsung untuk membuka website toko masing-masing seller.
+  - Toggle status keaktifan akun seller (*suspend / activate*).
 
 ---
 
-### `/dashboard/admin/topup-requests` — Verifikasi Top-Up & Rekap Finansial
-- **Akses**: Khusus Super Admin / Owner.
-- **Tujuan**: Verifikasi transaksi transfer manual dari para mitra reseller dan monitoring analitik keuangan platform.
-- **Fitur Utama**:
-  - **Kartu Analitik Finansial (Financial Recap Cards)**:
-    - *Dana Masuk (Disetujui)*: Akumulasi nominal rupiah yang sah masuk ke kas platform.
-    - *Menunggu Verifikasi*: Akumulasi nominal rupiah dari pengajuan yang sedang antre.
-    - *Total Permohonan*: Jumlah akumulasi permohonan (Approved, Pending, Rejected).
-  - **Filter Status Cepat**: Tab filter *Semua*, *Menunggu Verifikasi*, *Disetujui*, dan *Ditolak*.
-  - **Modal Tinjau Bukti Struk**: Klik thumbnail bukti transfer untuk membuka gambar beresolusi penuh untuk pencocokan mutasi bank.
-  - **Aksi Setujui / Tolak**:
-    - *Setujui (Approve)*: Menambahkan kuota kredit ke reseller secara atomik, mencatat ledger mutasi, dan memperbarui status menjadi disetujui.
-    - *Tolak (Reject)*: Membatalkan permohonan dengan kolom wajib menyertakan alasan penolakan (misal: "Struk tidak valid / dana belum masuk").
-  - **Ekspor CSV**: Mengunduh seluruh rekapitulasi permohonan top-up ke file spreadsheet CSV.
+## 7. Tabel Matriks Hak Akses Antar Peran
 
----
-
-### `/dashboard/admin/bank-accounts` — Manajemen Rekening Bank Platform
-- **Akses**: Khusus Super Admin / Owner.
-- **Tujuan**: Mengatur daftar rekening bank tujuan transfer yang tampil pada halaman top-up reseller.
-- **Fitur Utama**:
-  - **Tambah Rekening Bank Baru**: Input nama bank (BCA, Mandiri, BRI, BNI, BSI, Jago, dll.), nomor rekening, dan nama pemilik rekening (*account holder*).
-  - **Upload Gambar QRIS & Petunjuk Transfer**: Mendukung metode pembayaran QRIS statis dan panduan instruksi transfer.
-  - **Toggle Status Aktif / Nonaktif**: Mengontrol rekening mana saja yang sedang menerima pembayaran tanpa perlu menghapus riwayat rekening lama.
-
----
-
-### `/dashboard/admin/transactions` — Audit Ledger Platform
-- **Akses**: Khusus Super Admin / Owner.
-- **Tujuan**: Audit trail menyeluruh dan kepatuhan finansial atas seluruh mutasi kuota di level sistem.
-- **Fitur Utama**:
-  - **Tabel Mutasi Global**: Mencatat setiap transaksi kredit platform: tanggal transaksi, nama agensi, tipe mutasi (`purchase_topup`, `owner_grant`, `invitation_publish`, `refund`), perubahan saldo (*balance before* → *balance after*), ID referensi permohonan, dan aktor yang mengeksekusi.
-  - **Pencarian & Audit**: Menelusuri histori pemotongan kuota per undangan atau per agensi.
-  - **Ekspor CSV Audit Ledger**: Mengunduh seluruh jurnal transaksi kuota platform ke file CSV berstandar RFC 4180.
-
----
-
-## 5. Menu Khusus Pengembang (Development Only)
-
-### `/dashboard/playground` — Engine Playground
-- **Akses**: Otomatis aktif pada mode development (`NODE_ENV !== "production"`).
-- **Tujuan**: Tempat pengujian visual interaktif untuk memverifikasi bagaimana skema JSON variabel dinamis diinjeksikan ke dalam engine template undangan secara real-time.
-- **Fitur Utama**:
-  - Panel editor JSON input data mentah di sebelah kiri.
-  - Panel render engine di sebelah kanan untuk mengevaluasi formatting tanggal, nama variabel binding, dan error fallback secara langsung.
-
----
-
-## 6. Tabel Matriks Hak Akses Antar Peran
-
-| Halaman Dashboard | Path URL | Klien (`client`) | Mitra Reseller (`reseller`) | Super Admin (`owner`) |
+| Halaman / Fitur | Path URL | Customer (`client`) | Mitra Seller (`reseller`) | Super Admin (`owner`) |
 | :--- | :--- | :---: | :---: | :---: |
+| **Etalase Toko Publik Seller** | `/seller/[slug]` | ✅ Bebas Akses (Order) | ✅ (Pemilik Toko) | ✅ |
 | **Ringkasan Workspace** | `/dashboard` | ✅ *(White-label)* | ✅ | ✅ |
-| **Katalog Template** | `/dashboard/templates` | ✅ | ✅ | ✅ |
-| **Detail & Konfigurasi Template** | `/dashboard/templates/[id]` | ✅ | ✅ | ✅ |
-| **Visual Canvas Editor** | `/editor/[id]` | ✅ | ✅ | ✅ |
-| **Daftar Undangan** | `/dashboard/invitations` | ✅ | ✅ | ✅ |
-| **Data Mempelai & Penerbitan** | `/dashboard/invitations/[id]` | ✅ *(Potong 1 Kuota)* | ✅ *(Potong 1 Kuota)* | ✅ *(Bebas Kuota)* |
-| **Pratinjau Undangan** | `/dashboard/invitations/[id]/preview` | ✅ | ✅ | ✅ |
+| **Katalog Template Desain** | `/dashboard/templates` | ✅ (Lihat) | ✅ (Lihat) | ✅ (Kelola Penuh) |
+| **Visual Canvas Editor** | `/editor/[id]` | ❌ | ❌ *(Terkunci)* | ✅ (Akses Penuh) |
+| **Daftar Undangan** | `/dashboard/invitations` | ✅ | ✅ (Lihat Saja) | ✅ (Kelola Penuh) |
+| **Edit Data & Terbitkan Undangan** | `/dashboard/invitations/[id]` | ❌ *(Dikelola Admin)* | ❌ *(Admin Authority Lock)* | ✅ (Bebas / Tanpa Kuota) |
+| **Pratinjau Undangan Interaktif** | `/dashboard/invitations/[id]/preview` | ✅ | ✅ | ✅ |
 | **Manajemen Tamu & RSVP** | `/dashboard/invitations/[id]/rsvp` | ✅ | ✅ | ✅ |
-| **Ringkasan Agensi & Kuota** | `/dashboard/reseller` | ❌ *(Redirect)* | ✅ | ❌ *(Redirect)* |
-| **Beli Kuota (Top-Up Manual)** | `/dashboard/reseller/topup` | ❌ *(Redirect)* | ✅ | ❌ *(Redirect)* |
-| **Riwayat Transaksi Reseller** | `/dashboard/reseller/transactions` | ❌ *(Redirect)* | ✅ | ❌ *(Redirect)* |
-| **Manajemen Klien Agensi** | `/dashboard/reseller/clients` | ❌ *(Redirect)* | ✅ | ❌ *(Redirect)* |
-| **Kustomisasi Branding Agensi** | `/dashboard/reseller/branding` | ❌ *(Redirect)* | ✅ | ❌ *(Redirect)* |
-| **Manajemen Mitra Reseller** | `/dashboard/admin/resellers` | ❌ *(Redirect)* | ❌ *(Redirect)* | ✅ |
-| **Verifikasi Top-up & Rekap** | `/dashboard/admin/topup-requests` | ❌ *(Redirect)* | ❌ *(Redirect)* | ✅ |
-| **Rekening Bank Platform** | `/dashboard/admin/bank-accounts` | ❌ *(Redirect)* | ❌ *(Redirect)* | ✅ |
-| **Audit Ledger Platform** | `/dashboard/admin/transactions` | ❌ *(Redirect)* | ❌ *(Redirect)* | ✅ |
-| **Engine Playground** | `/dashboard/playground` | Dev Only | Dev Only | Dev Only |
+| **Ringkasan & Metrik Seller** | `/dashboard/reseller` | ❌ | ✅ | ❌ |
+| **Pesanan Toko Seller** | `/dashboard/reseller/orders` | ❌ | ✅ (Hanya Miliknya) | ❌ |
+| **Informasi Toko Publik Seller** | `/dashboard/reseller/storefront` | ❌ | ✅ | ❌ |
+| **Kustomisasi Branding & Domain** | `/dashboard/reseller/branding` | ❌ | ✅ | ❌ |
+| **Pusat Pipa Pesanan Platform** | `/dashboard/admin/orders` | ❌ | ❌ | ✅ (Semua Pesanan) |
+| **Manajemen Mitra Seller** | `/dashboard/admin/resellers` | ❌ | ❌ | ✅ |
