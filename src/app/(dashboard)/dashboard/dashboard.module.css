@@ -37,16 +37,19 @@
 .eyebrow {
   margin: 0;
   font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--dash-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dash-bronze);
 }
 
 .title {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.65rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.2;
+  color: var(--dash-text);
 }
 
 .lead {
@@ -67,15 +70,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: var(--dash-radius-sm);
   border: 1px solid transparent;
-  font-weight: 600;
+  font-weight: 650;
   font-size: 0.86rem;
   text-decoration: none;
   transition:
     background 120ms ease,
-    border-color 120ms ease;
+    border-color 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .primary svg,
@@ -87,10 +92,13 @@
 .primary {
   color: var(--dash-on-accent);
   background: var(--dash-accent);
+  box-shadow: 0 1px 3px rgba(212, 175, 55, 0.25);
 }
 
 .primary:hover {
   background: var(--dash-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(212, 175, 55, 0.35);
 }
 
 .secondary {
@@ -148,21 +156,30 @@
 .stat {
   display: grid;
   gap: 4px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border-radius: var(--dash-radius);
   border: 1px solid var(--dash-border);
   background: var(--dash-surface);
   box-shadow: var(--dash-shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  border-color: var(--dash-border-strong);
+  box-shadow: var(--dash-shadow-md);
 }
 
 .statLabel {
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--dash-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .statValue {
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 700;
   line-height: 1.15;
   color: var(--dash-text);
@@ -188,23 +205,30 @@
   display: grid;
   align-content: start;
   gap: 6px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border-radius: var(--dash-radius);
   border: 1px solid var(--dash-border);
   background: var(--dash-surface);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.workflowStep:hover {
+  transform: translateY(-2px);
+  border-color: var(--dash-border-strong);
 }
 
 .stepNo {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   margin-bottom: 4px;
   border-radius: 50%;
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--dash-accent);
-  background: var(--dash-accent-soft);
+  color: var(--dash-on-accent);
+  background: var(--dash-accent);
+  box-shadow: 0 1px 3px rgba(212, 175, 55, 0.3);
 }
 
 .stepTitle {

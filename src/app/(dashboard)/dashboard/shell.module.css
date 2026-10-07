@@ -34,14 +34,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--dash-accent);
-  color: var(--dash-on-accent);
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--dash-bronze), var(--dash-accent));
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(132, 99, 63, 0.25);
 }
 
 .brandText {
@@ -140,7 +141,9 @@
 
 .navItem[data-active] {
   background: var(--dash-accent-soft);
-  color: var(--dash-accent);
+  color: var(--dash-bronze);
+  font-weight: 650;
+  box-shadow: inset 3px 0 0 var(--dash-accent);
 }
 
 .navIcon {
@@ -151,7 +154,7 @@
 }
 
 .navItem[data-active] .navIcon {
-  color: var(--dash-accent);
+  color: var(--dash-bronze);
 }
 
 .navText {
@@ -246,59 +249,62 @@
 /* ---------- agency white-label badge ---------- */
 .agencyBadge {
   margin-top: auto;
-  padding: 12px;
+  padding: 14px;
   border-radius: var(--dash-radius);
-  border: 1px solid var(--dash-border);
-  background: var(--dash-surface-strong);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: var(--dash-bronze);
+  color: #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(132, 99, 63, 0.2);
 }
 
 .agencyBadgeHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .agencyLogo {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .agencyBrandIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--dash-surface-sunken);
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.15);
   color: var(--dash-accent);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .agencyInfo {
   display: grid;
-  line-height: 1.2;
+  line-height: 1.25;
   min-width: 0;
 }
 
 .agencyManagedLabel {
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--dash-subtle);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
 }
 
 .agencyName {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--dash-text);
+  font-weight: 700;
+  color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -309,19 +315,20 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 6px;
-  background: #25d36615;
-  border: 1px solid #25d36640;
-  color: #128c7e;
+  background: var(--dash-accent);
+  border: 1px solid var(--dash-accent-hover);
+  color: var(--dash-on-accent);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   text-decoration: none;
-  transition: background 120ms ease;
+  transition: transform 120ms ease, background 120ms ease;
 }
 
 .agencySupportLink:hover {
-  background: #25d36625;
+  background: var(--dash-accent-hover);
+  transform: translateY(-1px);
 }
 
 

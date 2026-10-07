@@ -1,43 +1,64 @@
 /* Dashboard-only global styles. Scoped to the (dashboard) root layout so they
  * never reach the public runtime (PRD §5.1 — renderer CSS must not leak). */
 
-/* Light, flat, neutral theme: one solid accent, no gradients or glows. */
+/* Warm Earthy Bronze & Champagne Gold Luxury Theme (Ivory #F7F4EF, Bronze #84633F, Gold #D4AF37, Text #2C221E) */
 :root {
   color-scheme: light;
 
-  --dash-bg: #f4f5f7;
-  --dash-surface: #ffffff;
-  --dash-surface-strong: #f7f8fa;
-  --dash-surface-sunken: #eef0f3;
-  --dash-border: #e2e5ea;
-  --dash-border-strong: #cbd1da;
-  --dash-text: #171a1f;
-  --dash-muted: #5f6774;
-  --dash-subtle: #8a919c;
+  /* --- 1. Background: Ivory lembut --- */
+  --dash-bg: #F7F4EF;
+  --dash-surface: #FFFFFF;
+  --dash-surface-card: #FFFFFF;
+  --dash-surface-strong: #EFE9DF;
+  --dash-surface-sunken: #E7DFD1;
+  --dash-border: #E2D9CC;
+  --dash-border-strong: #C4B59F;
 
-  --dash-accent: #2453b8;
-  --dash-accent-hover: #1c4499;
-  --dash-accent-soft: #ebf0fb;
-  /* Legacy alias: anything still referencing accent-2 renders as the solid accent. */
+  /* --- 2. Teks gelap: Teks pada latar terang --- */
+  --dash-text: #2C221E;
+  --dash-muted: #67584E;
+  --dash-subtle: #8F7F74;
+
+  /* --- 3. Product Card: Warm Earthy Bronze (#84633F) --- */
+  --dash-bronze: #84633F;
+  --dash-bronze-hover: #715332;
+  --dash-bronze-active: #5E4326;
+  --dash-bronze-soft: #F2EAE0;
+  --dash-card-bronze: #84633F;
+  --dash-on-bronze: #FFFFFF;
+
+  /* --- 4. Aksen & Tombol: Champagne Gold (#D4AF37) --- */
+  --dash-accent: #D4AF37;
+  --dash-accent-hover: #BF9B27;
+  --dash-accent-active: #A8861B;
+  --dash-accent-soft: #F9F3DE;
   --dash-accent-2: var(--dash-accent);
-  --dash-on-accent: #ffffff;
+  --dash-gold: #D4AF37;
+  --dash-gold-hover: #BF9B27;
+  --dash-gold-soft: #F9F3DE;
 
-  --dash-success: #17784a;
-  --dash-success-soft: #e7f5ee;
-  --dash-warning: #9a5b00;
-  --dash-warning-soft: #fdf4e3;
-  --dash-danger: #b42318;
-  --dash-danger-soft: #fdeceb;
-  /* Legacy alias used for "attention" text. */
-  --dash-gold: var(--dash-warning);
+  /* --- 5. Teks Putih: Teks pada latar cokelat / bronze --- */
+  --dash-text-white: #FFFFFF;
+  /* Kontras teks tombol: teks gelap (#2C221E) di atas emas (#D4AF37) = WCAG AAA */
+  --dash-on-accent: #2C221E;
 
-  --dash-radius: 10px;
-  --dash-radius-sm: 6px;
-  --dash-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
-  --dash-shadow-md: 0 4px 14px rgb(16 24 40 / 0.08);
+  /* Status Feedback */
+  --dash-success: #257849;
+  --dash-success-soft: #E8F5EE;
+  --dash-warning: #9E5F08;
+  --dash-warning-soft: #FEF4E2;
+  --dash-danger: #B3261E;
+  --dash-danger-soft: #FDECEB;
+
+  --dash-radius: 12px;
+  --dash-radius-sm: 8px;
+  --dash-shadow-sm: 0 1px 3px rgba(44, 34, 30, 0.05), 0 1px 2px rgba(44, 34, 30, 0.03);
+  --dash-shadow-md: 0 4px 16px rgba(132, 99, 63, 0.10), 0 2px 6px rgba(44, 34, 30, 0.04);
+  --dash-shadow-lg: 0 10px 28px rgba(132, 99, 63, 0.14), 0 4px 10px rgba(44, 34, 30, 0.05);
+
   --dash-font:
-    "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
-    sans-serif;
+    "Plus Jakarta Sans", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 *,

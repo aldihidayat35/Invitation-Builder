@@ -24,8 +24,10 @@
 .eyebrow {
   margin: 0;
   font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--dash-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dash-bronze);
 }
 
 .title {
@@ -131,10 +133,13 @@
 .primary {
   color: var(--dash-on-accent);
   background: var(--dash-accent);
+  box-shadow: 0 1px 3px rgba(212, 175, 55, 0.25);
 }
 
 .primary:hover:not(:disabled) {
   background: var(--dash-accent-hover);
+  box-shadow: 0 3px 8px rgba(212, 175, 55, 0.35);
+  transform: translateY(-1px);
 }
 
 .secondary {
@@ -283,13 +288,15 @@
   background: var(--dash-surface);
   box-shadow: var(--dash-shadow-sm);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .card:hover {
-  border-color: var(--dash-border-strong);
-  box-shadow: var(--dash-shadow-md);
+  border-color: var(--dash-bronze);
+  box-shadow: 0 6px 20px rgba(132, 99, 63, 0.15);
+  transform: translateY(-2px);
 }
 
 .cardName {

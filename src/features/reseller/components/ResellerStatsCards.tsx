@@ -4,12 +4,12 @@ import styles from "./reseller.module.css";
 export function ResellerStatsCards({ stats }: { stats: ResellerOverviewStats }) {
   return (
     <div className={styles.statsGrid}>
-      <div className={styles.statCard}>
+      <div className={`${styles.statCard} ${styles.statCardBronze}`}>
         <div className={styles.statTop}>
           <span className={styles.statLabel}>Sisa Kuota Kredit</span>
           <span
             className={styles.statIcon}
-            style={{ background: "#fef3c7", color: "#b45309" }}
+            style={{ background: "rgba(212, 175, 55, 0.2)", color: "var(--dash-accent)" }}
             aria-hidden="true"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
