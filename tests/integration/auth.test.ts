@@ -40,7 +40,13 @@ describe("FR-AUTH-001 sessions", () => {
     expect(result.user.id).toBe(user.id);
 
     const resolved = await validateSession(conn.db, result.token);
-    expect(resolved).toEqual({ id: user.id, email: user.email, name: user.name });
+    expect(resolved).toEqual({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      systemRole: "client",
+      resellerId: null,
+    });
 
     const [row] = await conn.db.select().from(sessions).where(eq(sessions.userId, user.id));
     expect(row?.tokenHash).toBe(hashSessionToken(result.token));

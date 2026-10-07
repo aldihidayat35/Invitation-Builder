@@ -8,8 +8,23 @@
 export const WORKSPACE_ROLES = ["owner", "admin", "designer", "operator"] as const;
 export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
 
+/** Platform-wide account layers: Owner (Super Admin), Reseller (Agency), Client (End user). */
+export const SYSTEM_ROLES = ["owner", "reseller", "client"] as const;
+export type SystemRole = (typeof SYSTEM_ROLES)[number];
+
 export const USER_STATUSES = ["active", "disabled"] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
+
+/** Reseller credit transaction ledger types. */
+export const CREDIT_TRANSACTION_TYPES = [
+  "owner_grant",
+  "purchase_topup",
+  "publish_deduct",
+  "unpublish_refund",
+  "manual_adjustment",
+] as const;
+export type CreditTransactionType = (typeof CREDIT_TRANSACTION_TYPES)[number];
+
 
 /** Template: draft → published/versioned → archived (Lampiran B). */
 export const TEMPLATE_STATUSES = ["draft", "published", "archived"] as const;
@@ -48,5 +63,9 @@ export const AUDIT_ACTIONS = [
   "invitation.publish",
   "invitation.rollback",
   "guest.import",
+  "reseller.create",
+  "reseller.update",
+  "reseller.credit_adjust",
+  "reseller.client_create",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

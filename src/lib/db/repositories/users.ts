@@ -1,4 +1,5 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import type { SystemRole } from "../../schema/domain";
 import { users, type NewUser, type User } from "../schema";
 import type { Database } from "../types";
 
@@ -26,6 +27,35 @@ export async function findUserById(db: Database, id: string): Promise<User | und
   return row;
 }
 
+export async function listUsersByRole(db: Database, role: SystemRole): Promise<User[]> {
+  return db
+    .select()
+    .from(users)
+    .where(eq(users.systemRole, role))
+    .orderBy(desc(users.createdAt));
+}
+
+export async function listUsersByReseller(db: Database, resellerId: string): Promise<User[]> {
+  return db
+    .select()
+    .from(users)
+    .where(eq(users.resellerId, resellerId))
+    .orderBy(desc(users.createdAt));
+}
+
+export async function updateUserRole(
+  db: Database,
+  userId: string,
+  systemRole: SystemRole,
+): Promise<User | undefined> {
+  const [row] = await db
+    .update(users)
+    .set({ systemRole })
+    .where(eq(users.id, userId))
+    .returning();
+  return row;
+}
+
 /** Sets the password hash only when none exists (seed/bootstrap); never overwrites. */
 export async function setInitialPasswordHash(
   db: Database,
@@ -37,3 +67,4 @@ export async function setInitialPasswordHash(
     .set({ passwordHash })
     .where(and(eq(users.id, userId), isNull(users.passwordHash)));
 }
+

@@ -13,6 +13,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  boolean,
   check,
   index,
   integer,
@@ -26,9 +27,11 @@ import {
 } from "drizzle-orm/pg-core";
 import {
   assetStatusEnum,
+  creditTransactionTypeEnum,
   guestStatusEnum,
   invitationStatusEnum,
   rsvpResponseEnum,
+  systemRoleEnum,
   templateStatusEnum,
   userStatusEnum,
   workspaceRoleEnum,
@@ -53,10 +56,16 @@ export const users = pgTable(
     /** Null for seed/SSO-less users; set by the auth phase (never plaintext). */
     passwordHash: text("password_hash"),
     status: userStatusEnum("status").notNull().default("active"),
+    systemRole: systemRoleEnum("system_role").notNull().default("client"),
+    resellerId: uuid("reseller_id").references((): AnyPgColumn => users.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex("users_email_lower_uq").on(sql`lower(${t.email})`)],
+  (t) => [
+    uniqueIndex("users_email_lower_uq").on(sql`lower(${t.email})`),
+    index("users_reseller_idx").on(t.resellerId),
+    index("users_system_role_idx").on(t.systemRole),
+  ],
 );
 
 export const workspaces = pgTable(
@@ -309,8 +318,64 @@ export const auditLogs = pgTable(
   ],
 );
 
+export const resellerProfiles = pgTable(
+  "reseller_profiles",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    agencyName: text("agency_name").notNull(),
+    slug: text("slug").notNull(),
+    whatsappContact: text("whatsapp_contact").notNull(),
+    logoUrl: text("logo_url"),
+    creditQuota: integer("credit_quota").notNull().default(0),
+    customDomain: text("custom_domain"),
+    brandColor: text("brand_color").notNull().default("#3b82f6"),
+    hideWatermark: boolean("hide_watermark").notNull().default(true),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("reseller_profiles_user_uq").on(t.userId),
+    uniqueIndex("reseller_profiles_slug_uq").on(t.slug),
+    check("reseller_profiles_slug_format", sql`${t.slug} ~ ${SLUG_SQL}`),
+    check("reseller_profiles_credit_quota_non_negative", sql`${t.creditQuota} >= 0`),
+  ],
+);
+
+export const creditTransactions = pgTable(
+  "credit_transactions",
+  {
+    id: id(),
+    resellerId: uuid("reseller_id")
+      .notNull()
+      .references(() => resellerProfiles.id),
+    type: creditTransactionTypeEnum("type").notNull(),
+    amount: integer("amount").notNull(),
+    balanceBefore: integer("balance_before").notNull(),
+    balanceAfter: integer("balance_after").notNull(),
+    referenceId: text("reference_id"),
+    notes: text("notes"),
+    performedBy: uuid("performed_by").references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("credit_transactions_reseller_idx").on(t.resellerId, t.createdAt),
+    check(
+      "credit_transactions_balances_valid",
+      sql`${t.balanceBefore} + ${t.amount} = ${t.balanceAfter}`,
+    ),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type ResellerProfile = typeof resellerProfiles.$inferSelect;
+export type NewResellerProfile = typeof resellerProfiles.$inferInsert;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
@@ -323,3 +388,4 @@ export type GuestRow = typeof guests.$inferSelect;
 export type RsvpRow = typeof rsvps.$inferSelect;
 export type AssetRow = typeof assets.$inferSelect;
 export type AuditLogRow = typeof auditLogs.$inferSelect;
+

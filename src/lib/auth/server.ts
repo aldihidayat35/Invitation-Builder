@@ -8,7 +8,9 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
+import { findResellerProfileByUserId } from "@/lib/db/repositories/resellers";
 import { listMemberships, type Membership } from "@/lib/db/repositories/workspaces";
+import type { ResellerProfile } from "@/lib/db/schema";
 import { login, logout, validateSession, type SessionUser } from "./sessions";
 
 export const SESSION_COOKIE = "session";
@@ -48,6 +50,38 @@ export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   return user;
+}
+
+/** Owner-only (Super Admin) guard. Redirects non-owners to main dashboard. */
+export async function requireOwner(): Promise<SessionUser> {
+  const user = await requireUser();
+  if (user.systemRole !== "owner") {
+    redirect("/dashboard");
+  }
+  return user;
+}
+
+export interface ResellerContext {
+  user: SessionUser;
+  profile: ResellerProfile;
+}
+
+/** Reseller guard: verifies that current user has reseller role and active profile. */
+export const getResellerContext = cache(async (): Promise<ResellerContext> => {
+  const user = await requireUser();
+  if (user.systemRole !== "reseller" && user.systemRole !== "owner") {
+    redirect("/dashboard");
+  }
+  const db = await getDb();
+  const profile = await findResellerProfileByUserId(db, user.id);
+  if (!profile) {
+    redirect("/dashboard");
+  }
+  return { user, profile };
+});
+
+export async function requireReseller(): Promise<ResellerContext> {
+  return getResellerContext();
 }
 
 export interface WorkspaceContext {

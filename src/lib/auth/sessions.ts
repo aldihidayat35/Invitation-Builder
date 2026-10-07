@@ -19,7 +19,10 @@ import { LoginThrottle } from "./throttle";
 
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type SessionUser = Pick<User, "id" | "email" | "name">;
+export type SessionUser = Pick<
+  User,
+  "id" | "email" | "name" | "systemRole" | "resellerId"
+>;
 
 export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -44,7 +47,13 @@ export async function validateSession(
   if (!token || token.length < 20 || token.length > 200) return undefined;
   const found = await findActiveSessionUser(db, hashSessionToken(token), now);
   if (!found) return undefined;
-  return { id: found.user.id, email: found.user.email, name: found.user.name };
+  return {
+    id: found.user.id,
+    email: found.user.email,
+    name: found.user.name,
+    systemRole: found.user.systemRole,
+    resellerId: found.user.resellerId,
+  };
 }
 
 export async function revokeSession(db: Database, token: string | undefined): Promise<void> {
@@ -104,7 +113,16 @@ export async function login(
     entityType: "user",
     entityId: user.id,
   });
-  return { user: { id: user.id, email: user.email, name: user.name }, ...session };
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      systemRole: user.systemRole,
+      resellerId: user.resellerId,
+    },
+    ...session,
+  };
 }
 
 export async function logout(
