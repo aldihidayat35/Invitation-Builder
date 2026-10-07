@@ -139,10 +139,10 @@ export function AssetLibrary({
         style={{
           display: "flex",
           gap: 4,
-          background: "rgba(15, 23, 42, 0.4)",
+          background: "#f1f5f9",
           padding: 3,
-          borderRadius: 6,
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: 8,
+          border: "1px solid #e2e8f0",
         }}
         data-testid={`${idPrefix}-category-tabs`}
       >
@@ -153,28 +153,32 @@ export function AssetLibrary({
             { id: "video", label: "Video" },
             { id: "gif", label: "GIF" },
           ] as const
-        ).map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            data-testid={`${idPrefix}-tab-${tab.id}`}
-            style={{
-              flex: 1,
-              padding: "4px 4px",
-              fontSize: 11,
-              fontWeight: activeCategory === tab.id ? 600 : 400,
-              borderRadius: 4,
-              background: activeCategory === tab.id ? "var(--accent, #6366f1)" : "transparent",
-              color: activeCategory === tab.id ? "#ffffff" : "var(--text-muted, #94a3b8)",
-              border: "none",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-            onClick={() => setActiveCategory(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        ).map((tab) => {
+          const isActive = activeCategory === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              data-testid={`${idPrefix}-tab-${tab.id}`}
+              style={{
+                flex: 1,
+                padding: "5px 4px",
+                fontSize: 11,
+                fontWeight: isActive ? 600 : 500,
+                borderRadius: 6,
+                background: isActive ? "#ffffff" : "transparent",
+                color: isActive ? "#0f172a" : "#64748b",
+                border: "none",
+                cursor: "pointer",
+                boxShadow: isActive ? "0 1px 3px rgba(0, 0, 0, 0.08)" : "none",
+                transition: "all 0.15s ease",
+              }}
+              onClick={() => setActiveCategory(tab.id)}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       <input
@@ -223,13 +227,14 @@ export function AssetLibrary({
                       style={{
                         position: "relative",
                         width: "100%",
-                        height: 72,
-                        background: "#090d16",
+                        height: 76,
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
-                        borderRadius: 4,
+                        borderRadius: 6,
                       }}
                     >
                       <video
@@ -248,19 +253,39 @@ export function AssetLibrary({
                           position: "absolute",
                           top: 4,
                           left: 4,
-                          background: "rgba(15, 23, 42, 0.85)",
-                          color: "#38bdf8",
-                          padding: "1px 5px",
-                          borderRadius: 3,
+                          background: "#eff6ff",
+                          color: "#2563eb",
+                          padding: "2px 5px",
+                          borderRadius: 4,
                           fontSize: 9,
                           fontWeight: 700,
                           display: "flex",
                           alignItems: "center",
                           gap: 3,
-                          border: "1px solid rgba(56, 189, 248, 0.4)",
+                          border: "1px solid #bfdbfe",
+                          boxShadow: "0 1px 2px rgba(37, 99, 235, 0.12)",
                         }}
                       >
-                        <span>▶</span> VIDEO
+                        <span style={{ fontSize: 8 }}>▶</span> VIDEO
+                      </div>
+                      <div
+                        style={{
+                          position: "absolute",
+                          width: 26,
+                          height: 26,
+                          borderRadius: "50%",
+                          background: "rgba(255, 255, 255, 0.88)",
+                          backdropFilter: "blur(4px)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#2563eb",
+                          fontSize: 10,
+                          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        ▶
                       </div>
                     </div>
                   ) : isGif ? (
@@ -268,10 +293,14 @@ export function AssetLibrary({
                       style={{
                         position: "relative",
                         width: "100%",
-                        height: 72,
-                        background: "#090d16",
+                        height: 76,
+                        background: "#fdf4ff",
+                        border: "1px solid #f5d0fe",
                         overflow: "hidden",
-                        borderRadius: 4,
+                        borderRadius: 6,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -281,19 +310,26 @@ export function AssetLibrary({
                         alt={asset.filename}
                         loading="lazy"
                         decoding="async"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                          padding: 2,
+                        }}
                       />
                       <div
                         style={{
                           position: "absolute",
                           top: 4,
                           left: 4,
-                          background: "rgba(99, 102, 241, 0.9)",
-                          color: "#ffffff",
-                          padding: "1px 5px",
-                          borderRadius: 3,
+                          background: "#fdf4ff",
+                          color: "#9333ea",
+                          padding: "2px 5px",
+                          borderRadius: 4,
                           fontSize: 9,
                           fontWeight: 700,
-                          border: "1px solid rgba(255, 255, 255, 0.3)",
+                          border: "1px solid #f0abfc",
+                          boxShadow: "0 1px 2px rgba(147, 51, 234, 0.12)",
                         }}
                       >
                         GIF

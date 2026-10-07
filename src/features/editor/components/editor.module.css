@@ -292,6 +292,14 @@
   display: flex;
   flex-direction: column;
   color-scheme: light;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.side::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .sideHeader {
@@ -1195,6 +1203,14 @@
   min-width: 0;
   min-height: 0;
   color-scheme: light;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.inspectorWrap::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .inspector {
@@ -1799,15 +1815,23 @@ textarea.input {
 .assetGrid {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 2px;
   display: grid;
   /* minmax(0, 1fr): long filenames must never widen the columns. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  max-height: 320px;
+  gap: 8px;
+  max-height: 360px;
   overflow-x: hidden;
   overflow-y: auto;
   color-scheme: light;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.assetGrid::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .assetGrid > li {
@@ -1820,18 +1844,22 @@ textarea.input {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 8px;
-  border: 1px solid var(--dash-border);
-  background: var(--dash-surface-strong);
-  color: var(--dash-text);
+  gap: 6px;
+  padding: 5px;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--dash-text, #0f172a);
   cursor: pointer;
   font: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 140ms ease;
 }
 
 .assetItem:hover:not(:disabled) {
-  border-color: var(--dash-accent);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+  transform: translateY(-1px);
 }
 
 .assetThumb {
@@ -1842,7 +1870,8 @@ textarea.input {
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 6px;
-  background: var(--dash-surface-sunken);
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
 }
 
 .assetName {
@@ -1851,10 +1880,12 @@ textarea.input {
   max-width: 100%;
   text-align: left;
   font-size: 11px;
-  color: var(--dash-muted);
+  font-weight: 500;
+  color: #334155;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 0 2px;
 }
 
 .imagePreview {

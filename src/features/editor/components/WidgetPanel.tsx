@@ -745,10 +745,11 @@ function VideoPropsControl({
           <div
             style={{
               marginTop: 8,
-              padding: 8,
-              background: "rgba(15, 23, 42, 0.45)",
-              borderRadius: 8,
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              padding: 10,
+              background: "#ffffff",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
             }}
             data-testid="video-asset-library-container"
           >
