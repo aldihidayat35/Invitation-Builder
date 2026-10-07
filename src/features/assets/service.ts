@@ -27,10 +27,13 @@ import {
   ASSET_LIMITS,
   EXTENSIONS_BY_MIME,
   IMAGE_MIME_TYPES,
+  VIDEO_MIME_TYPES,
   assetUploadInitSchema,
+  maxBytesForMime,
   type AllowedMimeType,
 } from "@/lib/schema";
 import { sniffImage } from "@/lib/storage/image-sniff";
+import { sniffVideo } from "@/lib/storage/video-sniff";
 import type { PresignedUpload, StorageDriver } from "@/lib/storage/types";
 import { z } from "zod";
 import { assetContentUrl } from "./urls";
@@ -68,6 +71,8 @@ export interface UploadInit {
 const idSchema = z.uuid();
 const isImageMime = (mime: string): boolean =>
   (IMAGE_MIME_TYPES as readonly string[]).includes(mime);
+const isVideoMime = (mime: string): boolean =>
+  (VIDEO_MIME_TYPES as readonly string[]).includes(mime);
 
 function toSummary(row: AssetRow): AssetSummary {
   return {
@@ -126,8 +131,8 @@ export async function initUpload(
     throw new AssetRejectedError(parsed.error.issues.map((i) => i.message).join("; "));
   }
   const upload = parsed.data;
-  if (!isImageMime(upload.mimeType)) {
-    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) yang didukung saat ini.");
+  if (!isImageMime(upload.mimeType) && !isVideoMime(upload.mimeType)) {
+    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.");
   }
 
   const id = randomUUID();
@@ -164,7 +169,8 @@ export async function receiveContent(
 ): Promise<void> {
   const row = await loadAuthorized(db, actor, assetId, "asset:write");
   if (row.status !== "uploading") throw new AssetRejectedError("Aset sudah diproses.");
-  if (data.byteLength > ASSET_LIMITS.imageMaxBytes || data.byteLength !== row.bytes) {
+  const maxBytes = maxBytesForMime(row.mimeType as AllowedMimeType);
+  if (data.byteLength > maxBytes || data.byteLength !== row.bytes) {
     await fail(db, storage, row, "Ukuran berkas tidak sesuai dengan yang dinyatakan.");
   }
   await storage.put(row.storageKey, data, row.mimeType);
@@ -181,14 +187,44 @@ export async function finalizeUpload(
   if (row.status === "ready") return toSummary(row);
   if (row.status !== "uploading") throw new AssetRejectedError("Upload ini sudah ditolak.");
 
-  const data = await storage.read(row.storageKey, ASSET_LIMITS.imageMaxBytes);
+  const maxBytes = maxBytesForMime(row.mimeType as AllowedMimeType);
+  const data = await storage.read(row.storageKey, maxBytes);
   if (!data) throw new AssetRejectedError("Berkas belum diunggah.");
-  if (data.byteLength > ASSET_LIMITS.imageMaxBytes) {
+  if (data.byteLength > maxBytes) {
     return fail(db, storage, row, "Berkas melebihi batas ukuran.");
   }
   if (data.byteLength !== row.bytes) {
     return fail(db, storage, row, "Ukuran berkas tidak sesuai dengan yang dinyatakan.");
   }
+
+  if (isVideoMime(row.mimeType)) {
+    const sniffed = sniffVideo(data);
+    if (!sniffed) return fail(db, storage, row, "Berkas bukan video yang valid.");
+    const match =
+      sniffed.mime === row.mimeType ||
+      (row.mimeType === "video/quicktime" && sniffed.mime === "video/mp4") ||
+      (row.mimeType === "video/mp4" && sniffed.mime === "video/quicktime");
+    if (!match) {
+      return fail(db, storage, row, "Isi berkas tidak sesuai dengan tipe yang dinyatakan.");
+    }
+    const ready = await markAssetReady(db, row.id, {
+      mimeType: row.mimeType,
+      bytes: data.byteLength,
+      width: sniffed.width,
+      height: sniffed.height,
+    });
+    if (!ready) throw new AssetRejectedError("Aset sudah diproses.");
+    await insertAuditLog(db, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "asset.upload",
+      entityType: "asset",
+      entityId: row.id,
+      metadata: { filename: row.filename, bytes: ready.bytes },
+    });
+    return toSummary(ready);
+  }
+
   const sniffed = sniffImage(data);
   if (!sniffed) return fail(db, storage, row, "Berkas bukan gambar yang valid.");
   if (sniffed.mime !== row.mimeType) {

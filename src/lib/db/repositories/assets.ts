@@ -31,7 +31,7 @@ export async function findAssetById(db: Database, id: string): Promise<AssetRow 
 export async function markAssetReady(
   db: Database,
   id: string,
-  input: { mimeType: string; bytes: number; width: number; height: number },
+  input: { mimeType: string; bytes: number; width?: number | null; height?: number | null },
 ): Promise<AssetRow | undefined> {
   const [row] = await db
     .update(assets)

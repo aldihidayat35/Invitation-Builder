@@ -23,8 +23,10 @@ import { TimelineEventsControl } from "./TimelineEventsControl";
 import { WishesItemsControl } from "./WishesItemsControl";
 import { CouplePersonControl } from "./CouplePersonControl";
 import { GifLibrary, type GifItemPick } from "./gif/GifLibrary";
+import { AssetLibrary } from "./AssetLibrary";
 import { saveAssetFromUrlAction } from "@/features/assets/actions";
 import { uploadAssetFile } from "@/features/assets/upload";
+import { assetUrl } from "@/features/assets/urls";
 import { useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { IconCheck, IconGif, IconSparkle, IconZap } from "./icons";
 import {
@@ -578,6 +580,7 @@ function VideoPropsControl({
   readonly disabled: boolean;
   readonly setProp: (name: string, value: unknown) => void;
 }) {
+  const workspaceId = useWorkspaceId();
   const props = (element.props ?? {}) as Record<string, unknown>;
   const rawUrl = typeof props.url === "string" ? props.url : "";
   const sourceType = (props.sourceType as string) || "youtube";
@@ -591,16 +594,34 @@ function VideoPropsControl({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const detectedYtId = extractYouTubeId(rawUrl);
+  const [showGallery, setShowGallery] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const blobUrl = URL.createObjectURL(file);
-    setProp("url", blobUrl);
-    setProp("sourceType", "upload");
-    if (!caption) {
-      setProp("caption", file.name.replace(/\.[^/.]+$/, ""));
+    setUploading(true);
+    try {
+      const res = await uploadAssetFile(workspaceId, file);
+      if (res.ok) {
+        setProp("url", assetUrl(res.asset.id));
+        setProp("assetId", res.asset.id);
+        setProp("sourceType", "upload");
+        if (!caption) {
+          setProp("caption", file.name.replace(/\.[^/.]+$/, ""));
+        }
+      } else {
+        const blobUrl = URL.createObjectURL(file);
+        setProp("url", blobUrl);
+        setProp("sourceType", "upload");
+        if (!caption) {
+          setProp("caption", file.name.replace(/\.[^/.]+$/, ""));
+        }
+      }
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -620,7 +641,10 @@ function VideoPropsControl({
               .join(" ")}
             style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
             disabled={disabled}
-            onClick={() => setProp("sourceType", "youtube")}
+            onClick={() => {
+              setProp("sourceType", "youtube");
+              setShowGallery(false);
+            }}
           >
             YouTube
           </button>
@@ -636,10 +660,10 @@ function VideoPropsControl({
             disabled={disabled}
             onClick={() => {
               setProp("sourceType", "upload");
-              fileInputRef.current?.click();
+              setShowGallery(true);
             }}
           >
-            Unggah File
+            Galeri / File
           </button>
           <button
             type="button"
@@ -651,7 +675,10 @@ function VideoPropsControl({
               .join(" ")}
             style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
             disabled={disabled}
-            onClick={() => setProp("sourceType", "direct")}
+            onClick={() => {
+              setProp("sourceType", "direct");
+              setShowGallery(false);
+            }}
           >
             Link MP4
           </button>
@@ -690,15 +717,65 @@ function VideoPropsControl({
         />
 
         {sourceType === "upload" && (
-          <button
-            type="button"
-            className={styles.primaryActionButton}
-            style={{ marginTop: 4, width: "100%", justifyContent: "center" }}
-            disabled={disabled}
-            onClick={() => fileInputRef.current?.click()}
+          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <button
+              type="button"
+              className={styles.primaryActionButton}
+              style={{ flex: 1, justifyContent: "center", fontSize: 11 }}
+              disabled={disabled || uploading}
+              onClick={() => setShowGallery((prev) => !prev)}
+              data-testid="video-open-gallery-btn"
+            >
+              {showGallery ? "Tutup Galeri" : "🎬 Pilih dari Galeri"}
+            </button>
+            <button
+              type="button"
+              className={styles.widgetVariantCard}
+              style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
+              disabled={disabled || uploading}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="video-upload-file-btn"
+            >
+              {uploading ? "Mengunggah..." : "📁 Unggah File"}
+            </button>
+          </div>
+        )}
+
+        {showGallery && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: 8,
+              background: "rgba(15, 23, 42, 0.45)",
+              borderRadius: 8,
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+            data-testid="video-asset-library-container"
           >
-            📁 Pilih File Video dari Perangkat
-          </button>
+            <AssetLibrary
+              idPrefix="video-picker"
+              pickLabel="Gunakan Video Ini"
+              filterType="video"
+              onPick={(asset) => {
+                setProp("url", assetUrl(asset.id));
+                setProp("assetId", asset.id);
+                setProp("sourceType", "upload");
+                if (!caption) {
+                  setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
+                }
+                setShowGallery(false);
+              }}
+              onUploaded={(asset) => {
+                setProp("url", assetUrl(asset.id));
+                setProp("assetId", asset.id);
+                setProp("sourceType", "upload");
+                if (!caption) {
+                  setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
+                }
+                setShowGallery(false);
+              }}
+            />
+          </div>
         )}
 
         {detectedYtId ? (

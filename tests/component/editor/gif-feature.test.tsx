@@ -263,7 +263,7 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
     });
   });
 
-  it("differentiates GIF from gallery in LeftPanel", async () => {
+  it("displays media gallery with tabs and allows fast selection of photos and GIFs in LeftPanel", async () => {
     const store = setupStore();
 
     render(
@@ -272,18 +272,26 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
       </EditorProvider>,
     );
 
-    // Both sections must exist separately
-    expect(screen.getByText("Galeri Foto")).toBeInTheDocument();
+    // Both sections must exist
+    expect(screen.getByText("Galeri Foto & Media")).toBeInTheDocument();
     expect(screen.getByText("GIF Animasi & Stiker")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /^galeri foto$/i }));
+    fireEvent.click(screen.getByText("Galeri Foto & Media"));
 
-    // Gallery should display only standard photo and exclude gifs
+    // In 'Semua' tab, both photo and gif are displayed
     await waitFor(() => {
       expect(screen.getByText("prewedding.jpg")).toBeInTheDocument();
+      expect(screen.getByText("cinta-abadi.gif")).toBeInTheDocument();
     });
-    // In photo gallery, GIF files should be excluded
-    const galleryItems = screen.getByTestId("asset-list");
-    expect(galleryItems).not.toHaveTextContent("cinta-abadi.gif");
+
+    // When clicking 'Foto' tab, GIF is filtered out
+    fireEvent.click(screen.getByTestId("asset-tab-image"));
+    expect(screen.getByText("prewedding.jpg")).toBeInTheDocument();
+    expect(screen.queryByText("cinta-abadi.gif")).not.toBeInTheDocument();
+
+    // When clicking 'GIF' tab, photo is filtered out and GIF is shown
+    fireEvent.click(screen.getByTestId("asset-tab-gif"));
+    expect(screen.getByText("cinta-abadi.gif")).toBeInTheDocument();
+    expect(screen.queryByText("prewedding.jpg")).not.toBeInTheDocument();
   });
 
   it("creates image element with assetId via createImageElement", () => {

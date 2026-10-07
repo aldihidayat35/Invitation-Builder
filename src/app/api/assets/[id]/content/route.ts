@@ -16,7 +16,7 @@ export async function PUT(request: Request, ctx: RouteContext<"/api/assets/[id]/
   const { id } = await ctx.params;
 
   const declared = Number(request.headers.get("content-length"));
-  if (!Number.isFinite(declared) || declared <= 0 || declared > ASSET_LIMITS.imageMaxBytes) {
+  if (!Number.isFinite(declared) || declared <= 0 || declared > ASSET_LIMITS.videoMaxBytes) {
     return NextResponse.json({ error: "Ukuran berkas tidak valid." }, { status: 413 });
   }
   const data = new Uint8Array(await request.arrayBuffer());

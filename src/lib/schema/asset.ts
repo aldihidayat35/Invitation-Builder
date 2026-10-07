@@ -14,13 +14,24 @@ export const IMAGE_MIME_TYPES = [
   "image/gif",
 ] as const;
 export const AUDIO_MIME_TYPES = ["audio/mpeg", "audio/mp4", "audio/ogg"] as const;
-export const ALLOWED_MIME_TYPES = [...IMAGE_MIME_TYPES, ...AUDIO_MIME_TYPES] as const;
+export const VIDEO_MIME_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
+] as const;
+export const ALLOWED_MIME_TYPES = [
+  ...IMAGE_MIME_TYPES,
+  ...AUDIO_MIME_TYPES,
+  ...VIDEO_MIME_TYPES,
+] as const;
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
-export type AssetKind = "image" | "audio";
+export type AssetKind = "image" | "audio" | "video";
 
 export const ASSET_LIMITS = {
   imageMaxBytes: 10 * 1024 * 1024,
   audioMaxBytes: 15 * 1024 * 1024,
+  videoMaxBytes: 50 * 1024 * 1024,
   imageMaxDimension: 8000,
   filenameMaxLength: 255,
 } as const;
@@ -35,16 +46,23 @@ export const EXTENSIONS_BY_MIME: Readonly<Record<AllowedMimeType, readonly strin
   "audio/mpeg": ["mp3"],
   "audio/mp4": ["m4a", "mp4"],
   "audio/ogg": ["ogg", "oga"],
+  "video/mp4": ["mp4"],
+  "video/webm": ["webm"],
+  "video/ogg": ["ogv", "ogg"],
+  "video/quicktime": ["mov"],
 };
 
 export function assetKindFromMime(mime: AllowedMimeType): AssetKind {
-  return (IMAGE_MIME_TYPES as readonly string[]).includes(mime) ? "image" : "audio";
+  if ((IMAGE_MIME_TYPES as readonly string[]).includes(mime)) return "image";
+  if ((VIDEO_MIME_TYPES as readonly string[]).includes(mime)) return "video";
+  return "audio";
 }
 
 export function maxBytesForMime(mime: AllowedMimeType): number {
-  return assetKindFromMime(mime) === "image"
-    ? ASSET_LIMITS.imageMaxBytes
-    : ASSET_LIMITS.audioMaxBytes;
+  const kind = assetKindFromMime(mime);
+  if (kind === "video") return ASSET_LIMITS.videoMaxBytes;
+  if (kind === "image") return ASSET_LIMITS.imageMaxBytes;
+  return ASSET_LIMITS.audioMaxBytes;
 }
 
 export const assetUploadInitSchema = z

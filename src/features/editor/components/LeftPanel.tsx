@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { defaultWidgetRegistry } from "@/features/widgets";
 import { elementLabel, elementTypeLabel } from "../core/display";
 import { findSection, type ElementKind } from "../core/ops";
+import { assetUrl } from "@/features/assets/urls";
 import { AssetLibrary } from "./AssetLibrary";
 import { BaseBackgroundControl } from "./BaseBackgroundControl";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
@@ -153,15 +154,53 @@ export function LeftPanel() {
           <PanelSection
             key="left-media"
             id="left-media"
-            title="Galeri Foto"
+            title="Galeri Foto & Media"
             icon={<IconImages size={14} />}
             defaultOpen={false}
             dragProps={getDragProps("left-media")}
           >
             <AssetLibrary
               pickLabel="Tambah ke artboard"
+              excludeGifs={false}
               onPick={(asset) => {
-                if (!section || asset.width === null || asset.height === null) return;
+                if (!section) return;
+                const isVideo = asset.mimeType.startsWith("video/");
+                const isGif = asset.mimeType === "image/gif";
+
+                if (isVideo) {
+                  const videoDef = defaultWidgetRegistry.resolve("video");
+                  if (videoDef.kind === "known") {
+                    store.getState().addWidget(videoDef.definition, {
+                      url: assetUrl(asset.id),
+                      assetId: asset.id,
+                      sourceType: "upload",
+                      caption: asset.filename.replace(/\.[^/.]+$/, ""),
+                    });
+                  }
+                  return;
+                }
+
+                if (isGif) {
+                  const gifDef = defaultWidgetRegistry.resolve("gif");
+                  if (gifDef.kind === "known") {
+                    store.getState().addWidget(gifDef.definition, {
+                      url: assetUrl(asset.id),
+                      assetId: asset.id,
+                      caption: asset.filename.replace(/\.[^/.]+$/, ""),
+                    });
+                  } else {
+                    store.getState().addImage({
+                      assetId: asset.id,
+                      url: assetUrl(asset.id),
+                      width: asset.width ?? 240,
+                      height: asset.height ?? 240,
+                      name: asset.filename,
+                    });
+                  }
+                  return;
+                }
+
+                if (asset.width === null || asset.height === null) return;
                 store.getState().addImage({
                   assetId: asset.id,
                   width: asset.width,
