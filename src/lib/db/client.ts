@@ -22,7 +22,22 @@ async function open(url: string): Promise<Database> {
     if (dataDir) mkdirSync(dirname(dataDir), { recursive: true });
     const { connectPglite, migratePglite } = await import("./pglite");
     const conn = await connectPglite(dataDir);
-    await migratePglite(conn);
+
+    // Only run migrations if tables are not initialized yet, preventing lock contention & "CREATE SCHEMA" race errors
+    try {
+      const check = await conn.client.query<{ count: string }>(
+        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'templates'",
+      );
+      if (Number(check.rows[0]?.count ?? 0) === 0) {
+        await migratePglite(conn);
+      }
+    } catch {
+      try {
+        await migratePglite(conn);
+      } catch (err) {
+        console.warn("[pglite] auto-migration skipped:", err);
+      }
+    }
     return conn.db;
   }
   return connectPostgres(url).db;
@@ -33,6 +48,11 @@ export function getDb(): Promise<Database> {
   if (!url) {
     throw new Error("DATABASE_URL is not set (see .env.example).");
   }
-  globalForDb.__invitationDb ??= open(url);
+  if (!globalForDb.__invitationDb) {
+    globalForDb.__invitationDb = open(url).catch((err) => {
+      delete globalForDb.__invitationDb;
+      throw err;
+    });
+  }
   return globalForDb.__invitationDb;
 }
