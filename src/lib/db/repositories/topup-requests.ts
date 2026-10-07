@@ -71,6 +71,27 @@ export async function listTopupRequests(
   return query.orderBy(desc(topupRequests.createdAt)).limit(limit);
 }
 
+export async function listResellerTopupRequests(
+  db: Database,
+  resellerProfileId: string,
+  limit: number = 50,
+): Promise<EnrichedTopupRequestItem[]> {
+  return db
+    .select({
+      request: topupRequests,
+      reseller: resellerProfiles,
+      user: users,
+      bankAccount: bankAccounts,
+    })
+    .from(topupRequests)
+    .innerJoin(resellerProfiles, eq(topupRequests.resellerId, resellerProfiles.id))
+    .innerJoin(users, eq(resellerProfiles.userId, users.id))
+    .leftJoin(bankAccounts, eq(topupRequests.bankAccountId, bankAccounts.id))
+    .where(eq(topupRequests.resellerId, resellerProfileId))
+    .orderBy(desc(topupRequests.createdAt))
+    .limit(limit);
+}
+
 export async function findTopupRequestById(
   db: Database,
   id: string,

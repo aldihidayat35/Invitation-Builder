@@ -1,0 +1,481 @@
+/* Modern styling for Reseller Agency Portal */
+
+.page {
+  padding: 32px 40px;
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dash-accent);
+  margin: 0;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 14px;
+  color: var(--dash-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- Stat Cards Grid ---------- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--dash-shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--dash-shadow-md);
+  border-color: var(--dash-border-strong);
+}
+
+.statTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dash-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--dash-text);
+  letter-spacing: -0.02em;
+}
+
+.statSub {
+  font-size: 12px;
+  color: var(--dash-muted);
+  line-height: 1.4;
+}
+
+/* ---------- Top-Up Package Cards ---------- */
+.packageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.packageCard {
+  background: var(--dash-surface);
+  border: 2px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s ease;
+}
+
+.packageCard:hover {
+  border-color: var(--dash-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--dash-shadow-md);
+}
+
+.packageCardSelected {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+  box-shadow: 0 0 0 1px var(--dash-accent);
+}
+
+.packageBadge {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  background: var(--dash-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.packageTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+.packagePrice {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--dash-accent);
+}
+
+.packageCredits {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dash-success);
+}
+
+.packageDesc {
+  font-size: 13px;
+  color: var(--dash-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ---------- Bank Accounts Info Box ---------- */
+.bankBox {
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bankBoxTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bankGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.bankCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bankName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-muted);
+  text-transform: uppercase;
+}
+
+.bankNumber {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--dash-text);
+}
+
+.bankHolder {
+  font-size: 13px;
+  color: var(--dash-muted);
+}
+
+/* ---------- Forms & Inputs ---------- */
+.formCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--dash-shadow-sm);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.inputControl {
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border-strong);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+
+.inputControl:focus {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-soft);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-accent);
+  color: var(--dash-on-accent);
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.btnPrimary:hover {
+  filter: brightness(1.08);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-surface-sunken);
+  color: var(--dash-text);
+  border: 1px solid var(--dash-border-strong);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnSecondary:hover {
+  background: var(--dash-border);
+}
+
+.formError {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  padding: 12px 16px;
+  border-radius: var(--dash-radius-sm);
+  font-size: 13px;
+  font-weight: 550;
+  border: 1px solid rgba(180, 35, 24, 0.2);
+}
+
+.formSuccess {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+  padding: 12px 16px;
+  border-radius: var(--dash-radius-sm);
+  font-size: 13px;
+  font-weight: 550;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+/* ---------- Tables ---------- */
+.tableCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+  box-shadow: var(--dash-shadow-sm);
+}
+
+.tableResponsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.table th {
+  background: var(--dash-surface-sunken);
+  color: var(--dash-muted);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dash-border);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dash-border);
+  color: var(--dash-text);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+}
+
+.statusPending {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid rgba(194, 65, 12, 0.2);
+}
+
+.statusApproved {
+  background: var(--dash-success-soft);
+  color: var(--dash-success);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.statusRejected {
+  background: var(--dash-danger-soft);
+  color: var(--dash-danger);
+  border: 1px solid rgba(180, 35, 24, 0.2);
+}
+
+.emptyState {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--dash-muted);
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 999;
+}
+
+.modalCard {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border-strong);
+  border-radius: var(--dash-radius);
+  width: 100%;
+  max-width: 500px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: var(--dash-shadow-lg);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dash-text);
+  margin: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--dash-muted);
+  cursor: pointer;
+}

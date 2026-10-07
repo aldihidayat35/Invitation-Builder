@@ -316,6 +316,36 @@ export async function updateResellerStatus(
   return updated;
 }
 
+export interface UpdateResellerBrandingInput {
+  agencyName?: string;
+  whatsappContact?: string;
+  logoUrl?: string | null;
+  brandColor?: string;
+  customDomain?: string | null;
+}
+
+export async function updateResellerBranding(
+  db: Database,
+  resellerProfileId: string,
+  input: UpdateResellerBrandingInput,
+): Promise<ResellerProfile> {
+  const [updated] = await db
+    .update(resellerProfiles)
+    .set({
+      ...(input.agencyName !== undefined && { agencyName: input.agencyName.trim() }),
+      ...(input.whatsappContact !== undefined && { whatsappContact: input.whatsappContact.trim() }),
+      ...(input.logoUrl !== undefined && { logoUrl: input.logoUrl }),
+      ...(input.brandColor !== undefined && { brandColor: input.brandColor.trim() }),
+      ...(input.customDomain !== undefined && { customDomain: input.customDomain }),
+      updatedAt: new Date(),
+    })
+    .where(eq(resellerProfiles.id, resellerProfileId))
+    .returning();
+  if (!updated) throw new Error(`Reseller profile not found: ${resellerProfileId}`);
+  return updated;
+}
+
+
 /** Aggregates platform-wide reseller and quota statistics for the Owner dashboard. */
 export async function getAdminResellerStats(db: Database): Promise<{
   totalResellers: number;

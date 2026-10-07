@@ -121,6 +121,60 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               </ul>
             </>
           ) : null}
+
+          {user.systemRole === "reseller" ? (
+            <>
+              <p className={styles.navGroup}>Portal Reseller</p>
+              <ul className={styles.navList}>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller"
+                    exact
+                    icon={<IconHome />}
+                    hint="Ringkasan agensi & saldo kuota"
+                  >
+                    Ringkasan Agensi
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller/topup"
+                    icon={<IconCoins />}
+                    hint="Beli paket kuota grosir via transfer"
+                  >
+                    Beli Kuota (Top-Up)
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller/transactions"
+                    icon={<IconReceipt />}
+                    hint="Status permohonan & buku mutasi"
+                  >
+                    Riwayat Kuota
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller/clients"
+                    icon={<IconUsers />}
+                    hint="Daftar klien & buat akun klien"
+                  >
+                    Klien Agensi
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    href="/dashboard/reseller/branding"
+                    icon={<IconTemplate />}
+                    hint="Logo, nama brand & kontak WA"
+                  >
+                    Branding Agensi
+                  </NavLink>
+                </li>
+              </ul>
+            </>
+          ) : null}
           {process.env.NODE_ENV !== "production" ? (
             <>
               <p className={styles.navGroup}>Pengembang</p>
