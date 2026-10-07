@@ -10,6 +10,7 @@ export type { PublishedTemplateOption } from "./components/CreateInvitationForm"
 export { DataModeForm } from "./components/DataModeForm";
 export { GuestPanel } from "./components/GuestPanel";
 export { InvitationList } from "./components/InvitationList";
+export { InvitationsView } from "./components/InvitationsView";
 export type {
   ActionState,
   InvitationAction,
