@@ -13,7 +13,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
-  boolean,
+  boolean as pgBoolean,
   check,
   index,
   integer,
@@ -332,8 +332,8 @@ export const resellerProfiles = pgTable(
     creditQuota: integer("credit_quota").notNull().default(0),
     customDomain: text("custom_domain"),
     brandColor: text("brand_color").notNull().default("#3b82f6"),
-    hideWatermark: boolean("hide_watermark").notNull().default(true),
-    isActive: boolean("is_active").notNull().default(true),
+    hideWatermark: pgBoolean("hide_watermark").notNull().default(true),
+    isActive: pgBoolean("is_active").notNull().default(true),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
