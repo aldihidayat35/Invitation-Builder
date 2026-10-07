@@ -10,6 +10,7 @@ Source of truth: [`docs/PRD_BASELINE.md`](docs/PRD_BASELINE.md) (PRD v1.0).
 | [`docs/PRD_BASELINE.md`](docs/PRD_BASELINE.md)                                                        | Salinan verbatim PRD v1.0 (checksum-verified)       |
 | [`docs/requirements-matrix.md`](docs/requirements-matrix.md)                                          | Traceability: requirement ID → fase → test → status |
 | [`docs/decisions/0001-architecture-baseline.md`](docs/decisions/0001-architecture-baseline.md)        | ADR arsitektur baseline                             |
+| [`docs/PANDUAN_HALAMAN_DASHBOARD.md`](docs/PANDUAN_HALAMAN_DASHBOARD.md)                              | Deskripsi & panduan lengkap seluruh halaman dashboard |
 | [`Prompt_Implementasi_Bertahap_…md`](Prompt_Implementasi_Bertahap_Digital_Invitation_Builder_v1.0.md) | Playbook implementasi per fase                      |
 
 ## Prasyarat
