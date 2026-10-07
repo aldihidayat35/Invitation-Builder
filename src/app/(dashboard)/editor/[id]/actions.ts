@@ -35,7 +35,18 @@ export async function saveDraftAction(
     return { ok: true, revision: saved.revision };
   } catch (error) {
     if (error instanceof RevisionConflictError) {
-      return { ok: false, kind: "conflict", message: describeTemplateError(error) };
+      let currentRevision: number | undefined;
+      try {
+        currentRevision = (await openTemplate(id.data)).revision;
+      } catch {
+        // ignore
+      }
+      return {
+        ok: false,
+        kind: "conflict",
+        message: describeTemplateError(error),
+        currentRevision,
+      };
     }
     if (error instanceof DocumentValidationError || error instanceof TemplateArchivedError) {
       return { ok: false, kind: "invalid", message: describeTemplateError(error) };

@@ -22,6 +22,7 @@ export type SaveResult =
       readonly ok: false;
       readonly kind: "conflict" | "invalid" | "forbidden" | "error";
       readonly message: string;
+      readonly currentRevision?: number;
     };
 
 export type SaveFn = (document: CanonicalDocument, revision: number) => Promise<SaveResult>;
@@ -31,6 +32,7 @@ export interface AutosaverOptions {
   readonly save: SaveFn;
   readonly delayMs?: number;
   readonly retryDelayMs?: number;
+  readonly resolveConflict?: () => Promise<number | null>;
 }
 
 export interface Autosaver {
@@ -50,6 +52,7 @@ export function createAutosaver(options: AutosaverOptions): Autosaver {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
   let disposed = false;
+  let retriedConflict = false;
 
   const clear = () => {
     if (timer !== null) clearTimeout(timer);
@@ -64,7 +67,8 @@ export function createAutosaver(options: AutosaverOptions): Autosaver {
   async function run(): Promise<void> {
     for (;;) {
       const state = store.getState();
-      if (disposed || state.readOnly || state.saveStatus === "conflict" || !isDirty(state)) return;
+      const shouldSave = isDirty(state) || state.saveStatus === "dirty";
+      if (disposed || state.readOnly || state.saveStatus === "conflict" || !shouldSave) return;
 
       const document = state.history.present;
       state.markSaving();
@@ -77,14 +81,27 @@ export function createAutosaver(options: AutosaverOptions): Autosaver {
       if (disposed) return;
 
       if (result.ok) {
+        retriedConflict = false;
         store.getState().markSaved(result.revision, document);
         // Edited during the request? loop and save the newer document.
         continue;
       }
       if (result.kind === "conflict") {
+        const nextRev =
+          result.currentRevision ??
+          (options.resolveConflict ? await options.resolveConflict() : null);
+
+        if (nextRev !== null && nextRev !== undefined && !retriedConflict) {
+          retriedConflict = true;
+          store.getState().adoptRevision(nextRev);
+          continue;
+        }
+
+        retriedConflict = false;
         store.getState().markConflict(result.message);
         return;
       }
+      retriedConflict = false;
       store.getState().markSaveError(result.message);
       if (result.kind === "error") schedule(retryDelayMs);
       return;

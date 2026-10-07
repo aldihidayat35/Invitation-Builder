@@ -380,6 +380,55 @@ describe("autosave (debounce + conflict detection)", () => {
     expect(store.getState().saveStatus).toBe("saved");
   });
 
+  it("automatically retries and saves seamlessly when conflict provides currentRevision", async () => {
+    const save = vi
+      .fn<SaveFn>()
+      .mockResolvedValueOnce({
+        ok: false,
+        kind: "conflict",
+        message: "Versi tertinggal",
+        currentRevision: 10,
+      })
+      .mockResolvedValueOnce({ ok: true, revision: 11 });
+
+    const { store } = setup(save);
+    store.getState().addSection();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls[0]![1]).toBe(1);
+    expect(save.mock.calls[1]![1]).toBe(10);
+    expect(store.getState().revision).toBe(11);
+    expect(store.getState().saveStatus).toBe("saved");
+    expect(store.getState().saveError).toBeNull();
+  });
+
+  it("automatically retries with resolveConflict fallback callback", async () => {
+    const store = newStore();
+    const save = vi
+      .fn<SaveFn>()
+      .mockResolvedValueOnce({ ok: false, kind: "conflict", message: "Konflik revisi" })
+      .mockResolvedValueOnce({ ok: true, revision: 25 });
+    const resolveConflict = vi.fn().mockResolvedValue(24);
+
+    createAutosaver({
+      store,
+      save,
+      resolveConflict,
+      delayMs: 1000,
+    });
+
+    store.getState().addSection();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(resolveConflict).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save.mock.calls[0]![1]).toBe(1);
+    expect(save.mock.calls[1]![1]).toBe(24);
+    expect(store.getState().revision).toBe(25);
+    expect(store.getState().saveStatus).toBe("saved");
+  });
+
   it("retries transient errors with back-off, but waits for an edit after validation errors", async () => {
     const save = vi
       .fn<SaveFn>()

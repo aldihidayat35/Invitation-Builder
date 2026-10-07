@@ -44,8 +44,9 @@ export function EditorShell(props: EditorShellProps) {
         : createAutosaver({
             store,
             save: (document, revision) => save(templateId, revision, document),
+            resolveConflict: () => props.currentRevision(templateId),
           }),
-    [store, save, templateId, props.readOnly],
+    [store, save, templateId, props.readOnly, props.currentRevision],
   );
 
   useEffect(() => () => autosaver?.dispose(), [autosaver]);

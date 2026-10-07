@@ -746,7 +746,12 @@ export function createEditorStore(init: EditorInit): EditorStore {
         set({ saveStatus: "conflict", saveError: message });
       },
       adoptRevision(revision) {
-        set({ revision, saveStatus: "dirty", saveError: null });
+        set({
+          revision,
+          saveStatus: "dirty",
+          saveError: null,
+          savedDocument: {} as unknown as CanonicalDocument,
+        });
       },
     };
   });
