@@ -160,7 +160,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           hint: "Uji pengisian data ke template",
         },
         {
-          href: "/dashboard/playground",
+          href: "/dashboard/playground?view=components",
           label: "Komponen & Font Studio",
           icon: <IconComponentStudio />,
           hint: "Eksplorasi komponen dan tipografi",

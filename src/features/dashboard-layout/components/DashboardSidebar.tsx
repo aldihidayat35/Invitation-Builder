@@ -89,7 +89,7 @@ export function DashboardSidebar({
                 {group.items.map((item) => {
                   const active = isLinkActive(item.href, item.exact);
                   return (
-                    <li key={item.href}>
+                    <li key={`${item.href}-${item.label}`}>
                       <Link
                         href={item.href}
                         onClick={onCloseMobile}
