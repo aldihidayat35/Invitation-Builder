@@ -15,14 +15,14 @@ import { createEditorStore } from "@/features/editor/core/store";
 
 describe("text-variables operations", () => {
   function makeDocWithText() {
-    let doc = createEmptyDocument({ title: "Test Doc", slug: "test-doc" });
+    let doc = createEmptyDocument();
     const addedSec = addSection(doc);
     doc = addedSec.document;
     const sectionId = addedSec.sectionId;
 
     const addedEl = createElement(doc, sectionId, "text");
     doc = addedEl.document;
-    const elementId = addedEl.elementId;
+    const elementId = addedEl.elementId!;
 
     doc = updateElement(doc, elementId, (el) => {
       if (el.type !== "text") return el;
@@ -155,7 +155,7 @@ describe("text-variables operations", () => {
 
   it("integrates with EditorStore actions and undo/redo", () => {
     const { doc } = makeDocWithText();
-    const store = createEditorStore({ document: doc });
+    const store = createEditorStore({ document: doc, revision: 1 });
     const textEl = doc.sections[0]!.elements[0]!;
 
     store.getState().addVariable({
