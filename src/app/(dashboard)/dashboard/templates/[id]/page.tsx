@@ -21,6 +21,7 @@ import {
   IconVariableChip,
 } from "@/features/templates/components/template-icons";
 import styles from "@/features/templates/components/templates.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import {
   archiveTemplateAction,
   duplicateTemplateAction,
@@ -64,31 +65,32 @@ export default async function TemplateDetailPage({
         <span>Kembali ke Koleksi Template</span>
       </Link>
 
-      <header className={styles.headerDetail}>
-        <div className={styles.headerTitleWrapper}>
-          <div className={styles.headerBadgeRow}>
-            <span className={styles.templateTypeTag}>Template Undangan</span>
-            <StatusBadge lifecycle={template.lifecycle} versionNo={template.publishedVersionNo} />
-          </div>
-          <h1 className={styles.titleDetail} data-testid="template-title">
-            {template.name}
-          </h1>
-          <p className={styles.titleDescription}>
-            Kelola desain visual, periksa integritas format, dan terbitkan versi siap pakai untuk undangan pernikahan Anda.
-          </p>
-        </div>
-        {!archived ? (
-          <TemplateActions
-            templateId={template.id}
-            templateName={template.name}
-            canWrite={permissions.write}
-            canArchive={permissions.archive}
-            rename={renameTemplateAction}
-            duplicate={duplicateTemplateAction}
-            archive={archiveTemplateAction}
-          />
-        ) : null}
-      </header>
+      <div className="mb-6">
+        <DashboardHeroHeader
+          eyebrow={
+            <div className="flex items-center gap-2">
+              <span>TEMPLATE UNDANGAN</span>
+              <span>•</span>
+              <StatusBadge lifecycle={template.lifecycle} versionNo={template.publishedVersionNo} />
+            </div>
+          }
+          title={<span data-testid="template-title">{template.name}</span>}
+          description="Kelola desain visual, periksa integritas format, dan terbitkan versi siap pakai untuk undangan pernikahan Anda."
+          actions={
+            !archived ? (
+              <TemplateActions
+                templateId={template.id}
+                templateName={template.name}
+                canWrite={permissions.write}
+                canArchive={permissions.archive}
+                rename={renameTemplateAction}
+                duplicate={duplicateTemplateAction}
+                archive={archiveTemplateAction}
+              />
+            ) : null
+          }
+        />
+      </div>
 
       {/* Hero Studio Editor Launchpad Card */}
       <section className={styles.heroLaunchpad} aria-labelledby="editor-launchpad-heading">

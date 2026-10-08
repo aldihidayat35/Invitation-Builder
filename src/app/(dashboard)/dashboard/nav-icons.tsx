@@ -75,6 +75,26 @@ export const IconUsers = () => (
   </Svg>
 );
 
+/** Storefront / Agency icon for Mitra Seller */
+export const IconStore = () => (
+  <Svg>
+    <path d="m2 7 3-4h14l3 4" />
+    <path d="M3 7v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
+    <path d="M14 22v-6a2 2 0 0 0-2-2h-0a2 2 0 0 0-2 2v6" />
+    <path d="M2 7h20" />
+  </Svg>
+);
+
+/** Super Admin user management directory icon */
+export const IconUserShield = () => (
+  <Svg>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="m16 11 2 2 4-4" />
+  </Svg>
+);
+
+
 /** Code brackets icon for Engine Playground */
 export const IconFlask = () => (
   <Svg>

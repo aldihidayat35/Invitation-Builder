@@ -1,63 +1,82 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ivory: #F7F9FB;
+  --color-ivory: #F7F4EF;
   --color-ivory-light: #FAF8F5;
-  --color-ivory-dark: #ECEEF0;
+  --color-ivory-dark: #EFE9DF;
   --color-bronze: #84633F;
   --color-bronze-hover: #715332;
   --color-bronze-dark: #63482C;
-  --color-bronze-light: #F2EAE0;
-  --color-gold: #D97706;
-  --color-gold-hover: #B45309;
-  --color-gold-light: #FEF3C7;
-  --color-espresso: #1E293B;
-  --color-espresso-muted: #475569;
-  --color-espresso-subtle: #64748B;
+  --color-bronze-light: #F4EDE4;
+  --color-gold: #D4AF37;
+  --color-gold-hover: #BD9B2F;
+  --color-gold-light: #FDF8E7;
+  --color-espresso: #2C221E;
+  --color-espresso-muted: #574B45;
+  --color-espresso-subtle: #7A6F68;
 }
 
 /* Dashboard-only global styles. Scoped to the (dashboard) root layout so they
  * never reach the public runtime (PRD §5.1 — renderer CSS must not leak). */
 
-/* Kencana Atelier / Stitch Modern Web Workspace Theme */
+/* Kencana Atelier / Stitch Color Theme Guideline:
+ * - Background: #F7F4EF (Ivory lembut)
+ * - Product Card: #84633F (Warm Earthy Bronze)
+ * - Aksen & Tombol: #D4AF37 (Champagne Gold)
+ * - Teks gelap: #2C221E (Teks pada latar terang)
+ * - Teks putih: #FFFFFF (Teks pada latar cokelat)
+ */
 :root {
   color-scheme: light;
 
-  /* --- 1. Background: Warm Neutral Canvas --- */
-  --dash-bg: #F7F9FB;
+  /* --- 1. Background: Ivory Lembut (#F7F4EF) --- */
+  --dash-bg: #F7F4EF;
   --dash-surface: #FFFFFF;
   --dash-surface-card: #FFFFFF;
-  --dash-surface-strong: #ECEEF0;
-  --dash-surface-sunken: #E2E8F0;
-  --dash-border: #E2E8F0;
+  --dash-surface-strong: #EFE9DF;
+  --dash-surface-sunken: #E5DFD4;
+  --dash-border: #E8E2D8;
   --dash-border-soft: #F1ECE1;
-  --dash-border-strong: #CBD5E1;
+  --dash-border-strong: #D5CEBF;
 
-  /* --- 2. Typography: Slate & Dark Obsidian --- */
-  --dash-text: #1E293B;
-  --dash-muted: #64748B;
-  --dash-subtle: #94A3B8;
+  /* --- 2. Typography: Teks Gelap pada latar terang (#2C221E) --- */
+  --dash-text: #2C221E;
+  --dash-muted: #6B5E57;
+  --dash-subtle: #8F827B;
+  --dash-text-inverse: #FFFFFF;
 
-  /* --- 3. Primary CTA: Golden Amber (#D97706) --- */
-  --dash-primary: #D97706;
-  --dash-primary-hover: #B45309;
-  --dash-primary-soft: #FEF3C7;
-  --dash-on-primary: #FFFFFF;
+  /* --- 3. Aksen & Tombol: Champagne Gold (#D4AF37) --- */
+  --dash-primary: #D4AF37;
+  --dash-primary-hover: #BD9B2F;
+  --dash-primary-soft: #FDF8E7;
+  --dash-on-primary: #2C221E;
 
-  /* --- 4. Secondary: Deep Obsidian Slate (#1E293B) --- */
-  --dash-secondary: #1E293B;
-  --dash-secondary-hover: #0F172A;
-  --dash-secondary-soft: #F1F5F9;
+  --dash-accent: #D4AF37;
+  --dash-accent-hover: #BD9B2F;
+  --dash-accent-soft: #FDF8E7;
+  --dash-on-accent: #2C221E;
 
-  /* --- 5. Tertiary: Warm Sand & Champagne Gold (#CA8A04) --- */
-  --dash-tertiary: #CA8A04;
-  --dash-tertiary-hover: #A16207;
-  --dash-tertiary-soft: #FEF9C3;
+  /* --- 4. Product Card: Warm Earthy Bronze (#84633F) --- */
+  --dash-bronze: #84633F;
+  --dash-bronze-hover: #715332;
+  --dash-bronze-dark: #63482C;
+  --dash-bronze-soft: #F4EDE4;
+  --dash-on-bronze: #FFFFFF;
+
+  /* Secondary: Warm Earthy Bronze */
+  --dash-secondary: #84633F;
+  --dash-secondary-hover: #63482C;
+  --dash-secondary-soft: #F4EDE4;
+
+  /* Tertiary: Champagne Gold */
+  --dash-tertiary: #D4AF37;
+  --dash-tertiary-hover: #BD9B2F;
+  --dash-tertiary-soft: #FDF8E7;
 
   /* Status Feedback */
   --dash-success: #059669;
   --dash-success-soft: #ECFDF5;
-  --dash-warning: #D97706;
+  --dash-warning: #D4AF37;
   --dash-warning-soft: #FFFBEB;
   --dash-danger: #DC2626;
   --dash-danger-soft: #FEF2F2;
@@ -65,9 +84,9 @@
   --dash-radius: 16px;
   --dash-radius-sm: 8px;
   --dash-radius-full: 9999px;
-  --dash-shadow-sm: 0 1px 3px rgba(30, 41, 59, 0.04), 0 1px 2px rgba(30, 41, 59, 0.02);
-  --dash-shadow-md: 0 1px 3px rgba(30, 41, 59, 0.04), 0 6px 16px -4px rgba(217, 119, 6, 0.06);
-  --dash-shadow-lg: 0 8px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(217, 119, 6, 0.05);
+  --dash-shadow-sm: 0 1px 3px rgba(44, 34, 30, 0.04), 0 1px 2px rgba(44, 34, 30, 0.02);
+  --dash-shadow-md: 0 1px 3px rgba(44, 34, 30, 0.04), 0 6px 16px -4px rgba(212, 175, 55, 0.08);
+  --dash-shadow-lg: 0 8px 24px -6px rgba(44, 34, 30, 0.08), 0 4px 12px -2px rgba(212, 175, 55, 0.06);
 
   --dash-font:
     "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

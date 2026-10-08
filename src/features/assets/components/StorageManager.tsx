@@ -5,6 +5,7 @@ import type { StorageAssetItem, StorageOverview } from "../api";
 import { deleteAssetAction, getStorageOverviewAction, listAllStorageAssetsAction } from "../actions";
 import { uploadAssetFile } from "../upload";
 import { formatBytes } from "../config";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 
 interface StorageManagerProps {
   readonly initialOverview: StorageOverview;
@@ -157,60 +158,54 @@ export function StorageManager({
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 uppercase tracking-wider">
-              {isSuperAdmin ? "Platform Storage" : "Workspace Media"}
-            </span>
-            <span className="text-xs text-slate-400 font-mono">
-              .env: STORAGE_LIMIT_MB={limitMb}MB
-            </span>
+      {/* Hero Header Banner */}
+      <DashboardHeroHeader
+        eyebrow={
+          <>
+            <span>{isSuperAdmin ? "PLATFORM STORAGE" : "WORKSPACE MEDIA"}</span>
+            <span>•</span>
+            <span className="font-mono text-stone-400">KUOTA: {limitMb}MB</span>
+          </>
+        }
+        title="Manajemen Storage & Galeri Media"
+        description="Kelola berkas media, pantau kuota disk, serta tambahkan atau hapus foto dan video aplikasi secara terpusat."
+        actions={
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => handleFileUpload(e.target.files)}
+              multiple
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,video/ogg,video/quicktime"
+              className="hidden"
+              id="storage-file-input"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors focus:outline-hidden disabled:opacity-60 cursor-pointer"
+            >
+              {isUploading ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin text-[#2C221E]" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  <span>Mengunggah...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Unggah Media Baru</span>
+                </>
+              )}
+            </button>
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            Manajemen Storage & Galeri Media
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Kelola berkas media, pantau kuota disk, serta tambahkan atau hapus foto dan video aplikasi.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={(e) => handleFileUpload(e.target.files)}
-            multiple
-            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,video/ogg,video/quicktime"
-            className="hidden"
-            id="storage-file-input"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#D97706] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#B45309] focus:outline-hidden disabled:opacity-60 cursor-pointer"
-          >
-            {isUploading ? (
-              <>
-                <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                <span>Mengunggah...</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span>Unggah Media Baru</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Uploading Status Banner */}
       {uploadProgress && (

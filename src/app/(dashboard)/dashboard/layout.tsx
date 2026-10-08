@@ -13,8 +13,10 @@ import {
   IconInvitation,
   IconReceipt,
   IconStorage,
+  IconStore,
   IconTemplate,
   IconUsers,
+  IconUserShield,
 } from "./nav-icons";
 
 /** Authenticated enterprise dashboard shell layout. */
@@ -88,6 +90,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           hint: "Ringkasan metrik & grafik platform",
         },
         {
+          href: "/dashboard/admin/users",
+          label: "Manajemen Pengguna",
+          icon: <IconUserShield />,
+          hint: "Kelola akun pengguna, peran, & kredensial",
+        },
+        {
           href: "/dashboard/admin/orders",
           label: "Pesanan Masuk",
           icon: <IconReceipt />,
@@ -97,7 +105,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         {
           href: "/dashboard/admin/resellers",
           label: "Mitra Seller",
-          icon: <IconUsers />,
+          icon: <IconStore />,
           hint: "Kelola mitra seller & website toko",
         },
         {

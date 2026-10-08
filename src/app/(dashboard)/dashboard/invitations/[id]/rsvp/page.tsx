@@ -5,6 +5,7 @@ import { InvitationNotFoundError, open } from "@/features/invitations/api";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { rsvpsFor } from "@/features/rsvp/api";
 import { totalsOf } from "@/features/rsvp/schemas";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 
 export const metadata: Metadata = { title: "RSVP undangan" };
 
@@ -26,11 +27,23 @@ export default async function InvitationRsvpPage({
   return (
     <main className={styles.page}>
       <Link href={`/dashboard/invitations/${invitation.id}`} className={styles.breadcrumb}>
-        ← {invitation.title}
+        ← Kembali ke {invitation.title}
       </Link>
-      <header className={styles.header}>
-        <h1 className={styles.title}>RSVP</h1>
-      </header>
+      <div className="mb-6">
+        <DashboardHeroHeader
+          eyebrow={`BUKU TAMU RSVP • ${invitation.title.toUpperCase()}`}
+          title="Daftar Respons & Kehadiran RSVP"
+          description="Pantau konfirmasi kehadiran dan pesan ucapan doa dari para tamu undangan secara realtime."
+          actions={
+            <Link
+              href={`/dashboard/invitations/${invitation.id}`}
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"
+            >
+              <span>← Data Undangan</span>
+            </Link>
+          }
+        />
+      </div>
       <section className={styles.panel} aria-label="Ringkasan RSVP" data-testid="rsvp-totals">
         <p>
           Hadir: <strong>{totals.attending}</strong> ({totals.attendingParty} orang) · Tidak hadir:{" "}

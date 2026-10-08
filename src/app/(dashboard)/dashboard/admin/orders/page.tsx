@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getAdminOrders, getAdminStats } from "@/features/admin/api";
 import { AdminOrdersTable, AdminStatsCards } from "@/features/admin/components";
-import styles from "@/features/admin/components/admin.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireOwner } from "@/lib/auth/server";
 import { updateOrderStatusAction } from "./actions";
 
@@ -18,27 +18,21 @@ export default async function AdminOrdersPage() {
   ]);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Platform Owner · Otoritas Penuh Pengelolaan</p>
-          <h1 className={styles.title}>Pesanan Customer & Pengolahan Data</h1>
-          <p className={styles.lead}>
-            Admin memiliki wewenang penuh mutlak untuk membuat, mengedit data website undangan,
-            dan menerbitkan website undangan bagi customer yang memesan melalui mitra seller.
-          </p>
-        </div>
-
-        <div className={styles.headerActions}>
+    <div className="space-y-6">
+      <DashboardHeroHeader
+        eyebrow="SUPER ADMIN • PESANAN CUSTOMER"
+        title="Pesanan Customer & Pengolahan Data"
+        description="Admin memiliki wewenang penuh mutlak untuk membuat, mengedit data website undangan, dan menerbitkan website undangan bagi customer yang memesan melalui mitra seller."
+        actions={
           <Link
             href="/dashboard/invitations"
-            className={styles.btnPrimary}
-            style={{ textDecoration: "none" }}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
           >
-            Buka Daftar Undangan →
+            <span>Buka Daftar Undangan</span>
+            <span>→</span>
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <AdminStatsCards stats={stats} />
 
@@ -46,6 +40,6 @@ export default async function AdminOrdersPage() {
         orders={orders}
         onUpdateStatus={updateOrderStatusAction}
       />
-    </main>
+    </div>
   );
 }

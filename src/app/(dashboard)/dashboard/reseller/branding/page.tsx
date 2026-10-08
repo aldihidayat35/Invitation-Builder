@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getResellerBrandingProfile } from "@/features/reseller/api";
 import { ResellerBrandingForm } from "@/features/reseller/components";
-import styles from "@/features/reseller/components/reseller.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireReseller } from "@/lib/auth/server";
 import { updateBrandingAction } from "./actions";
 
@@ -15,17 +15,12 @@ export default async function ResellerBrandingPage() {
   const profile = await getResellerBrandingProfile();
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Portal Reseller · White-Label</p>
-          <h1 className={styles.title}>Identitas & Branding Agensi</h1>
-          <p className={styles.lead}>
-            Atur nama brand, logo, dan kontak WhatsApp CS yang akan ditampilkan kepada klien Anda
-            secara profesional.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <DashboardHeroHeader
+        eyebrow="PORTAL RESELLER • WHITE-LABEL"
+        title="Identitas & Branding Agensi"
+        description="Atur nama brand, logo, dan kontak WhatsApp CS yang akan ditampilkan kepada klien Anda secara profesional."
+      />
 
       <ResellerBrandingForm
         initialData={{

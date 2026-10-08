@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { and, gte, lte, sql, eq } from "drizzle-orm";
 import { listAll } from "@/features/invitations/api";
 import type { InvitationSummary } from "@/features/invitations/types";
 import { listLibrary } from "@/features/templates/api";
 import type { TemplateSummary } from "@/features/templates/types";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import { getDb } from "@/lib/db/client";
-import { getMonthlyOrderTrends } from "@/lib/db/repositories/orders";
+import { invitations, templates as templatesTable, rsvps } from "@/lib/db/schema";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { IconArrowRight } from "./nav-icons";
 
 export const metadata: Metadata = {
@@ -73,56 +75,150 @@ export default async function DashboardPage() {
   const { user, active } = await getWorkspaceContext();
   const db = await getDb();
   const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1);
+  const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
-  const [templates, invitations, monthlyTrends] = active
+  const [
+    templates,
+    invitationsData,
+    invitationMonthRows,
+    templateMonthRows,
+    rsvpStatsRows,
+  ] = active
     ? await Promise.all([
         listLibrary(active.workspace.id),
         listAll(active.workspace.id),
-        getMonthlyOrderTrends(db, { workspaceId: active.workspace.id, year: currentYear }),
+        db
+          .select({
+            monthNum: sql<number>`extract(month from ${invitations.createdAt})::int`,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(invitations)
+          .where(
+            and(
+              eq(invitations.workspaceId, active.workspace.id),
+              gte(invitations.createdAt, startOfYear),
+              lte(invitations.createdAt, endOfYear),
+            ),
+          )
+          .groupBy(sql`extract(month from ${invitations.createdAt})`),
+        db
+          .select({
+            monthNum: sql<number>`extract(month from ${templatesTable.createdAt})::int`,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(templatesTable)
+          .where(
+            and(
+              eq(templatesTable.workspaceId, active.workspace.id),
+              gte(templatesTable.createdAt, startOfYear),
+              lte(templatesTable.createdAt, endOfYear),
+            ),
+          )
+          .groupBy(sql`extract(month from ${templatesTable.createdAt})`),
+        db
+          .select({
+            totalRsvps: sql<number>`count(*)::int`,
+            attendingCount: sql<number>`coalesce(sum(case when ${rsvps.response} = 'attending' then 1 else 0 end), 0)::int`,
+            totalPartyGuests: sql<number>`coalesce(sum(case when ${rsvps.response} = 'attending' then ${rsvps.partySize} else 0 end), 0)::int`,
+          })
+          .from(rsvps)
+          .innerJoin(invitations, eq(invitations.id, rsvps.invitationId))
+          .where(eq(invitations.workspaceId, active.workspace.id)),
       ])
-    : [[], [], await getMonthlyOrderTrends(db, { year: currentYear })];
+    : [
+        [],
+        [],
+        [],
+        [],
+        [{ totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 }],
+      ];
 
+  const rsvpStats = rsvpStatsRows[0] ?? { totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 };
+
+  // Template Metrics
   const publishedTemplates = templates.filter((t) => t.publishedVersionNo !== null).length;
-  const publishedInvitations = invitations.filter((i) => i.status === "published").length;
-  const draftInvitations = invitations.filter((i) => i.status === "draft").length;
-  const archivedInvitations = invitations.filter((i) => i.status === "archived").length;
+  const draftTemplates = templates.length - publishedTemplates;
+  const templateReadyPercent =
+    templates.length > 0 ? Math.round((publishedTemplates / templates.length) * 100) : 0;
 
-  const recentTemplates = [...templates].sort(byUpdated).slice(0, 5);
-  const recentInvitations = [...invitations].sort(byUpdated).slice(0, 5);
+  // Invitation Metrics
+  const totalInvitations = invitationsData.length;
+  const publishedInvitations = invitationsData.filter((i) => i.status === "published").length;
+  const draftInvitations = invitationsData.filter((i) => i.status === "draft").length;
+  const archivedInvitations = invitationsData.filter((i) => i.status === "archived").length;
 
-  const totalInvitations = invitations.length;
-  const publishedPercent = totalInvitations > 0 ? Math.round((publishedInvitations / totalInvitations) * 100) : 100;
+  const publishedPercent = totalInvitations > 0 ? Math.round((publishedInvitations / totalInvitations) * 100) : 0;
   const draftPercent = totalInvitations > 0 ? Math.round((draftInvitations / totalInvitations) * 100) : 0;
   const archivedPercent = totalInvitations > 0 ? Math.round((archivedInvitations / totalInvitations) * 100) : 0;
 
+  const recentTemplates = [...templates].sort(byUpdated).slice(0, 5);
+  const recentInvitations = [...invitationsData].sort(byUpdated).slice(0, 5);
+
+  // SVG Geometry for Donut Chart
+  const C = 251.327; // 2 * PI * 40
+  const pubLen = totalInvitations > 0 ? (publishedInvitations / totalInvitations) * C : 0;
+  const draftLen = totalInvitations > 0 ? (draftInvitations / totalInvitations) * C : 0;
+  const archLen = totalInvitations > 0 ? (archivedInvitations / totalInvitations) * C : 0;
+
   // Monthly labels Jan - Des
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-  const currentMonthIdx = new Date().getMonth(); // 0-indexed (9 for October)
-  const totalYearOrders = monthlyTrends.reduce((sum, m) => sum + m.value, 0) || Math.max(totalInvitations, 3);
+  const currentMonthIdx = new Date().getMonth(); // 0-indexed
+
+  const invCounts = new Map<number, number>();
+  for (const r of invitationMonthRows) {
+    invCounts.set(r.monthNum, r.count);
+  }
+
+  const tplCounts = new Map<number, number>();
+  for (const r of templateMonthRows) {
+    tplCounts.set(r.monthNum, r.count);
+  }
+
+  const monthlyData = monthLabels.map((lbl, idx) => {
+    const month = idx + 1;
+    const invCount = invCounts.get(month) ?? 0;
+    const tplCount = tplCounts.get(month) ?? 0;
+    const totalActivity = invCount + tplCount;
+    return {
+      month,
+      label: lbl,
+      invitations: invCount,
+      templates: tplCount,
+      value: totalActivity,
+    };
+  });
+
+  const totalYearActivity = monthlyData.reduce((sum, m) => sum + m.value, 0);
+  const maxMonthlyVal = Math.max(...monthlyData.map((m) => m.value), 0);
+
+  const defaultMonth = monthlyData[0] ?? {
+    month: 1,
+    label: "Jan",
+    invitations: 0,
+    templates: 0,
+    value: 0,
+  };
+
+  const peakMonth = monthlyData.reduce(
+    (max, curr) => (curr.value > max.value ? curr : max),
+    defaultMonth,
+  );
 
   return (
     <div className="space-y-6">
-      {/* 1. Hero Workspace Banner (Stitch Spec: Dark Espresso #181513) */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#181513] border border-[#262220] p-6 sm:p-8 text-white shadow-md">
-        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-[#D4A338] uppercase mb-2.5">
-              <span>WORKSPACE</span>
-              <span className="text-[#D4A338]">•</span>
-              <span>{active?.workspace.name?.toUpperCase() ?? "DEV WORKSPACE"}</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Dashboard Workspace
-            </h1>
-
-            <p className="mt-2.5 text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
-              Selamat datang, <strong className="text-[#D4A338] font-bold">{user.name}</strong>. Kelola desain template, terbitkan website undangan pernikahan digital eksklusif, dan pantau respons tamu (RSVP) secara presisi.
-            </p>
-          </div>
-
-          {active && (
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
+      {/* 1. Hero Workspace Banner */}
+      <DashboardHeroHeader
+        eyebrow={`WORKSPACE • ${active?.workspace.name?.toUpperCase() ?? "DEV WORKSPACE"}`}
+        title="Dashboard Workspace"
+        description={
+          <>
+            Selamat datang, <strong className="text-[#D4AF37] font-bold">{user.name}</strong>. Kelola desain template, terbitkan website undangan pernikahan digital eksklusif, dan pantau respons tamu (RSVP) secara presisi.
+          </>
+        }
+        actions={
+          active ? (
+            <>
               <Link
                 href="/dashboard/templates"
                 id="open-template-library"
@@ -133,7 +229,7 @@ export default async function DashboardPage() {
               </Link>
               <Link
                 href="/dashboard/invitations"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#D4A338] px-5 py-2.5 text-xs font-bold text-stone-950 shadow-md hover:bg-[#B88728] transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md hover:bg-[#BD9B2F] transition-colors"
               >
                 <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
@@ -141,10 +237,10 @@ export default async function DashboardPage() {
                 </svg>
                 <span>Undangan Baru</span>
               </Link>
-            </div>
-          )}
-        </div>
-      </div>
+            </>
+          ) : undefined
+        }
+      />
 
       {!active && (
         <div
@@ -155,7 +251,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* 2. Metric KPI Cards Grid (Matching Screenshot) */}
+      {/* 2. Metric KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: TOTAL TEMPLATE DESAIN */}
         <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
@@ -179,7 +275,7 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
             <span className="text-stone-400">Dalam pustaka aktif</span>
-            <span className="font-semibold text-stone-600">{templates.length} Master</span>
+            <span className="font-semibold text-stone-600">{draftTemplates} draft · {publishedTemplates} terbit</span>
           </div>
         </div>
 
@@ -204,8 +300,8 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
-            <span className="text-stone-400">Status verifikasi</span>
-            <span className="font-semibold text-emerald-600">✓ Siap Pakai</span>
+            <span className="text-stone-400">Rasio siap pakai</span>
+            <span className="font-semibold text-emerald-600">{templateReadyPercent}% terverifikasi</span>
           </div>
         </div>
 
@@ -223,15 +319,15 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-extrabold tracking-tight text-stone-900">
-              {invitations.length}
+              {totalInvitations}
             </span>
             <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-600">
               Online
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
-            <span className="text-stone-400">Tautan beredar</span>
-            <span className="font-semibold text-stone-600">100% hosted</span>
+            <span className="text-stone-400">Status pengerjaan</span>
+            <span className="font-semibold text-stone-600">{publishedInvitations} live · {draftInvitations} draft</span>
           </div>
         </div>
 
@@ -256,13 +352,17 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
-            <span className="text-stone-400">Uptime domain</span>
-            <span className="font-semibold text-stone-600">99.98% SLA</span>
+            <span className="text-stone-400">Respons tamu RSVP</span>
+            <span className="font-semibold text-stone-600">
+              {rsvpStats.totalRsvps > 0
+                ? `${rsvpStats.totalRsvps} respons (${rsvpStats.attendingCount} hadir)`
+                : `${publishedPercent}% rasio publish`}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 3. Analytics Chart & Volume Trends (Matching Screenshot) */}
+      {/* 3. Analytics Chart & Volume Trends */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Left: Donut Chart (Distribusi Status Undangan) */}
         <div className="lg:col-span-5 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs flex flex-col justify-between">
@@ -270,11 +370,11 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-stone-900">Distribusi Status Undangan</h3>
-                <p className="text-xs text-stone-400 mt-0.5">Perbandingan undangan terbit vs draft</p>
+                <p className="text-xs text-stone-400 mt-0.5">Perbandingan status undangan dalam workspace</p>
               </div>
-              <button type="button" className="text-stone-400 hover:text-stone-600 text-base" title="Opsi">
-                •••
-              </button>
+              <span className="rounded-md bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
+                {totalInvitations} Total
+              </span>
             </div>
 
             {/* Circular Donut Graphic */}
@@ -290,24 +390,56 @@ export default async function DashboardPage() {
                     stroke="#E7E5E4"
                     strokeWidth="14"
                   />
-                  {/* Published Ring (Deep Emerald Green) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#15803D"
-                    strokeWidth="14"
-                    strokeDasharray="251.2"
-                    strokeDashoffset={251.2 * (1 - (publishedPercent / 100 || 1))}
-                    strokeLinecap="round"
-                    className="transition-all duration-700"
-                  />
+                  {/* Published Ring (Emerald Green) */}
+                  {pubLen > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#15803D"
+                      strokeWidth="14"
+                      strokeDasharray={`${pubLen} ${C - pubLen}`}
+                      strokeDashoffset={0}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  )}
+                  {/* Draft Ring (Gold/Amber #D4AF37) */}
+                  {draftLen > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#D4AF37"
+                      strokeWidth="14"
+                      strokeDasharray={`${draftLen} ${C - draftLen}`}
+                      strokeDashoffset={-pubLen}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  )}
+                  {/* Archived Ring (Stone) */}
+                  {archLen > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#A8A29E"
+                      strokeWidth="14"
+                      strokeDasharray={`${archLen} ${C - archLen}`}
+                      strokeDashoffset={-(pubLen + draftLen)}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  )}
                 </svg>
                 {/* Center Counter */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-3xl font-black text-stone-900 leading-tight">
-                    {totalInvitations || 2}
+                  <span className="text-3xl font-black text-[#2C221E] leading-tight">
+                    {totalInvitations}
                   </span>
                   <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase">
                     UNDANGAN
@@ -324,75 +456,96 @@ export default async function DashboardPage() {
                 <span className="h-2 w-2 rounded-full bg-[#15803D]" />
                 <span className="text-stone-700 font-medium">Dipublish</span>
               </div>
-              <span className="font-semibold text-stone-900">{publishedInvitations || 2} ({publishedPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">{publishedInvitations} ({publishedPercent}%)</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#D4A338]" />
+                <span className="h-2 w-2 rounded-full bg-[#D4AF37]" />
                 <span className="text-stone-700 font-medium">Draft</span>
               </div>
-              <span className="font-semibold text-stone-900">{draftInvitations} ({draftPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">{draftInvitations} ({draftPercent}%)</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-stone-400" />
                 <span className="text-stone-700 font-medium">Diarsipkan</span>
               </div>
-              <span className="font-semibold text-stone-900">{archivedInvitations} ({archivedPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">{archivedInvitations} ({archivedPercent}%)</span>
             </div>
           </div>
         </div>
 
-        {/* Right: Annual Bar Chart (Tren Pemesanan & Pembuatan Tahunan) */}
+        {/* Right: Annual Bar Chart (Tren Pembuatan & Volume Tahunan) */}
         <div className="lg:col-span-7 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-stone-900">
-                    Tren Pemesanan & Pembuatan Tahunan
+                  <h3 className="text-sm font-bold text-[#2C221E]">
+                    Tren Aktivitas Desain & Pembuatan
                   </h3>
                   <span className="rounded-md bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
                     {currentYear}
                   </span>
                 </div>
                 <p className="text-xs text-stone-400 mt-0.5">
-                  Grafik volume bulan per bulan (Jan – Des {currentYear})
+                  Volume projek bulanan (Jan – Des {currentYear})
                 </p>
               </div>
 
               <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50/70 px-3 py-1 text-xs font-semibold text-amber-900">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D4A338]" />
-                <span>Total {totalYearOrders} undangan</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+                <span>Total {totalYearActivity} projek dibuat</span>
               </div>
             </div>
 
             {/* 12 Months Bar Chart */}
             <div className="mt-8 flex h-48 items-end justify-between gap-1 sm:gap-2 px-1">
-              {monthLabels.map((lbl, idx) => {
-                const isOctober = idx === 9; // Oktober
-                const heightClass = isOctober ? "h-full" : "h-14";
+              {monthlyData.map((item, idx) => {
+                const isPeak = maxMonthlyVal > 0 && item.value === maxMonthlyVal;
+                const isCurrentMonth = idx === currentMonthIdx;
+                const heightPercent =
+                  maxMonthlyVal > 0
+                    ? item.value > 0
+                      ? Math.max(16, Math.round((item.value / maxMonthlyVal) * 100))
+                      : 6
+                    : isCurrentMonth
+                      ? 10
+                      : 6;
 
                 return (
-                  <div key={lbl} className="flex flex-1 flex-col items-center h-full justify-end">
+                  <div
+                    key={item.label}
+                    className="flex flex-1 flex-col items-center h-full justify-end group cursor-pointer"
+                    title={`${item.label} ${currentYear}: ${item.value} projek (${item.invitations} undangan, ${item.templates} template)`}
+                  >
+                    {item.value > 0 ? (
+                      <span className="text-[10px] font-bold text-[#2C221E] leading-none mb-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                        {item.value}
+                      </span>
+                    ) : null}
+
                     <div className="w-full flex items-end justify-center h-full">
                       <div
-                        className={`w-full max-w-[28px] rounded-t-lg transition-all ${
-                          isOctober
-                            ? "bg-gradient-to-t from-[#B88728] via-[#D4A338] to-[#F59E0B] shadow-sm"
-                            : "bg-[#EAE8E5]"
-                        } ${heightClass}`}
+                        style={{ height: `${heightPercent}%` }}
+                        className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 ${
+                          isPeak
+                            ? "bg-gradient-to-t from-[#84633F] via-[#D4AF37] to-[#F3C74D] shadow-sm group-hover:brightness-110"
+                            : item.value > 0
+                              ? "bg-gradient-to-t from-stone-400 via-[#84633F]/70 to-[#D4AF37] shadow-2xs group-hover:brightness-110"
+                              : "bg-[#EAE8E5] group-hover:bg-stone-300"
+                        }`}
                       />
                     </div>
                     <span
                       className={`mt-2 text-[10.5px] ${
-                        isOctober ? "font-bold text-stone-900" : "text-stone-400 font-medium"
+                        isPeak || isCurrentMonth ? "font-bold text-[#2C221E]" : "text-stone-400 font-medium"
                       }`}
                     >
-                      {lbl}
+                      {item.label}
                     </span>
-                    {isOctober && (
-                      <span className="h-1 w-1 rounded-full bg-[#D4A338] mt-0.5" />
+                    {isCurrentMonth && (
+                      <span className="h-1 w-1 rounded-full bg-[#D4AF37] mt-0.5" title="Bulan Berjalan" />
                     )}
                   </div>
                 );
@@ -403,16 +556,18 @@ export default async function DashboardPage() {
           {/* Footer Bar */}
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-100 pt-4 text-xs">
             <div className="flex items-center gap-2 text-stone-600">
-              <span className="h-2 w-2 rounded-full bg-[#D4A338]" />
+              <span className="h-2 w-2 rounded-full bg-[#D4AF37]" />
               <span className="text-[11.5px]">
-                Puncak: Bulan Oktober (Pernikahan Musim Gugur) · Rerata konversi 94.2%
+                {peakMonth && peakMonth.value > 0
+                  ? `Puncak: Bulan ${peakMonth.label} (${peakMonth.value} projek) · Total ${totalYearActivity} projek tahun ${currentYear}`
+                  : `Belum ada projek dibuat pada tahun ${currentYear} · Buat template atau undangan baru untuk melihat grafik volume.`}
               </span>
             </div>
             <Link
               href="/dashboard/invitations"
-              className="text-xs font-bold text-stone-800 hover:text-[#D4A338] transition-colors"
+              className="text-xs font-bold text-[#2C221E] hover:text-[#D4AF37] transition-colors"
             >
-              Lihat Laporan Lengkap →
+              Lihat Semua Undangan →
             </Link>
           </div>
         </div>
@@ -425,8 +580,8 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between px-5 py-4 bg-stone-50/70 border-b border-stone-100">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-[#D4A338]" />
-                <h3 className="text-sm font-bold text-stone-900">Undangan Terbaru</h3>
+                <span className="flex h-2 w-2 rounded-full bg-[#D4AF37]" />
+                <h3 className="text-sm font-bold text-[#2C221E]">Undangan Terbaru</h3>
               </div>
               <p className="text-[11.5px] text-stone-400 mt-0.5">
                 Projek undangan yang baru saja disunting di workspace
@@ -434,7 +589,7 @@ export default async function DashboardPage() {
             </div>
             <Link
               href="/dashboard/invitations"
-              className="text-xs font-bold text-[#D4A338] hover:text-[#B88728] transition-colors"
+              className="text-xs font-bold text-[#D4AF37] hover:text-[#BD9B2F] transition-colors"
             >
               Lihat Semua →
             </Link>
@@ -463,11 +618,11 @@ export default async function DashboardPage() {
                       className="flex items-center justify-between px-4 py-3.5 hover:bg-stone-50/80 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 border border-amber-200/70 text-xs font-bold text-[#D4A338] shadow-2xs">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 border border-amber-200/70 text-xs font-bold text-[#D4AF37] shadow-2xs">
                           {initialChar}
                         </div>
                         <div className="min-w-0">
-                          <strong className="block text-stone-800 font-semibold truncate">
+                          <strong className="block text-[#2C221E] font-semibold truncate">
                             {inv.title}
                           </strong>
                           <span className="text-[11px] text-stone-400">
@@ -500,8 +655,8 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between px-5 py-4 bg-stone-50/70 border-b border-stone-100">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-[#CA8A04]" />
-                <h3 className="text-sm font-bold text-stone-900">Template Desain Terbaru</h3>
+                <span className="flex h-2 w-2 rounded-full bg-[#84633F]" />
+                <h3 className="text-sm font-bold text-[#2C221E]">Template Desain Terbaru</h3>
               </div>
               <p className="text-[11.5px] text-stone-400 mt-0.5">
                 Katalog master template yang tersimpan dalam pustaka
@@ -509,7 +664,7 @@ export default async function DashboardPage() {
             </div>
             <Link
               href="/dashboard/templates"
-              className="text-xs font-bold text-[#D4A338] hover:text-[#B88728] transition-colors"
+              className="text-xs font-bold text-[#D4AF37] hover:text-[#BD9B2F] transition-colors"
             >
               Buka Katalog →
             </Link>
@@ -538,11 +693,11 @@ export default async function DashboardPage() {
                       className="flex items-center justify-between px-4 py-3.5 hover:bg-stone-50/80 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-yellow-50 border border-yellow-200/70 text-xs font-bold text-[#CA8A04] shadow-2xs">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F4EDE4] border border-[#84633F]/30 text-xs font-bold text-[#84633F] shadow-2xs">
                           {initialChar}
                         </div>
                         <div className="min-w-0">
-                          <strong className="block text-stone-800 font-semibold truncate">
+                          <strong className="block text-[#2C221E] font-semibold truncate">
                             {tpl.name}
                           </strong>
                           <span className="text-[11px] text-stone-400">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getResellerBrandingProfile } from "@/features/reseller/api";
 import { ResellerBrandingForm } from "@/features/reseller/components";
-import styles from "@/features/reseller/components/reseller.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireReseller } from "@/lib/auth/server";
 import { updateBrandingAction } from "../branding/actions";
 
@@ -15,17 +15,23 @@ export default async function ResellerStorefrontPage() {
   const profile = await getResellerBrandingProfile();
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Portal Seller · Identitas & Toko</p>
-          <h1 className={styles.title}>Website Toko & Domain Khusus</h1>
-          <p className={styles.lead}>
-            Atur identitas website toko khusus seller Anda sebagai sarana melayani customer,
-            termasuk nama brand, logo, domain sendiri, dan kontak CS WhatsApp.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <DashboardHeroHeader
+        eyebrow="PORTAL SELLER • WEBSITE TOKO"
+        title="Website Toko & Domain Khusus"
+        description="Atur identitas website toko khusus seller Anda sebagai sarana melayani customer, termasuk nama brand, logo, domain sendiri, dan kontak CS WhatsApp."
+        actions={
+          <a
+            href={`/seller/${profile.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+          >
+            <span>Pratinjau Toko</span>
+            <span>↗</span>
+          </a>
+        }
+      />
 
       <ResellerBrandingForm
         initialData={{

@@ -64,7 +64,7 @@ export function DashboardSidebar({
       {/* Top Brand Section */}
       <div>
         <div className="flex items-center gap-3.5 border-b border-[#262220] px-6 py-5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D4A338] text-base font-black text-stone-950 shadow-md shadow-amber-950/20">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D4AF37] text-base font-black text-[#2C221E] shadow-md shadow-amber-950/20">
             IS
           </div>
           <div className="overflow-hidden">
@@ -72,7 +72,7 @@ export function DashboardSidebar({
               <span>Invitation Studio</span>
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block shrink-0" />
             </h2>
-            <p className="mt-0.5 text-[10px] font-bold text-[#D4A338] tracking-widest uppercase">
+            <p className="mt-0.5 text-[10px] font-bold text-[#D4AF37] tracking-widest uppercase">
               PLATFORM UNDANGAN
             </p>
           </div>
@@ -103,7 +103,7 @@ export function DashboardSidebar({
                         <div className="flex items-center gap-3.5 min-w-0">
                           <span
                             className={`h-5 w-5 shrink-0 transition-colors flex items-center justify-center ${
-                              active ? "text-[#D4A338]" : "text-[#78716C] group-hover:text-stone-300"
+                              active ? "text-[#D4AF37]" : "text-[#78716C] group-hover:text-stone-300"
                             }`}
                           >
                             {item.icon}
@@ -114,7 +114,7 @@ export function DashboardSidebar({
                         <div className="flex items-center gap-2 shrink-0">
                           {item.badge !== undefined ? renderBadge(item.badge) : null}
                           {active && !item.badge && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#D4A338] shrink-0" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37] shrink-0" />
                           )}
                         </div>
                       </Link>
@@ -134,7 +134,7 @@ export function DashboardSidebar({
           <div className="rounded-xl border border-[#2B2725] bg-[#221E1C] p-3 shadow-inner">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <div className="flex items-center gap-1.5 font-semibold text-stone-300">
-                <svg className="h-4 w-4 text-[#D4A338]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16" />
                 </svg>
                 <span className="text-[11px] font-medium tracking-wide">Storage Server</span>
@@ -144,7 +144,7 @@ export function DashboardSidebar({
                   ? "text-rose-400"
                   : storageUsage.usagePercent >= 75
                   ? "text-amber-400"
-                  : "text-[#D4A338]"
+                  : "text-[#D4AF37]"
               }`}>
                 {storageUsage.usagePercent}%
               </span>
@@ -158,7 +158,7 @@ export function DashboardSidebar({
                     ? "bg-rose-500"
                     : storageUsage.usagePercent >= 75
                     ? "bg-amber-500"
-                    : "bg-gradient-to-r from-[#D4A338] to-[#F59E0B]"
+                    : "bg-gradient-to-r from-[#D4AF37] to-[#F59E0B]"
                 }`}
                 style={{ width: `${Math.min(100, Math.max(storageUsage.usagePercent, 2))}%` }}
               />
@@ -169,7 +169,7 @@ export function DashboardSidebar({
               <Link
                 href="/dashboard/storage"
                 onClick={onCloseMobile}
-                className="font-medium text-[#D4A338] hover:text-amber-300 transition-colors"
+                className="font-medium text-[#D4AF37] hover:text-amber-300 transition-colors"
               >
                 Kelola →
               </Link>
@@ -188,7 +188,7 @@ export function DashboardSidebar({
                   className="h-8 w-8 rounded-lg object-contain bg-white/10 p-0.5"
                 />
               ) : (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4A338] text-xs font-bold text-stone-950">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4AF37] text-xs font-bold text-[#2C221E]">
                   {agencyBranding.agencyName.charAt(0).toUpperCase()}
                 </span>
               )}

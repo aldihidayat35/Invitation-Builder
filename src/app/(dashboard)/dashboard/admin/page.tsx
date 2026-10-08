@@ -11,6 +11,7 @@ import {
   OrderTrendAnalytics,
   StatusDonutChart,
 } from "@/features/analytics";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireOwner } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -83,36 +84,28 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#84633F]">
-            Super Admin Control
-          </span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#2C221E] sm:text-3xl">
-            Platform Analytics
-          </h1>
-          <p className="mt-1 text-xs text-stone-500 sm:text-sm">
-            Pantau arus pemesanan customer, kinerja mitra seller, dan status pengerjaan website undangan secara terpusat.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/dashboard/admin/orders"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#715332]"
-          >
-            <span>Lihat Semua Pesanan</span>
-            <span>→</span>
-          </Link>
-          <Link
-            href="/dashboard/admin/resellers"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 shadow-2xs transition hover:bg-stone-50"
-          >
-            <span>Mitra Seller ({stats.totalResellers})</span>
-          </Link>
-        </div>
-      </div>
+      <DashboardHeroHeader
+        eyebrow="SUPER ADMIN • PLATFORM CONTROL"
+        title="Platform Analytics"
+        description="Pantau arus pemesanan customer, kinerja mitra seller, dan status pengerjaan website undangan secara terpusat."
+        actions={
+          <>
+            <Link
+              href="/dashboard/admin/resellers"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"
+            >
+              <span>Mitra Seller ({stats.totalResellers})</span>
+            </Link>
+            <Link
+              href="/dashboard/admin/orders"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md hover:bg-[#BD9B2F] transition-colors"
+            >
+              <span>Lihat Semua Pesanan</span>
+              <span>→</span>
+            </Link>
+          </>
+        }
+      />
 
       {/* KPI Stats Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

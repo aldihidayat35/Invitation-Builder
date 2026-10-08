@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getResellerOverview, getResellerOrders, getResellerOrderTrends } from "@/features/reseller/api";
 import { KpiStatCard, TrendLineChart, StatusDonutChart } from "@/features/analytics";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireReseller } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -34,38 +35,30 @@ export default async function ResellerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#84633F]">
-            Mitra Seller · Storefront & Order Intake
-          </span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#2C221E] sm:text-3xl">
-            {stats.agencyName}
-          </h1>
-          <p className="mt-1 text-xs text-stone-500 sm:text-sm">
-            Kelola toko online seller Anda, pantau pemesanan calon pengantin, dan lihat progres pengerjaan website undangan oleh Admin.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <a
-            href={`/seller/${stats.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#715332]"
-          >
-            <span>Buka Website Toko</span>
-            <span>↗</span>
-          </a>
-          <Link
-            href="/dashboard/reseller/orders"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 shadow-2xs transition hover:bg-stone-50"
-          >
-            <span>Daftar Pesanan ({stats.totalOrders})</span>
-          </Link>
-        </div>
-      </div>
+      <DashboardHeroHeader
+        eyebrow={`PORTAL SELLER • ${stats.agencyName.toUpperCase()}`}
+        title={stats.agencyName}
+        description="Kelola toko online seller Anda, pantau pemesanan calon pengantin, dan lihat progres pengerjaan website undangan oleh Admin."
+        actions={
+          <>
+            <Link
+              href="/dashboard/reseller/orders"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"
+            >
+              <span>Daftar Pesanan ({stats.totalOrders})</span>
+            </Link>
+            <a
+              href={`/seller/${stats.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+            >
+              <span>Buka Website Toko</span>
+              <span>↗</span>
+            </a>
+          </>
+        }
+      />
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getAdminResellers, getAdminStats } from "@/features/admin/api";
 import { AdminStatsCards, CreateResellerModal, ResellersManager } from "@/features/admin/components";
-import styles from "@/features/admin/components/admin.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { createResellerAction, toggleResellerStatusAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -15,20 +15,13 @@ export default async function AdminResellersPage() {
   ]);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Platform Owner · Layer 1</p>
-          <h1 className={styles.title}>Manajemen Mitra Seller</h1>
-          <p className={styles.lead}>
-            Kelola pendaftaran mitra seller, pantau toko online mereka, dan konfigurasi domain khusus seller.
-          </p>
-        </div>
-
-        <div className={styles.headerActions}>
-          <CreateResellerModal action={createResellerAction} />
-        </div>
-      </header>
+    <div className="space-y-6">
+      <DashboardHeroHeader
+        eyebrow="SUPER ADMIN • MITRA SELLER"
+        title="Manajemen Mitra Seller"
+        description="Kelola pendaftaran mitra seller, pantau toko online mereka, dan konfigurasi domain khusus seller."
+        actions={<CreateResellerModal action={createResellerAction} />}
+      />
 
       <AdminStatsCards stats={stats} />
 
@@ -36,6 +29,6 @@ export default async function AdminResellersPage() {
         resellers={resellers}
         toggleStatusAction={toggleResellerStatusAction}
       />
-    </main>
+    </div>
   );
 }

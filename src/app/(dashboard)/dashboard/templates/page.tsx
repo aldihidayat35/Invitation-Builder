@@ -3,6 +3,7 @@ import Link from "next/link";
 import { listLibrary, permissionsFor } from "@/features/templates/api";
 import { CreateTemplateForm, ImportTemplateDialog, TemplateList } from "@/features/templates/components";
 import styles from "@/features/templates/components/templates.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import {
   archiveTemplateAction,
@@ -39,16 +40,20 @@ export default async function TemplateLibraryPage({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerText}>
-          <p className={styles.eyebrow}>Workspace · {active.workspace.name}</p>
-          <h1 className={styles.title}>Template</h1>
-          <p className={styles.lead}>
-            Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu
-            publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan.
-          </p>
-        </div>
-      </header>
+      <DashboardHeroHeader
+        eyebrow={`WORKSPACE • ${active.workspace.name.toUpperCase()}`}
+        title="Katalog & Desain Template"
+        description="Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan."
+        actions={
+          <Link
+            href="/dashboard/invitations"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+          >
+            <span>Daftar Undangan</span>
+            <span>→</span>
+          </Link>
+        }
+      />
 
       {permissions.write && !archivedView ? (
         <div className={styles.creationRow}>

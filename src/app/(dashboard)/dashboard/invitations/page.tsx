@@ -5,6 +5,7 @@ import { CreateInvitationForm } from "@/features/invitations/components/CreateIn
 import { InvitationsView } from "@/features/invitations/components/InvitationsView";
 import { KpiStatCard } from "@/features/analytics";
 import { listLibrary } from "@/features/templates/api";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import {
   createInvitationAction,
@@ -72,43 +73,23 @@ export default async function InvitationsPage({
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8">
-      {/* Executive Header Section */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#84633F]/20 bg-[#FAF8F5] px-3 py-1 text-xs font-semibold text-[#84633F]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#84633F]" />
-            <span>Workspace: {active.workspace.name}</span>
-          </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#2C221E] sm:text-3xl">
-            Kelola Undangan Digital
-          </h1>
-          <p className="mt-1 text-xs text-stone-500 max-w-2xl leading-relaxed">
-            Undangan digital adalah salinan kustomisasi dari template master untuk satu acara klien.
-            Atur data mempelai, jadwalkan acara, kelola daftar tamu VIP, dan pantau status RSVP real-time.
-          </p>
-        </div>
-
-        {/* Quick Action Button to Template Library */}
-        <div className="flex shrink-0 items-center gap-2.5">
+      {/* Executive Hero Header Section */}
+      <DashboardHeroHeader
+        eyebrow={`WORKSPACE • ${active.workspace.name.toUpperCase()}`}
+        title="Kelola Undangan Digital"
+        description="Undangan digital adalah salinan kustomisasi dari template master untuk satu acara klien. Atur data mempelai, jadwalkan acara, kelola daftar tamu VIP, dan pantau status RSVP real-time."
+        actions={
           <Link
             href="/dashboard/templates"
-            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-[#84633F] shadow-xs transition hover:border-[#84633F]/50 hover:bg-stone-50 hover:text-[#715332]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-              />
+            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+              <path d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
-            <span>Template Library</span>
-            <span className="rounded-md bg-stone-100 px-1.5 py-0.5 text-[10px] font-bold text-stone-600">
-              {published.length} Siap
-            </span>
+            <span>Template Library ({published.length} Siap)</span>
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       {/* KPI Metric Cards */}
       <section aria-label="Ringkasan Statistik Undangan" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

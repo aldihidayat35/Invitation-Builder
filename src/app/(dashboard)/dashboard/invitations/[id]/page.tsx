@@ -15,6 +15,7 @@ import { GuestImport } from "@/features/invitations/components/GuestImport";
 import { GuestPanel } from "@/features/invitations/components/GuestPanel";
 import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
 import {
   addGuestAction,
@@ -68,32 +69,32 @@ export default async function InvitationDataPage({
       <Link href="/dashboard/invitations" className={styles.breadcrumb}>
         ← Undangan
       </Link>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>
-            Template: {invitation.template.name} · v{invitation.template.versionNo}
-          </p>
-          <h1 className={styles.title} data-testid="invitation-title">
-            {invitation.title}
-          </h1>
-        </div>
-        <div className={styles.row}>
-          <Link
-            href={`/dashboard/invitations/${invitation.id}/rsvp`}
-            className={styles.secondary}
-            id="open-rsvp"
-          >
-            RSVP
-          </Link>
-          <Link
-            href={`/dashboard/invitations/${invitation.id}/preview`}
-            className={styles.primary}
-            id="open-preview"
-          >
-            Preview
-          </Link>
-        </div>
-      </header>
+      <div className="mb-6">
+        <DashboardHeroHeader
+          eyebrow={`TEMPLATE: ${invitation.template.name.toUpperCase()} • V${invitation.template.versionNo}`}
+          title={<span data-testid="invitation-title">{invitation.title}</span>}
+          description="Isi dan sesuaikan data undangan pernikahan digital seperti nama mempelai, jadwal acara akad dan resepsi, lokasi, serta daftar tamu VIP."
+          actions={
+            <div className="flex items-center gap-2.5">
+              <Link
+                href={`/dashboard/invitations/${invitation.id}/rsvp`}
+                className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"
+                id="open-rsvp"
+              >
+                <span>Buku Tamu RSVP</span>
+              </Link>
+              <Link
+                href={`/dashboard/invitations/${invitation.id}/preview`}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+                id="open-preview"
+              >
+                <span>Preview Undangan</span>
+                <span>↗</span>
+              </Link>
+            </div>
+          }
+        />
+      </div>
 
       <div className={styles.layout}>
         <div>

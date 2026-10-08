@@ -34,7 +34,7 @@ export function DashboardShell({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#F5F5F4] text-[#1C1917] antialiased">
+    <div className="flex min-h-screen bg-[#F7F4EF] text-[#2C221E] antialiased">
       {/* Sidebar Navigation */}
       <DashboardSidebar
         navGroups={navGroups}

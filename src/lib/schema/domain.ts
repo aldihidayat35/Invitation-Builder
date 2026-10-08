@@ -71,5 +71,8 @@ export const AUDIT_ACTIONS = [
   "order.create",
   "order.update_status",
   "order.assign_invitation",
+  "user.create",
+  "user.update",
+  "user.delete",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -61,26 +61,28 @@
 }
 
 .btnPrimary {
-  background: linear-gradient(135deg, #84633f 0%, #6e4e2a 100%);
-  color: #ffffff;
+  background: #d4af37;
+  color: #2c221e;
   padding: 0.85rem 1.85rem;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid #d4af37;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(132, 99, 63, 0.3);
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(135deg, #6e4e2a 0%, #573a1d 100%);
+  background: #bd9b2f;
+  border-color: #bd9b2f;
+  color: #2c221e;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(132, 99, 63, 0.4);
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.45);
 }
 
 .btnSecondary {
@@ -144,17 +146,18 @@
 /* Template Grid */
 .templateGrid {
   display: grid;
-  grid-templateColumns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.75rem;
   margin-bottom: 4rem;
 }
 
 .templateCard {
-  background: #ffffff;
-  border: 1px solid rgba(132, 99, 63, 0.18);
-  border-radius: 12px;
+  background: #84633f;
+  color: #ffffff;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(44, 34, 30, 0.04);
+  box-shadow: 0 4px 16px rgba(44, 34, 30, 0.12);
   transition: all 0.25s ease;
   display: flex;
   flex-direction: column;
@@ -162,30 +165,30 @@
 
 .templateCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(132, 99, 63, 0.12);
-  border-color: #84633f;
+  box-shadow: 0 10px 24px rgba(44, 34, 30, 0.2);
+  border-color: #d4af37;
 }
 
 .templateCardSelected {
-  border: 2px solid #84633f;
-  box-shadow: 0 0 0 4px rgba(132, 99, 63, 0.15);
+  border: 2px solid #d4af37;
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.25);
 }
 
 .templateThumb {
   height: 180px;
-  background: linear-gradient(135deg, #eae5dc 0%, #d8cfc2 100%);
+  background: linear-gradient(135deg, #63482c 0%, #4a341d 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  border-bottom: 1px solid rgba(132, 99, 63, 0.1);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .templateThumbText {
   font-family: var(--font-serif, "Cinzel", Georgia, serif);
   font-size: 1.35rem;
   font-weight: 700;
-  color: #84633f;
+  color: #d4af37;
   text-align: center;
   padding: 1rem;
 }
@@ -195,39 +198,42 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #84633f;
+  color: #ffffff;
 }
 
 .templateName {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #2c221e;
+  color: #ffffff;
   margin: 0 0 0.4rem;
 }
 
 .templateMeta {
   font-size: 0.82rem;
-  color: #7d6e66;
+  color: #f4ede4;
   margin-bottom: 1.25rem;
 }
 
 .templateActionBtn {
   margin-top: auto;
   width: 100%;
-  padding: 0.65rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  border: 1px solid #84633f;
-  background: #ffffff;
-  color: #84633f;
+  border: 1px solid #d4af37;
+  background: #d4af37;
+  color: #2c221e;
   transition: all 0.2s ease;
 }
 
 .templateActionBtn:hover,
 .templateActionBtnSelected {
-  background: #84633f;
-  color: #ffffff;
+  background: #bd9b2f;
+  border-color: #bd9b2f;
+  color: #2c221e;
 }
 
 /* Order Form Card */

@@ -47,10 +47,15 @@ test.describe("public renderer smoke route", () => {
 });
 
 test.describe("dashboard entry (protected since Fase 2)", () => {
-  test("root redirects to login, then to the dashboard, which links to the smoke route", async ({
+  test("landing page renders at root without login", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("h1")).toContainText("Ciptakan Undangan Digital");
+  });
+
+  test("dashboard redirects to login, then to the dashboard, which links to the smoke route", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
     await login(page);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ringkasan");

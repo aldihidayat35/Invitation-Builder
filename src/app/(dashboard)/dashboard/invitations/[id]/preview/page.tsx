@@ -10,6 +10,7 @@ import {
 } from "@/features/invitations/api";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { DocumentRenderer } from "@/features/renderer";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 
 export const metadata: Metadata = { title: "Preview undangan" };
 
@@ -53,30 +54,24 @@ export default async function InvitationPreviewPage({
   return (
     <main className={styles.page}>
       <Link href={`/dashboard/invitations/${id}`} className={styles.breadcrumb}>
-        <svg
-          width={14}
-          height={14}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 4 }}
-          aria-hidden="true"
-        >
-          <path d="m12 19-7-7 7-7M5 12h14" />
-        </svg>
-        <span>Kembali ke data</span>
+        ← Kembali ke data undangan
       </Link>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>Preview · {model.guestLabel}</p>
-          <h1 className={styles.title} data-testid="preview-title">
-            {model.invitation.title}
-          </h1>
-        </div>
-      </header>
+      <div className="mb-6">
+        <DashboardHeroHeader
+          eyebrow={`PREVIEW UNDANGAN • ${model.guestLabel.toUpperCase()}`}
+          title={<span data-testid="preview-title">{model.invitation.title}</span>}
+          description="Pratinjau tampilan undangan pernikahan digital seperti yang akan dilihat oleh tamu undangan Anda."
+          actions={
+            <Link
+              href={`/dashboard/invitations/${id}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+            >
+              <span>Edit Data Undangan</span>
+              <span>→</span>
+            </Link>
+          }
+        />
+      </div>
 
       <nav className={styles.previewBar} aria-label="Konteks tamu preview">
         <Link

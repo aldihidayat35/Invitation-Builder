@@ -15,6 +15,7 @@ import {
   type ResolvedDocument,
 } from "@/lib/engine";
 import { createSampleTemplate, SAMPLE_DATASETS } from "@/lib/engine/samples";
+import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import styles from "./playground.module.css";
 
 export const metadata: Metadata = { title: "Engine playground", robots: { index: false } };
@@ -93,22 +94,11 @@ export default async function PlaygroundPage({ searchParams }: PageProps<"/dashb
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Alat pengembang · hanya tampil di mode development</p>
-        <h1 className={styles.title}>Engine playground</h1>
-        <p className={styles.lead}>
-          Halaman uji untuk melihat bagaimana data undangan (nama mempelai, tanggal, lokasi, nama
-          tamu) mengisi sebuah template contoh. Template-nya tidak pernah diubah — hanya hasil
-          pengisiannya yang berbeda. Halaman ini tidak memengaruhi template atau undangan Anda.
-        </p>
-        <ol className={styles.howto}>
-          <li>Pilih dataset contoh, atau ubah isian pada form di kiri.</li>
-          <li>
-            Klik <strong>Terapkan</strong> untuk melihat hasilnya di panel kanan.
-          </li>
-          <li>Bandingkan dua dataset di bagian bawah untuk memastikan template tetap sama.</li>
-        </ol>
-      </header>
+      <DashboardHeroHeader
+        eyebrow="DEV TOOLS • ENGINE PLAYGROUND"
+        title="Engine Playground"
+        description="Halaman uji untuk melihat bagaimana data undangan mengisi template contoh. Template tidak pernah diubah — hanya hasil pengisian variabel yang dinamis."
+      />
 
       <div className={styles.datasetBar}>
         <span className={styles.datasetLabel}>Dataset contoh</span>

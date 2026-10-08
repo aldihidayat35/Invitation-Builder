@@ -42,13 +42,13 @@ export function DashboardHeader({
   const roleBadge = getRoleBadge(user.systemRole);
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-stone-200/90 bg-white px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-[#E8E2D8] bg-white px-4 sm:px-6 lg:px-8">
       {/* Left: Mobile trigger & breadcrumb */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleMobileSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-700 shadow-2xs hover:bg-stone-50 transition-colors lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E8E2D8] bg-white text-[#2C221E] shadow-2xs hover:bg-[#F7F4EF] transition-colors lg:hidden"
           aria-label="Buka navigasi menu"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,9 +62,9 @@ export function DashboardHeader({
           {activeWorkspace ? (
             <div
               id="active-workspace"
-              className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-[#F5F5F4] px-3 py-1 text-xs font-semibold text-stone-800 shadow-2xs cursor-default"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#E8E2D8] bg-[#F7F4EF] px-3 py-1 text-xs font-semibold text-[#2C221E] shadow-2xs cursor-default"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A338]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
               <span className="workspaceName">{activeWorkspace.name}</span>
               <svg className="h-3 w-3 text-stone-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
