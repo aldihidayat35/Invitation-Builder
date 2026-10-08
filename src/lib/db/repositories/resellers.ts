@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
   customerOrders,
@@ -76,7 +77,13 @@ export async function findResellerProfileByCustomDomain(
   const [row] = await db
     .select()
     .from(resellerProfiles)
-    .where(eq(resellerProfiles.customDomain, customDomain))
+    .where(
+      and(
+        eq(resellerProfiles.customDomain, customDomain),
+        eq(resellerProfiles.domainStatus, "active"),
+        eq(resellerProfiles.tlsStatus, "active"),
+      ),
+    )
     .limit(1);
   return row;
 }
@@ -122,7 +129,10 @@ export async function createResellerWithProfile(
         slug: input.slug.trim().toLowerCase(),
         whatsappContact: input.whatsappContact.trim(),
         logoUrl: input.logoUrl ?? null,
-        customDomain: input.customDomain ?? null,
+        customDomain: input.customDomain?.trim().toLowerCase() || null,
+        domainStatus: input.customDomain ? "pending" : "unconfigured",
+        domainVerificationToken: input.customDomain ? randomBytes(18).toString("base64url") : null,
+        tlsStatus: input.customDomain ? "pending" : "unconfigured",
       })
       .returning();
     if (!profile) throw new Error("createResellerWithProfile: failed to insert profile");
@@ -226,6 +236,12 @@ export interface UpdateResellerBrandingInput {
   logoUrl?: string | null;
   brandColor?: string;
   customDomain?: string | null;
+  domainStatus?: "unconfigured" | "pending" | "verified" | "active" | "failed";
+  domainVerificationToken?: string | null;
+  domainVerifiedAt?: Date | null;
+  domainLastCheckedAt?: Date | null;
+  tlsStatus?: "unconfigured" | "pending" | "active" | "failed";
+  tlsActivatedAt?: Date | null;
 }
 
 export async function updateResellerBranding(
@@ -241,6 +257,16 @@ export async function updateResellerBranding(
       ...(input.logoUrl !== undefined && { logoUrl: input.logoUrl }),
       ...(input.brandColor !== undefined && { brandColor: input.brandColor.trim() }),
       ...(input.customDomain !== undefined && { customDomain: input.customDomain }),
+      ...(input.domainStatus !== undefined && { domainStatus: input.domainStatus }),
+      ...(input.domainVerificationToken !== undefined && {
+        domainVerificationToken: input.domainVerificationToken,
+      }),
+      ...(input.domainVerifiedAt !== undefined && { domainVerifiedAt: input.domainVerifiedAt }),
+      ...(input.domainLastCheckedAt !== undefined && {
+        domainLastCheckedAt: input.domainLastCheckedAt,
+      }),
+      ...(input.tlsStatus !== undefined && { tlsStatus: input.tlsStatus }),
+      ...(input.tlsActivatedAt !== undefined && { tlsActivatedAt: input.tlsActivatedAt }),
       updatedAt: new Date(),
     })
     .where(eq(resellerProfiles.id, resellerProfileId))
@@ -288,8 +314,8 @@ export async function getAdminResellerStats(db: Database): Promise<{
     .select({
       totalOrders: sql<number>`count(*)::int`,
       resellersWithOrders: sql<number>`count(distinct ${customerOrders.sellerId})::int`,
-      newOrders: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
-      completedOrders: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
+      newOrders: sql<number>`count(case when ${customerOrders.orderStatus} = 'new' then 1 end)::int`,
+      completedOrders: sql<number>`count(case when ${customerOrders.orderStatus} = 'completed' then 1 end)::int`,
     })
     .from(customerOrders);
 
@@ -321,9 +347,9 @@ export async function getTopResellersByOrders(
       ownerName: users.name,
       ownerEmail: users.email,
       totalOrders: sql<number>`count(${customerOrders.id})::int`,
-      completedOrders: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
-      newOrders: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
-      inProgressOrders: sql<number>`count(case when ${customerOrders.status} in ('in_progress', 'in_review') then 1 end)::int`,
+      completedOrders: sql<number>`count(case when ${customerOrders.orderStatus} = 'completed' then 1 end)::int`,
+      newOrders: sql<number>`count(case when ${customerOrders.orderStatus} = 'new' then 1 end)::int`,
+      inProgressOrders: sql<number>`count(case when ${customerOrders.orderStatus} in ('qualified', 'accepted') then 1 end)::int`,
     })
     .from(resellerProfiles)
     .innerJoin(users, eq(users.id, resellerProfiles.userId))

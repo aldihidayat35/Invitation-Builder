@@ -11,6 +11,25 @@ export async function findWorkspaceBySlug(
   return row;
 }
 
+export async function findWorkspaceById(
+  db: Database,
+  workspaceId: string,
+): Promise<Workspace | undefined> {
+  const [row] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  return row;
+}
+
+export async function ensureWorkspaceMember(
+  db: Database,
+  input: { workspaceId: string; userId: string; role: WorkspaceRole },
+): Promise<void> {
+  await db
+    .insert(workspaceMembers)
+    .values(input)
+    // Existing membership may carry a stronger role (for example owner).
+    .onConflictDoNothing();
+}
+
 /** Creates a workspace and its owner membership atomically. */
 export async function createWorkspaceWithOwner(
   db: Database,

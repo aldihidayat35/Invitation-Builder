@@ -15,6 +15,7 @@ import type { SystemRole } from "@/lib/schema/domain";
 import { login, logout, validateSession, type SessionUser } from "./sessions";
 
 export const SESSION_COOKIE = "session";
+export const ACTIVE_WORKSPACE_COOKIE = "active_workspace";
 
 function cookieOptions(expires?: Date) {
   return {
@@ -93,19 +94,22 @@ export async function requireReseller(): Promise<ResellerContext> {
 export interface WorkspaceContext {
   user: SessionUser;
   memberships: Membership[];
-  /** Active workspace = first membership (a workspace switcher is out of scope for F2). */
+  /** Active workspace is selected by a validated cookie, then falls back to the first membership. */
   active: Membership | undefined;
 }
 
 export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => {
   const user = await requireUser();
   const memberships = await listMemberships(await getDb(), user.id);
-  return { user, memberships, active: memberships[0] };
+  const selectedId = (await cookies()).get(ACTIVE_WORKSPACE_COOKIE)?.value;
+  const active =
+    memberships.find((membership) => membership.workspace.id === selectedId) ?? memberships[0];
+  return { user, memberships, active };
 });
 
 /** Verifies credentials, opens a session and sets the cookie. Throws Authentication/RateLimit errors. */
-export async function signIn(email: string, password: string): Promise<void> {
-  const { token, expiresAt } = await login(await getDb(), { email, password });
+export async function signIn(email: string, password: string, clientKey?: string): Promise<void> {
+  const { token, expiresAt } = await login(await getDb(), { email, password, clientKey });
   await setSessionCookie(token, expiresAt);
 }
 

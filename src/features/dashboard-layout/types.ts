@@ -34,6 +34,8 @@ export interface WorkspaceSummaryData {
   readonly role: string;
 }
 
+export type WorkspaceOptionData = WorkspaceSummaryData;
+
 export interface StorageUsageSummary {
   readonly totalBytes: number;
   readonly limitBytes: number;

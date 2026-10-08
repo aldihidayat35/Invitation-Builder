@@ -1,24 +1,32 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import type { AdminOrderItem } from "../types";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 
 interface AdminOrdersTableProps {
   orders: AdminOrderItem[];
-  onUpdateStatus: (orderId: string, nextStatus: CustomerOrderStatus) => Promise<void>;
 }
 
 function getStatusBadge(status: CustomerOrderStatus) {
   switch (status) {
     case "new":
       return { label: "Pesanan Baru", className: "bg-amber-100 text-amber-900 border-amber-300" };
-    case "in_review":
-      return { label: "Sedang Ditinjau", className: "bg-purple-100 text-purple-900 border-purple-300" };
-    case "in_progress":
+    case "qualified":
+      return {
+        label: "Sedang Ditinjau",
+        className: "bg-purple-100 text-purple-900 border-purple-300",
+      };
+    case "accepted":
       return { label: "Sedang Dikerjakan", className: "bg-blue-100 text-blue-900 border-blue-300" };
+    case "rejected":
+      return { label: "Ditolak", className: "bg-stone-100 text-stone-700 border-stone-300" };
     case "completed":
-      return { label: "Selesai & Terbit", className: "bg-emerald-100 text-emerald-900 border-emerald-300" };
+      return {
+        label: "Selesai & Terbit",
+        className: "bg-emerald-100 text-emerald-900 border-emerald-300",
+      };
     case "cancelled":
       return { label: "Dibatalkan", className: "bg-rose-100 text-rose-900 border-rose-300" };
     default:
@@ -26,11 +34,9 @@ function getStatusBadge(status: CustomerOrderStatus) {
   }
 }
 
-export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTableProps) {
+export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isPending, startTransition] = useTransition();
-  const [actionTargetId, setActionTargetId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return orders.filter((item) => {
@@ -50,17 +56,6 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
     });
   }, [orders, search, statusFilter]);
 
-  const handleStatusChange = (orderId: string, nextStatus: CustomerOrderStatus) => {
-    setActionTargetId(orderId);
-    startTransition(async () => {
-      try {
-        await onUpdateStatus(orderId, nextStatus);
-      } finally {
-        setActionTargetId(null);
-      }
-    });
-  };
-
   return (
     <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
       <div className="flex flex-col gap-4 border-b border-stone-100 pb-5 md:flex-row md:items-center md:justify-between">
@@ -74,7 +69,8 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
             </span>
           </div>
           <p className="mt-1 text-xs text-stone-500">
-            Admin memiliki akses penuh mutlak untuk mengolah data dan membuat website undangan customer.
+            Admin memiliki akses penuh mutlak untuk mengolah data dan membuat website undangan
+            customer.
           </p>
         </div>
 
@@ -96,8 +92,9 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
           >
             <option value="all">Semua Status</option>
             <option value="new">Pesanan Baru</option>
-            <option value="in_review">Sedang Ditinjau</option>
-            <option value="in_progress">Sedang Dikerjakan</option>
+            <option value="qualified">Terkualifikasi</option>
+            <option value="accepted">Diterima</option>
+            <option value="rejected">Ditolak</option>
             <option value="completed">Selesai & Terbit</option>
             <option value="cancelled">Dibatalkan</option>
           </select>
@@ -123,12 +120,21 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
                 <td colSpan={7} className="py-12 text-center">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-stone-400">
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
-                  <strong className="mt-3 block font-semibold text-stone-700">Tidak ada data pesanan</strong>
+                  <strong className="mt-3 block font-semibold text-stone-700">
+                    Tidak ada data pesanan
+                  </strong>
                   <p className="mt-1 text-xs text-stone-400">
-                    {search ? "Coba ganti kata kunci pencarian Anda." : "Belum ada pesanan masuk dari toko seller."}
+                    {search
+                      ? "Coba ganti kata kunci pencarian Anda."
+                      : "Belum ada pesanan masuk dari toko seller."}
                   </p>
                 </td>
               </tr>
@@ -137,17 +143,20 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
                 const badge = getStatusBadge(item.status);
                 const waDigits = item.customerWhatsapp.replace(/\D/g, "");
                 const waUrl = `https://wa.me/${waDigits.startsWith("0") ? "62" + waDigits.slice(1) : waDigits}`;
-                const isTargetPending = isPending && actionTargetId === item.id;
 
                 return (
                   <tr key={item.id} className="hover:bg-stone-50/60 transition-colors">
                     <td className="py-3 px-3">
-                      <strong className="block font-medium text-[#2C221E]">{item.sellerName}</strong>
+                      <strong className="block font-medium text-[#2C221E]">
+                        {item.sellerName}
+                      </strong>
                     </td>
 
                     <td className="py-3 px-3">
                       <div>
-                        <strong className="block font-medium text-stone-900">{item.customerName}</strong>
+                        <strong className="block font-medium text-stone-900">
+                          {item.customerName}
+                        </strong>
                         {item.groomBrideNames && (
                           <div className="text-[11px] font-medium text-[#84633F]">
                             💍 {item.groomBrideNames}
@@ -179,21 +188,15 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
 
                     <td className="py-3 px-3">
                       <div className="flex flex-col gap-1.5">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.className}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.className}`}
+                        >
                           {badge.label}
                         </span>
-                        <select
-                          value={item.status}
-                          disabled={isTargetPending}
-                          onChange={(e) => handleStatusChange(item.id, e.target.value as CustomerOrderStatus)}
-                          className="rounded-md border border-stone-200 bg-[#FAF8F5] px-2 py-1 text-[11px] text-stone-700 shadow-2xs hover:bg-white"
-                        >
-                          <option value="new">Ubah: Baru</option>
-                          <option value="in_review">Ubah: Sedang Ditinjau</option>
-                          <option value="in_progress">Ubah: Sedang Dikerjakan</option>
-                          <option value="completed">Ubah: Selesai</option>
-                          <option value="cancelled">Ubah: Dibatalkan</option>
-                        </select>
+                        <span className="text-[10px] text-stone-500">
+                          Produksi: {item.productionStatus.replaceAll("_", " ")} · Pembayaran:{" "}
+                          {item.paymentStatus}
+                        </span>
                       </div>
                     </td>
 
@@ -206,24 +209,12 @@ export function AdminOrdersTable({ orders, onUpdateStatus }: AdminOrdersTablePro
                     </td>
 
                     <td className="py-3 px-3 text-right">
-                      {item.invitationSlug ? (
-                        <a
-                          href={`/i/${item.invitationSlug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#84633F] px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#715332]"
-                        >
-                          Lihat Web Undangan ↗
-                        </a>
-                      ) : (
-                        <a
-                          href="/dashboard/invitations"
-                          className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-2xs hover:bg-stone-50"
-                          title="Buat dan edit undangan untuk pesanan ini"
-                        >
-                          Olah Data Undangan
-                        </a>
-                      )}
+                      <Link
+                        href={`/dashboard/admin/orders/${item.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg bg-[#84633F] px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#715332]"
+                      >
+                        Buka Detail Order
+                      </Link>
                     </td>
                   </tr>
                 );

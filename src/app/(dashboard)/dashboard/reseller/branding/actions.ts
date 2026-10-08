@@ -2,20 +2,47 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { updateAgencyBranding } from "@/features/reseller/api";
+import { updateAgencyBranding, verifyOwnCustomDomain } from "@/features/reseller/api";
 import type { ActionState } from "@/features/reseller/types";
 
 const brandingSchema = z.object({
   agencyName: z.string().trim().min(2, "Nama toko minimal 2 karakter"),
   whatsappContact: z.string().trim().min(8, "Nomor WhatsApp minimal 8 digit"),
   logoUrl: z.string().trim().optional(),
-  brandColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Format warna heksadesimal tidak valid").optional(),
+  brandColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Format warna heksadesimal tidak valid")
+    .optional(),
   customDomain: z.string().trim().optional(),
 });
 
 function field(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
+}
+
+export async function verifyDomainAction(
+  _prev: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  void _prev;
+  void _formData;
+  try {
+    const result = await verifyOwnCustomDomain();
+    revalidatePath("/dashboard/reseller/branding");
+    return result.domainStatus === "verified" || result.domainStatus === "active"
+      ? {
+          ok: true,
+          message:
+            result.domainStatus === "active"
+              ? "DNS dan TLS domain aktif."
+              : "DNS terverifikasi. Aktivasi TLS sedang menunggu tim platform.",
+        }
+      : { error: "TXT verifikasi belum ditemukan. Propagasi DNS dapat memerlukan waktu." };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Gagal memeriksa domain." };
+  }
 }
 
 export async function updateBrandingAction(

@@ -11,6 +11,7 @@ import {
 } from "@/features/templates/api";
 import type { SaveResult } from "@/features/editor/core/autosave";
 import { ForbiddenError } from "@/lib/auth/errors";
+import { requireOwner } from "@/lib/auth/server";
 import { DocumentValidationError } from "@/lib/schema";
 
 const idSchema = z.uuid();
@@ -25,6 +26,7 @@ export async function saveDraftAction(
   expectedRevision: number,
   document: unknown,
 ): Promise<SaveResult> {
+  await requireOwner();
   const id = idSchema.safeParse(templateId);
   const revision = revisionSchema.safeParse(expectedRevision);
   if (!id.success || !revision.success) {
@@ -61,6 +63,7 @@ export async function saveDraftAction(
 
 /** Used by "overwrite with my version" after a conflict: returns the server's current revision. */
 export async function currentRevisionAction(templateId: string): Promise<number | null> {
+  await requireOwner();
   const id = idSchema.safeParse(templateId);
   if (!id.success) return null;
   try {

@@ -1,4 +1,4 @@
-import type { CustomerOrderStatus } from "@/lib/schema/domain";
+import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 import type { ResellerProfile, User } from "@/lib/db/schema";
 
 export interface AdminResellerItem {
@@ -23,6 +23,10 @@ export interface AdminOrderItem {
   notes?: string | null;
   adminNotes?: string | null;
   status: CustomerOrderStatus;
+  productionStatus: ProductionStatus;
+  paymentStatus: PaymentStatus;
+  assignedTo?: string | null;
+  dueAt?: Date | null;
   createdAt: Date;
 }
 

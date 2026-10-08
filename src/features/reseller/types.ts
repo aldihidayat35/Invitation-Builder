@@ -1,4 +1,4 @@
-import type { CustomerOrderStatus } from "@/lib/schema/domain";
+import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 
 export interface ResellerOverviewStats {
   totalOrders: number;
@@ -9,6 +9,11 @@ export interface ResellerOverviewStats {
   agencyName: string;
   slug: string;
   customDomain?: string | null;
+  domainStatus: string;
+  domainVerificationToken?: string | null;
+  domainVerifiedAt?: Date | null;
+  domainLastCheckedAt?: Date | null;
+  tlsStatus: string;
 }
 
 export interface ResellerOrderItem {
@@ -22,6 +27,8 @@ export interface ResellerOrderItem {
   templateTitle?: string | null;
   invitationSlug?: string | null;
   status: CustomerOrderStatus;
+  productionStatus: ProductionStatus;
+  paymentStatus: PaymentStatus;
   notes?: string | null;
   adminNotes?: string | null;
   createdAt: Date;

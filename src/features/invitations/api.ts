@@ -12,6 +12,7 @@ import type { Database } from "@/lib/db/types";
 import * as service from "./service";
 import { importGuests } from "./guest-import";
 import type { PreviewGuestSelection } from "./service";
+import { assertApprovedForPublish, markOrderPublished } from "@/features/orders/service";
 
 async function context(): Promise<{ db: Database; actor: Actor }> {
   const user = await requireUser();
@@ -111,7 +112,10 @@ export async function preview(invitationId: string, guest?: PreviewGuestSelectio
 
 export async function publish(invitationId: string) {
   const { db, actor } = await context();
-  return service.publishInvitation(db, actor, invitationId);
+  const order = await assertApprovedForPublish(db, actor, invitationId);
+  const snapshot = await service.publishInvitation(db, actor, invitationId);
+  if (order) await markOrderPublished(db, actor, order);
+  return snapshot;
 }
 
 export async function rollback(invitationId: string, revisionNo: number) {

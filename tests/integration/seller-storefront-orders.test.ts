@@ -29,6 +29,11 @@ import {
   templatePermissions,
 } from "@/features/templates/service";
 import { ForbiddenError } from "@/lib/auth/errors";
+import {
+  activateResellerDomainTls,
+  DOMAIN_TXT_PREFIX,
+  verifyResellerDomain,
+} from "@/features/reseller/domain-service";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 const db = () => conn.db;
@@ -57,7 +62,28 @@ describe("Seller Storefront, Order Intake & Admin Authority Lock", () => {
     expect(bySlug).toBeDefined();
     expect(bySlug?.agencyName).toBe("Berkah Wedding Store");
 
-    // Lookup by custom domain
+    // Domain is intentionally unavailable until ownership and TLS are verified.
+    expect(
+      await findResellerProfileByCustomDomain(db(), "undangan.berkahwedding.com"),
+    ).toBeUndefined();
+    const verified = await verifyResellerDomain(
+      db(),
+      { userId: reseller.user.id, systemRole: "reseller" },
+      reseller.profile.id,
+      {
+        resolveTxt: async () => [
+          [`${DOMAIN_TXT_PREFIX}${reseller.profile.domainVerificationToken}`],
+        ],
+      },
+    );
+    expect(verified.domainStatus).toBe("verified");
+    await activateResellerDomainTls(
+      db(),
+      { userId: crypto.randomUUID(), systemRole: "owner" },
+      reseller.profile.id,
+    );
+
+    // Lookup by custom domain after controlled activation.
     const byDomain = await findResellerProfileByCustomDomain(db(), "undangan.berkahwedding.com");
     expect(byDomain).toBeDefined();
     expect(byDomain?.id).toBe(reseller.profile.id);

@@ -18,6 +18,11 @@ import {
 } from "@/lib/db/repositories/orders";
 import { listUsersByReseller } from "@/lib/db/repositories/users";
 import type { ResellerClientItem, ResellerOrderItem, ResellerOverviewStats } from "./types";
+import {
+  newDomainVerificationToken,
+  normalizeCustomDomain,
+  verifyResellerDomain,
+} from "./domain-service";
 
 /** Fetches dashboard summary statistics for the authenticated reseller. */
 export async function getResellerOverview(): Promise<ResellerOverviewStats> {
@@ -38,6 +43,11 @@ export async function getResellerOverview(): Promise<ResellerOverviewStats> {
     agencyName: profile.agencyName,
     slug: profile.slug,
     customDomain: profile.customDomain,
+    domainStatus: profile.domainStatus,
+    domainVerificationToken: profile.domainVerificationToken,
+    domainVerifiedAt: profile.domainVerifiedAt,
+    domainLastCheckedAt: profile.domainLastCheckedAt,
+    tlsStatus: profile.tlsStatus,
   };
 }
 
@@ -62,7 +72,9 @@ export async function getResellerOrders(limit: number = 100): Promise<ResellerOr
     groomBrideNames: o.groomBrideNames,
     eventDate: o.eventDate,
     eventLocation: o.eventLocation,
-    status: o.status,
+    status: o.orderStatus,
+    productionStatus: o.productionStatus,
+    paymentStatus: o.paymentStatus,
     notes: o.notes,
     adminNotes: o.adminNotes,
     createdAt: o.createdAt,
@@ -134,6 +146,12 @@ export async function getResellerBrandingProfile() {
     logoUrl: profile.logoUrl,
     brandColor: profile.brandColor,
     customDomain: profile.customDomain,
+    domainStatus: profile.domainStatus,
+    domainVerificationToken: profile.domainVerificationToken,
+    domainVerifiedAt: profile.domainVerifiedAt,
+    domainLastCheckedAt: profile.domainLastCheckedAt,
+    tlsStatus: profile.tlsStatus,
+    tlsActivatedAt: profile.tlsActivatedAt,
   };
 }
 
@@ -142,7 +160,20 @@ export async function updateAgencyBranding(input: UpdateResellerBrandingInput) {
   const { profile, user } = await requireReseller();
   const db = await getDb();
 
-  const updated = await updateResellerBranding(db, profile.id, input);
+  const normalizedDomain = input.customDomain ? normalizeCustomDomain(input.customDomain) : null;
+  const domainChanged = normalizedDomain !== profile.customDomain;
+  const updated = await updateResellerBranding(db, profile.id, {
+    ...input,
+    customDomain: normalizedDomain,
+    ...(domainChanged && {
+      domainStatus: normalizedDomain ? "pending" : "unconfigured",
+      domainVerificationToken: normalizedDomain ? newDomainVerificationToken() : null,
+      domainVerifiedAt: null,
+      domainLastCheckedAt: null,
+      tlsStatus: normalizedDomain ? "pending" : "unconfigured",
+      tlsActivatedAt: null,
+    }),
+  });
 
   await insertAuditLog(db, {
     workspaceId: null,
@@ -153,6 +184,25 @@ export async function updateAgencyBranding(input: UpdateResellerBrandingInput) {
     metadata: { type: "branding_update", agencyName: input.agencyName },
   });
 
+  return updated;
+}
+
+export async function verifyOwnCustomDomain() {
+  const { profile, user } = await requireReseller();
+  const db = await getDb();
+  const updated = await verifyResellerDomain(
+    db,
+    { userId: user.id, systemRole: user.systemRole },
+    profile.id,
+  );
+  await insertAuditLog(db, {
+    workspaceId: null,
+    actorId: user.id,
+    action: "reseller.update",
+    entityType: "reseller_domain",
+    entityId: profile.id,
+    metadata: { type: "domain_verification", status: updated.domainStatus },
+  });
   return updated;
 }
 

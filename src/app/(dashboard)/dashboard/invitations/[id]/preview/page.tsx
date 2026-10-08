@@ -11,6 +11,8 @@ import {
 import styles from "@/features/invitations/components/invitations.module.css";
 import { DocumentRenderer } from "@/features/renderer";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { getInvitationReview } from "@/features/orders/api";
+import { decideInvitationReviewAction } from "../../actions";
 
 export const metadata: Metadata = { title: "Preview undangan" };
 
@@ -45,7 +47,7 @@ export default async function InvitationPreviewPage({
       throw error;
     }
   }
-  const guests = await listGuests(id);
+  const [guests, review] = await Promise.all([listGuests(id), getInvitationReview(id)]);
   const current =
     selection.kind === "guest" && model.guest.name !== undefined
       ? selection.guestId
@@ -106,6 +108,61 @@ export default async function InvitationPreviewPage({
           Mode sebelum publish.
         </p>
       )}
+
+      {review?.isClientReviewer ? (
+        <section
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-5"
+          aria-labelledby="client-review-title"
+        >
+          <h2 id="client-review-title" className="text-base font-bold text-stone-900">
+            Persetujuan klien
+          </h2>
+          {review.productionStatus === "client_review" ? (
+            <div className="mt-3 grid gap-4">
+              <p className="text-sm leading-6 text-stone-700">
+                Periksa nama, tanggal, lokasi, tautan, dan tampilan undangan. Setujui jika sudah
+                final, atau tuliskan revisi yang spesifik agar tim produksi dapat
+                menindaklanjutinya.
+              </p>
+              <form action={decideInvitationReviewAction} className="grid gap-3">
+                <input type="hidden" name="invitationId" value={id} />
+                <label className="grid gap-1.5 text-sm font-semibold text-stone-800">
+                  Catatan revisi
+                  <textarea
+                    name="note"
+                    rows={3}
+                    className="rounded-xl border border-amber-200 bg-white px-3 py-2 font-normal"
+                    placeholder="Wajib diisi bila meminta revisi"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    name="decision"
+                    value="approve"
+                    className="min-h-11 rounded-xl bg-emerald-700 px-5 text-sm font-bold text-white"
+                  >
+                    Setujui Undangan
+                  </button>
+                  <button
+                    type="submit"
+                    name="decision"
+                    value="request_revision"
+                    className="min-h-11 rounded-xl border border-rose-300 bg-white px-5 text-sm font-bold text-rose-700"
+                  >
+                    Minta Revisi
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-stone-700">
+              Status review saat ini:{" "}
+              <strong>{review.productionStatus.replaceAll("_", " ")}</strong>.
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <div className={styles.previewFrame} data-testid="preview-frame">
         <DocumentRenderer document={model.resolved} runtimeMode="preview" />

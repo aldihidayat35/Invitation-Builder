@@ -5,7 +5,14 @@ import { createMigratedDb } from "../helpers/db";
 import { fullDocument } from "../helpers/documents";
 import { migrateDocument } from "@/lib/schema";
 import { seedDev } from "@/lib/db/seed";
-import { publishedSnapshots, templateVersions, auditLogs, invitations, users } from "@/lib/db/schema";
+import {
+  publishedSnapshots,
+  templateVersions,
+  auditLogs,
+  invitations,
+  securityEvents,
+  users,
+} from "@/lib/db/schema";
 
 type Conn = Awaited<ReturnType<typeof createMigratedDb>>;
 let conn: Conn;
@@ -24,6 +31,10 @@ const EXPECTED_TABLES = [
   "workspaces",
   "reseller_profiles",
   "customer_orders",
+  "order_workflow_events",
+  "security_events",
+  "privacy_requests",
+  "recovery_drills",
 ];
 
 beforeAll(async () => {
@@ -34,7 +45,7 @@ afterAll(async () => {
 });
 
 describe("migration from an empty database (acceptance gate)", () => {
-  it("creates all 11 tables", async () => {
+  it("creates every application table", async () => {
     const res = await conn.client.query<{ table_name: string }>(
       `select table_name from information_schema.tables where table_schema='public' order by 1`,
     );
@@ -53,7 +64,9 @@ describe("migration from an empty database (acceptance gate)", () => {
     );
     expect(triggers.rows.map((r) => r.tgname).sort()).toEqual([
       "audit_logs_immutable",
+      "order_workflow_events_immutable",
       "published_snapshots_immutable",
+      "security_events_immutable",
       "template_versions_immutable",
     ]);
   });
@@ -92,6 +105,11 @@ describe("immutability + round trip (NFR-REL-001)", () => {
       .values({ workspaceId: seed.workspaceId, action: "x", entityType: "template" })
       .returning();
     if (!log) throw new Error("no log");
+    const [securityEvent] = await db
+      .insert(securityEvents)
+      .values({ eventType: "auth.login_failed", subjectHash: "hash" })
+      .returning();
+    if (!securityEvent) throw new Error("no security event");
 
     expect(migrateDocument(snap.document)).toEqual(migrateDocument(doc));
     expect(migrateDocument(version.document)).toEqual(migrateDocument(doc));
@@ -112,6 +130,14 @@ describe("immutability + round trip (NFR-REL-001)", () => {
       db.execute(sql`update audit_logs set action = 'y' where id = ${log.id}`),
     ).rejects.toThrow();
     await expect(db.execute(sql`delete from audit_logs where id = ${log.id}`)).rejects.toThrow();
+    await expect(
+      db.execute(
+        sql`update security_events set severity = 'critical' where id = ${securityEvent.id}`,
+      ),
+    ).rejects.toThrow();
+    await expect(
+      db.execute(sql`delete from security_events where id = ${securityEvent.id}`),
+    ).rejects.toThrow();
   });
 
   it("enforces check constraints (slug format, unique lower(email))", async () => {
@@ -121,7 +147,9 @@ describe("immutability + round trip (NFR-REL-001)", () => {
     ).rejects.toThrow();
     const [seededUser] = await db.select({ email: users.email }).from(users).limit(1);
     await expect(
-      db.execute(sql`insert into users (email, name) values (${seededUser!.email.toUpperCase()}, 'dup')`),
+      db.execute(
+        sql`insert into users (email, name) values (${seededUser!.email.toUpperCase()}, 'dup')`,
+      ),
     ).rejects.toThrow();
   });
 });

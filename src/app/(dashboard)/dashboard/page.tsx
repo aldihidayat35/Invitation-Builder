@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { and, gte, lte, sql, eq } from "drizzle-orm";
 import { listAll } from "@/features/invitations/api";
 import type { InvitationSummary } from "@/features/invitations/types";
@@ -8,12 +9,13 @@ import type { TemplateSummary } from "@/features/templates/types";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import { getDb } from "@/lib/db/client";
 import { invitations, templates as templatesTable, rsvps } from "@/lib/db/schema";
-import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { ClientDashboard, DashboardHeroHeader } from "@/features/dashboard-layout";
 import { IconArrowRight } from "./nav-icons";
 
 export const metadata: Metadata = {
   title: "Studio Dashboard Workspace",
-  description: "Studio dashboard workspace: ringkasan template, undangan digital, dan status publikasi.",
+  description:
+    "Studio dashboard workspace: ringkasan template, undangan digital, dan status publikasi.",
 };
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
@@ -73,18 +75,25 @@ const byUpdated = <T extends { updatedAt: Date }>(a: T, b: T) =>
 
 export default async function DashboardPage() {
   const { user, active } = await getWorkspaceContext();
+
+  if (user.systemRole === "reseller") redirect("/dashboard/reseller");
+  if (user.systemRole === "client") {
+    const clientInvitations = active ? await listAll(active.workspace.id) : [];
+    return (
+      <ClientDashboard
+        userName={user.name}
+        workspaceName={active?.workspace.name}
+        invitations={clientInvitations}
+      />
+    );
+  }
+
   const db = await getDb();
   const currentYear = new Date().getFullYear();
   const startOfYear = new Date(currentYear, 0, 1);
   const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
-  const [
-    templates,
-    invitationsData,
-    invitationMonthRows,
-    templateMonthRows,
-    rsvpStatsRows,
-  ] = active
+  const [templates, invitationsData, invitationMonthRows, templateMonthRows, rsvpStatsRows] = active
     ? await Promise.all([
         listLibrary(active.workspace.id),
         listAll(active.workspace.id),
@@ -126,13 +135,7 @@ export default async function DashboardPage() {
           .innerJoin(invitations, eq(invitations.id, rsvps.invitationId))
           .where(eq(invitations.workspaceId, active.workspace.id)),
       ])
-    : [
-        [],
-        [],
-        [],
-        [],
-        [{ totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 }],
-      ];
+    : [[], [], [], [], [{ totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 }]];
 
   const rsvpStats = rsvpStatsRows[0] ?? { totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 };
 
@@ -148,9 +151,12 @@ export default async function DashboardPage() {
   const draftInvitations = invitationsData.filter((i) => i.status === "draft").length;
   const archivedInvitations = invitationsData.filter((i) => i.status === "archived").length;
 
-  const publishedPercent = totalInvitations > 0 ? Math.round((publishedInvitations / totalInvitations) * 100) : 0;
-  const draftPercent = totalInvitations > 0 ? Math.round((draftInvitations / totalInvitations) * 100) : 0;
-  const archivedPercent = totalInvitations > 0 ? Math.round((archivedInvitations / totalInvitations) * 100) : 0;
+  const publishedPercent =
+    totalInvitations > 0 ? Math.round((publishedInvitations / totalInvitations) * 100) : 0;
+  const draftPercent =
+    totalInvitations > 0 ? Math.round((draftInvitations / totalInvitations) * 100) : 0;
+  const archivedPercent =
+    totalInvitations > 0 ? Math.round((archivedInvitations / totalInvitations) * 100) : 0;
 
   const recentTemplates = [...templates].sort(byUpdated).slice(0, 5);
   const recentInvitations = [...invitationsData].sort(byUpdated).slice(0, 5);
@@ -162,7 +168,20 @@ export default async function DashboardPage() {
   const archLen = totalInvitations > 0 ? (archivedInvitations / totalInvitations) * C : 0;
 
   // Monthly labels Jan - Des
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+  const monthLabels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Ags",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Des",
+  ];
   const currentMonthIdx = new Date().getMonth(); // 0-indexed
 
   const invCounts = new Map<number, number>();
@@ -213,7 +232,9 @@ export default async function DashboardPage() {
         title="Dashboard Workspace"
         description={
           <>
-            Selamat datang, <strong className="text-[#D4AF37] font-bold">{user.name}</strong>. Kelola desain template, terbitkan website undangan pernikahan digital eksklusif, dan pantau respons tamu (RSVP) secara presisi.
+            Selamat datang, <strong className="text-[#D4AF37] font-bold">{user.name}</strong>.
+            Kelola desain template, terbitkan website undangan pernikahan digital eksklusif, dan
+            pantau respons tamu (RSVP) secara presisi.
           </>
         }
         actions={
@@ -247,7 +268,8 @@ export default async function DashboardPage() {
           data-testid="no-workspace"
           className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-medium text-amber-900 shadow-xs"
         >
-          Akun Anda belum tergabung di workspace mana pun. Hubungi admin untuk diundang ke workspace tim.
+          Akun Anda belum tergabung di workspace mana pun. Hubungi admin untuk diundang ke workspace
+          tim.
         </div>
       )}
 
@@ -261,7 +283,12 @@ export default async function DashboardPage() {
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-500">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
               </svg>
             </div>
           </div>
@@ -275,7 +302,9 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
             <span className="text-stone-400">Dalam pustaka aktif</span>
-            <span className="font-semibold text-stone-600">{draftTemplates} draft · {publishedTemplates} terbit</span>
+            <span className="font-semibold text-stone-600">
+              {draftTemplates} draft · {publishedTemplates} terbit
+            </span>
           </div>
         </div>
 
@@ -287,7 +316,12 @@ export default async function DashboardPage() {
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-500">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
           </div>
@@ -301,7 +335,9 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
             <span className="text-stone-400">Rasio siap pakai</span>
-            <span className="font-semibold text-emerald-600">{templateReadyPercent}% terverifikasi</span>
+            <span className="font-semibold text-emerald-600">
+              {templateReadyPercent}% terverifikasi
+            </span>
           </div>
         </div>
 
@@ -313,7 +349,12 @@ export default async function DashboardPage() {
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-500">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
             </div>
           </div>
@@ -327,7 +368,9 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-[11px]">
             <span className="text-stone-400">Status pengerjaan</span>
-            <span className="font-semibold text-stone-600">{publishedInvitations} live · {draftInvitations} draft</span>
+            <span className="font-semibold text-stone-600">
+              {publishedInvitations} live · {draftInvitations} draft
+            </span>
           </div>
         </div>
 
@@ -339,7 +382,12 @@ export default async function DashboardPage() {
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-100 text-stone-500">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
               </svg>
             </div>
           </div>
@@ -370,7 +418,9 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-stone-900">Distribusi Status Undangan</h3>
-                <p className="text-xs text-stone-400 mt-0.5">Perbandingan status undangan dalam workspace</p>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  Perbandingan status undangan dalam workspace
+                </p>
               </div>
               <span className="rounded-md bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
                 {totalInvitations} Total
@@ -382,14 +432,7 @@ export default async function DashboardPage() {
               <div className="relative flex h-44 w-44 items-center justify-center">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
                   {/* Background Track */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#E7E5E4"
-                    strokeWidth="14"
-                  />
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#E7E5E4" strokeWidth="14" />
                   {/* Published Ring (Emerald Green) */}
                   {pubLen > 0 && (
                     <circle
@@ -456,21 +499,27 @@ export default async function DashboardPage() {
                 <span className="h-2 w-2 rounded-full bg-[#15803D]" />
                 <span className="text-stone-700 font-medium">Dipublish</span>
               </div>
-              <span className="font-semibold text-[#2C221E]">{publishedInvitations} ({publishedPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">
+                {publishedInvitations} ({publishedPercent}%)
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#D4AF37]" />
                 <span className="text-stone-700 font-medium">Draft</span>
               </div>
-              <span className="font-semibold text-[#2C221E]">{draftInvitations} ({draftPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">
+                {draftInvitations} ({draftPercent}%)
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-stone-400" />
                 <span className="text-stone-700 font-medium">Diarsipkan</span>
               </div>
-              <span className="font-semibold text-[#2C221E]">{archivedInvitations} ({archivedPercent}%)</span>
+              <span className="font-semibold text-[#2C221E]">
+                {archivedInvitations} ({archivedPercent}%)
+              </span>
             </div>
           </div>
         </div>
@@ -539,13 +588,18 @@ export default async function DashboardPage() {
                     </div>
                     <span
                       className={`mt-2 text-[10.5px] ${
-                        isPeak || isCurrentMonth ? "font-bold text-[#2C221E]" : "text-stone-400 font-medium"
+                        isPeak || isCurrentMonth
+                          ? "font-bold text-[#2C221E]"
+                          : "text-stone-400 font-medium"
                       }`}
                     >
                       {item.label}
                     </span>
                     {isCurrentMonth && (
-                      <span className="h-1 w-1 rounded-full bg-[#D4AF37] mt-0.5" title="Bulan Berjalan" />
+                      <span
+                        className="h-1 w-1 rounded-full bg-[#D4AF37] mt-0.5"
+                        title="Bulan Berjalan"
+                      />
                     )}
                   </div>
                 );

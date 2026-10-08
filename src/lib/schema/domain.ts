@@ -23,7 +23,31 @@ export const CUSTOMER_ORDER_STATUSES = [
   "completed",
   "cancelled",
 ] as const;
-export type CustomerOrderStatus = (typeof CUSTOMER_ORDER_STATUSES)[number];
+export type LegacyCustomerOrderStatus = (typeof CUSTOMER_ORDER_STATUSES)[number];
+
+/** Commercial lifecycle; production and payment progress are stored independently. */
+export const ORDER_STATUSES = [
+  "new",
+  "qualified",
+  "accepted",
+  "rejected",
+  "cancelled",
+  "completed",
+] as const;
+export type CustomerOrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const PRODUCTION_STATUSES = [
+  "awaiting_client",
+  "in_production",
+  "client_review",
+  "revision_requested",
+  "approved",
+  "published",
+] as const;
+export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
+
+export const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "refunded"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 /** Template: draft → published/versioned → archived (Lampiran B). */
 export const TEMPLATE_STATUSES = ["draft", "published", "archived"] as const;
@@ -71,6 +95,16 @@ export const AUDIT_ACTIONS = [
   "order.create",
   "order.update_status",
   "order.assign_invitation",
+  "order.transition",
+  "order.configure_production",
+  "order.assign_production",
+  "order.client_approve",
+  "order.revision_requested",
+  "order.payment_update",
+  "privacy.request",
+  "privacy.resolve",
+  "domain.tls_activate",
+  "operations.recovery_drill",
   "user.create",
   "user.update",
   "user.delete",

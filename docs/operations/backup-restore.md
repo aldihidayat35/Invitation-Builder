@@ -18,6 +18,17 @@ Backup logis manual (sebelum migrasi production):
 pg_dump --format=custom --no-owner "$DATABASE_URL" --file "undangan-$(date +%Y%m%d-%H%M).dump"
 ```
 
+Implementasi aplikasi menyediakan perintah aman berikut:
+
+```powershell
+npm.cmd run backup:db
+npm.cmd run backup:verify -- C:\backup\undangan-YYYY-MM-DD.dump
+```
+
+`backup:db` hanya menerima PostgreSQL, menjalankan `pg_dump` tanpa shell interpolation, lalu membuat manifest SHA-256. `backup:verify` memeriksa checksum dan keterbacaan arsip melalui `pg_restore --list`; perintah ini tidak menimpa database.
+
+Setiap backup/restore/failover drill wajib dicatat pada halaman `/dashboard/admin/operations`, termasuk environment, referensi backup, RPO/RTO aktual, hasil, dan masalah yang ditemukan.
+
 Restore ke instance **baru** (jangan menimpa production langsung):
 
 ```bash

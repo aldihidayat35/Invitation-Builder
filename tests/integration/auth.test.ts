@@ -15,7 +15,7 @@ import {
   validateSession,
 } from "@/lib/auth/sessions";
 import { listAuditLogs } from "@/lib/db/repositories/audit";
-import { auditLogs, sessions, users } from "@/lib/db/schema";
+import { auditLogs, securityEvents, sessions, users } from "@/lib/db/schema";
 
 type Conn = Awaited<ReturnType<typeof createMigratedDb>>;
 let conn: Conn;
@@ -143,8 +143,9 @@ describe("login failure handling", () => {
     ).resolves.toBeDefined();
   });
 
-  it("does not create sessions or login audit rows for failed logins", async () => {
+  it("does not create sessions/audit rows but records a pseudonymous security event", async () => {
     const user = await makeUser(conn.db, "heidi");
+    const securityBefore = await conn.db.select().from(securityEvents);
     await login(
       conn.db,
       { email: user.email, password: "wrong-password!!" },
@@ -155,5 +156,14 @@ describe("login failure handling", () => {
       [],
     );
     expect(await listAuditLogs(conn.db, "00000000-0000-4000-8000-000000000000")).toEqual([]);
+    const securityAfter = await conn.db.select().from(securityEvents);
+    expect(securityAfter).toHaveLength(securityBefore.length + 1);
+    const previousIds = new Set(securityBefore.map((event) => event.id));
+    const event = securityAfter.find((candidate) => !previousIds.has(candidate.id));
+    expect(event).toMatchObject({
+      eventType: "auth.login_failed",
+      severity: "warning",
+    });
+    expect(JSON.stringify(event)).not.toContain(user.email);
   });
 });

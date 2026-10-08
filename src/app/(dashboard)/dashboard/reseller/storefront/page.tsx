@@ -3,7 +3,7 @@ import { getResellerBrandingProfile } from "@/features/reseller/api";
 import { ResellerBrandingForm } from "@/features/reseller/components";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireReseller } from "@/lib/auth/server";
-import { updateBrandingAction } from "../branding/actions";
+import { updateBrandingAction, verifyDomainAction } from "../branding/actions";
 
 export const metadata: Metadata = {
   title: "Website & Domain Khusus Seller — Portal Seller",
@@ -41,8 +41,13 @@ export default async function ResellerStorefrontPage() {
           logoUrl: profile.logoUrl,
           brandColor: profile.brandColor,
           customDomain: profile.customDomain,
+          domainStatus: profile.domainStatus,
+          domainVerificationToken: profile.domainVerificationToken,
+          domainLastCheckedAt: profile.domainLastCheckedAt,
+          tlsStatus: profile.tlsStatus,
         }}
         action={updateBrandingAction}
+        verifyAction={verifyDomainAction}
       />
     </div>
   );

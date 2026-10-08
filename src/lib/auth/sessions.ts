@@ -11,6 +11,7 @@ import {
 } from "../db/repositories/sessions";
 import { findUserByEmail } from "../db/repositories/users";
 import { insertAuditLog } from "../db/repositories/audit";
+import { insertSecurityEvent } from "../db/repositories/operations";
 import type { User } from "../db/schema";
 import type { Database } from "../db/types";
 import { AuthenticationError, RateLimitError } from "./errors";
@@ -19,10 +20,7 @@ import { LoginThrottle } from "./throttle";
 
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type SessionUser = Pick<
-  User,
-  "id" | "email" | "name" | "systemRole" | "resellerId"
->;
+export type SessionUser = Pick<User, "id" | "email" | "name" | "systemRole" | "resellerId">;
 
 export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -76,6 +74,30 @@ export interface LoginInput {
   clientKey?: string;
 }
 
+function securityHash(value: string): string {
+  return createHash("sha256")
+    .update(`${process.env.SECURITY_EVENT_HASH_SALT ?? "undangan-security-v1"}:${value}`)
+    .digest("hex");
+}
+
+async function recordLoginSecurityEvent(
+  db: Database,
+  input: LoginInput,
+  eventType: "auth.login_failed" | "auth.rate_limited",
+): Promise<void> {
+  try {
+    await insertSecurityEvent(db, {
+      eventType,
+      severity: eventType === "auth.rate_limited" ? "critical" : "warning",
+      subjectHash: securityHash(input.email.trim().toLowerCase() || "empty"),
+      clientHash: securityHash(input.clientKey ?? "unknown"),
+    });
+  } catch (error) {
+    // Authentication outcome must not depend on the monitoring sink.
+    console.error("security event persistence failed", error);
+  }
+}
+
 /**
  * Verifies credentials and opens a session. Same error for unknown email,
  * wrong password and disabled account (no account enumeration).
@@ -88,10 +110,14 @@ export async function login(
   const email = input.email.trim().toLowerCase();
   const key = `${email}|${input.clientKey ?? "-"}`;
   const wait = throttle.retryAfterSeconds(key);
-  if (wait > 0) throw new RateLimitError(wait);
+  if (wait > 0) {
+    await recordLoginSecurityEvent(db, input, "auth.rate_limited");
+    throw new RateLimitError(wait);
+  }
 
   if (!email || !input.password || input.password.length > MAX_PASSWORD_LENGTH) {
     throttle.recordFailure(key);
+    await recordLoginSecurityEvent(db, input, "auth.login_failed");
     throw new AuthenticationError();
   }
 
@@ -101,6 +127,7 @@ export async function login(
 
   if (!user || !user.passwordHash || !passwordOk || user.status !== "active") {
     throttle.recordFailure(key);
+    await recordLoginSecurityEvent(db, input, "auth.login_failed");
     throw new AuthenticationError();
   }
 

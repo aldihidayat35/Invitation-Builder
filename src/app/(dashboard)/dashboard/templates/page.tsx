@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTemplateCategories, listLibrary, permissionsFor } from "@/features/templates/api";
-import { CreateTemplateForm, ImportTemplateDialog, TemplateList } from "@/features/templates/components";
+import {
+  CreateTemplateForm,
+  ImportTemplateDialog,
+  TemplateList,
+} from "@/features/templates/components";
 import styles from "@/features/templates/components/templates.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
-import { getWorkspaceContext } from "@/lib/auth/server";
+import { getWorkspaceContext, requireOwner } from "@/lib/auth/server";
 import {
   archiveTemplateAction,
   createTemplateAction,
@@ -18,6 +22,7 @@ export const metadata: Metadata = { title: "Template" };
 export default async function TemplateLibraryPage({
   searchParams,
 }: PageProps<"/dashboard/templates">) {
+  await requireOwner();
   const params = await searchParams;
   const archivedView = params.view === "archived";
   const { user, active } = await getWorkspaceContext();
@@ -78,7 +83,8 @@ export default async function TemplateLibraryPage({
             <div className={styles.importSideCardHead}>
               <h3 className={styles.importSideCardTitle}>Pindahkan Template</h3>
               <p className={styles.muted}>
-                Punya file template dari server atau aplikasi lain? Impor seluruh konfigurasi, tata letak, dan aset media sekaligus.
+                Punya file template dari server atau aplikasi lain? Impor seluruh konfigurasi, tata
+                letak, dan aset media sekaligus.
               </p>
             </div>
             <ImportTemplateDialog workspaceId={workspaceId} />

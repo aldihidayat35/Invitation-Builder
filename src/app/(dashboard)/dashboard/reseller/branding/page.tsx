@@ -3,7 +3,7 @@ import { getResellerBrandingProfile } from "@/features/reseller/api";
 import { ResellerBrandingForm } from "@/features/reseller/components";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireReseller } from "@/lib/auth/server";
-import { updateBrandingAction } from "./actions";
+import { updateBrandingAction, verifyDomainAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Pengaturan Branding Agensi — Portal Reseller",
@@ -30,8 +30,13 @@ export default async function ResellerBrandingPage() {
           logoUrl: profile.logoUrl,
           brandColor: profile.brandColor,
           customDomain: profile.customDomain,
+          domainStatus: profile.domainStatus,
+          domainVerificationToken: profile.domainVerificationToken,
+          domainLastCheckedAt: profile.domainLastCheckedAt,
+          tlsStatus: profile.tlsStatus,
         }}
         action={updateBrandingAction}
+        verifyAction={verifyDomainAction}
       />
     </div>
   );

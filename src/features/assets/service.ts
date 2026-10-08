@@ -13,6 +13,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { findRole, requireCapability, type Actor } from "@/lib/auth/authorization";
+import { ForbiddenError } from "@/lib/auth/errors";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   deleteAssetRow,
@@ -139,14 +140,16 @@ export async function initUpload(
   }
   const upload = parsed.data;
   if (!isImageMime(upload.mimeType) && !isVideoMime(upload.mimeType)) {
-    throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.");
+    throw new AssetRejectedError(
+      "Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.",
+    );
   }
 
   const limitBytes = getStorageLimitBytes();
   const stats = await getStorageAggregate(db);
   if (stats.totalBytes + upload.bytes > limitBytes) {
     throw new AssetRejectedError(
-      `Penyimpanan penuh. Kapasitas maksimum ${formatBytes(limitBytes)} telah tercapai.`
+      `Penyimpanan penuh. Kapasitas maksimum ${formatBytes(limitBytes)} telah tercapai.`,
     );
   }
 
@@ -348,6 +351,9 @@ export async function getStorageOverview(
 ): Promise<StorageOverview> {
   const isSuperAdmin = actor.systemRole === "owner";
   const targetWsId = workspaceId;
+  if (!targetWsId && !isSuperAdmin) {
+    throw new ForbiddenError("Workspace wajib dipilih.");
+  }
   if (targetWsId && !isSuperAdmin) {
     await requireCapability(db, actor, targetWsId, "asset:read");
   }
@@ -390,6 +396,9 @@ export async function listAllStorageAssets(
 ): Promise<{ items: StorageAssetItem[]; total: number }> {
   const isSuperAdmin = actor.systemRole === "owner";
   const wsId = options.workspaceId;
+  if (!wsId && !isSuperAdmin) {
+    throw new ForbiddenError("Workspace wajib dipilih.");
+  }
   if (wsId && !isSuperAdmin) {
     await requireCapability(db, actor, wsId, "asset:read");
   }

@@ -208,6 +208,18 @@ export async function findTemplateVersion(
   return row;
 }
 
+export async function findTemplateVersionById(
+  db: Database,
+  versionId: string,
+): Promise<TemplateVersionRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(templateVersions)
+    .where(eq(templateVersions.id, versionId))
+    .limit(1);
+  return row;
+}
+
 /** Lists active templates available in the public catalog for customer order selection. */
 export async function listPublicTemplates(db: Database): Promise<TemplateRow[]> {
   return db

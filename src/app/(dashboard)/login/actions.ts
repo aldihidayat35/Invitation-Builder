@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { AuthenticationError, RateLimitError } from "@/lib/auth/errors";
 import { safeNextPath } from "@/lib/auth/redirect";
@@ -23,7 +24,12 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid." };
 
   try {
-    await signIn(parsed.data.email, parsed.data.password);
+    const requestHeaders = await headers();
+    const clientKey =
+      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      requestHeaders.get("x-real-ip") ||
+      "unknown";
+    await signIn(parsed.data.email, parsed.data.password, clientKey);
   } catch (error) {
     if (error instanceof RateLimitError) {
       return {

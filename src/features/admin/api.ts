@@ -22,6 +22,8 @@ import {
 import { getAppSettings, updateAppSettings } from "@/lib/db/repositories/settings";
 import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
+import { transitionOrder } from "@/features/orders/service";
+import { normalizeCustomDomain } from "@/features/reseller/domain-service";
 import type {
   AdminOrderItem,
   AdminOrderStats,
@@ -121,7 +123,11 @@ export async function getAdminOrders(
     eventLocation: order.eventLocation,
     notes: order.notes,
     adminNotes: order.adminNotes,
-    status: order.status,
+    status: order.orderStatus,
+    productionStatus: order.productionStatus,
+    paymentStatus: order.paymentStatus,
+    assignedTo: order.assignedTo,
+    dueAt: order.dueAt,
     createdAt: order.createdAt,
   }));
 }
@@ -142,7 +148,9 @@ export async function createReseller(input: CreateResellerServiceInput) {
     agencyName: input.agencyName.trim(),
     slug: input.slug.trim().toLowerCase(),
     whatsappContact: input.whatsappContact.trim(),
-    customDomain: input.customDomain?.trim() || null,
+    customDomain: input.customDomain?.trim()
+      ? normalizeCustomDomain(input.customDomain)
+      : null,
     performedBy: actor.id,
   });
 
@@ -181,12 +189,11 @@ export async function toggleResellerStatus(profileId: string, isActive: boolean)
   return result;
 }
 
-/** Updates order status, links created invitation, or saves admin notes. */
+/** Compatibility facade for validated status transitions and internal notes. */
 export async function updateAdminOrderStatus(
   orderId: string,
   input: {
     status?: CustomerOrderStatus;
-    invitationId?: string;
     adminNotes?: string;
   },
 ) {
@@ -196,11 +203,21 @@ export async function updateAdminOrderStatus(
   const current = await findCustomerOrderById(db, orderId);
   if (!current) throw new Error("Pesanan tidak ditemukan");
 
-  const updated = await updateCustomerOrder(db, orderId, {
-    ...(input.status && { status: input.status }),
-    ...(input.invitationId !== undefined && { invitationId: input.invitationId }),
-    ...(input.adminNotes !== undefined && { adminNotes: input.adminNotes }),
-  });
+  let updated = current;
+  if (input.status) {
+    updated = await transitionOrder(
+      db,
+      { userId: actor.id, systemRole: actor.systemRole },
+      orderId,
+      input.status,
+      input.adminNotes,
+    );
+  }
+  if (input.adminNotes !== undefined) {
+    updated = await updateCustomerOrder(db, orderId, {
+      adminNotes: input.adminNotes,
+    });
+  }
 
   await insertAuditLog(db, {
     workspaceId: null,
@@ -209,9 +226,8 @@ export async function updateAdminOrderStatus(
     entityType: "customer_order",
     entityId: orderId,
     metadata: {
-      previousStatus: current.status,
-      newStatus: updated.status,
-      invitationId: input.invitationId,
+      previousStatus: current.orderStatus,
+      newStatus: updated.orderStatus,
     },
   });
 

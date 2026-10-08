@@ -11,6 +11,8 @@ export const SECURITY_HEADERS = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Also served on verified seller domains, so do not claim ownership of their subdomains/preload.
+  { key: "Strict-Transport-Security", value: "max-age=31536000" },
 ] as const;
 
 const nextConfig: NextConfig = {

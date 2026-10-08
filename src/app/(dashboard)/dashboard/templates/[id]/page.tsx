@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TemplateNotFoundError, getTemplateCategories, openTemplate, permissionsFor } from "@/features/templates/api";
+import {
+  TemplateNotFoundError,
+  getTemplateCategories,
+  openTemplate,
+  permissionsFor,
+} from "@/features/templates/api";
 import {
   PublishPanel,
   StatusBadge,
@@ -23,6 +28,7 @@ import {
 } from "@/features/templates/components/template-icons";
 import styles from "@/features/templates/components/templates.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { requireOwner } from "@/lib/auth/server";
 import {
   archiveTemplateAction,
   deleteTemplateAction,
@@ -43,6 +49,7 @@ const dateFormat = new Intl.DateTimeFormat("id-ID", {
 export default async function TemplateDetailPage({
   params,
 }: PageProps<"/dashboard/templates/[id]">) {
+  await requireOwner();
   const { id } = await params;
 
   let template;
@@ -111,7 +118,9 @@ export default async function TemplateDetailPage({
             Studio Editor Undangan
           </h2>
           <p className={styles.heroDesc}>
-            Buka studio editor visual untuk menyusun tata letak undangan secara langsung (WYSIWYG). Anda dapat mengubah teks biasa menjadi variabel dinamis, mengatur foto & video, menambahkan animasi, serta menyesuaikan seluruh elemen undangan.
+            Buka studio editor visual untuk menyusun tata letak undangan secara langsung (WYSIWYG).
+            Anda dapat mengubah teks biasa menjadi variabel dinamis, mengatur foto & video,
+            menambahkan animasi, serta menyesuaikan seluruh elemen undangan.
           </p>
 
           <div className={styles.heroActionGroup}>
@@ -261,9 +270,7 @@ export default async function TemplateDetailPage({
 
       {archived ? (
         <div className={styles.panel} data-testid="archived-note">
-          <p className={styles.muted}>
-            Template ini diarsipkan dan bersifat read-only.
-          </p>
+          <p className={styles.muted}>Template ini diarsipkan dan bersifat read-only.</p>
         </div>
       ) : null}
 
@@ -354,8 +361,17 @@ export default async function TemplateDetailPage({
             </div>
           ) : null}
 
-          <p className={styles.muted} style={{ fontSize: "0.8rem", borderTop: "1px dashed var(--dash-border)", paddingTop: "12px", margin: 0 }}>
-            Draft disimpan sebagai JSON tervalidasi. Seluruh konfigurasi dapat diubah secara visual di Studio Editor.
+          <p
+            className={styles.muted}
+            style={{
+              fontSize: "0.8rem",
+              borderTop: "1px dashed var(--dash-border)",
+              paddingTop: "12px",
+              margin: 0,
+            }}
+          >
+            Draft disimpan sebagai JSON tervalidasi. Seluruh konfigurasi dapat diubah secara visual
+            di Studio Editor.
           </p>
         </section>
 
@@ -408,7 +424,8 @@ export default async function TemplateDetailPage({
         {template.versions.length === 0 ? (
           <div className={styles.emptyVersionBox}>
             <p className={styles.muted} style={{ margin: 0 }}>
-              Belum ada versi yang dipublish. Setelah selesai mendesain di Studio Editor dan menjalankan validasi, gunakan kartu Publikasi di atas untuk merilis versi pertama.
+              Belum ada versi yang dipublish. Setelah selesai mendesain di Studio Editor dan
+              menjalankan validasi, gunakan kartu Publikasi di atas untuk merilis versi pertama.
             </p>
           </div>
         ) : (
@@ -416,21 +433,14 @@ export default async function TemplateDetailPage({
             {template.versions.map((version) => (
               <li key={version.id} className={styles.versionTimelineItem}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span className={styles.versionBadgePrimary}>
-                    v{version.versionNo}
-                  </span>
+                  <span className={styles.versionBadgePrimary}>v{version.versionNo}</span>
                   <span style={{ fontSize: "0.9rem", color: "var(--dash-text)", fontWeight: 500 }}>
                     {version.note ? version.note : "Rilis reguler"}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span className={styles.meta}>
-                    {dateFormat.format(version.createdAt)}
-                  </span>
-                  <span
-                    className={styles.fact}
-                    style={{ padding: "2px 8px", fontSize: "0.72rem" }}
-                  >
+                  <span className={styles.meta}>{dateFormat.format(version.createdAt)}</span>
+                  <span className={styles.fact} style={{ padding: "2px 8px", fontSize: "0.72rem" }}>
                     immutable
                   </span>
                 </div>
@@ -442,4 +452,3 @@ export default async function TemplateDetailPage({
     </main>
   );
 }
-

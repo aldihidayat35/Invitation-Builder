@@ -1,12 +1,12 @@
 /**
- * Relational schema (PRD §15.1, Lampiran B). 11 tables.
+ * Relational schema (PRD §15.1, Lampiran B).
  *
  * Conventions:
  * - uuid PKs, snake_case columns, timestamptz everywhere.
  * - Document-bearing jsonb columns are typed `unknown` so every read MUST go
  *   through `migrateDocument` (NFR-REL-001).
  * - Foreign keys default to RESTRICT: records are archived, not hard-deleted.
- * - template_versions / published_snapshots / audit_logs are immutable; this is
+ * - template_versions / published_snapshots / audit_logs / security_events are immutable; this is
  *   enforced by DB triggers in the `immutability_triggers` migration.
  * - Client data (invitations/guests/rsvps) is separate from template design.
  */
@@ -27,9 +27,12 @@ import {
 } from "drizzle-orm/pg-core";
 import {
   assetStatusEnum,
+  businessOrderStatusEnum,
   customerOrderStatusEnum,
   guestStatusEnum,
   invitationStatusEnum,
+  paymentStatusEnum,
+  productionStatusEnum,
   rsvpResponseEnum,
   systemRoleEnum,
   templateStatusEnum,
@@ -362,6 +365,12 @@ export const resellerProfiles = pgTable(
     whatsappContact: text("whatsapp_contact").notNull(),
     logoUrl: text("logo_url"),
     customDomain: text("custom_domain"),
+    domainStatus: text("domain_status").notNull().default("unconfigured"),
+    domainVerificationToken: text("domain_verification_token"),
+    domainVerifiedAt: timestamp("domain_verified_at", { withTimezone: true }),
+    domainLastCheckedAt: timestamp("domain_last_checked_at", { withTimezone: true }),
+    tlsStatus: text("tls_status").notNull().default("unconfigured"),
+    tlsActivatedAt: timestamp("tls_activated_at", { withTimezone: true }),
     brandColor: text("brand_color").notNull().default("#3b82f6"),
     hideWatermark: pgBoolean("hide_watermark").notNull().default(true),
     isActive: pgBoolean("is_active").notNull().default(true),
@@ -371,7 +380,18 @@ export const resellerProfiles = pgTable(
   (t) => [
     uniqueIndex("reseller_profiles_user_uq").on(t.userId),
     uniqueIndex("reseller_profiles_slug_uq").on(t.slug),
+    uniqueIndex("reseller_profiles_custom_domain_lower_uq")
+      .on(sql`lower(${t.customDomain})`)
+      .where(sql`${t.customDomain} is not null`),
     check("reseller_profiles_slug_format", sql`${t.slug} ~ ${SLUG_SQL}`),
+    check(
+      "reseller_profiles_domain_status_check",
+      sql`${t.domainStatus} in ('unconfigured', 'pending', 'verified', 'active', 'failed')`,
+    ),
+    check(
+      "reseller_profiles_tls_status_check",
+      sql`${t.tlsStatus} in ('unconfigured', 'pending', 'active', 'failed')`,
+    ),
   ],
 );
 
@@ -394,6 +414,18 @@ export const customerOrders = pgTable(
     eventLocation: text("event_location"),
     notes: text("notes"),
     status: customerOrderStatusEnum("status").notNull().default("new"),
+    /** Fase 1 separates commercial, production, and payment lifecycles. */
+    orderStatus: businessOrderStatusEnum("order_status").notNull().default("new"),
+    productionStatus: productionStatusEnum("production_status")
+      .notNull()
+      .default("awaiting_client"),
+    paymentStatus: paymentStatusEnum("payment_status").notNull().default("unpaid"),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id),
+    templateVersionId: uuid("template_version_id").references(() => templateVersions.id),
+    assignedTo: uuid("assigned_to").references(() => users.id),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
     adminNotes: text("admin_notes"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -401,9 +433,113 @@ export const customerOrders = pgTable(
   (t) => [
     index("customer_orders_seller_idx").on(t.sellerId, t.createdAt),
     index("customer_orders_status_idx").on(t.status, t.createdAt),
+    index("customer_orders_business_status_idx").on(t.orderStatus, t.createdAt),
+    index("customer_orders_production_status_idx").on(t.productionStatus, t.dueAt),
+    index("customer_orders_workspace_idx").on(t.workspaceId),
+    index("customer_orders_assignee_idx").on(t.assignedTo, t.productionStatus),
     uniqueIndex("customer_orders_idempotency_uq")
       .on(t.idempotencyKey)
       .where(sql`${t.idempotencyKey} is not null`),
+  ],
+);
+
+/** Append-only commercial/production/payment/approval timeline. */
+export const orderWorkflowEvents = pgTable(
+  "order_workflow_events",
+  {
+    id: id(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => customerOrders.id),
+    actorId: uuid("actor_id").references(() => users.id),
+    eventType: text("event_type").notNull(),
+    fromValue: text("from_value"),
+    toValue: text("to_value"),
+    note: text("note"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [index("order_workflow_events_order_idx").on(t.orderId, t.createdAt)],
+);
+
+/** Append-only security signal ledger; identifiers are hashed before storage. */
+export const securityEvents = pgTable(
+  "security_events",
+  {
+    id: id(),
+    eventType: text("event_type").notNull(),
+    severity: text("severity").notNull().default("warning"),
+    subjectHash: text("subject_hash"),
+    clientHash: text("client_hash"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("security_events_type_created_idx").on(t.eventType, t.createdAt),
+    index("security_events_subject_created_idx").on(t.subjectHash, t.createdAt),
+    check("security_events_severity_check", sql`${t.severity} in ('info', 'warning', 'critical')`),
+  ],
+);
+
+/** Non-destructive privacy request workflow; deletion is reviewed before execution. */
+export const privacyRequests = pgTable(
+  "privacy_requests",
+  {
+    id: id(),
+    requesterId: uuid("requester_id")
+      .notNull()
+      .references(() => users.id),
+    targetUserId: uuid("target_user_id")
+      .notNull()
+      .references(() => users.id),
+    requestType: text("request_type").notNull(),
+    status: text("status").notNull().default("pending"),
+    reason: text("reason"),
+    resolutionNote: text("resolution_note"),
+    resolvedBy: uuid("resolved_by").references(() => users.id),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    retentionDueAt: timestamp("retention_due_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("privacy_requests_status_created_idx").on(t.status, t.createdAt),
+    index("privacy_requests_target_idx").on(t.targetUserId, t.createdAt),
+    check("privacy_requests_type_check", sql`${t.requestType} in ('export', 'delete')`),
+    check(
+      "privacy_requests_status_check",
+      sql`${t.status} in ('pending', 'in_progress', 'completed', 'rejected')`,
+    ),
+  ],
+);
+
+/** Evidence register for backup/restore and disaster-recovery drills. */
+export const recoveryDrills = pgTable(
+  "recovery_drills",
+  {
+    id: id(),
+    drillType: text("drill_type").notNull().default("restore"),
+    status: text("status").notNull().default("planned"),
+    performedBy: uuid("performed_by")
+      .notNull()
+      .references(() => users.id),
+    environment: text("environment").notNull(),
+    backupReference: text("backup_reference"),
+    measuredRpoMinutes: integer("measured_rpo_minutes"),
+    measuredRtoMinutes: integer("measured_rto_minutes"),
+    notes: text("notes"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("recovery_drills_status_created_idx").on(t.status, t.createdAt),
+    check(
+      "recovery_drills_status_check",
+      sql`${t.status} in ('planned', 'running', 'passed', 'failed')`,
+    ),
+    check("recovery_drills_type_check", sql`${t.drillType} in ('backup', 'restore', 'failover')`),
   ],
 );
 
@@ -472,6 +608,10 @@ export type ResellerProfile = typeof resellerProfiles.$inferSelect;
 export type NewResellerProfile = typeof resellerProfiles.$inferInsert;
 export type CustomerOrder = typeof customerOrders.$inferSelect;
 export type NewCustomerOrder = typeof customerOrders.$inferInsert;
+export type OrderWorkflowEvent = typeof orderWorkflowEvents.$inferSelect;
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type PrivacyRequest = typeof privacyRequests.$inferSelect;
+export type RecoveryDrill = typeof recoveryDrills.$inferSelect;
 export type Workspace = typeof workspaces.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;

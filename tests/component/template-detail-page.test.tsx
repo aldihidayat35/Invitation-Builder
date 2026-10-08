@@ -6,6 +6,15 @@ import type { TemplateDetail } from "@/features/templates/types";
 import { createEmptyDocument } from "@/lib/schema";
 import { addSection, createElement } from "@/features/editor/core/ops";
 
+vi.mock("@/lib/auth/server", () => ({
+  requireOwner: vi.fn().mockResolvedValue({
+    id: "owner-1",
+    name: "Owner",
+    email: "owner@example.test",
+    systemRole: "owner",
+  }),
+}));
+
 afterEach(cleanup);
 beforeEach(() => {
   vi.spyOn(api, "getTemplateCategories").mockResolvedValue([

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TemplateRealPreview } from "@/features/editor/components/TemplateRealPreview";
 import { TemplateNotFoundError, openTemplate } from "@/features/templates/api";
+import { requireOwner } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
   title: "Pratinjau Nyata Template",
@@ -13,6 +14,7 @@ export default async function TemplatePreviewPage({
 }: {
   readonly params: Promise<{ id: string }>;
 }) {
+  await requireOwner();
   const { id } = await params;
 
   let template;

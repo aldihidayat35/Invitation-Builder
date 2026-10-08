@@ -48,7 +48,12 @@ import {
   updateInvitationData,
   updateInvitationTitle,
 } from "@/lib/db/repositories/invitations";
-import { findTemplateById, findTemplateVersion } from "@/lib/db/repositories/templates";
+import { findCustomerOrderByInvitationId } from "@/lib/db/repositories/orders";
+import {
+  findTemplateById,
+  findTemplateVersion,
+  findTemplateVersionById,
+} from "@/lib/db/repositories/templates";
 import type { GuestRow, InvitationRow } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import {
@@ -78,7 +83,6 @@ import type {
   SaveDataResult,
   SnapshotSummary,
 } from "./types";
-
 
 export class PublishBlockedError extends Error {
   constructor(readonly missing: readonly string[]) {
@@ -130,6 +134,19 @@ export class GuestNotFoundError extends Error {
   constructor(id: string) {
     super(`Tamu ${id} tidak ditemukan.`);
     this.name = "GuestNotFoundError";
+  }
+}
+
+/** Prevents an approved preview from becoming stale through later content changes. */
+export async function assertInvitationWorkflowMutable(
+  db: Database,
+  invitationId: string,
+): Promise<void> {
+  const order = await findCustomerOrderByInvitationId(db, invitationId);
+  if (order && ["client_review", "approved", "published"].includes(order.productionStatus)) {
+    throw new InvitationInputError(
+      "Data dikunci selama review atau setelah persetujuan klien. Minta revisi untuk membukanya kembali.",
+    );
   }
 }
 
@@ -188,7 +205,7 @@ async function loadAuthorized(
   invitationId: string,
   capability: Capability,
 ): Promise<InvitationRow> {
-  if (actor.systemRole === "reseller" && capability.endsWith(":write")) {
+  if (actor.systemRole === "reseller" && capability !== "invitation:read") {
     throw new ForbiddenError("Reseller/Seller tidak memiliki akses untuk mengubah data undangan.");
   }
   if (!uuidSchema.safeParse(invitationId).success) throw new InvitationNotFoundError(invitationId);
@@ -242,7 +259,9 @@ export async function invitationPermissions(
     return { write: false };
   }
   const role = await findRole(db, actor, workspaceId);
-  return { write: role ? roleCan(role, "invitation:write") : false };
+  return {
+    write: !!role && actor.systemRole !== "reseller" && roleCan(role, "invitation:content_write"),
+  };
 }
 
 export async function listInvitations(
@@ -262,22 +281,33 @@ export async function listInvitations(
 export async function createInvitation(
   db: Database,
   actor: Actor,
-  input: { workspaceId: string; templateId: string; title: string },
+  input: { workspaceId: string; templateId: string; templateVersionId?: string; title: string },
 ): Promise<InvitationSummary> {
-  await requireCapability(db, actor, input.workspaceId, "invitation:write");
-  await requireCapability(db, actor, input.workspaceId, "template:read");
+  await requireCapability(db, actor, input.workspaceId, "invitation:project_manage");
   const title = parseTitle(input.title);
 
   if (!uuidSchema.safeParse(input.templateId).success) {
     throw new InvitationInputError("Template tidak valid.");
   }
   const template = await findTemplateById(db, input.templateId);
-  // Cross-workspace templates are reported exactly like missing ones.
-  if (!template || template.workspaceId !== input.workspaceId || template.status === "archived") {
+  if (!template || template.status === "archived") {
     throw new InvitationInputError("Template tidak ditemukan atau sudah diarsipkan.");
   }
+  if (template.workspaceId === input.workspaceId) {
+    await requireCapability(db, actor, input.workspaceId, "template:read");
+  } else if (actor.systemRole !== "owner" || !template.isPublic) {
+    // A published platform master may be pinned cross-workspace only by production owner.
+    throw new InvitationInputError(
+      "Template tidak ditemukan atau tidak tersedia untuk proyek ini.",
+    );
+  }
   if (template.publishedVersionNo === null) throw new TemplateNotPublishedError();
-  const version = await findTemplateVersion(db, template.id, template.publishedVersionNo);
+  const version = input.templateVersionId
+    ? await findTemplateVersionById(db, input.templateVersionId)
+    : await findTemplateVersion(db, template.id, template.publishedVersionNo);
+  if (version && version.templateId !== template.id) {
+    throw new InvitationInputError("Versi template tidak sesuai dengan master template.");
+  }
   if (!version) throw new TemplateNotPublishedError();
 
   const document = parseDocumentOrThrow(migrateDocument(version.document));
@@ -335,7 +365,7 @@ export async function renameInvitation(
   invitationId: string,
   title: string,
 ): Promise<InvitationSummary> {
-  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:project_manage");
   assertWritable(row);
   const next = parseTitle(title);
   return db.transaction(async (tx) => {
@@ -358,7 +388,7 @@ export async function archiveInvitation(
   actor: Actor,
   invitationId: string,
 ): Promise<InvitationSummary> {
-  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:project_manage");
   return db.transaction(async (tx) => {
     const updated = await archiveInvitationRow(tx, row.id);
     if (!updated) throw new InvitationArchivedError();
@@ -379,7 +409,7 @@ export async function restoreInvitation(
   actor: Actor,
   invitationId: string,
 ): Promise<InvitationSummary> {
-  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:project_manage");
   return db.transaction(async (tx) => {
     const updated = await restoreInvitationRow(tx, row.id);
     if (!updated) throw new InvitationNotFoundError(row.id);
@@ -400,7 +430,7 @@ export async function deleteInvitation(
   actor: Actor,
   invitationId: string,
 ): Promise<{ deleted: boolean; archived: boolean }> {
-  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:project_manage");
   const hasSnapshots = await hasPublishedSnapshots(db, row.id);
 
   if (!hasSnapshots) {
@@ -441,8 +471,9 @@ export async function saveInvitationData(
     timeZone?: string;
   },
 ): Promise<SaveDataResult> {
-  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
   assertWritable(row);
+  await assertInvitationWorkflowMutable(db, row.id);
   const { document } = await loadPinnedDocument(db, row);
   const { data, issues } = parseFormSubmission(document.variables, input.values, {
     timeZone: input.timeZone ?? "Asia/Jakarta",
@@ -485,8 +516,9 @@ export async function addGuest(
   actor: Actor,
   input: { invitationId: string; name: string; maxParty?: number },
 ): Promise<GuestSummary> {
-  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
   assertWritable(row);
+  await assertInvitationWorkflowMutable(db, row.id);
   const name = guestNameSchema.safeParse(input.name);
   if (!name.success) {
     throw new InvitationInputError(name.error.issues[0]?.message ?? "Nama tamu tidak valid.");
@@ -519,8 +551,9 @@ export async function updateGuest(
   actor: Actor,
   input: { invitationId: string; guestId: string; name?: string; maxParty?: number },
 ): Promise<GuestSummary> {
-  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
   assertWritable(row);
+  await assertInvitationWorkflowMutable(db, row.id);
   const changes: { name?: string; maxParty?: number } = {};
   if (input.name !== undefined) {
     const name = guestNameSchema.safeParse(input.name);
@@ -551,7 +584,9 @@ export async function archiveGuest(
   actor: Actor,
   input: { invitationId: string; guestId: string },
 ): Promise<GuestSummary> {
-  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
+  assertWritable(row);
+  await assertInvitationWorkflowMutable(db, row.id);
   return db.transaction(async (tx) => {
     const archived = await archiveGuestRow(tx, row.id, input.guestId);
     if (!archived) throw new GuestNotFoundError(input.guestId);
@@ -619,7 +654,7 @@ export async function publishInvitation(
   actor: Actor,
   invitationId: string,
 ): Promise<SnapshotSummary> {
-  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:publish");
   assertWritable(row);
   const { document } = await loadPinnedDocument(db, row);
   const issues = validateInvitationData(
@@ -629,7 +664,6 @@ export async function publishInvitation(
   if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
 
   return db.transaction(async (tx) => {
-
     const revisionNo = await nextRevisionNo(tx, row.id);
     const snapshot = await insertPublishedSnapshot(tx, {
       invitationId: row.id,
@@ -664,7 +698,7 @@ export async function rollbackInvitation(
   actor: Actor,
   input: { invitationId: string; revisionNo: number },
 ): Promise<SnapshotSummary> {
-  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:write");
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:rollback");
   assertWritable(row);
   const snapshot = Number.isInteger(input.revisionNo)
     ? await findSnapshotByRevision(db, row.id, input.revisionNo)
@@ -748,7 +782,7 @@ export async function requireInvitationAccess(
   db: Database,
   actor: Actor,
   invitationId: string,
-  capability: "invitation:read" | "invitation:write",
+  capability: "invitation:read" | "invitation:guest_manage" | "rsvp:read" | "rsvp:moderate",
 ): Promise<InvitationRow> {
   return loadAuthorized(db, actor, invitationId, capability);
 }

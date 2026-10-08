@@ -61,7 +61,7 @@ async function invitation(title: string, published = true) {
     title,
   });
   await saveInvitationData(db(), world.operatorA, { invitationId: inv.id, values: REQUIRED });
-  if (published) await publishInvitation(db(), world.operatorA, inv.id);
+  if (published) await publishInvitation(db(), world.ownerA, inv.id);
   return inv;
 }
 

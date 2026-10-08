@@ -6,14 +6,10 @@ import {
   getAdminMonthlyOrderTrends,
   getAdminOrderTrends,
 } from "@/features/admin/api";
-import {
-  AdminOrdersTable,
-  AdminOrderStatsCards,
-} from "@/features/admin/components";
+import { AdminOrdersTable, AdminOrderStatsCards } from "@/features/admin/components";
 import { OrderTrendAnalytics } from "@/features/analytics";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireOwner } from "@/lib/auth/server";
-import { updateOrderStatusAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Pusat Pengolahan Pesanan Customer — Super Admin",
@@ -60,10 +56,7 @@ export default async function AdminOrdersPage() {
         valueSuffix=" pesanan"
       />
 
-      <AdminOrdersTable
-        orders={orders}
-        onUpdateStatus={updateOrderStatusAction}
-      />
+      <AdminOrdersTable orders={orders} />
     </div>
   );
 }

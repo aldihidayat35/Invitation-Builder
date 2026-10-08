@@ -12,6 +12,7 @@ import {
   rename,
 } from "@/features/templates/api";
 import type { ActionState } from "@/features/templates/components";
+import { requireOwner } from "@/lib/auth/server";
 
 const idSchema = z.uuid();
 const LIBRARY = "/dashboard/templates";
@@ -31,6 +32,7 @@ export async function createTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const workspaceId = idSchema.safeParse(field(formData, "workspaceId"));
   if (!workspaceId.success) return { error: "Workspace tidak valid." };
   let createdId: string;
@@ -47,6 +49,7 @@ export async function renameTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   if (!id.success) return { error: "Template tidak valid." };
   try {
@@ -63,6 +66,7 @@ export async function duplicateTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   if (!id.success) return { error: "Template tidak valid." };
   try {
@@ -78,6 +82,7 @@ export async function archiveTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   if (!id.success) return { error: "Template tidak valid." };
   try {
@@ -94,6 +99,7 @@ export async function publishTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   const revision = z.coerce.number().int().min(1).safeParse(field(formData, "expectedRevision"));
   if (!id.success || !revision.success) return { error: "Permintaan tidak valid." };
@@ -111,6 +117,7 @@ export async function deleteTemplateAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   if (!id.success) return { error: "Template tidak valid." };
   try {
@@ -127,6 +134,7 @@ export async function updateTemplateCatalogAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "templateId"));
   if (!id.success) return { error: "Template tidak valid." };
 

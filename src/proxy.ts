@@ -7,6 +7,20 @@ import { NextResponse, type NextRequest } from "next/server";
  * Never redirect *away* from /login here (a stale cookie would loop).
  */
 export function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/" && process.env.APP_HOST) {
+    const requestHost = request.nextUrl.hostname.toLowerCase();
+    const platformHost = process.env.APP_HOST.toLowerCase().split(":")[0];
+    if (
+      requestHost !== platformHost &&
+      requestHost !== "localhost" &&
+      requestHost !== "127.0.0.1"
+    ) {
+      const storefront = request.nextUrl.clone();
+      storefront.pathname = `/seller/${requestHost}`;
+      return NextResponse.rewrite(storefront);
+    }
+  }
+  if (request.nextUrl.pathname === "/") return NextResponse.next();
   if (!request.cookies.has("session")) {
     const login = new URL("/login", request.url);
     const next = request.nextUrl.pathname + request.nextUrl.search;
@@ -17,5 +31,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/editor/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/editor/:path*"],
 };

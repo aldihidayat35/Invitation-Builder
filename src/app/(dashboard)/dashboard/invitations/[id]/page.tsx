@@ -16,6 +16,7 @@ import { GuestPanel } from "@/features/invitations/components/GuestPanel";
 import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { getWorkspaceContext } from "@/lib/auth/server";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
 import {
   addGuestAction,
@@ -32,6 +33,8 @@ export default async function InvitationDataPage({
   params,
 }: PageProps<"/dashboard/invitations/[id]">) {
   const { id } = await params;
+  const { user } = await getWorkspaceContext();
+  const canManagePublication = user.systemRole === "owner";
 
   let invitation;
   try {
@@ -47,7 +50,7 @@ export default async function InvitationDataPage({
     listGuests(invitation.id),
     readiness(invitation.id),
     searchAssets(invitation.workspaceId).catch(() => []),
-    listSnapshots(invitation.id),
+    canManagePublication ? listSnapshots(invitation.id) : Promise.resolve([]),
   ]);
 
   const fields = buildFormFields(invitation.document.variables);
@@ -133,16 +136,29 @@ export default async function InvitationDataPage({
               </ul>
             )}
           </section>
-          <PublishPanel
-            invitationId={invitation.id}
-            slug={invitation.slug}
-            status={invitation.status}
-            ready={report.ready}
-            canWrite={permissions.write}
-            snapshots={snapshots}
-            publish={publishInvitationAction}
-            rollback={rollbackInvitationAction}
-          />
+          {canManagePublication ? (
+            <PublishPanel
+              invitationId={invitation.id}
+              slug={invitation.slug}
+              status={invitation.status}
+              ready={report.ready}
+              canWrite={permissions.write}
+              snapshots={snapshots}
+              publish={publishInvitationAction}
+              rollback={rollbackInvitationAction}
+            />
+          ) : (
+            <section className={styles.panel} aria-labelledby="publication-owner-title">
+              <h2 id="publication-owner-title" className={styles.panelTitle}>
+                Status publikasi
+              </h2>
+              <p className="text-sm leading-6 text-stone-600">
+                {invitation.status === "published"
+                  ? "Undangan ini sudah live. Perubahan data berikutnya akan diperiksa dan diterbitkan kembali oleh tim produksi."
+                  : "Setelah data lengkap dan preview sudah sesuai, tim produksi akan memeriksa lalu menerbitkan undangan Anda."}
+              </p>
+            </section>
+          )}
           <GuestPanel
             invitationId={invitation.id}
             guests={guests}

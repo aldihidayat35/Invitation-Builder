@@ -12,17 +12,28 @@ interface ResellerBrandingProfileProps {
     logoUrl?: string | null;
     brandColor?: string;
     customDomain?: string | null;
+    domainStatus: string;
+    domainVerificationToken?: string | null;
+    domainLastCheckedAt?: Date | null;
+    tlsStatus: string;
   };
   action: (_prev: ActionState, formData: FormData) => Promise<ActionState>;
+  verifyAction: (_prev: ActionState, formData: FormData) => Promise<ActionState>;
 }
 
-export function ResellerBrandingForm({ initialData, action }: ResellerBrandingProfileProps) {
+export function ResellerBrandingForm({
+  initialData,
+  action,
+  verifyAction,
+}: ResellerBrandingProfileProps) {
   const [state, formAction, isPending] = useActionState(action, {});
+  const [verifyState, verifyFormAction, isVerifying] = useActionState(verifyAction, {});
   const [copied, setCopied] = useState(false);
 
-  const storefrontUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/seller/${initialData.slug}`
-    : `/seller/${initialData.slug}`;
+  const storefrontUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/seller/${initialData.slug}`
+      : `/seller/${initialData.slug}`;
 
   const handleCopyLink = () => {
     if (typeof navigator !== "undefined") {
@@ -35,19 +46,31 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
   return (
     <div className={styles.formCard} style={{ maxWidth: 680 }}>
       {/* Storefront Link Banner */}
-      <div style={{
-        padding: "1.25rem",
-        marginBottom: "1.5rem",
-        borderRadius: "8px",
-        background: "var(--dash-card-bg)",
-        border: "1px solid var(--dash-border)",
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+      <div
+        style={{
+          padding: "1.25rem",
+          marginBottom: "1.5rem",
+          borderRadius: "8px",
+          background: "var(--dash-card-bg)",
+          border: "1px solid var(--dash-border)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+          }}
+        >
           <div>
             <div style={{ fontWeight: 600, color: "var(--dash-text)", fontSize: "0.95rem" }}>
               Website Toko / Etalase Publik Seller Anda
             </div>
-            <div style={{ fontSize: "0.85rem", color: "var(--dash-text-muted)", marginTop: "0.2rem" }}>
+            <div
+              style={{ fontSize: "0.85rem", color: "var(--dash-text-muted)", marginTop: "0.2rem" }}
+            >
               {storefrontUrl}
             </div>
           </div>
@@ -72,6 +95,27 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
           </div>
         </div>
       </div>
+
+      {initialData.customDomain ? (
+        <form action={verifyFormAction} className={styles.formGroup} style={{ marginBottom: 18 }}>
+          <strong>Status domain: {initialData.domainStatus}</strong>
+          <span style={{ fontSize: 12, color: "var(--dash-muted)" }}>
+            Tambahkan TXT <code>_undangan-verification.{initialData.customDomain}</code> dengan
+            nilai <code>undangan-verification={initialData.domainVerificationToken}</code>.
+          </span>
+          <span style={{ fontSize: 12, color: "var(--dash-muted)" }}>
+            TLS: {initialData.tlsStatus}. Domain baru aktif setelah DNS terverifikasi dan TLS
+            diaktifkan tim platform.
+          </span>
+          {verifyState.error ? <div className={styles.formError}>{verifyState.error}</div> : null}
+          {verifyState.message ? (
+            <div className={styles.formSuccess}>{verifyState.message}</div>
+          ) : null}
+          <button type="submit" className={styles.btnSecondary} disabled={isVerifying}>
+            {isVerifying ? "Memeriksa DNS..." : "Periksa Verifikasi DNS"}
+          </button>
+        </form>
+      ) : null}
 
       <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {state.error ? <div className={styles.formError}>{state.error}</div> : null}
@@ -119,7 +163,8 @@ export function ResellerBrandingForm({ initialData, action }: ResellerBrandingPr
             className={styles.inputControl}
           />
           <span style={{ fontSize: 11, color: "var(--dash-muted)" }}>
-            Pesanan customer di website toko akan otomatis diarahkan untuk konfirmasi ke WhatsApp ini.
+            Pesanan customer di website toko akan otomatis diarahkan untuk konfirmasi ke WhatsApp
+            ini.
           </span>
         </div>
 

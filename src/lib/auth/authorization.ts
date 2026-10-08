@@ -9,6 +9,10 @@ import type { Database } from "../db/types";
 import { ForbiddenError } from "./errors";
 
 export const CAPABILITIES = [
+  "catalog:manage",
+  "order:read_own",
+  "order:qualify",
+  "order:assign",
   "template:read",
   "template:write",
   "template:publish",
@@ -17,6 +21,16 @@ export const CAPABILITIES = [
   "asset:write",
   "invitation:read",
   "invitation:write",
+  "invitation:project_manage",
+  "invitation:content_write",
+  "invitation:design_write",
+  "invitation:guest_manage",
+  "invitation:review",
+  "invitation:approve",
+  "invitation:publish",
+  "invitation:rollback",
+  "rsvp:read",
+  "rsvp:moderate",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -31,9 +45,34 @@ const ROLE_CAPABILITIES: Readonly<Record<WorkspaceRole, readonly Capability[]>> 
     "asset:write",
     "invitation:read",
     "invitation:write",
+    "invitation:design_write",
+    "invitation:review",
+    "rsvp:read",
   ],
-  operator: ["template:read", "asset:read", "invitation:read", "invitation:write"],
+  operator: [
+    "template:read",
+    "asset:read",
+    "invitation:read",
+    "invitation:write",
+    "invitation:project_manage",
+    "invitation:content_write",
+    "invitation:guest_manage",
+    "invitation:review",
+    "rsvp:read",
+    "rsvp:moderate",
+  ],
 };
+
+const CLIENT_CAPABILITIES: readonly Capability[] = [
+  "asset:read",
+  "asset:write",
+  "invitation:read",
+  "invitation:content_write",
+  "invitation:guest_manage",
+  "invitation:review",
+  "invitation:approve",
+  "rsvp:read",
+];
 
 export function roleCan(role: WorkspaceRole, capability: Capability): boolean {
   return ROLE_CAPABILITIES[role].includes(capability);
@@ -60,12 +99,15 @@ export async function requireCapability(
   workspaceId: string,
   capability: Capability,
 ): Promise<WorkspaceRole> {
+  if (actor.systemRole === "client" && !CLIENT_CAPABILITIES.includes(capability)) {
+    throw new ForbiddenError(
+      "Akun klien hanya dapat mengelola data acara, tamu, preview, dan persetujuan.",
+    );
+  }
   if (
     actor.systemRole === "reseller" &&
-    (capability === "invitation:write" ||
-      capability === "template:write" ||
-      capability === "template:publish" ||
-      capability === "template:archive")
+    capability !== "order:read_own" &&
+    capability !== "order:qualify"
   ) {
     throw new ForbiddenError(
       "Seller tidak memiliki hak akses untuk mengubah data website undangan yang menjadi kewenangan Admin.",

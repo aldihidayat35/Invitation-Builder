@@ -85,8 +85,22 @@ describe("role capability matrix (PRD §4)", () => {
       "asset:write",
       "invitation:read",
       "invitation:write",
+      "invitation:design_write",
+      "invitation:review",
+      "rsvp:read",
     ],
-    operator: ["template:read", "asset:read", "invitation:read", "invitation:write"],
+    operator: [
+      "template:read",
+      "asset:read",
+      "invitation:read",
+      "invitation:write",
+      "invitation:project_manage",
+      "invitation:content_write",
+      "invitation:guest_manage",
+      "invitation:review",
+      "rsvp:read",
+      "rsvp:moderate",
+    ],
   };
 
   it.each(WORKSPACE_ROLES)("%s has exactly the expected capabilities", (role) => {

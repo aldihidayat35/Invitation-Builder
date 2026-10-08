@@ -21,6 +21,8 @@ import type {
   ImportState,
   SaveDataState,
 } from "@/features/invitations/components/action-state";
+import { requireOwner } from "@/lib/auth/server";
+import { decideInvitationReview } from "@/features/orders/api";
 
 const idSchema = z.uuid();
 const LIST = "/dashboard/invitations";
@@ -40,6 +42,7 @@ export async function createInvitationAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const workspaceId = idSchema.safeParse(field(formData, "workspaceId"));
   const templateId = idSchema.safeParse(field(formData, "templateId"));
   if (!workspaceId.success) return { error: "Workspace tidak valid." };
@@ -115,6 +118,7 @@ export async function publishInvitationAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "invitationId"));
   if (!id.success) return { error: "Undangan tidak valid." };
   let revisionNo: number;
@@ -131,6 +135,7 @@ export async function rollbackInvitationAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(field(formData, "invitationId"));
   const revisionNo = Number(field(formData, "revisionNo"));
   if (!id.success || !Number.isInteger(revisionNo)) return { error: "Permintaan tidak valid." };
@@ -162,9 +167,8 @@ export async function importGuestsAction(
   }
 }
 
-export async function deleteInvitationAction(
-  invitationId: string,
-): Promise<ActionState> {
+export async function deleteInvitationAction(invitationId: string): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(invitationId);
   if (!id.success) return { error: "Undangan tidak valid." };
   try {
@@ -181,9 +185,8 @@ export async function deleteInvitationAction(
   }
 }
 
-export async function archiveInvitationAction(
-  invitationId: string,
-): Promise<ActionState> {
+export async function archiveInvitationAction(invitationId: string): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(invitationId);
   if (!id.success) return { error: "Undangan tidak valid." };
   try {
@@ -195,9 +198,8 @@ export async function archiveInvitationAction(
   }
 }
 
-export async function restoreInvitationAction(
-  invitationId: string,
-): Promise<ActionState> {
+export async function restoreInvitationAction(invitationId: string): Promise<ActionState> {
+  await requireOwner();
   const id = idSchema.safeParse(invitationId);
   if (!id.success) return { error: "Undangan tidak valid." };
   try {
@@ -207,4 +209,13 @@ export async function restoreInvitationAction(
   } catch (error) {
     return failure(error);
   }
+}
+
+export async function decideInvitationReviewAction(formData: FormData): Promise<void> {
+  const invitationId = idSchema.parse(field(formData, "invitationId"));
+  const decision = z.enum(["approve", "request_revision"]).parse(field(formData, "decision"));
+  const note = field(formData, "note").trim() || undefined;
+  await decideInvitationReview(invitationId, decision, note);
+  revalidatePath(`${LIST}/${invitationId}`);
+  revalidatePath(`${LIST}/${invitationId}/preview`);
 }

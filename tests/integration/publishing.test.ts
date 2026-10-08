@@ -88,7 +88,7 @@ describe("publish gate (FR-INV-004)", () => {
       templateId,
       title: "Belum lengkap",
     });
-    await expect(publishInvitation(db(), world.operatorA, invitation.id)).rejects.toBeInstanceOf(
+    await expect(publishInvitation(db(), world.ownerA, invitation.id)).rejects.toBeInstanceOf(
       PublishBlockedError,
     );
     expect(await getPublicInvitation(db(), { slug: invitation.slug })).toBeNull();
@@ -96,7 +96,7 @@ describe("publish gate (FR-INV-004)", () => {
 
   it("publishes a ready invitation and serves it by slug without a session", async () => {
     const invitation = await readyInvitation("Siap");
-    const snap = await publishInvitation(db(), world.operatorA, invitation.id);
+    const snap = await publishInvitation(db(), world.ownerA, invitation.id);
     expect(snap.revisionNo).toBe(1);
     const pub = await getPublicInvitation(db(), { slug: invitation.slug });
     expect(pub?.resolved.ok).toBe(true);
@@ -111,7 +111,7 @@ describe("publish gate (FR-INV-004)", () => {
     await expect(publishInvitation(db(), world.ownerB, invitation.id)).rejects.toBeInstanceOf(
       InvitationNotFoundError,
     );
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
     const logs = await listAuditLogs(db(), world.wsA.id);
     expect(
       logs.some((l) => l.action === "invitation.publish" && l.entityId === invitation.id),
@@ -122,7 +122,7 @@ describe("publish gate (FR-INV-004)", () => {
 describe("draft isolation and republish (AC-10, P-06)", () => {
   it("keeps live content unchanged after draft edits until republished", async () => {
     const invitation = await readyInvitation("Isolasi");
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
     const before = await getPublicInvitation(db(), { slug: invitation.slug });
 
     await saveInvitationData(db(), world.operatorA, {
@@ -133,7 +133,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
     expect(allText(stillLive!.resolved)).toBe(allText(before!.resolved));
     expect(allText(stillLive!.resolved)).not.toContain("PENDOPO");
 
-    const snap = await publishInvitation(db(), world.operatorA, invitation.id);
+    const snap = await publishInvitation(db(), world.ownerA, invitation.id);
     expect(snap.revisionNo).toBe(2);
     const updated = await getPublicInvitation(db(), { slug: invitation.slug });
     expect(allText(updated!.resolved)).toContain("PENDOPO AGUNG");
@@ -141,12 +141,12 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
 
   it("keeps old snapshots readable and supports rollback (FR-PUB-003)", async () => {
     const invitation = await readyInvitation("Rollback");
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
     await saveInvitationData(db(), world.operatorA, {
       invitationId: invitation.id,
       values: { ...REQUIRED, "venue.name": "Pendopo Agung" },
     });
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
 
     const list = await listInvitationSnapshots(db(), world.operatorA, invitation.id);
     expect(list.map((s) => [s.revisionNo, s.active])).toEqual([
@@ -154,7 +154,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
       [1, false],
     ]);
 
-    await rollbackInvitation(db(), world.operatorA, { invitationId: invitation.id, revisionNo: 1 });
+    await rollbackInvitation(db(), world.ownerA, { invitationId: invitation.id, revisionNo: 1 });
     const pub = await getPublicInvitation(db(), { slug: invitation.slug });
     expect(pub?.revisionNo).toBe(1);
     expect(allText(pub!.resolved)).toContain("GEDUNG SERBAGUNA");
@@ -164,7 +164,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
     ).toBe(1);
 
     await expect(
-      rollbackInvitation(db(), world.operatorA, { invitationId: invitation.id, revisionNo: 99 }),
+      rollbackInvitation(db(), world.ownerA, { invitationId: invitation.id, revisionNo: 99 }),
     ).rejects.toBeInstanceOf(RevisionNotFoundError);
     const logs = await listAuditLogs(db(), world.wsA.id);
     expect(logs.some((l) => l.action === "invitation.rollback")).toBe(true);
@@ -172,7 +172,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
 
   it("published snapshots are immutable at the database level (P-06)", async () => {
     const invitation = await readyInvitation("Immutable");
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
     await expect(db().update(publishedSnapshots).set({ data: {} })).rejects.toThrow();
   });
 });
@@ -180,7 +180,7 @@ describe("draft isolation and republish (AC-10, P-06)", () => {
 describe("public read model", () => {
   it("returns null for archived invitations", async () => {
     const invitation = await readyInvitation("Arsip");
-    await publishInvitation(db(), world.operatorA, invitation.id);
+    await publishInvitation(db(), world.ownerA, invitation.id);
     await archiveInvitation(db(), world.operatorA, invitation.id);
     expect(await getPublicInvitation(db(), { slug: invitation.slug })).toBeNull();
   });
@@ -193,8 +193,8 @@ describe("public read model", () => {
   it("applies guest context only for tokens of the same invitation", async () => {
     const a = await readyInvitation("Konteks A");
     const b = await readyInvitation("Konteks B");
-    await publishInvitation(db(), world.operatorA, a.id);
-    await publishInvitation(db(), world.operatorA, b.id);
+    await publishInvitation(db(), world.ownerA, a.id);
+    await publishInvitation(db(), world.ownerA, b.id);
     const guestA = await addGuest(db(), world.operatorA, { invitationId: a.id, name: "Wulan" });
     const guestB = await addGuest(db(), world.operatorA, { invitationId: b.id, name: "Budi" });
 

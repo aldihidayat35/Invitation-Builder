@@ -10,7 +10,11 @@ import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { insertGuest, listGuests } from "@/lib/db/repositories/invitations";
 import type { Database } from "@/lib/db/types";
 import { planGuestImport, type ColumnMapping, type ImportPlan } from "./csv";
-import { assertInvitationWritable, requireInvitationAccess } from "./service";
+import {
+  assertInvitationWorkflowMutable,
+  assertInvitationWritable,
+  requireInvitationAccess,
+} from "./service";
 
 export interface ImportGuestsResult {
   readonly plan: ImportPlan;
@@ -28,12 +32,19 @@ export async function importGuests(
     dryRun?: boolean;
   },
 ): Promise<ImportGuestsResult> {
-  const row = await requireInvitationAccess(db, actor, input.invitationId, "invitation:write");
+  const row = await requireInvitationAccess(
+    db,
+    actor,
+    input.invitationId,
+    "invitation:guest_manage",
+  );
   assertInvitationWritable(row);
 
   const existing = (await listGuests(db, row.id)).map((g) => g.name);
   const plan = planGuestImport(input.csv, existing, input.mapping);
   if (input.dryRun !== false || plan.fatal) return { plan, created: 0 };
+
+  await assertInvitationWorkflowMutable(db, row.id);
 
   const valid = plan.rows.filter((r) => r.status === "ok");
   if (valid.length === 0) return { plan, created: 0 };

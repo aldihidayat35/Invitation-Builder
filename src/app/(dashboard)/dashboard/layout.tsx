@@ -21,22 +21,29 @@ import {
   IconStar,
 } from "./nav-icons";
 import { getAppSettings } from "@/lib/db/repositories/settings";
+import { switchWorkspaceAction } from "@/features/workspaces/actions";
 
 /** Authenticated enterprise dashboard shell layout. */
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
-  const { user, active } = await getWorkspaceContext();
-  const agencyBranding = user.resellerId
-    ? await getClientAgencyBranding(user.resellerId)
-    : null;
+  const { user, active, memberships } = await getWorkspaceContext();
+  const agencyBranding = user.resellerId ? await getClientAgencyBranding(user.resellerId) : null;
 
   const [storageUsage, templateCount, activeInvitationCount, appSettings] = await Promise.all([
-    fetchStorageOverview(user.systemRole === "owner" ? undefined : active?.workspace.id).catch(() => null),
-    active ? listLibrary(active.workspace.id).then((l) => l.length).catch(() => 2) : 2,
-    active
+    user.systemRole !== "reseller" && active
+      ? fetchStorageOverview(user.systemRole === "owner" ? undefined : active.workspace.id).catch(
+          () => null,
+        )
+      : null,
+    user.systemRole === "owner" && active
+      ? listLibrary(active.workspace.id)
+          .then((items) => items.length)
+          .catch(() => null)
+      : null,
+    user.systemRole !== "reseller" && active
       ? listAll(active.workspace.id)
-          .then((invs) => invs.filter((i) => i.status === "published").length || invs.length)
-          .catch(() => 2)
-      : 2,
+          .then((items) => items.filter((item) => item.status === "published").length)
+          .catch(() => null)
+      : null,
     getAppSettings().catch(() => null),
   ]);
 
@@ -47,29 +54,31 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     .map((part) => part[0]!.toUpperCase())
     .join("");
 
-  const navGroups: NavGroup[] = [
-    {
-      title: "Menu Utama",
+  const navGroups: NavGroup[] = [];
+
+  if (user.systemRole === "owner") {
+    navGroups.push({
+      title: "Studio Produksi",
       items: [
         {
           href: "/dashboard",
-          label: "Dashboard",
+          label: "Dashboard Produksi",
           exact: true,
           icon: <IconHome />,
-          hint: "Gambaran umum & performa workspace",
+          hint: "Ringkasan produksi workspace aktif",
         },
         {
           href: "/dashboard/templates",
           label: "Katalog Template",
           icon: <IconTemplate />,
-          badge: templateCount,
+          ...(templateCount !== null ? { badge: templateCount } : {}),
           hint: "Desain template siap pakai",
         },
         {
           href: "/dashboard/invitations",
           label: "Website Undangan",
           icon: <IconInvitation />,
-          badge: `${activeInvitationCount} Aktif`,
+          ...(activeInvitationCount !== null ? { badge: `${activeInvitationCount} Live` } : {}),
           hint: "Undangan online klien, tamu & RSVP",
         },
         {
@@ -79,8 +88,36 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           hint: "Galeri media & kapasitas penyimpanan",
         },
       ],
-    },
-  ];
+    });
+  }
+
+  if (user.systemRole === "client") {
+    navGroups.push({
+      title: "Area Mempelai",
+      items: [
+        {
+          href: "/dashboard",
+          label: "Ringkasan Saya",
+          exact: true,
+          icon: <IconHome />,
+          hint: "Langkah berikutnya untuk undangan Anda",
+        },
+        {
+          href: "/dashboard/invitations",
+          label: "Undangan Saya",
+          icon: <IconInvitation />,
+          ...(activeInvitationCount !== null ? { badge: `${activeInvitationCount} Live` } : {}),
+          hint: "Isi data acara, tamu, preview, dan RSVP",
+        },
+        {
+          href: "/dashboard/storage",
+          label: "Foto & Media",
+          icon: <IconStorage />,
+          hint: "Kelola foto dan media undangan",
+        },
+      ],
+    });
+  }
 
   if (user.systemRole === "owner") {
     navGroups.push({
@@ -130,6 +167,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           icon: <IconSettings />,
           hint: "Identitas aplikasi, logo, kontak & alamat",
         },
+        {
+          href: "/dashboard/admin/operations",
+          label: "Operasional & Audit",
+          icon: <IconUserShield />,
+          hint: "Keamanan, SLA, privasi, domain & recovery",
+        },
       ],
     });
   }
@@ -173,7 +216,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     });
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && user.systemRole === "owner") {
     navGroups.push({
       title: "Pengembang",
       items: [
@@ -193,6 +236,18 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     });
   }
 
+  navGroups.push({
+    title: "Akun",
+    items: [
+      {
+        href: "/dashboard/privacy",
+        label: "Privasi & Data Saya",
+        icon: <IconUserShield />,
+        hint: "Ekspor, retensi, dan penghapusan data",
+      },
+    ],
+  });
+
   return (
     <DashboardShell
       user={{
@@ -211,11 +266,17 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
             }
           : null
       }
+      workspaces={memberships.map((membership) => ({
+        id: membership.workspace.id,
+        name: membership.workspace.name,
+        role: membership.role,
+      }))}
       agencyBranding={agencyBranding}
       appSettings={appSettings}
       storageUsage={storageUsage}
       navGroups={navGroups}
       logoutAction={logoutAction}
+      switchWorkspaceAction={switchWorkspaceAction}
     >
       {children}
     </DashboardShell>

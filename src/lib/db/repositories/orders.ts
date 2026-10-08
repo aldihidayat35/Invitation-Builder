@@ -1,11 +1,18 @@
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
-import type { CustomerOrderStatus } from "../../schema/domain";
+import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import type {
+  CustomerOrderStatus,
+  LegacyCustomerOrderStatus,
+  PaymentStatus,
+  ProductionStatus,
+} from "../../schema/domain";
 import {
   customerOrders,
   invitations,
+  orderWorkflowEvents,
   resellerProfiles,
   templates,
   type CustomerOrder,
+  type OrderWorkflowEvent,
   type ResellerProfile,
 } from "../schema";
 import type { Database } from "../types";
@@ -24,9 +31,20 @@ export interface CreateCustomerOrderInput {
 }
 
 export interface UpdateCustomerOrderInput {
-  status?: CustomerOrderStatus;
+  /** @deprecated Compatibility only while legacy callers migrate to orderStatus. */
+  status?: LegacyCustomerOrderStatus;
+  orderStatus?: CustomerOrderStatus;
+  productionStatus?: ProductionStatus;
+  paymentStatus?: PaymentStatus;
+  templateId?: string | null;
   invitationId?: string | null;
   clientUserId?: string | null;
+  workspaceId?: string | null;
+  templateVersionId?: string | null;
+  assignedTo?: string | null;
+  dueAt?: Date | null;
+  acceptedAt?: Date | null;
+  completedAt?: Date | null;
   adminNotes?: string | null;
 }
 
@@ -92,6 +110,57 @@ export async function findCustomerOrderById(
   return order;
 }
 
+export async function findCustomerOrderByInvitationId(
+  db: Database,
+  invitationId: string,
+): Promise<CustomerOrder | undefined> {
+  const [order] = await db
+    .select()
+    .from(customerOrders)
+    .where(eq(customerOrders.invitationId, invitationId))
+    .limit(1);
+  return order;
+}
+
+export async function insertOrderWorkflowEvent(
+  db: Database,
+  input: {
+    orderId: string;
+    actorId?: string | null;
+    eventType: string;
+    fromValue?: string | null;
+    toValue?: string | null;
+    note?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+): Promise<OrderWorkflowEvent> {
+  const [event] = await db
+    .insert(orderWorkflowEvents)
+    .values({
+      orderId: input.orderId,
+      actorId: input.actorId ?? null,
+      eventType: input.eventType,
+      fromValue: input.fromValue ?? null,
+      toValue: input.toValue ?? null,
+      note: input.note?.trim() || null,
+      metadata: input.metadata ?? {},
+    })
+    .returning();
+  if (!event) throw new Error("insertOrderWorkflowEvent returned no row");
+  return event;
+}
+
+export async function listOrderWorkflowEvents(
+  db: Database,
+  orderId: string,
+): Promise<OrderWorkflowEvent[]> {
+  return db
+    .select()
+    .from(orderWorkflowEvents)
+    .where(eq(orderWorkflowEvents.orderId, orderId))
+    .orderBy(desc(orderWorkflowEvents.createdAt));
+}
+
 /** Lists all customer orders submitted via a specific seller's storefront. */
 export async function listOrdersBySeller(
   db: Database,
@@ -126,7 +195,7 @@ export async function listAllOrders(
 
   const rows = filterStatus
     ? await query
-        .where(eq(customerOrders.status, filterStatus))
+        .where(eq(customerOrders.orderStatus, filterStatus))
         .orderBy(desc(customerOrders.createdAt))
         .limit(limit)
     : await query.orderBy(desc(customerOrders.createdAt)).limit(limit);
@@ -140,12 +209,38 @@ export async function updateCustomerOrder(
   orderId: string,
   input: UpdateCustomerOrderInput,
 ): Promise<CustomerOrder> {
+  const legacyBusinessStatus =
+    input.status === undefined
+      ? undefined
+      : (
+          {
+            new: "new",
+            in_review: "qualified",
+            in_progress: "accepted",
+            completed: "completed",
+            cancelled: "cancelled",
+          } as const
+        )[input.status];
   const [updated] = await db
     .update(customerOrders)
     .set({
       ...(input.status !== undefined && { status: input.status }),
+      ...((input.orderStatus !== undefined || legacyBusinessStatus !== undefined) && {
+        orderStatus: input.orderStatus ?? legacyBusinessStatus,
+      }),
+      ...(input.productionStatus !== undefined && { productionStatus: input.productionStatus }),
+      ...(input.paymentStatus !== undefined && { paymentStatus: input.paymentStatus }),
+      ...(input.templateId !== undefined && { templateId: input.templateId }),
       ...(input.invitationId !== undefined && { invitationId: input.invitationId }),
       ...(input.clientUserId !== undefined && { clientUserId: input.clientUserId }),
+      ...(input.workspaceId !== undefined && { workspaceId: input.workspaceId }),
+      ...(input.templateVersionId !== undefined && {
+        templateVersionId: input.templateVersionId,
+      }),
+      ...(input.assignedTo !== undefined && { assignedTo: input.assignedTo }),
+      ...(input.dueAt !== undefined && { dueAt: input.dueAt }),
+      ...(input.acceptedAt !== undefined && { acceptedAt: input.acceptedAt }),
+      ...(input.completedAt !== undefined && { completedAt: input.completedAt }),
       ...(input.adminNotes !== undefined && { adminNotes: input.adminNotes }),
       updatedAt: new Date(),
     })
@@ -156,6 +251,52 @@ export async function updateCustomerOrder(
     throw new Error(`Customer order not found: ${orderId}`);
   }
 
+  return updated;
+}
+
+/** Atomic compare-and-set used by workflow transitions to prevent double processing. */
+export async function transitionCustomerOrderStatus(
+  db: Database,
+  orderId: string,
+  fromStatus: CustomerOrderStatus,
+  toStatus: CustomerOrderStatus,
+): Promise<CustomerOrder | undefined> {
+  const [updated] = await db
+    .update(customerOrders)
+    .set({
+      orderStatus: toStatus,
+      ...(toStatus === "accepted" && { acceptedAt: new Date() }),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(customerOrders.id, orderId), eq(customerOrders.orderStatus, fromStatus)))
+    .returning();
+  return updated;
+}
+
+export async function transitionCustomerOrderProduction(
+  db: Database,
+  orderId: string,
+  fromStatus: ProductionStatus,
+  toStatus: ProductionStatus,
+): Promise<CustomerOrder | undefined> {
+  const [updated] = await db
+    .update(customerOrders)
+    .set({ productionStatus: toStatus, updatedAt: new Date() })
+    .where(and(eq(customerOrders.id, orderId), eq(customerOrders.productionStatus, fromStatus)))
+    .returning();
+  return updated;
+}
+
+export async function linkCustomerOrderInvitation(
+  db: Database,
+  orderId: string,
+  invitationId: string,
+): Promise<CustomerOrder | undefined> {
+  const [updated] = await db
+    .update(customerOrders)
+    .set({ invitationId, productionStatus: "in_production", updatedAt: new Date() })
+    .where(and(eq(customerOrders.id, orderId), isNull(customerOrders.invitationId)))
+    .returning();
   return updated;
 }
 
@@ -172,9 +313,9 @@ export async function getSellerOrderStats(
   const [row] = await db
     .select({
       total: sql<number>`count(*)::int`,
-      newCount: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
-      inProgressCount: sql<number>`count(case when ${customerOrders.status} = 'in_progress' or ${customerOrders.status} = 'in_review' then 1 end)::int`,
-      completedCount: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
+      newCount: sql<number>`count(case when ${customerOrders.orderStatus} = 'new' then 1 end)::int`,
+      inProgressCount: sql<number>`count(case when ${customerOrders.orderStatus} in ('qualified', 'accepted') then 1 end)::int`,
+      completedCount: sql<number>`count(case when ${customerOrders.orderStatus} = 'completed' then 1 end)::int`,
     })
     .from(customerOrders)
     .where(eq(customerOrders.sellerId, sellerId));
@@ -197,9 +338,9 @@ export async function getGlobalOrderStats(db: Database): Promise<{
   const [row] = await db
     .select({
       total: sql<number>`count(*)::int`,
-      newCount: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
-      inProgressCount: sql<number>`count(case when ${customerOrders.status} = 'in_progress' or ${customerOrders.status} = 'in_review' then 1 end)::int`,
-      completedCount: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
+      newCount: sql<number>`count(case when ${customerOrders.orderStatus} = 'new' then 1 end)::int`,
+      inProgressCount: sql<number>`count(case when ${customerOrders.orderStatus} in ('qualified', 'accepted') then 1 end)::int`,
+      completedCount: sql<number>`count(case when ${customerOrders.orderStatus} = 'completed' then 1 end)::int`,
     })
     .from(customerOrders);
 
