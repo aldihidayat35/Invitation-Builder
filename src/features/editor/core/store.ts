@@ -28,6 +28,7 @@ import {
 import {
   addSection as addSectionOp,
   addVariable as addVariableOp,
+  bindTextSegmentToVariable as bindTextSegmentOp,
   createElement,
   createImageElement,
   createWidgetElement,
@@ -42,6 +43,7 @@ import {
   insertElementCopies,
   moveElementInLayers,
   nudgeElements,
+  removeVariable as removeVariableOp,
   renameElement as renameElementOp,
   renameGroup as renameGroupOp,
   reorderElements,
@@ -50,6 +52,7 @@ import {
   setVisible as setVisibleOp,
   shiftSection,
   toggleSectionOpening as toggleSectionOpeningOp,
+  unbindTextSegmentToStatic as unbindTextSegmentOp,
   ungroupElements,
   updateElement,
   updateElementFrame,
@@ -57,6 +60,7 @@ import {
   updateGroupAnimation as updateGroupAnimationOp,
   updateGroupStyle as updateGroupStyleOp,
   updateSection as updateSectionOp,
+  updateVariable as updateVariableOp,
   DEFAULT_DUPLICATE_OFFSET,
   type ElementKind,
   type ReorderMode,
@@ -164,6 +168,10 @@ export interface EditorActions {
     initialProps?: Record<string, unknown>,
   ): void;
   addVariable(input: Parameters<typeof addVariableOp>[1]): void;
+  updateVariable(key: string, patch: Parameters<typeof updateVariableOp>[2]): void;
+  removeVariable(key: string): void;
+  bindTextSegment(elementId: string, segmentIndex: number, bindKey: string, fallback?: string): void;
+  unbindTextSegment(elementId: string, segmentIndex: number, fallbackText?: string): void;
   deleteSelected(): void;
   duplicateSelected(): void;
   copySelected(): void;
@@ -516,6 +524,18 @@ export function createEditorStore(init: EditorInit): EditorStore {
       },
       addVariable(input) {
         edit((doc) => addVariableOp(doc, input));
+      },
+      updateVariable(key, patch) {
+        edit((doc) => updateVariableOp(doc, key, patch));
+      },
+      removeVariable(key) {
+        edit((doc) => removeVariableOp(doc, key));
+      },
+      bindTextSegment(elementId, segmentIndex, bindKey, fallback) {
+        edit((doc) => bindTextSegmentOp(doc, elementId, segmentIndex, bindKey, fallback));
+      },
+      unbindTextSegment(elementId, segmentIndex, fallbackText) {
+        edit((doc) => unbindTextSegmentOp(doc, elementId, segmentIndex, fallbackText));
       },
       deleteSelected() {
         const ids = get().selectedIds;

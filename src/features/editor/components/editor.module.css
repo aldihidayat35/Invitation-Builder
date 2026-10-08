@@ -6071,6 +6071,358 @@ textarea.input {
   color: #ff3844;
 }
 
+/* ----------------------------------------------------------------- text variable controls */
+.segmentCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--dash-border, #e2e8f0);
+  border-radius: 8px;
+  box-sizing: border-box;
+  position: relative;
+  transition: all 150ms ease;
+}
+
+.segmentCard:hover {
+  border-color: #cbd5e1;
+}
+
+.segmentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.segmentRow > div {
+  flex: 1;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--dash-text, #0f172a);
+  background: var(--dash-surface, #ffffff);
+  border: 1px solid var(--dash-border, #cbd5e1);
+  border-radius: 6px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 52px;
+}
+
+.errorHint {
+  font-size: 11px;
+  color: #e11d48;
+  margin: 0;
+}
+
+.chipRemove {
+  background: none;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+  margin-top: 24px;
+}
+
+.chipRemove:hover:not(:disabled) {
+  color: #e11d48;
+  background: rgba(225, 29, 72, 0.08);
+}
+
+.variableConvertRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.variableConvertBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.variableConvertBtn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+
+.variableConvertBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.variableConvertTabs {
+  display: flex;
+  gap: 4px;
+  background: #e2e8f0;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.variableConvertTab {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.variableConvertTab[data-active="true"] {
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.variableConvertActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.variableSubmitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #6366f1;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.variableSubmitBtn:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.variableCancelBtn {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.variableCancelBtn:hover {
+  background: #f1f5f9;
+}
+
+/* Dynamic Variable Card */
+.variableSegmentCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(236, 72, 153, 0.04) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-radius: 10px;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.06);
+}
+
+.variableCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.variableBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.variableBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 4px;
+}
+
+.variableKeyBadge {
+  font-family: monospace;
+  font-size: 11px;
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.variableUnbindBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+}
+
+.variableUnbindBtn:hover:not(:disabled) {
+  color: #e11d48;
+  border-color: #fca5a5;
+  background: #fff1f2;
+}
+
+.variableCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variableMetaLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.variableHint {
+  font-size: 10.5px;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.variableAdvancedToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: #6366f1;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.segmentBtnGroup {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Dark mode theme adaptations */
+.shell[data-theme="dark"] .segmentCard {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #242632;
+}
+
+.shell[data-theme="dark"] .segmentCard:hover {
+  border-color: #383b4d;
+}
+
+.shell[data-theme="dark"] .variableConvertBtn {
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.shell[data-theme="dark"] .variableConvertBox {
+  background: #15161c;
+  border-color: #242632;
+}
+
+.shell[data-theme="dark"] .variableConvertTabs {
+  background: #1e2028;
+}
+
+.shell[data-theme="dark"] .variableConvertTab[data-active="true"] {
+  background: #282a36;
+  color: #f8fafc;
+}
+
+.shell[data-theme="dark"] .variableSegmentCard {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(229, 9, 20, 0.08) 100%);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.shell[data-theme="dark"] .variableKeyBadge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.shell[data-theme="dark"] .variableUnbindBtn {
+  background: #1e2028;
+  border-color: #383b4d;
+  color: #cbd5e1;
+}
+
+.shell[data-theme="dark"] .variableMetaLabel {
+  color: #e2e8f0;
+}
+
+.shell[data-theme="dark"] .variableHint {
+  color: #94a3b8;
+}
+
 
 
 

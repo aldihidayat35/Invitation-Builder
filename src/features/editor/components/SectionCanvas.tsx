@@ -19,6 +19,7 @@ import {
   type Frame,
   type Section,
   type ThemeTokens,
+  type VariableDefinition,
 } from "@/lib/schema";
 import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
 import { findElement } from "../core/ops";
@@ -49,6 +50,7 @@ interface ElementNodeProps {
   readonly isMotionTarget?: boolean;
   readonly isOutsideSection?: boolean;
   readonly zoom?: number;
+  readonly variables?: readonly VariableDefinition[];
 }
 
 interface ElementHandlers {
@@ -69,10 +71,12 @@ function Visual({
   element,
   tokens,
   fontRev,
+  variables,
 }: {
   element: Element;
   tokens: ThemeTokens;
   fontRev: number;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   switch (element.type) {
@@ -83,7 +87,7 @@ function Visual({
           key={`txt-${element.id}-${fontRev}`}
           width={w}
           height={h}
-          text={textPreview(element)}
+          text={textPreview(element, variables)}
           fontFamily={resolveFontFamily(s.fontFamily, tokens)}
           fontSize={s.fontSize}
           fontStyle={String(s.fontWeight)}
@@ -173,6 +177,7 @@ const ElementNode = memo(function ElementNode({
   isMotionTarget = false,
   isOutsideSection = false,
   zoom = 1,
+  variables,
 }: ElementNodeProps) {
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
@@ -220,7 +225,7 @@ const ElementNode = memo(function ElementNode({
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
       <Group ref={innerRef} x={w / 2} y={h / 2} offsetX={w / 2} offsetY={h / 2}>
-        <Visual element={element} tokens={tokens} fontRev={fontRev} />
+        <Visual element={element} tokens={tokens} fontRev={fontRev} variables={variables} />
       </Group>
 
       {/* Off-canvas styling indicator when motion target is placed outside frame */}
@@ -330,6 +335,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   );
   const tokens = useEditor((s) => s.history.present.design.tokens);
   const docBackground = useEditor((s) => s.history.present.design.background);
+  const variables = useEditor((s) => s.history.present.variables);
   const zoom = useEditor((s) => s.zoom);
   const selectedIds = useEditor((s) => s.selectedIds);
   const readOnly = useEditor((s) => s.readOnly);
@@ -944,6 +950,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                     isMotionTarget={isTarget}
                     isOutsideSection={isOutsideSection}
                     zoom={zoom}
+                    variables={variables}
                   />
                 );
               })}

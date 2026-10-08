@@ -611,3 +611,18 @@ export const IconUngroup = (p: IconProps) => (
   </Svg>
 );
 
+export const IconVariable = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1" />
+    <path d="M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1" />
+  </Svg>
+);
+
+export const IconDatabase = (p: IconProps) => (
+  <Svg {...p}>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+  </Svg>
+);
+

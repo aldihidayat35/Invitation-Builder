@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import type { Element } from "@/lib/schema";
-import { findElement, findSection, type ReorderMode } from "../core/ops";
+import type { Element, VariableDefinition } from "@/lib/schema";
+import { variableKeySchema, isBindingCompatible, RUNTIME_CONTEXT_VARIABLES } from "@/lib/schema";
+import { findElement, findSection, uniqueVariableKey, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { BaseBackgroundControl } from "./BaseBackgroundControl";
@@ -22,6 +23,7 @@ import {
   IconClipboardCopy,
   IconClipboardPaste,
   IconCopy,
+  IconDatabase,
   IconDuplicate,
   IconEyeOff,
   IconForward,
@@ -38,6 +40,7 @@ import {
   IconTrash,
   IconUngroup,
   IconUnlock,
+  IconVariable,
 } from "./icons";
 import { ImagePanel } from "./ImagePanel";
 import { PanelSection } from "./PanelSection";
@@ -1075,9 +1078,22 @@ function TextPanel({
 }) {
   const store = useEditorStore();
   const act = () => store.getState();
+  const doc = useEditor(selectDoc);
   const id = element.id;
   const s = element.style;
   const segments = element.content.segments;
+
+  const [convertingIndex, setConvertingIndex] = useState<number | null>(null);
+  const [convertMode, setConvertMode] = useState<"create" | "pick">("create");
+  const [newKey, setNewKey] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newDefault, setNewDefault] = useState("");
+  const [selectedExistingKey, setSelectedExistingKey] = useState("");
+  const [convertError, setConvertError] = useState<string | null>(null);
+
+  // Available text-compatible variables in document + runtime
+  const declaredTextVars = doc.variables.filter((v) => isBindingCompatible("text", v.type));
+  const declaredKeys = new Set(doc.variables.map((v) => v.key));
 
   const setSegments = (next: TextElement["content"]["segments"]) =>
     act().patchElement(
@@ -1085,6 +1101,63 @@ function TextPanel({
       (el) => ({ ...(el as TextElement), content: { segments: next } }),
       "segments",
     );
+
+  const startConvert = (index: number, initialText: string) => {
+    setConvertingIndex(index);
+    setConvertMode("create");
+    setConvertError(null);
+    const suggestedKey = uniqueVariableKey(doc, "custom.text");
+    setNewKey(suggestedKey);
+    setNewLabel("Teks Dinamis");
+    setNewDefault(initialText);
+    setSelectedExistingKey(declaredTextVars[0]?.key ?? "guest.name");
+  };
+
+  const handleApplyConvert = (index: number) => {
+    if (convertMode === "create") {
+      const key = newKey.trim();
+      if (!variableKeySchema.safeParse(key).success) {
+        setConvertError("Kunci harus berupa dot path yang valid (mis. tamu.nama atau teks.pesan)");
+        return;
+      }
+      if (declaredKeys.has(key)) {
+        setConvertError("Kunci variabel ini sudah ada, gunakan kunci lain.");
+        return;
+      }
+      act().addVariable({
+        key,
+        label: newLabel.trim() || "Teks Dinamis",
+        type: "text",
+        default: newDefault,
+      });
+      act().bindTextSegment(id, index, key, newDefault);
+      setConvertingIndex(null);
+    } else {
+      if (!selectedExistingKey) {
+        setConvertError("Pilih variabel terlebih dahulu.");
+        return;
+      }
+      const existing = doc.variables.find((v) => v.key === selectedExistingKey);
+      const fallback =
+        (existing && "default" in existing && typeof existing.default === "string"
+          ? existing.default
+          : "") || newDefault;
+      act().bindTextSegment(id, index, selectedExistingKey, fallback);
+      setConvertingIndex(null);
+    }
+  };
+
+  const handleInsertVariable = () => {
+    const key = uniqueVariableKey(doc, "custom.text");
+    const label = "Teks Dinamis Baru";
+    act().addVariable({
+      key,
+      label,
+      type: "text",
+      default: "Teks baru",
+    });
+    setSegments([...segments, { bind: key, fallback: "Teks baru" }]);
+  };
 
   const fontName = typeof s.fontFamily === "string" ? s.fontFamily : "";
   const fontToken = typeof s.fontFamily === "object" ? s.fontFamily.token : "";
@@ -1133,57 +1206,292 @@ function TextPanel({
 
   return (
     <>
-      {segments.map((segment, index) =>
-        "bind" in segment ? (
-          <div key={index} className={styles.bindingChip} data-testid="binding-chip">
-            <span>Binding</span>
-            <code>{segment.bind}</code>
-            <button
-              type="button"
-              className={styles.chipRemove}
-              disabled={readOnly || segments.length <= 1}
-              aria-label={`Hapus segmen binding ${segment.bind}`}
-              onClick={() => setSegments(segments.filter((_, i) => i !== index))}
-            >
-              x
-            </button>
-          </div>
-        ) : (
-          <div key={index} className={styles.segmentRow}>
-            <TextField
-              id={`insp-text-${index}`}
-              label={segments.length > 1 ? `Segmen ${index + 1}` : "Isi teks"}
-              value={segment.text}
-              multiline
-              disabled={readOnly}
-              maxLength={2000}
-              onCommit={(text) =>
-                setSegments(segments.map((seg, i) => (i === index ? { text } : seg)))
-              }
-            />
-            {segments.length > 1 ? (
-              <button
-                type="button"
-                className={styles.chipRemove}
+      {segments.map((segment, index) => {
+        if ("bind" in segment) {
+          const declaredVar = doc.variables.find((v) => v.key === segment.bind);
+          const isGuest = segment.bind === "guest.name";
+          const varLabel = declaredVar?.label ?? (isGuest ? "Nama Tamu Undangan" : segment.bind);
+          const currentValue =
+            (declaredVar && "default" in declaredVar && typeof declaredVar.default === "string"
+              ? declaredVar.default
+              : "") || (typeof segment.fallback === "string" ? segment.fallback : "");
+
+          return (
+            <div key={index} className={styles.variableSegmentCard} data-testid="binding-chip">
+              <div className={styles.variableCardHeader}>
+                <div className={styles.variableBadgeGroup}>
+                  <span className={styles.variableBadge}>
+                    <IconVariable size={11} /> Variabel Dinamis
+                  </span>
+                  <code className={styles.variableKeyBadge}>{segment.bind}</code>
+                </div>
+                <button
+                  type="button"
+                  className={styles.variableUnbindBtn}
+                  disabled={readOnly}
+                  onClick={() => act().unbindTextSegment(id, index, currentValue)}
+                  title="Ubah kembali menjadi teks biasa (lepas variabel)"
+                >
+                  Teks Biasa
+                </button>
+              </div>
+
+              <div className={styles.variableCardBody}>
+                <span className={styles.variableMetaLabel}>{varLabel}</span>
+
+                {declaredVar ? (
+                  <>
+                    <FieldRow
+                      label="Isi Data Dinamis (Nilai Bawaan)"
+                      htmlFor={`var-dyn-val-${index}`}
+                    >
+                      <textarea
+                        id={`var-dyn-val-${index}`}
+                        className={styles.textarea}
+                        rows={2}
+                        disabled={readOnly}
+                        value={currentValue}
+                        placeholder="Ketik data dinamis yang akan tampil..."
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          act().updateVariable(segment.bind, { default: val });
+                          act().bindTextSegment(id, index, segment.bind, val);
+                        }}
+                      />
+                    </FieldRow>
+                    <p className={styles.variableHint}>
+                      Data dinamis ini langsung muncul di artboard dan pratinjau undangan.
+                    </p>
+                  </>
+                ) : isGuest ? (
+                  <>
+                    <FieldRow
+                      label="Teks Cadangan (Fallback jika nama tamu kosong)"
+                      htmlFor={`var-guest-fallback-${index}`}
+                    >
+                      <input
+                        id={`var-guest-fallback-${index}`}
+                        className={styles.input}
+                        disabled={readOnly}
+                        value={
+                          typeof segment.fallback === "string"
+                            ? segment.fallback
+                            : "Bapak / Ibu / Saudara(i)"
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          act().bindTextSegment(id, index, segment.bind, val);
+                        }}
+                      />
+                    </FieldRow>
+                    <p className={styles.variableHint}>
+                      Secara otomatis diisi nama tamu penerima dari tautan undangan.
+                    </p>
+                  </>
+                ) : (
+                  <FieldRow label="Nilai Cadangan (Fallback)" htmlFor={`var-fb-${index}`}>
+                    <input
+                      id={`var-fb-${index}`}
+                      className={styles.input}
+                      disabled={readOnly}
+                      value={typeof segment.fallback === "string" ? segment.fallback : ""}
+                      onChange={(e) =>
+                        act().bindTextSegment(id, index, segment.bind, e.target.value)
+                      }
+                    />
+                  </FieldRow>
+                )}
+
+                {segments.length > 1 && (
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className={styles.miniBtn}
+                      disabled={readOnly}
+                      onClick={() => setSegments(segments.filter((_, i) => i !== index))}
+                    >
+                      <IconTrash size={12} /> Hapus Segmen
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={index} className={styles.segmentCard}>
+            <div className={styles.segmentRow}>
+              <TextField
+                id={`insp-text-${index}`}
+                label={segments.length > 1 ? `Segmen ${index + 1} (Teks Biasa)` : "Isi Teks Biasa"}
+                value={segment.text}
+                multiline
                 disabled={readOnly}
-                aria-label={`Hapus segmen ${index + 1}`}
-                onClick={() => setSegments(segments.filter((_, i) => i !== index))}
-              >
-                x
-              </button>
-            ) : null}
+                maxLength={2000}
+                onCommit={(text) =>
+                  setSegments(segments.map((seg, i) => (i === index ? { text } : seg)))
+                }
+              />
+              {segments.length > 1 ? (
+                <button
+                  type="button"
+                  className={styles.chipRemove}
+                  disabled={readOnly}
+                  aria-label={`Hapus segmen ${index + 1}`}
+                  onClick={() => setSegments(segments.filter((_, i) => i !== index))}
+                >
+                  <IconTrash size={13} />
+                </button>
+              ) : null}
+            </div>
+
+            {!readOnly && (
+              <div className={styles.variableConvertRow}>
+                <button
+                  type="button"
+                  className={styles.variableConvertBtn}
+                  onClick={() => {
+                    if (convertingIndex === index) {
+                      setConvertingIndex(null);
+                    } else {
+                      startConvert(index, segment.text);
+                    }
+                  }}
+                  title="Jadikan teks biasa ini sebagai variabel dinamis"
+                >
+                  <IconVariable size={13} />
+                  <span>Jadikan Variabel Dinamis</span>
+                </button>
+              </div>
+            )}
+
+            {convertingIndex === index && !readOnly && (
+              <div className={styles.variableConvertBox}>
+                <div className={styles.variableConvertTabs}>
+                  <button
+                    type="button"
+                    className={styles.variableConvertTab}
+                    data-active={convertMode === "create"}
+                    onClick={() => {
+                      setConvertMode("create");
+                      setConvertError(null);
+                    }}
+                  >
+                    Buat Variabel Baru
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.variableConvertTab}
+                    data-active={convertMode === "pick"}
+                    onClick={() => {
+                      setConvertMode("pick");
+                      setConvertError(null);
+                    }}
+                  >
+                    Pilih yang Sudah Ada
+                  </button>
+                </div>
+
+                {convertError && <p className={styles.errorHint}>{convertError}</p>}
+
+                {convertMode === "create" ? (
+                  <>
+                    <FieldRow label="Label Variabel" htmlFor={`var-label-${index}`}>
+                      <input
+                        id={`var-label-${index}`}
+                        className={styles.input}
+                        value={newLabel}
+                        placeholder="Contoh: Nama Tamu, Ucapan"
+                        onChange={(e) => setNewLabel(e.target.value)}
+                      />
+                    </FieldRow>
+                    <FieldRow label="Kunci Variabel (dot path)" htmlFor={`var-key-${index}`}>
+                      <input
+                        id={`var-key-${index}`}
+                        className={styles.input}
+                        value={newKey}
+                        placeholder="mis. custom.text"
+                        onChange={(e) => setNewKey(e.target.value)}
+                      />
+                    </FieldRow>
+                    <FieldRow label="Nilai Dinamis Bawaan" htmlFor={`var-def-${index}`}>
+                      <textarea
+                        id={`var-def-${index}`}
+                        className={styles.textarea}
+                        rows={2}
+                        value={newDefault}
+                        onChange={(e) => setNewDefault(e.target.value)}
+                      />
+                    </FieldRow>
+                  </>
+                ) : (
+                  <FieldRow label="Pilih Variabel" htmlFor={`var-pick-${index}`}>
+                    <select
+                      id={`var-pick-${index}`}
+                      className={styles.input}
+                      value={selectedExistingKey}
+                      onChange={(e) => setSelectedExistingKey(e.target.value)}
+                    >
+                      <optgroup label="Konteks Tamu (Runtime)">
+                        <option value="guest.name">Nama Tamu Undangan (guest.name)</option>
+                      </optgroup>
+                      {declaredTextVars.length > 0 && (
+                        <optgroup label="Variabel Terdaftar">
+                          {declaredTextVars.map((v) => (
+                            <option key={v.key} value={v.key}>
+                              {v.label} ({v.key})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </FieldRow>
+                )}
+
+                <div className={styles.variableConvertActions}>
+                  <button
+                    type="button"
+                    className={styles.variableCancelBtn}
+                    onClick={() => setConvertingIndex(null)}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.variableSubmitBtn}
+                    onClick={() => handleApplyConvert(index)}
+                  >
+                    <IconVariable size={12} />
+                    {convertMode === "create" ? "Buat & Sambungkan" : "Sambungkan"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        ),
-      )}
-      <button
-        type="button"
-        className={styles.ghostButton}
-        disabled={readOnly || segments.length >= 50}
-        onClick={() => setSegments([...segments, { text: " " }])}
-      >
-        <IconPlus size={13} />
-        Segmen teks
-      </button>
+        );
+      })}
+      <div className={styles.segmentBtnGroup}>
+        <button
+          type="button"
+          className={styles.ghostButton}
+          disabled={readOnly || segments.length >= 50}
+          onClick={() => setSegments([...segments, { text: " " }])}
+        >
+          <IconPlus size={13} />
+          Segmen teks
+        </button>
+        <button
+          type="button"
+          className={styles.ghostButton}
+          disabled={readOnly || segments.length >= 50}
+          onClick={handleInsertVariable}
+          title="Sisipkan variabel dinamis baru"
+        >
+          <IconVariable size={13} />
+          + Variabel Dinamis
+        </button>
+      </div>
 
       <p className={styles.groupLabel}>Tipografi</p>
       <SelectField

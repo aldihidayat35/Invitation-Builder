@@ -848,6 +848,93 @@ export function uniqueVariableKey(doc: CanonicalDocument, base: string): string 
   for (let n = 2; ; n++) if (!taken.has(`${base}${n}`)) return `${base}${n}`;
 }
 
+/**
+ * Updates an existing variable definition in the document (e.g. updating default value or label).
+ * Returns the modified document, or same reference if key not found or patch invalid.
+ */
+export function updateVariable(
+  doc: CanonicalDocument,
+  key: string,
+  patch: Partial<VariableDefinitionInput>,
+): CanonicalDocument {
+  const existing = doc.variables.find((v) => v.key === key);
+  if (!existing) return doc;
+
+  const merged = { ...existing, ...patch, key: existing.key };
+  const parsed = variableDefinitionSchema.safeParse(merged);
+  if (!parsed.success) return doc;
+
+  return {
+    ...doc,
+    variables: doc.variables.map((v) => (v.key === key ? parsed.data : v)),
+  };
+}
+
+/**
+ * Removes a variable from the document variables list.
+ */
+export function removeVariable(
+  doc: CanonicalDocument,
+  key: string,
+): CanonicalDocument {
+  if (!doc.variables.some((v) => v.key === key)) return doc;
+  return {
+    ...doc,
+    variables: doc.variables.filter((v) => v.key !== key),
+  };
+}
+
+/**
+ * Converts a static text segment into a variable binding segment.
+ */
+export function bindTextSegmentToVariable(
+  doc: CanonicalDocument,
+  elementId: string,
+  segmentIndex: number,
+  bindKey: string,
+  fallback?: string,
+): CanonicalDocument {
+  return updateElement(doc, elementId, (el) => {
+    if (el.type !== "text") return el;
+    const segments = [...el.content.segments];
+    if (segmentIndex < 0 || segmentIndex >= segments.length) return el;
+    segments[segmentIndex] = {
+      bind: bindKey,
+      ...(fallback !== undefined && fallback.length > 0 ? { fallback } : {}),
+    };
+    return { ...el, content: { segments } };
+  });
+}
+
+/**
+ * Converts a variable binding segment back to a static text segment.
+ */
+export function unbindTextSegmentToStatic(
+  doc: CanonicalDocument,
+  elementId: string,
+  segmentIndex: number,
+  fallbackText?: string,
+): CanonicalDocument {
+  return updateElement(doc, elementId, (el) => {
+    if (el.type !== "text") return el;
+    const segments = [...el.content.segments];
+    if (segmentIndex < 0 || segmentIndex >= segments.length) return el;
+    const seg = segments[segmentIndex]!;
+    let text = fallbackText ?? "";
+    if (!text && "bind" in seg) {
+      const v = doc.variables.find((item) => item.key === seg.bind);
+      const defaultVal = v && "default" in v && typeof v.default === "string" ? v.default : "";
+      text =
+        defaultVal ||
+        (typeof seg.fallback === "string" ? seg.fallback : "") ||
+        "";
+    }
+    segments[segmentIndex] = { text: text || " " };
+    return { ...el, content: { segments } };
+  });
+}
+
+
 // ----------------------------------------------------------------------- groups
 
 /** Finds all elements belonging to a specific group in the document. */

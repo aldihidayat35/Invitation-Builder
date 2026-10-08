@@ -2,7 +2,7 @@
  * Display helpers shared by editor panels and the canvas: token-aware color
  * resolution and human-readable element labels. Pure.
  */
-import type { CanonicalDocument, Element, ThemeTokens } from "@/lib/schema";
+import type { CanonicalDocument, Element, ThemeTokens, VariableDefinition } from "@/lib/schema";
 import { getFontFallback } from "@/lib/fonts";
 
 type ColorInput = string | { readonly token: string } | undefined;
@@ -39,9 +39,34 @@ export function resolveFontFamily(
   return `${name}, ${fallback}`;
 }
 
-/** Plain text preview of a text element; bindings appear as `{key}`. */
-export function textPreview(element: Extract<Element, { type: "text" }>): string {
-  return element.content.segments.map((s) => ("bind" in s ? `{${s.bind}}` : s.text)).join("");
+/** Plain text preview of a text element; bindings appear as dynamic value, fallback, or `{key}`. */
+export function textPreview(
+  element: Extract<Element, { type: "text" }>,
+  variables?: readonly VariableDefinition[],
+): string {
+  return element.content.segments
+    .map((s) => {
+      if (!("bind" in s)) return s.text;
+      if (variables) {
+        const found = variables.find((v) => v.key === s.bind);
+        if (
+          found &&
+          "default" in found &&
+          typeof found.default === "string" &&
+          found.default.length > 0
+        ) {
+          return found.default;
+        }
+      }
+      if (typeof s.fallback === "string" && s.fallback.length > 0) {
+        return s.fallback;
+      }
+      if (s.bind === "guest.name") {
+        return "Bapak/Ibu/Saudara(i)";
+      }
+      return `{${s.bind}}`;
+    })
+    .join("");
 }
 
 const TYPE_LABEL: Record<string, string> = {
