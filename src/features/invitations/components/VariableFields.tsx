@@ -1,4 +1,6 @@
+import type { AssetSummary } from "@/features/assets/api";
 import type { FormField, FormGroup } from "@/lib/engine";
+import { InvitationImagePicker } from "./InvitationImagePicker";
 import styles from "./VariableFields.module.css";
 
 export interface VariableFieldsProps {
@@ -11,6 +13,8 @@ export interface VariableFieldsProps {
   readonly errors?: Readonly<Record<string, string>>;
   /** Ready image assets to pick from; without it the image field falls back to an Asset ID input. */
   readonly imageOptions?: readonly { readonly id: string; readonly label: string }[];
+  readonly workspaceId?: string;
+  readonly initialAssets?: readonly AssetSummary[];
 }
 
 const INPUT_TYPE: Partial<Record<FormField["control"], string>> = {
@@ -39,6 +43,8 @@ export function VariableFields({
   namePrefix = "",
   errors = {},
   imageOptions,
+  workspaceId,
+  initialAssets,
 }: VariableFieldsProps) {
   return (
     <div className={styles.groups}>
@@ -67,7 +73,19 @@ export function VariableFields({
                     </span>
                   ) : null}
                 </label>
-                {field.control === "select" || (field.control === "image" && imageOptions) ? (
+                {field.control === "image" ? (
+                  <InvitationImagePicker
+                    id={id}
+                    name={name}
+                    label={field.label}
+                    value={value}
+                    required={field.required}
+                    imageOptions={imageOptions}
+                    workspaceId={workspaceId}
+                    initialAssets={initialAssets}
+                    describedBy={describedBy}
+                  />
+                ) : field.control === "select" ? (
                   <select
                     id={id}
                     name={name}
@@ -77,17 +95,11 @@ export function VariableFields({
                     aria-describedby={describedBy}
                   >
                     <option value="">-</option>
-                    {field.control === "image"
-                      ? imageOptions?.map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.label}
-                          </option>
-                        ))
-                      : field.options?.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
+                    {field.options?.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
                   </select>
                 ) : field.control === "textarea" ? (
                   <textarea

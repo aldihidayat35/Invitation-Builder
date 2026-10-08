@@ -59,9 +59,8 @@ export default async function InvitationDataPage({
   for (const issue of report.issues) {
     if (!(issue.key in errors)) errors[issue.key] = issue.message;
   }
-  const imageOptions = assets
-    .filter((asset) => asset.mimeType.startsWith("image/"))
-    .map((asset) => ({ id: asset.id, label: asset.filename }));
+  const imageAssets = assets.filter((asset) => asset.mimeType.startsWith("image/"));
+  const imageOptions = imageAssets.map((asset) => ({ id: asset.id, label: asset.filename }));
   const archived = invitation.status === "archived";
 
   return (
@@ -105,10 +104,12 @@ export default async function InvitationDataPage({
           ) : (
             <DataModeForm
               invitationId={invitation.id}
+              workspaceId={invitation.workspaceId}
               groups={groups}
               values={values}
               initialErrors={errors}
               imageOptions={imageOptions}
+              initialAssets={imageAssets}
               save={saveInvitationDataAction}
               readOnly={archived || !permissions.write}
             />

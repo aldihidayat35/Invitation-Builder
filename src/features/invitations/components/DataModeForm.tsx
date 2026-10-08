@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AssetSummary } from "@/features/assets/api";
 import type { FormGroup } from "@/lib/engine";
 import type { SaveDataAction } from "./action-state";
 import styles from "./invitations.module.css";
@@ -36,18 +37,22 @@ function collect(form: HTMLFormElement): Record<string, string> {
  */
 export function DataModeForm({
   invitationId,
+  workspaceId,
   groups,
   values,
   initialErrors,
   imageOptions,
+  initialAssets,
   save,
   readOnly = false,
 }: {
   invitationId: string;
+  workspaceId?: string;
   groups: readonly FormGroup[];
   values: Readonly<Record<string, string>>;
   initialErrors: Readonly<Record<string, string>>;
   imageOptions?: readonly { id: string; label: string }[];
+  initialAssets?: readonly AssetSummary[];
   save: SaveDataAction;
   readOnly?: boolean;
 }) {
@@ -107,6 +112,8 @@ export function DataModeForm({
           values={values}
           namePrefix={PREFIX}
           errors={errors}
+          workspaceId={workspaceId}
+          initialAssets={initialAssets}
           {...(imageOptions && { imageOptions })}
         />
       </fieldset>

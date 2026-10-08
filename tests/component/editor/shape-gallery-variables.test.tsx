@@ -245,7 +245,7 @@ describe("Shape & Gallery Dynamic Image Variables", () => {
         "media.gallery1": "https://example.com/resolved-gallery.jpg",
       });
 
-      const resolvedProps = (resolved.sections[0]!.elements[0] as { props: { items: { src: string }[] } }).props;
+      const resolvedProps = (resolved.sections[0]!.elements[0] as unknown as { props: { items: { src: string }[] } }).props;
       expect(resolvedProps.items[0]?.src).toBe("https://example.com/resolved-gallery.jpg");
     });
   });
