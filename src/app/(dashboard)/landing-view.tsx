@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
+import type { AppSettingsData } from "@/features/dashboard-layout";
 import "./landing.css";
 
 export interface TemplateItem {
@@ -228,9 +229,10 @@ const formatRupiah = (n: number) =>
 
 interface LandingViewProps {
   currentUser?: { id: string; name: string; email: string } | null;
+  appSettings?: AppSettingsData | null;
 }
 
-export function LandingView({ currentUser }: LandingViewProps) {
+export function LandingView({ currentUser, appSettings }: LandingViewProps) {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -503,10 +505,18 @@ export function LandingView({ currentUser }: LandingViewProps) {
           aria-label="Navigasi utama"
         >
           <Link
-            className="font-display text-[23px] font-bold tracking-[-.04em] text-white"
+            className="font-display text-[23px] font-bold tracking-[-.04em] text-white flex items-center gap-2.5"
             href="/"
           >
-            Undangan.id
+            {appSettings?.appLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={appSettings.appLogo}
+                alt={appSettings.appName}
+                className="h-8 w-auto max-w-[120px] object-contain rounded"
+              />
+            ) : null}
+            <span>{appSettings?.appName || "Undangan.id"}</span>
           </Link>
           <div className="hidden items-center gap-9 text-[13px] font-medium text-[#e6e3df] md:flex">
             <a href="#beranda" className="border-b-2 border-[#b87831] pb-2 text-white">
@@ -579,6 +589,19 @@ export function LandingView({ currentUser }: LandingViewProps) {
             id="mobileNav"
             className="relative z-40 mx-5 mb-3 space-y-1 rounded-xl border border-white/10 bg-[#333333] p-4 text-sm md:hidden"
           >
+            <div className="flex items-center gap-2 px-3 py-1 mb-2 border-b border-white/10 pb-2">
+              {appSettings?.appLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={appSettings.appLogo}
+                  alt={appSettings.appName}
+                  className="h-6 w-auto object-contain rounded"
+                />
+              ) : null}
+              <span className="font-display text-base font-bold text-white">
+                {appSettings?.appName || "Undangan.id"}
+              </span>
+            </div>
             <a
               className="block rounded-lg px-3 py-2 hover:bg-white/10"
               href="#beranda"
@@ -1002,8 +1025,83 @@ export function LandingView({ currentUser }: LandingViewProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#fafafa] pb-6 text-center text-[11px] text-[#a5a09a]">
-        © 2026 Undangan.id · Solusi Template Undangan Digital Modern & Elegan.
+      <footer className="border-t border-[#e8e7e5] bg-[#fafafa] pt-10 pb-8 text-[#5b5855]">
+        <div className="mx-auto max-w-[1240px] px-5 lg:px-0">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-4 pb-8 border-b border-[#e8e7e5]">
+            {/* Col 1: Brand & Slogan */}
+            <div className="md:col-span-2 space-y-3">
+              <Link href="/" className="font-display text-[22px] font-bold tracking-tight text-[#262524] flex items-center gap-2.5">
+                {appSettings?.appLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={appSettings.appLogo}
+                    alt={appSettings.appName}
+                    className="h-8 w-auto max-w-[120px] object-contain rounded"
+                  />
+                ) : null}
+                <span>{appSettings?.appName || "Undangan.id"}</span>
+              </Link>
+              <p className="max-w-md text-[13px] leading-relaxed text-[#78716c]">
+                {appSettings?.footerDescription ||
+                  "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia."}
+              </p>
+            </div>
+
+            {/* Col 2: Hubungi Kami */}
+            <div className="space-y-2.5">
+              <h4 className="text-[12px] font-bold uppercase tracking-wider text-[#925003]">
+                Kontak Resmi
+              </h4>
+              <ul className="space-y-2 text-[12.5px] text-[#5c5652]">
+                {appSettings?.contactWhatsapp ? (
+                  <li>
+                    <a
+                      href={`https://wa.me/${appSettings.contactWhatsapp}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#925003] transition-colors flex items-center gap-1.5"
+                    >
+                      <span>💬 WhatsApp: +{appSettings.contactWhatsapp}</span>
+                    </a>
+                  </li>
+                ) : null}
+                {appSettings?.contactPhone ? (
+                  <li>
+                    <a href={`tel:${appSettings.contactPhone}`} className="hover:text-[#925003] transition-colors">
+                      📞 Telp: {appSettings.contactPhone}
+                    </a>
+                  </li>
+                ) : null}
+                {appSettings?.contactEmail ? (
+                  <li>
+                    <a href={`mailto:${appSettings.contactEmail}`} className="hover:text-[#925003] transition-colors">
+                      ✉️ {appSettings.contactEmail}
+                    </a>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+
+            {/* Col 3: Alamat Operasional */}
+            <div className="space-y-2.5">
+              <h4 className="text-[12px] font-bold uppercase tracking-wider text-[#925003]">
+                Alamat Kantor
+              </h4>
+              <p className="text-[12px] leading-relaxed text-[#5c5652]">
+                {appSettings?.address || "Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col items-center justify-between gap-3 text-[11px] text-[#a5a09a] sm:flex-row">
+            <p>
+              © {new Date().getFullYear()} {appSettings?.companyName || appSettings?.appName || "Undangan.id"}. Seluruh hak cipta dilindungi.
+            </p>
+            <p className="text-[10px] text-[#a5a09a]">
+              Solusi Template Undangan Digital Modern & Elegan
+            </p>
+          </div>
+        </div>
       </footer>
 
       {/* Details Modal */}

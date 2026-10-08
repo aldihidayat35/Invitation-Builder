@@ -17,7 +17,9 @@ import {
   IconTemplate,
   IconUsers,
   IconUserShield,
+  IconSettings,
 } from "./nav-icons";
+import { getAppSettings } from "@/lib/db/repositories/settings";
 
 /** Authenticated enterprise dashboard shell layout. */
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
@@ -26,7 +28,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     ? await getClientAgencyBranding(user.resellerId)
     : null;
 
-  const [storageUsage, templateCount, activeInvitationCount] = await Promise.all([
+  const [storageUsage, templateCount, activeInvitationCount, appSettings] = await Promise.all([
     fetchStorageOverview(user.systemRole === "owner" ? undefined : active?.workspace.id).catch(() => null),
     active ? listLibrary(active.workspace.id).then((l) => l.length).catch(() => 2) : 2,
     active
@@ -34,6 +36,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           .then((invs) => invs.filter((i) => i.status === "published").length || invs.length)
           .catch(() => 2)
       : 2,
+    getAppSettings().catch(() => null),
   ]);
 
   const initials = user.name
@@ -113,6 +116,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Manajemen Storage",
           icon: <IconStorage />,
           hint: "Kapasitas & kelola seluruh berkas media",
+        },
+        {
+          href: "/dashboard/admin/settings",
+          label: "Pengaturan Umum",
+          icon: <IconSettings />,
+          hint: "Identitas aplikasi, logo, kontak & alamat",
         },
       ],
     });
@@ -196,6 +205,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           : null
       }
       agencyBranding={agencyBranding}
+      appSettings={appSettings}
       storageUsage={storageUsage}
       navGroups={navGroups}
       logoutAction={logoutAction}

@@ -43,6 +43,13 @@
       "when": 1791389000000,
       "tag": "0005_remove_credit_system_add_customer_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791460000000,
+      "tag": "0006_app_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -17,6 +17,11 @@ import {
   getOrderTrends,
   getMonthlyOrderTrends,
 } from "@/lib/db/repositories/orders";
+import {
+  getAppSettings,
+  updateAppSettings,
+} from "@/lib/db/repositories/settings";
+import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import type {
   AdminOrderItem,
@@ -178,6 +183,37 @@ export async function updateAdminOrderStatus(
       previousStatus: current.status,
       newStatus: updated.status,
       invitationId: input.invitationId,
+    },
+  });
+
+  return updated;
+}
+
+/** Fetches application branding and general settings. */
+export async function getAdminAppSettings(): Promise<AppSettingRow> {
+  await requireOwner();
+  const db = await getDb();
+  return getAppSettings(db);
+}
+
+/** Saves application branding and general settings. */
+export async function saveAdminAppSettings(
+  input: Partial<Omit<NewAppSettingRow, "id" | "createdAt" | "updatedAt">>
+): Promise<AppSettingRow> {
+  const actor = await requireOwner();
+  const db = await getDb();
+
+  const updated = await updateAppSettings(db, input);
+
+  await insertAuditLog(db, {
+    workspaceId: null,
+    actorId: actor.id,
+    action: "settings.update",
+    entityType: "app_settings",
+    entityId: "global",
+    metadata: {
+      appName: updated.appName,
+      companyName: updated.companyName,
     },
   });
 

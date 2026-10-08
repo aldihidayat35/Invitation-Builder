@@ -42,3 +42,15 @@ export interface StorageUsageSummary {
   readonly formattedUsed: string;
   readonly formattedLimit: string;
 }
+
+export interface AppSettingsData {
+  readonly appName: string;
+  readonly appTagline: string;
+  readonly appLogo?: string | null;
+  readonly companyName: string;
+  readonly contactPhone: string;
+  readonly contactWhatsapp: string;
+  readonly contactEmail: string;
+  readonly address: string;
+  readonly footerDescription: string;
+}

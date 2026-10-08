@@ -371,6 +371,23 @@ export const customerOrders = pgTable(
   ],
 );
 
+export const appSettings = pgTable("app_settings", {
+  id: text("id").primaryKey().default("global"),
+  appName: text("app_name").notNull().default("Undangan.id"),
+  appTagline: text("app_tagline").notNull().default("Undangan Digital, Lebih Berkesan"),
+  appLogo: text("app_logo"),
+  companyName: text("company_name").notNull().default("Undangan.id"),
+  contactPhone: text("contact_phone").notNull().default("+62 812-3456-7890"),
+  contactWhatsapp: text("contact_whatsapp").notNull().default("6281234567890"),
+  contactEmail: text("contact_email").notNull().default("support@undangan.id"),
+  address: text("address").notNull().default("Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190"),
+  footerDescription: text("footer_description").notNull().default(
+    "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia."
+  ),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
@@ -389,5 +406,7 @@ export type GuestRow = typeof guests.$inferSelect;
 export type RsvpRow = typeof rsvps.$inferSelect;
 export type AssetRow = typeof assets.$inferSelect;
 export type AuditLogRow = typeof auditLogs.$inferSelect;
+export type AppSettingRow = typeof appSettings.$inferSelect;
+export type NewAppSettingRow = typeof appSettings.$inferInsert;
 
 

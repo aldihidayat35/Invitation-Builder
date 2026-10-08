@@ -1,6 +1,9 @@
 import React from "react";
+import type { AppSettingsData } from "../types";
 
-export function DashboardFooter() {
+export function DashboardFooter({ appSettings }: { readonly appSettings?: AppSettingsData | null }) {
+  const brandName = appSettings?.companyName || appSettings?.appName || "Invitation Studio";
+
   return (
     <footer className="mt-auto border-t border-stone-200/90 bg-white/80 px-6 py-4 text-xs text-stone-500 backdrop-blur-xs select-none">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
@@ -13,7 +16,7 @@ export function DashboardFooter() {
           <span className="text-stone-500">Platform Undangan Digital v1.2</span>
         </div>
         <p className="text-stone-400">
-          © {new Date().getFullYear()} Invitation Studio · Kencana Atelier. Seluruh hak cipta dilindungi.
+          © {new Date().getFullYear()} {brandName}. Seluruh hak cipta dilindungi.
         </p>
       </div>
     </footer>

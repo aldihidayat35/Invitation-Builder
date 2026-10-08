@@ -7,3 +7,4 @@ export * from "./assets";
 export * from "./invitations";
 export * from "./resellers";
 export * from "./orders";
+export * from "./settings";

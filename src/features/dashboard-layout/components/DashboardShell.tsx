@@ -6,6 +6,7 @@ import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardFooter } from "./DashboardFooter";
 import type {
   AgencyBrandingData,
+  AppSettingsData,
   NavGroup,
   StorageUsageSummary,
   UserSummaryData,
@@ -16,6 +17,7 @@ interface DashboardShellProps {
   readonly user: UserSummaryData;
   readonly activeWorkspace: WorkspaceSummaryData | null;
   readonly agencyBranding: AgencyBrandingData | null;
+  readonly appSettings?: AppSettingsData | null;
   readonly storageUsage?: StorageUsageSummary | null;
   readonly navGroups: readonly NavGroup[];
   readonly logoutAction: () => Promise<void> | void;
@@ -26,6 +28,7 @@ export function DashboardShell({
   user,
   activeWorkspace,
   agencyBranding,
+  appSettings,
   storageUsage,
   navGroups,
   logoutAction,
@@ -39,6 +42,7 @@ export function DashboardShell({
       <DashboardSidebar
         navGroups={navGroups}
         agencyBranding={agencyBranding}
+        appSettings={appSettings}
         storageUsage={storageUsage}
         user={user}
         logoutAction={logoutAction}
@@ -59,7 +63,7 @@ export function DashboardShell({
           {children}
         </main>
 
-        <DashboardFooter />
+        <DashboardFooter appSettings={appSettings} />
       </div>
     </div>
   );

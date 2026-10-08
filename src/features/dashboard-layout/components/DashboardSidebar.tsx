@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { AgencyBrandingData, NavGroup, StorageUsageSummary } from "../types";
+import type { AgencyBrandingData, AppSettingsData, NavGroup, StorageUsageSummary } from "../types";
 
 interface DashboardSidebarProps {
   readonly navGroups: readonly NavGroup[];
   readonly agencyBranding: AgencyBrandingData | null;
+  readonly appSettings?: AppSettingsData | null;
   readonly storageUsage?: StorageUsageSummary | null;
   readonly isMobileOpen: boolean;
   readonly onCloseMobile: () => void;
@@ -23,6 +24,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({
   navGroups,
   agencyBranding,
+  appSettings,
   storageUsage,
   isMobileOpen,
   onCloseMobile,
@@ -35,6 +37,16 @@ export function DashboardSidebar({
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   };
+
+  const brandName = appSettings?.appName || "Invitation Studio";
+  const brandTagline = appSettings?.appTagline || "PLATFORM UNDANGAN";
+  const brandLogo = appSettings?.appLogo;
+  const brandInitials = brandName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("") || "IS";
 
   const renderBadge = (badge: number | string) => {
     const badgeStr = String(badge);
@@ -64,16 +76,25 @@ export function DashboardSidebar({
       {/* Top Brand Section */}
       <div>
         <div className="flex items-center gap-3.5 border-b border-[#262220] px-6 py-5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D4AF37] text-base font-black text-[#2C221E] shadow-md shadow-amber-950/20">
-            IS
-          </div>
+          {brandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brandLogo}
+              alt={brandName}
+              className="h-11 w-11 shrink-0 rounded-xl object-contain bg-white/10 p-1 border border-white/10"
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D4AF37] text-base font-black text-[#2C221E] shadow-md shadow-amber-950/20">
+              {brandInitials}
+            </div>
+          )}
           <div className="overflow-hidden">
             <h2 className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-white leading-tight">
-              <span>Invitation Studio</span>
+              <span className="truncate">{brandName}</span>
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block shrink-0" />
             </h2>
-            <p className="mt-0.5 text-[10px] font-bold text-[#D4AF37] tracking-widest uppercase">
-              PLATFORM UNDANGAN
+            <p className="mt-0.5 text-[10px] font-bold text-[#D4AF37] tracking-widest uppercase truncate">
+              {brandTagline}
             </p>
           </div>
         </div>

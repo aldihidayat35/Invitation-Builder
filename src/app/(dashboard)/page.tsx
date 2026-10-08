@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/server";
+import { getAppSettings } from "@/lib/db/repositories/settings";
 import { LandingView } from "./landing-view";
 
-export const metadata: Metadata = {
-  title: "Undangan.id — Template Undangan Digital",
-  description:
-    "Temukan template undangan digital yang elegan dan mudah disesuaikan untuk momen spesialmu. Ribuan template siap digunakan.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getAppSettings().catch(() => null);
+  const appName = settings?.appName || "Undangan.id";
+  const tagline = settings?.appTagline || "Template Undangan Digital";
+  return {
+    title: `${appName} — ${tagline}`,
+    description:
+      settings?.footerDescription ||
+      "Temukan template undangan digital yang elegan dan mudah disesuaikan untuk momen spesialmu. Ribuan template siap digunakan.",
+  };
+}
 
 export default async function HomePage() {
-  const currentUser = await getCurrentUser().catch(() => null);
+  const [currentUser, appSettings] = await Promise.all([
+    getCurrentUser().catch(() => null),
+    getAppSettings().catch(() => null),
+  ]);
 
-  return <LandingView currentUser={currentUser} />;
+  return <LandingView currentUser={currentUser} appSettings={appSettings} />;
 }

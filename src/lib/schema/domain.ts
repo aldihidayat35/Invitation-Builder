@@ -74,5 +74,6 @@ export const AUDIT_ACTIONS = [
   "user.create",
   "user.update",
   "user.delete",
+  "settings.update",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
