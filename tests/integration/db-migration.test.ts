@@ -5,7 +5,7 @@ import { createMigratedDb } from "../helpers/db";
 import { fullDocument } from "../helpers/documents";
 import { migrateDocument } from "@/lib/schema";
 import { seedDev } from "@/lib/db/seed";
-import { publishedSnapshots, templateVersions, auditLogs, invitations } from "@/lib/db/schema";
+import { publishedSnapshots, templateVersions, auditLogs, invitations, users } from "@/lib/db/schema";
 
 type Conn = Awaited<ReturnType<typeof createMigratedDb>>;
 let conn: Conn;
@@ -119,8 +119,9 @@ describe("immutability + round trip (NFR-REL-001)", () => {
     await expect(
       db.execute(sql`insert into workspaces (name, slug) values ('x', 'Bad Slug')`),
     ).rejects.toThrow();
+    const [seededUser] = await db.select({ email: users.email }).from(users).limit(1);
     await expect(
-      db.execute(sql`insert into users (email, name) values ('DEV@example.test', 'dup')`),
+      db.execute(sql`insert into users (email, name) values (${seededUser!.email.toUpperCase()}, 'dup')`),
     ).rejects.toThrow();
   });
 });

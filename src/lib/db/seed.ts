@@ -2,8 +2,10 @@
  * Idempotent dev seed: one dev user, one dev workspace (+owner), one empty template.
  * Uses repositories only; contains no client data.
  */
+import { eq } from "drizzle-orm";
 import { assertPasswordPolicy, hashPassword } from "../auth/password";
 import { createEmptyDocument } from "../schema/document";
+import { templates, users, workspaceMembers } from "./schema";
 import {
   createResellerClient,
   createResellerWithProfile,
@@ -18,7 +20,9 @@ import {
 import { createWorkspaceWithOwner, findWorkspaceBySlug } from "./repositories/workspaces";
 import type { Database } from "./types";
 
-export const DEV_USER_EMAIL = "dev@example.test";
+export const ADMIN_USER_EMAIL = "admin@admin.com";
+export const ADMIN_DEFAULT_PASSWORD = "admin123";
+export const DEV_USER_EMAIL = ADMIN_USER_EMAIL;
 export const DEV_WORKSPACE_SLUG = "dev-workspace";
 export const DEV_TEMPLATE_NAME = "Empty Template";
 export const DEMO_RESELLER_EMAIL = "reseller@example.test";
@@ -28,6 +32,7 @@ export const DEMO_CLIENT_SLUG = "klien-berkah";
 
 export interface SeedResult {
   userId: string;
+  adminUserId?: string;
   workspaceId: string;
   templateId: string;
   resellerUserId?: string;
@@ -35,18 +40,38 @@ export interface SeedResult {
 }
 
 export interface SeedOptions {
-  /** Dev login password. Applied only when the dev user has no password yet; never overwrites. */
+  email?: string;
+  name?: string;
   password?: string;
-  /** Whether to seed a demo reseller account. Defaults to true. */
   withDemoReseller?: boolean;
 }
 
 export async function seedDev(db: Database, options: SeedOptions = {}): Promise<SeedResult> {
+  const adminEmail = options.email ?? ADMIN_USER_EMAIL;
+  const adminName = options.name ?? "Super Admin";
+  const password = options.password ?? ADMIN_DEFAULT_PASSWORD;
+
+  // Clean up old dev@example.test user if migrating to admin@admin.com so exactly 1 owner exists
+  if (adminEmail === ADMIN_USER_EMAIL) {
+    const oldDev = await findUserByEmail(db, "dev@example.test");
+    const currentAdmin = await findUserByEmail(db, ADMIN_USER_EMAIL);
+    if (oldDev && !currentAdmin) {
+      await db
+        .update(users)
+        .set({ email: ADMIN_USER_EMAIL, name: adminName, updatedAt: new Date() })
+        .where(eq(users.id, oldDev.id));
+    } else if (oldDev && currentAdmin && oldDev.id !== currentAdmin.id) {
+      await db.update(templates).set({ createdBy: currentAdmin.id }).where(eq(templates.createdBy, oldDev.id));
+      await db.delete(workspaceMembers).where(eq(workspaceMembers.userId, oldDev.id));
+      await db.delete(users).where(eq(users.id, oldDev.id));
+    }
+  }
+
   const user =
-    (await findUserByEmail(db, DEV_USER_EMAIL)) ??
+    (await findUserByEmail(db, adminEmail)) ??
     (await insertUser(db, {
-      email: DEV_USER_EMAIL,
-      name: "Dev User",
+      email: adminEmail,
+      name: adminName,
       passwordHash: null,
       systemRole: "owner",
     }));
@@ -55,9 +80,13 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     await updateUserRole(db, user.id, "owner");
   }
 
-  if (options.password) {
-    assertPasswordPolicy(options.password);
-    await setInitialPasswordHash(db, user.id, await hashPassword(options.password));
+  if (password) {
+    assertPasswordPolicy(password);
+    const hash = await hashPassword(password);
+    await db
+      .update(users)
+      .set({ passwordHash: hash, status: "active", updatedAt: new Date() })
+      .where(eq(users.id, user.id));
   }
 
   const workspace =
@@ -67,6 +96,15 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       slug: DEV_WORKSPACE_SLUG,
       ownerUserId: user.id,
     }));
+
+  await db
+    .insert(workspaceMembers)
+    .values({
+      workspaceId: workspace.id,
+      userId: user.id,
+      role: "owner",
+    })
+    .onConflictDoNothing();
 
   const template =
     (await findTemplateByName(db, workspace.id, DEV_TEMPLATE_NAME)) ??
@@ -115,6 +153,7 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
 
     return {
       userId: user.id,
+      adminUserId: user.id,
       workspaceId: workspace.id,
       templateId: template.id,
       resellerUserId,
@@ -122,5 +161,11 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     };
   }
 
-  return { userId: user.id, workspaceId: workspace.id, templateId: template.id, resellerUserId };
+  return {
+    userId: user.id,
+    adminUserId: user.id,
+    workspaceId: workspace.id,
+    templateId: template.id,
+    resellerUserId,
+  };
 }

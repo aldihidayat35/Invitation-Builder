@@ -13,7 +13,7 @@ export interface ScryptParams {
 }
 
 export const DEFAULT_SCRYPT_PARAMS: ScryptParams = { N: 65_536, r: 8, p: 1 };
-export const MIN_PASSWORD_LENGTH = 10;
+export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_PASSWORD_LENGTH = 256;
 const KEY_LENGTH = 32;
 const MAX_N = 1 << 20;

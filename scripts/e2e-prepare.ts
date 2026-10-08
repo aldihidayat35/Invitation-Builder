@@ -22,7 +22,11 @@ async function main(): Promise<void> {
   const conn = connectFromEnv();
   try {
     await conn.migrate();
-    const seeded = await seedDev(conn.db, { password: E2E_PASSWORD });
+    const seeded = await seedDev(conn.db, {
+      email: "dev@example.test",
+      name: "Dev User",
+      password: E2E_PASSWORD,
+    });
 
     const other = await insertUser(conn.db, {
       email: "other@example.test",

@@ -1,4 +1,4 @@
-import { seedDev } from "../src/lib/db/seed";
+import { ADMIN_DEFAULT_PASSWORD, ADMIN_USER_EMAIL, seedDev } from "../src/lib/db/seed";
 import { connectFromEnv } from "./lib/connect";
 
 async function main(): Promise<void> {
@@ -14,6 +14,7 @@ async function main(): Promise<void> {
           : "dev-password-change-me";
     const result = await seedDev(conn.db, { password });
     console.log("Seed OK:", result);
+    console.log(`Admin login: ${ADMIN_USER_EMAIL} / ${ADMIN_DEFAULT_PASSWORD}`);
     if (password)
       console.log(`Dev login: ${"dev@example.test"} / (SEED_DEV_PASSWORD or the dev default)`);
   } finally {
