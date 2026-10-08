@@ -21,32 +21,32 @@ export function KpiStatCard({
   trend,
   tone = "default",
 }: KpiStatCardProps) {
-  const getToneClasses = () => {
+  const getBadgeClasses = () => {
     switch (tone) {
       case "gold":
-        return "border-[#D4AF37]/40 bg-gradient-to-br from-amber-50/60 to-white";
+        return "border-amber-200/80 bg-[#FEF3C7] text-[#D97706]";
       case "bronze":
-        return "border-[#84633F]/30 bg-gradient-to-br from-stone-50 to-white";
+        return "border-yellow-200/80 bg-[#FEF9C3] text-[#CA8A04]";
       case "emerald":
-        return "border-emerald-200/80 bg-gradient-to-br from-emerald-50/50 to-white";
+        return "border-emerald-200/80 bg-[#ECFDF5] text-[#059669]";
       default:
-        return "border-stone-200/90 bg-white";
+        return "border-blue-200/80 bg-[#EFF6FF] text-[#2563EB]";
     }
   };
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border p-5 shadow-xs transition-all hover:shadow-md ${getToneClasses()}`}
+      className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300"
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-stone-500">{title}</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-[#2C221E] sm:text-3xl">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[#1E293B]">
             {value}
           </p>
         </div>
 
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] border border-stone-200/80 text-[#84633F] shadow-2xs">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-2xs ${getBadgeClasses()}`}>
           {icon}
         </div>
       </div>
@@ -57,7 +57,7 @@ export function KpiStatCard({
             <span
               className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-semibold ${
                 trend.neutral
-                  ? "bg-stone-100 text-stone-600"
+                  ? "bg-slate-100 text-slate-600"
                   : trend.positive
                     ? "bg-emerald-100 text-emerald-800"
                     : "bg-rose-100 text-rose-800"
@@ -66,7 +66,7 @@ export function KpiStatCard({
               {!trend.neutral && (trend.positive ? "↑" : "↓")} {trend.value}
             </span>
           )}
-          {subtitle && <span className="text-stone-400 truncate">{subtitle}</span>}
+          {subtitle && <span className="text-slate-400 truncate text-[11.5px]">{subtitle}</span>}
         </div>
       )}
     </div>

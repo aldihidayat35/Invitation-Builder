@@ -31,11 +31,13 @@ export function DashboardShell({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#F7F4EF] text-[#2C221E] antialiased">
+    <div className="flex min-h-screen bg-[#F7F9FB] text-[#1E293B] antialiased">
       {/* Sidebar Navigation */}
       <DashboardSidebar
         navGroups={navGroups}
         agencyBranding={agencyBranding}
+        user={user}
+        logoutAction={logoutAction}
         isMobileOpen={isMobileOpen}
         onCloseMobile={() => setIsMobileOpen(false)}
       />

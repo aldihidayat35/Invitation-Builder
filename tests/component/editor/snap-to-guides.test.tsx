@@ -6,10 +6,12 @@ import { TopBar } from "@/features/editor/components/TopBar";
 import { minimalDocument } from "../../helpers/documents";
 import { snapToGuides } from "@/features/editor/core/geometry";
 
+import { canonicalDocumentSchema } from "@/lib/schema";
+
 describe("Snap to Guides (Perataan Otomatis) in Editor", () => {
   it("initializes with snapToGuides enabled by default in store", () => {
     const store = createEditorStore({
-      document: minimalDocument(),
+      document: canonicalDocumentSchema.parse(minimalDocument()),
       revision: 1,
     });
     expect(store.getState().snapToGuides).toBe(true);
@@ -23,7 +25,7 @@ describe("Snap to Guides (Perataan Otomatis) in Editor", () => {
 
   it("renders the Snap to Guides toggle button in TopBar and updates on click", () => {
     const store = createEditorStore({
-      document: minimalDocument(),
+      document: canonicalDocumentSchema.parse(minimalDocument()),
       revision: 1,
     });
 

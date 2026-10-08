@@ -11,8 +11,8 @@ import { getMonthlyOrderTrends } from "@/lib/db/repositories/orders";
 import { IconArrowRight, IconInvitation, IconPlus, IconTemplate } from "./nav-icons";
 
 export const metadata: Metadata = {
-  title: "Dashboard Workspace",
-  description: "Dashboard workspace: ringkasan template, undangan, dan status publikasi.",
+  title: "Studio Dashboard Workspace",
+  description: "Studio dashboard workspace: ringkasan template, undangan digital, dan status publikasi.",
 };
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
@@ -20,17 +20,51 @@ const dateFormat = new Intl.DateTimeFormat("id-ID", {
   timeZone: "Asia/Jakarta",
 });
 
-const TEMPLATE_STATUS: Record<TemplateSummary["lifecycle"], { label: string; badgeClass: string }> = {
-  draft: { label: "Draft", badgeClass: "bg-amber-100 text-amber-900 border-amber-300" },
-  published: { label: "Dipublish", badgeClass: "bg-emerald-100 text-emerald-900 border-emerald-300" },
-  "published-with-changes": { label: "Revisi Aktif", badgeClass: "bg-blue-100 text-blue-900 border-blue-300" },
-  archived: { label: "Diarsipkan", badgeClass: "bg-stone-100 text-stone-600 border-stone-200" },
+interface StatusStyle {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+}
+
+const TEMPLATE_STATUS: Record<TemplateSummary["lifecycle"], StatusStyle> = {
+  draft: {
+    label: "Draft",
+    badgeClass: "bg-amber-50 text-amber-900 border-amber-200/80",
+    dotClass: "bg-[#D97706]",
+  },
+  published: {
+    label: "Dipublish",
+    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+    dotClass: "bg-[#059669]",
+  },
+  "published-with-changes": {
+    label: "Revisi Aktif",
+    badgeClass: "bg-blue-50 text-blue-900 border-blue-200/80",
+    dotClass: "bg-[#2563EB]",
+  },
+  archived: {
+    label: "Diarsipkan",
+    badgeClass: "bg-slate-50 text-slate-700 border-slate-200/80",
+    dotClass: "bg-slate-400",
+  },
 };
 
-const INVITATION_STATUS: Record<InvitationSummary["status"], { label: string; badgeClass: string }> = {
-  draft: { label: "Draft", badgeClass: "bg-amber-100 text-amber-900 border-amber-300" },
-  published: { label: "Dipublish", badgeClass: "bg-emerald-100 text-emerald-900 border-emerald-300" },
-  archived: { label: "Diarsipkan", badgeClass: "bg-stone-100 text-stone-600 border-stone-200" },
+const INVITATION_STATUS: Record<InvitationSummary["status"], StatusStyle> = {
+  draft: {
+    label: "Draft",
+    badgeClass: "bg-amber-50 text-amber-900 border-amber-200/80",
+    dotClass: "bg-[#D97706]",
+  },
+  published: {
+    label: "Dipublish",
+    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+    dotClass: "bg-[#059669]",
+  },
+  archived: {
+    label: "Diarsipkan",
+    badgeClass: "bg-slate-50 text-slate-700 border-slate-200/80",
+    dotClass: "bg-slate-400",
+  },
 };
 
 const byUpdated = <T extends { updatedAt: Date }>(a: T, b: T) =>
@@ -59,46 +93,66 @@ export default async function DashboardPage() {
   const recentInvitations = [...invitations].sort(byUpdated).slice(0, 5);
 
   const invitationDonutSegments = [
-    { label: "Dipublish", value: publishedInvitations, color: "#257849" },
-    { label: "Draft", value: draftInvitations, color: "#D4AF37" },
-    { label: "Diarsipkan", value: archivedInvitations, color: "#8F7F74" },
+    { label: "Dipublish", value: publishedInvitations, color: "#059669" },
+    { label: "Draft", value: draftInvitations, color: "#D97706" },
+    { label: "Diarsipkan", value: archivedInvitations, color: "#64748B" },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#84633F]">
-            {active ? `Workspace · ${active.workspace.name}` : "Akun Personal"}
-          </span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#2C221E] sm:text-3xl">
-            Dashboard Workspace
-          </h1>
-          <p className="mt-1 text-xs text-stone-500 sm:text-sm">
-            Selamat datang, <strong>{user.name}</strong>. Kelola desain template, buat website undangan pernikahan digital, dan pantau konfirmasi tamu (RSVP).
-          </p>
-        </div>
+      {/* 1. Hero Welcome & Creation Banner (Stitch Spec) */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-white to-amber-50/40 p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1 text-[11px] font-bold text-amber-900 tracking-wide uppercase mb-2 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] animate-pulse" />
+              <span>{active ? `Workspace · ${active.workspace.name}` : "Studio Platform Undangan"}</span>
+            </div>
 
-        {active && (
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/dashboard/templates"
-              id="open-template-library"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 shadow-2xs transition hover:bg-stone-50"
-            >
-              <IconPlus />
-              <span>Template Baru</span>
-            </Link>
-            <Link
-              href="/dashboard/invitations"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#715332]"
-            >
-              <IconPlus />
-              <span>Undangan Baru</span>
-            </Link>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1E293B]">
+              Studio Dashboard Workspace
+            </h1>
+
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Selamat datang kembali, <strong className="text-slate-900 font-semibold">{user.name}</strong>. Kelola desain template, buat website undangan pernikahan digital, dan pantau konfirmasi kehadiran tamu (RSVP) secara realtime.
+            </p>
+
+            <div className="mt-3.5 flex flex-wrap items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2.5 py-1 font-medium text-slate-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                {publishedInvitations} Undangan Dipublish
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2.5 py-1 font-medium text-slate-700">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                {publishedTemplates} Template Siap Pakai
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100/80 px-2.5 py-1 font-medium text-slate-700">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                {invitations.length} Total Projek
+              </span>
+            </div>
           </div>
-        )}
+
+          {active && (
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <Link
+                href="/dashboard/templates"
+                id="open-template-library"
+                className="inline-flex h-[42px] items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-amber-300 hover:bg-amber-50/40 hover:text-slate-900"
+              >
+                <IconPlus />
+                <span>Katalog Template</span>
+              </Link>
+              <Link
+                href="/dashboard/invitations"
+                className="inline-flex h-[42px] items-center gap-2 rounded-xl bg-[#D97706] px-5 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#B45309] hover:shadow-md"
+              >
+                <IconPlus />
+                <span>Buat Undangan Baru</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {!active && (
@@ -110,19 +164,21 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards Grid */}
+      {/* 2. Metric KPI Cards Grid (30px bold numeral & domain badge pills) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiStatCard
           title="Total Template Desain"
           value={templates.length}
-          tone="bronze"
+          tone="gold"
+          subtitle={`${publishedTemplates} template siap pakai`}
           icon={<IconTemplate />}
         />
 
         <KpiStatCard
           title="Template Siap Pakai"
           value={publishedTemplates}
-          tone="gold"
+          tone="bronze"
+          subtitle={`${draftTemplates} template dalam draft`}
           icon={<IconTemplate />}
         />
 
@@ -130,6 +186,7 @@ export default async function DashboardPage() {
           title="Total Website Undangan"
           value={invitations.length}
           tone="default"
+          subtitle={`${publishedInvitations} telah dipublish`}
           icon={<IconInvitation />}
         />
 
@@ -137,11 +194,12 @@ export default async function DashboardPage() {
           title="Undangan Sudah Terbit"
           value={publishedInvitations}
           tone="emerald"
+          subtitle={`${draftInvitations} undangan masih draft`}
           icon={<IconInvitation />}
         />
       </div>
 
-      {/* Analytics Chart & Workflow Grid */}
+      {/* 3. Analytics Chart & Volume Trends */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <StatusDonutChart
@@ -163,48 +221,75 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Work Grid (Invitations & Templates) */}
+      {/* 4. Recent Work Tables (Stitch Partner & Storefront Table Style) */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Recent Invitations */}
-        <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+        {/* Table: Undangan Terbaru */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 bg-slate-50/70 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-[#2C221E]">Undangan Terbaru</h3>
-              <p className="text-xs text-stone-400">Undangan yang baru saja disunting di workspace</p>
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-[#D97706]" />
+                <h3 className="text-sm font-bold text-[#1E293B]">Undangan Terbaru</h3>
+              </div>
+              <p className="text-[11.5px] text-slate-400 mt-0.5">
+                Projek undangan yang baru saja disunting di workspace
+              </p>
             </div>
             <Link
               href="/dashboard/invitations"
-              className="text-xs font-semibold text-[#84633F] hover:text-[#715332]"
+              className="text-xs font-bold text-[#D97706] hover:text-[#B45309] transition-colors"
             >
               Lihat Semua →
             </Link>
           </div>
 
           {recentInvitations.length === 0 ? (
-            <div className="py-8 text-center text-xs text-stone-400">
-              Belum ada undangan dibuat. Klik tombol &quot;Undangan Baru&quot; di atas untuk memulai.
+            <div className="py-12 text-center text-xs text-slate-400">
+              <p className="font-medium text-slate-500">Belum ada undangan dibuat.</p>
+              <p className="mt-1">Klik tombol &quot;Buat Undangan Baru&quot; di atas untuk memulai.</p>
             </div>
           ) : (
-            <ul className="mt-2 divide-y divide-stone-100 text-xs">
+            <ul className="divide-y divide-slate-100 text-xs">
               {recentInvitations.map((inv) => {
-                const cfg = INVITATION_STATUS[inv.status] ?? { label: inv.status, badgeClass: "bg-stone-100 text-stone-700" };
+                const cfg = INVITATION_STATUS[inv.status] ?? {
+                  label: inv.status,
+                  badgeClass: "bg-slate-50 text-slate-700 border-slate-200",
+                  dotClass: "bg-slate-400",
+                };
+
+                const initialChar = inv.title.trim().charAt(0).toUpperCase() || "U";
+
                 return (
                   <li key={inv.id}>
                     <Link
                       href={`/dashboard/invitations/${inv.id}`}
-                      className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-stone-50 transition-colors"
+                      className="flex items-center justify-between px-4 py-3.5 hover:bg-[#FAF7F2] transition-colors"
                     >
-                      <div>
-                        <strong className="block text-[#2C221E] font-medium">{inv.title}</strong>
-                        <span className="text-[11px] text-stone-400">
-                          Diperbarui {dateFormat.format(inv.updatedAt)}
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Monogram Identity Square (Stitch Spec) */}
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 border border-amber-200/70 text-xs font-bold text-[#D97706] shadow-2xs">
+                          {initialChar}
+                        </div>
+                        <div className="min-w-0">
+                          <strong className="block text-slate-800 font-semibold truncate">
+                            {inv.title}
+                          </strong>
+                          <span className="text-[11px] text-slate-400">
+                            Diperbarui {dateFormat.format(inv.updatedAt)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${cfg.badgeClass}`}>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${cfg.badgeClass}`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${cfg.dotClass}`} />
                           {cfg.label}
                         </span>
-                        <IconArrowRight />
+                        <span className="text-slate-400 group-hover:text-slate-700">
+                          <IconArrowRight />
+                        </span>
                       </div>
                     </Link>
                   </li>
@@ -214,46 +299,76 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Templates */}
-        <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+        {/* Table: Template Desain Terbaru */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 bg-slate-50/70 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-[#2C221E]">Template Desain Terbaru</h3>
-              <p className="text-xs text-stone-400">Desain template yang tersimpan dalam pustaka</p>
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-[#CA8A04]" />
+                <h3 className="text-sm font-bold text-[#1E293B]">Template Desain Terbaru</h3>
+              </div>
+              <p className="text-[11.5px] text-slate-400 mt-0.5">
+                Katalog master template yang tersimpan dalam pustaka
+              </p>
             </div>
             <Link
               href="/dashboard/templates"
-              className="text-xs font-semibold text-[#84633F] hover:text-[#715332]"
+              className="text-xs font-bold text-[#D97706] hover:text-[#B45309] transition-colors"
             >
               Buka Katalog →
             </Link>
           </div>
 
           {recentTemplates.length === 0 ? (
-            <div className="py-8 text-center text-xs text-stone-400">
-              Belum ada template. Buat desain template di kanvas editor.
+            <div className="py-12 text-center text-xs text-slate-400">
+              <p className="font-medium text-slate-500">Belum ada template terdaftar.</p>
+              <p className="mt-1">Buat desain template di kanvas editor.</p>
             </div>
           ) : (
-            <ul className="mt-2 divide-y divide-stone-100 text-xs">
+            <ul className="divide-y divide-slate-100 text-xs">
               {recentTemplates.map((tpl) => {
-                const cfg = TEMPLATE_STATUS[tpl.lifecycle] ?? { label: tpl.lifecycle, badgeClass: "bg-stone-100 text-stone-700" };
+                const cfg = TEMPLATE_STATUS[tpl.lifecycle] ?? {
+                  label: tpl.lifecycle,
+                  badgeClass: "bg-slate-50 text-slate-700 border-slate-200",
+                  dotClass: "bg-slate-400",
+                };
+
+                const initialChar = tpl.name.trim().charAt(0).toUpperCase() || "T";
+
                 return (
                   <li key={tpl.id}>
                     <Link
                       href={`/dashboard/templates/${tpl.id}`}
-                      className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-stone-50 transition-colors"
+                      className="flex items-center justify-between px-4 py-3.5 hover:bg-[#FAF7F2] transition-colors"
                     >
-                      <div>
-                        <strong className="block text-[#2C221E] font-medium">{tpl.name}</strong>
-                        <span className="text-[11px] text-stone-400">
-                          {tpl.publishedVersionNo !== null ? `Versi ${tpl.publishedVersionNo}` : "Draft belum rilis"} · {dateFormat.format(tpl.updatedAt)}
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Monogram Identity Square (Stitch Spec) */}
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-yellow-50 border border-yellow-200/70 text-xs font-bold text-[#CA8A04] shadow-2xs">
+                          {initialChar}
+                        </div>
+                        <div className="min-w-0">
+                          <strong className="block text-slate-800 font-semibold truncate">
+                            {tpl.name}
+                          </strong>
+                          <span className="text-[11px] text-slate-400">
+                            {tpl.publishedVersionNo !== null
+                              ? `Versi ${tpl.publishedVersionNo}`
+                              : "Draft belum rilis"}{" "}
+                            · {dateFormat.format(tpl.updatedAt)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${cfg.badgeClass}`}>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${cfg.badgeClass}`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${cfg.dotClass}`} />
                           {cfg.label}
                         </span>
-                        <IconArrowRight />
+                        <span className="text-slate-400 group-hover:text-slate-700">
+                          <IconArrowRight />
+                        </span>
                       </div>
                     </Link>
                   </li>
