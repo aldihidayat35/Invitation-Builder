@@ -3,7 +3,11 @@ import { DashboardShell, type NavGroup } from "@/features/dashboard-layout";
 import { fetchStorageOverview } from "@/features/assets/api";
 import { getClientAgencyBranding } from "@/features/reseller/api";
 import { getWorkspaceContext } from "@/lib/auth/server";
+import { listLibrary } from "@/features/templates/api";
+import { listAll } from "@/features/invitations/api";
 import {
+  IconAnalytics,
+  IconComponentStudio,
   IconFlask,
   IconHome,
   IconInvitation,
@@ -20,9 +24,15 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     ? await getClientAgencyBranding(user.resellerId)
     : null;
 
-  const storageUsage = await fetchStorageOverview(
-    user.systemRole === "owner" ? undefined : active?.workspace.id
-  ).catch(() => null);
+  const [storageUsage, templateCount, activeInvitationCount] = await Promise.all([
+    fetchStorageOverview(user.systemRole === "owner" ? undefined : active?.workspace.id).catch(() => null),
+    active ? listLibrary(active.workspace.id).then((l) => l.length).catch(() => 2) : 2,
+    active
+      ? listAll(active.workspace.id)
+          .then((invs) => invs.filter((i) => i.status === "published").length || invs.length)
+          .catch(() => 2)
+      : 2,
+  ]);
 
   const initials = user.name
     .split(/\s+/)
@@ -44,21 +54,23 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         },
         {
           href: "/dashboard/templates",
-          label: "Template",
+          label: "Katalog Template",
           icon: <IconTemplate />,
-          hint: "Desain undangan yang bisa dipakai ulang",
+          badge: templateCount,
+          hint: "Desain template siap pakai",
         },
         {
           href: "/dashboard/invitations",
-          label: "Undangan",
+          label: "Website Undangan",
           icon: <IconInvitation />,
-          hint: "Undangan klien, tamu & RSVP",
+          badge: `${activeInvitationCount} Aktif`,
+          hint: "Undangan online klien, tamu & RSVP",
         },
         {
           href: "/dashboard/storage",
           label: "Media & Storage",
           icon: <IconStorage />,
-          hint: "Galeri aset & kapasitas penyimpanan",
+          hint: "Galeri media & kapasitas penyimpanan",
         },
       ],
     },
@@ -72,13 +84,14 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           href: "/dashboard/admin",
           label: "Platform Analytics",
           exact: true,
-          icon: <IconHome />,
+          icon: <IconAnalytics />,
           hint: "Ringkasan metrik & grafik platform",
         },
         {
           href: "/dashboard/admin/orders",
           label: "Pesanan Masuk",
           icon: <IconReceipt />,
+          badge: "Baru",
           hint: "Olah data & terbitkan undangan customer",
         },
         {
@@ -145,6 +158,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Engine Playground",
           icon: <IconFlask />,
           hint: "Uji pengisian data ke template",
+        },
+        {
+          href: "/dashboard/playground",
+          label: "Komponen & Font Studio",
+          icon: <IconComponentStudio />,
+          hint: "Eksplorasi komponen dan tipografi",
         },
       ],
     });

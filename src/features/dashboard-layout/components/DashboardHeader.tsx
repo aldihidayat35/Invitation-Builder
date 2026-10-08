@@ -21,7 +21,7 @@ export function DashboardHeader({
       case "owner":
         return {
           label: "Super Admin",
-          className: "bg-amber-50 text-amber-900 border-amber-200/90 shadow-2xs",
+          className: "bg-gradient-to-r from-amber-100 to-amber-200/70 text-[#92400E] border-amber-300/80 shadow-2xs",
           icon: "👑",
         };
       case "reseller":
@@ -33,7 +33,7 @@ export function DashboardHeader({
       default:
         return {
           label: "Klien / Mempelai",
-          className: "bg-slate-50 text-slate-800 border-slate-200 shadow-2xs",
+          className: "bg-stone-50 text-stone-800 border-stone-200 shadow-2xs",
           icon: "💍",
         };
     }
@@ -42,13 +42,13 @@ export function DashboardHeader({
   const roleBadge = getRoleBadge(user.systemRole);
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-stone-200/90 bg-white px-4 sm:px-6 lg:px-8">
       {/* Left: Mobile trigger & breadcrumb */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleMobileSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-700 shadow-2xs hover:bg-stone-50 transition-colors lg:hidden"
           aria-label="Buka navigasi menu"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,79 +56,75 @@ export function DashboardHeader({
           </svg>
         </button>
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-bold text-[#1E293B] tracking-tight">Studio Dashboard</span>
-          <span className="text-slate-300">/</span>
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
+          <span className="font-medium text-stone-400">Studio Dashboard</span>
+          <span className="text-stone-300">/</span>
           {activeWorkspace ? (
-            <span
+            <div
               id="active-workspace"
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50/80 px-2.5 py-0.5 text-xs font-semibold text-amber-900 shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-[#F5F5F4] px-3 py-1 text-xs font-semibold text-stone-800 shadow-2xs cursor-default"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A338]" />
               <span className="workspaceName">{activeWorkspace.name}</span>
-            </span>
+              <svg className="h-3 w-3 text-stone-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </div>
           ) : (
-            <span id="active-workspace" className="text-xs text-slate-400">
+            <span id="active-workspace" className="text-xs text-stone-400">
               Workspace Mandiri
             </span>
           )}
         </div>
       </div>
 
-      {/* Center: Search input micro-component (Desktop) */}
-      <div className="hidden md:flex items-center relative max-w-xs w-full mx-4">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <input
-          type="text"
-          placeholder="Cari undangan, template..."
-          className="w-full pl-9 pr-8 py-1.5 text-xs rounded-xl border border-slate-200/90 bg-slate-50/70 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/15 transition-all"
-          readOnly
-        />
-        <span className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[10px] font-semibold text-slate-400">
-          ⌘K
-        </span>
-      </div>
-
-      {/* Right: Role indicator & User Menu */}
-      <div className="flex items-center gap-3">
+      {/* Right: Role indicator, Bell, User Profile, Logout */}
+      <div className="flex items-center gap-3.5">
         {/* Role Badge */}
         <span
-          className={`hidden sm:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${roleBadge.className}`}
+          className={`hidden sm:inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${roleBadge.className}`}
         >
           <span>{roleBadge.icon}</span>
           <span>{roleBadge.label}</span>
         </span>
 
-        {/* User Card & Logout */}
-        <div id="current-user" className="flex items-center gap-3 pl-2 sm:border-l sm:border-slate-200">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs font-bold text-white shadow-xs">
-              {user.initials}
-            </div>
-            <div className="hidden text-left md:block">
-              <p className="text-xs font-semibold text-[#1E293B] leading-tight">{user.name}</p>
-              <p className="text-[11px] text-slate-400 leading-tight truncate max-w-[140px]">{user.email}</p>
-            </div>
-          </div>
+        {/* Notification Bell */}
+        <button
+          type="button"
+          className="relative flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          title="Notifikasi"
+          aria-label="Notifikasi"
+        >
+          <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+        </button>
 
-          <form action={logoutAction}>
-            <button
-              id="logout-button"
-              type="submit"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-2xs hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors"
-              title="Keluar dari akun"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="hidden sm:inline">Keluar</span>
-            </button>
-          </form>
+        {/* User Card */}
+        <div id="current-user" className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1C1917] text-xs font-bold text-white shadow-xs">
+            {user.initials}
+          </div>
+          <div className="hidden text-left md:block">
+            <p className="text-xs font-bold text-stone-900 leading-tight">{user.name}</p>
+            <p className="text-[11px] text-stone-400 leading-tight truncate max-w-[140px]">{user.email}</p>
+          </div>
         </div>
+
+        {/* Logout Button */}
+        <form action={logoutAction}>
+          <button
+            id="logout-button"
+            type="submit"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+            title="Keluar dari akun"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </form>
       </div>
     </header>
   );
