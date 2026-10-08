@@ -99,6 +99,15 @@ export function TemplateActions(props: TemplateActionsProps) {
               </button>
             </form>
           ) : null}
+          <a
+            href={`/api/templates/${templateId}/export`}
+            className={styles.secondarySmall}
+            data-testid="export-button"
+            download
+            title="Ekspor template ke format paket .zip"
+          >
+            Ekspor (.zip)
+          </a>
           {canArchive ? (
             <button
               type="button"

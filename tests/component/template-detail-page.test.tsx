@@ -44,7 +44,6 @@ describe("TemplateDetailPage (Revamped Layout & Studio Editor Launchpad)", () =>
     const tpl = mockTemplate();
     vi.spyOn(api, "openTemplate").mockResolvedValue(tpl);
     vi.spyOn(api, "permissionsFor").mockResolvedValue({
-      read: true,
       write: true,
       publish: true,
       archive: true,
@@ -104,7 +103,6 @@ describe("TemplateDetailPage (Revamped Layout & Studio Editor Launchpad)", () =>
     });
     vi.spyOn(api, "openTemplate").mockResolvedValue(tpl);
     vi.spyOn(api, "permissionsFor").mockResolvedValue({
-      read: true,
       write: false,
       publish: false,
       archive: false,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { listLibrary, permissionsFor } from "@/features/templates/api";
-import { CreateTemplateForm, TemplateList } from "@/features/templates/components";
+import { CreateTemplateForm, ImportTemplateDialog, TemplateList } from "@/features/templates/components";
 import styles from "@/features/templates/components/templates.module.css";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import {
@@ -51,7 +51,20 @@ export default async function TemplateLibraryPage({
       </header>
 
       {permissions.write && !archivedView ? (
-        <CreateTemplateForm workspaceId={workspaceId} action={createTemplateAction} />
+        <div className={styles.creationRow}>
+          <div style={{ flex: "1 1 540px" }}>
+            <CreateTemplateForm workspaceId={workspaceId} action={createTemplateAction} />
+          </div>
+          <div className={styles.importSideCard}>
+            <div className={styles.importSideCardHead}>
+              <h3 className={styles.importSideCardTitle}>Pindahkan Template</h3>
+              <p className={styles.muted}>
+                Punya file template dari server atau aplikasi lain? Impor seluruh konfigurasi, tata letak, dan aset media sekaligus.
+              </p>
+            </div>
+            <ImportTemplateDialog workspaceId={workspaceId} />
+          </div>
+        </div>
       ) : null}
 
       <div className={styles.toolbar}>

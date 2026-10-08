@@ -72,6 +72,20 @@ export async function validate(templateId: string, document?: unknown) {
   return service.validateTemplate(db, actor, templateId, document);
 }
 
+export async function exportTemplate(templateId: string) {
+  const { db, actor } = await context();
+  const { getStorage } = await import("@/lib/storage");
+  const { exportTemplatePackage } = await import("./export");
+  return exportTemplatePackage(db, getStorage(), actor, templateId);
+}
+
+export async function importTemplate(workspaceId: string, zipBytes: Uint8Array) {
+  const { db, actor } = await context();
+  const { getStorage } = await import("@/lib/storage");
+  const { importTemplatePackage } = await import("./import");
+  return importTemplatePackage(db, getStorage(), actor, workspaceId, zipBytes);
+}
+
 export {
   NothingToPublishError,
   PublishBlockedError,
@@ -80,6 +94,7 @@ export {
   TemplateInputError,
   TemplateNotFoundError,
 } from "./service";
+export { TemplateImportError } from "./import";
 
 /** Maps domain errors to messages that are safe to show; unknown errors are not leaked. */
 export function describeTemplateError(error: unknown): string {

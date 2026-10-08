@@ -1218,3 +1218,288 @@
   color: var(--dash-muted);
   font-size: 0.86rem;
 }
+
+/* ---------- Template Import / Export Styles ---------- */
+.creationRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.importSideCard {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  border-radius: var(--dash-radius);
+  border: 1px dashed var(--dash-border-strong);
+  background: var(--dash-surface-sunken);
+  box-shadow: var(--dash-shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.importSideCard:hover {
+  border-color: var(--dash-accent);
+  background: var(--dash-surface);
+}
+
+.importSideCardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.importSideCardTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--dash-text);
+}
+
+.importTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 18px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-accent);
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.importTriggerBtn:hover {
+  background: var(--dash-accent);
+  color: var(--dash-on-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(132, 99, 63, 0.2);
+}
+
+/* Modal dialog */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(18, 16, 14, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.importModalContent {
+  width: 100%;
+  max-width: 540px;
+  border-radius: 16px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.modalIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.modalSubtitle {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--dash-muted);
+  line-height: 1.4;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--dash-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  background: var(--dash-surface-sunken);
+  color: var(--dash-text);
+}
+
+.modalBody {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--dash-border);
+  background: var(--dash-surface-sunken);
+}
+
+/* Drop zone */
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 20px;
+  border-radius: 12px;
+  border: 2px dashed var(--dash-border-strong);
+  background: var(--dash-surface-sunken);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropZone:hover,
+.dropZoneActive {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+}
+
+.dropZoneIcon {
+  color: var(--dash-accent);
+  margin-bottom: 4px;
+}
+
+.dropZoneTitle {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  color: var(--dash-text);
+}
+
+.dropZoneHint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dash-muted);
+}
+
+/* Package summary card inside dialog */
+.packageSummaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--dash-surface-sunken);
+  border: 1px solid var(--dash-border);
+}
+
+.packageSummaryHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.packageCheckIcon {
+  color: var(--dash-success);
+}
+
+.packageNameTitle {
+  font-size: 1.05rem;
+  color: var(--dash-text);
+  display: block;
+}
+
+.packageFileMeta {
+  font-size: 0.78rem;
+  color: var(--dash-muted);
+}
+
+.changeFileBtn {
+  font-size: 0.8rem;
+  color: var(--dash-accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.packageStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.packageStatBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+}
+
+.packageStatLabel {
+  font-size: 0.72rem;
+  color: var(--dash-muted);
+}
+
+.packageStatVal {
+  font-size: 0.92rem;
+  color: var(--dash-text);
+}
+
+.packageNoticeText {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--dash-muted);
+  line-height: 1.45;
+  border-top: 1px dashed var(--dash-border);
+  padding-top: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

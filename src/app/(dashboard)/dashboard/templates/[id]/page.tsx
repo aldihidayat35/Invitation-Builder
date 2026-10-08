@@ -10,6 +10,7 @@ import {
 } from "@/features/templates/components";
 import {
   IconArrowLeft,
+  IconDownload,
   IconEditorStudio,
   IconHistory,
   IconInfoCircle,
@@ -133,6 +134,17 @@ export default async function TemplateDetailPage({
               <IconPreviewEye size={18} />
               <span>Pratinjau Layar Penuh</span>
             </Link>
+
+            <a
+              href={`/api/templates/${template.id}/export`}
+              className={styles.heroPreviewBtn}
+              download
+              data-testid="hero-export-button"
+              title="Unduh paket lengkap template (.zip) beserta seluruh aset media lokal"
+            >
+              <IconDownload size={18} />
+              <span>Ekspor (.zip)</span>
+            </a>
           </div>
 
           <div className={styles.heroTipRow}>
