@@ -9,6 +9,7 @@ import "./landing.css";
 export interface TemplateItem {
   id: number | string;
   name: string;
+  slug?: string | null;
   category: string;
   person1: string;
   person2: string;
@@ -16,14 +17,18 @@ export interface TemplateItem {
   price: number;
   theme: "ivory" | "dark" | "terracotta" | "sage" | "blush";
   image?: string;
+  previewUrl?: string;
 }
 
 export interface ReviewItem {
+  id?: string;
   initial: string;
   name: string;
   type: string;
   quote: string;
   shade: string;
+  rating?: number;
+  avatarUrl?: string | null;
 }
 
 const TEMPLATES: TemplateItem[] = [
@@ -228,13 +233,70 @@ const formatRupiah = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-interface LandingViewProps {
+export interface DynamicCategoryItem {
+  id?: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  sortOrder?: number;
+  templateCount?: number;
+}
+
+export interface DynamicReviewItem {
+  id?: string;
+  name: string;
+  role?: string;
+  quote: string;
+  rating?: number;
+  avatarUrl?: string | null;
+  initials?: string | null;
+  shade?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface LandingViewProps {
   currentUser?: { id: string; name: string; email: string } | null;
   appSettings?: AppSettingsData | null;
   catalogTemplates?: CatalogTemplateItem[] | null;
+  categories?: DynamicCategoryItem[] | null;
+  reviews?: DynamicReviewItem[] | null;
 }
 
-export function LandingView({ currentUser, appSettings, catalogTemplates }: LandingViewProps) {
+const DEFAULT_CATEGORIES: DynamicCategoryItem[] = [
+  { slug: "wedding", name: "Pernikahan", icon: "rings", templateCount: 500 },
+  { slug: "engagement", name: "Tunangan", icon: "leaf", templateCount: 120 },
+  { slug: "birthday", name: "Ulang Tahun", icon: "cake", templateCount: 150 },
+  { slug: "aqiqah", name: "Aqiqah", icon: "moon", templateCount: 90 },
+  { slug: "tasyakuran", name: "Tasyakuran", icon: "leaf", templateCount: 80 },
+  { slug: "event", name: "Event Lainnya", icon: "gift", templateCount: 100 },
+];
+
+function getCategoryIconHref(icon?: string | null): string {
+  if (!icon) return "#i-sparkle";
+  const clean = icon.trim().toLowerCase().replace(/^#i-/, "").replace(/^i-/, "");
+  if (clean === "rings" || clean === "ring" || clean === "wedding") return "#i-rings";
+  if (clean === "leaf" || clean === "leaves" || clean === "flower") return "#i-leaf";
+  if (clean === "cake" || clean === "birthday") return "#i-cake";
+  if (clean === "moon" || clean === "islamic" || clean === "aqiqah") return "#i-moon";
+  if (clean === "gift" || clean === "present" || clean === "event") return "#i-gift";
+  if (clean === "heart") return "#i-heart";
+  if (clean === "users" || clean === "user") return "#i-users";
+  if (clean === "file" || clean === "document") return "#i-file";
+  if (clean === "star") return "#i-star";
+  return "#i-sparkle";
+}
+
+interface LandingViewInternalProps extends LandingViewProps {}
+
+export function LandingView({
+  currentUser,
+  appSettings,
+  catalogTemplates,
+  categories,
+  reviews,
+}: LandingViewProps) {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -244,13 +306,40 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const categoryList: DynamicCategoryItem[] =
+    categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+
+  const reviewList: ReviewItem[] =
+    reviews && reviews.length > 0
+      ? reviews.map((r) => {
+          const initials =
+            r.initials ||
+            r.name
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase())
+              .join("") ||
+            "U";
+          return {
+            id: r.id,
+            initial: initials,
+            name: r.name,
+            type: r.role || "Pelanggan Premium",
+            quote: r.quote,
+            shade: r.shade || "#e7c9b3",
+            rating: r.rating || 5,
+            avatarUrl: r.avatarUrl,
+          };
+        })
+      : REVIEWS;
+
   const templateList: TemplateItem[] =
     catalogTemplates && catalogTemplates.length > 0
-      ? catalogTemplates.map((c, idx) => ({
-          id: c.id,
-          name: c.name,
-          category:
-            c.category === "wedding"
+      ? catalogTemplates.map((c) => {
+          const categorySlug = String(c.category).toLowerCase();
+          const matchedCategory =
+            categoryList.find((cat) => cat.slug.toLowerCase() === categorySlug)?.name ||
+            (c.category === "wedding"
               ? "Pernikahan"
               : c.category === "engagement"
                 ? "Tunangan"
@@ -258,20 +347,38 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                   ? "Ulang Tahun"
                   : c.category === "aqiqah"
                     ? "Aqiqah"
-                    : "Acara",
-          person1: c.name.split(" ")[0] || "Mempelai",
-          person2: c.name.split(" ")[1] || "",
-          date: "2026",
-          price: c.price || 89000,
-          theme: c.style.includes("jawa")
-            ? "dark"
-            : c.style.includes("boho")
-              ? "terracotta"
-              : c.style.includes("sage")
-                ? "sage"
-                : "ivory",
-          image: c.thumbnailUrl || "",
-        }))
+                    : c.category === "graduation"
+                      ? "Wisuda"
+                      : c.category === "corporate"
+                        ? "Perusahaan"
+                        : "Event Lainnya");
+
+          const previewUrl = c.demoInvitationSlug
+            ? `/i/${c.demoInvitationSlug}`
+            : c.slug
+              ? `/i/${c.slug}`
+              : `/dashboard/templates/${c.id}/preview`;
+
+          return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            category: matchedCategory,
+            person1: c.name.split(" ")[0] || "Mempelai",
+            person2: c.name.split(" ").slice(1).join(" ") || "",
+            date: "2026",
+            price: c.price || 89000,
+            theme: c.style.includes("jawa")
+              ? "dark"
+              : c.style.includes("boho")
+                ? "terracotta"
+                : c.style.includes("sage")
+                  ? "sage"
+                  : "ivory",
+            image: c.thumbnailUrl || "",
+            previewUrl,
+          };
+        })
       : TEMPLATES;
 
   useEffect(() => {
@@ -320,7 +427,9 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
   };
 
   const filteredTemplates = templateList.filter((t) => {
-    const matchesCategory = selectedCategory === "Semua" || t.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "Semua" ||
+      t.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch = `${t.name} ${t.category} ${t.person1} ${t.person2}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -332,7 +441,10 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
       ? filteredTemplates
       : filteredTemplates.slice(0, 4);
 
-  const displayedReviews = [0, 1, 2].map((n) => REVIEWS[(n + reviewIndex) % REVIEWS.length]!);
+  const displayedReviews =
+    reviewList.length <= 3
+      ? reviewList
+      : [0, 1, 2].map((n) => reviewList[(n + reviewIndex) % reviewList.length]!);
 
   return (
     <div className="landing-root">
@@ -530,7 +642,20 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
       </svg>
 
       {/* Header & Hero */}
-      <header className="hero-bg text-white" id="beranda">
+      <header
+        className="hero-bg text-white"
+        id="beranda"
+        style={
+          appSettings?.heroBackgroundImage
+            ? {
+                backgroundImage: `url("${appSettings.heroBackgroundImage}")`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }
+            : undefined
+        }
+      >
         <div className="hero-glow"></div>
         <nav
           className="relative z-30 mx-auto flex h-[72px] max-w-[1240px] items-center justify-between px-5 lg:px-0"
@@ -674,12 +799,12 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
 
         <div className="relative z-10 mx-auto max-w-[1240px] px-5 pb-8 pt-4 md:pb-10 lg:px-0">
           <div className="relative z-20 max-w-[690px] pb-6 pt-3 md:pb-[42px] md:pt-8 lg:pt-10">
-            <p className="eyebrow mb-3">UNDANGAN DIGITAL, LEBIH BERKESAN</p>
-            <h1 className="font-display max-w-[680px] text-[42px] font-medium leading-[1.12] tracking-[-.045em] sm:text-[56px] lg:text-[59px]">
+            <p className="eyebrow mb-3 drop-shadow-md">UNDANGAN DIGITAL, LEBIH BERKESAN</p>
+            <h1 className="font-display max-w-[680px] text-[42px] font-medium leading-[1.12] tracking-[-.045em] sm:text-[56px] lg:text-[59px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
               Temukan Template
               <br /> Undangan <span className="text-[#c58b55]">Impianmu</span>
             </h1>
-            <p className="mt-3 max-w-[535px] text-[14px] leading-[1.7] text-[#dddddc] sm:text-[15px]">
+            <p className="mt-3 max-w-[535px] text-[14px] leading-[1.7] text-[#dddddc] sm:text-[15px] drop-shadow-[0_1px_6px_rgba(0,0,0,0.65)]">
               Buat undangan digital yang elegan, praktis, dan penuh makna untuk momen spesialmu.
               Ribuan template siap digunakan.
             </p>
@@ -714,12 +839,11 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                 className="hidden max-w-[148px] border-l border-[#e7e7e7] bg-white pl-4 pr-1 text-[11px] text-[#5b5b5b] outline-none sm:block"
               >
                 <option value="Semua">Semua Kategori</option>
-                <option value="Pernikahan">Pernikahan</option>
-                <option value="Tunangan">Tunangan</option>
-                <option value="Ulang Tahun">Ulang Tahun</option>
-                <option value="Aqiqah">Aqiqah</option>
-                <option value="Tasyakuran">Tasyakuran</option>
-                <option value="Event Lainnya">Event Lainnya</option>
+                {categoryList.map((cat) => (
+                  <option key={cat.slug || cat.name} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
               <button
                 type="submit"
@@ -843,16 +967,30 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                           <h3 className="truncate text-[11px] font-bold">{t.name}</h3>
                           <p className="mt-0.5 text-[10px] text-[#97928e]">{t.category}</p>
                         </div>
-                        <button
-                          type="button"
-                          className="arrow-circle shrink-0"
-                          onClick={() => setModalTemplate(t)}
-                          aria-label={`Lihat detail ${t.name}`}
-                        >
-                          <svg className="h-[14px] w-[14px]">
-                            <use href="#i-chevron-right" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {t.previewUrl && t.previewUrl !== "#" ? (
+                            <a
+                              href={t.previewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="grid h-7 w-7 place-items-center rounded-full border border-[#ded8cf] bg-white text-[#836953] transition hover:bg-[#925003] hover:text-white hover:border-[#925003]"
+                              title="Buka live preview di tab baru"
+                              aria-label={`Buka live preview ${t.name} di tab baru`}
+                            >
+                              <span className="text-[12px] font-bold leading-none">↗</span>
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            className="arrow-circle shrink-0"
+                            onClick={() => setModalTemplate(t)}
+                            aria-label={`Lihat detail ${t.name}`}
+                          >
+                            <svg className="h-[14px] w-[14px]">
+                              <use href="#i-chevron-right" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </article>
                   );
@@ -895,18 +1033,11 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
               </div>
 
               <div className="mt-[18px] grid grid-cols-3 gap-3" id="categoryGrid">
-                {[
-                  { name: "Pernikahan", icon: "#i-rings", count: "500+ template" },
-                  { name: "Tunangan", icon: "#i-leaf", count: "120+ template" },
-                  { name: "Ulang Tahun", icon: "#i-cake", count: "150+ template" },
-                  { name: "Aqiqah", icon: "#i-moon", count: "90+ template" },
-                  { name: "Tasyakuran", icon: "#i-leaf", count: "80+ template" },
-                  { name: "Event Lainnya", icon: "#i-gift", count: "100+ template" },
-                ].map((cat) => (
+                {categoryList.map((cat) => (
                   <button
-                    key={cat.name}
+                    key={cat.slug || cat.name}
                     type="button"
-                    className={`category-card ${selectedCategory === cat.name ? "active" : ""}`}
+                    className={`category-card ${selectedCategory.toLowerCase() === cat.name.toLowerCase() ? "active" : ""}`}
                     onClick={() => {
                       setSelectedCategory(cat.name);
                       setShowAll(true);
@@ -914,10 +1045,12 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                     }}
                   >
                     <svg className="category-icon">
-                      <use href={cat.icon} />
+                      <use href={getCategoryIconHref(cat.icon)} />
                     </svg>
                     <span className="text-[12px] font-semibold">{cat.name}</span>
-                    <span className="text-[10px] text-[#898581]">{cat.count}</span>
+                    <span className="text-[10px] text-[#898581]">
+                      {cat.templateCount !== undefined ? `${cat.templateCount}+ template` : "Tersedia"}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -944,7 +1077,7 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                   id="reviewPrev"
                   aria-label="Testimoni sebelumnya"
                   onClick={() =>
-                    setReviewIndex((reviewIndex - 1 + REVIEWS.length) % REVIEWS.length)
+                    setReviewIndex((reviewIndex - 1 + reviewList.length) % reviewList.length)
                   }
                 >
                   ←
@@ -954,7 +1087,7 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
                   type="button"
                   id="reviewNext"
                   aria-label="Testimoni berikutnya"
-                  onClick={() => setReviewIndex((reviewIndex + 1) % REVIEWS.length)}
+                  onClick={() => setReviewIndex((reviewIndex + 1) % reviewList.length)}
                 >
                   →
                 </button>
@@ -962,24 +1095,42 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
             </div>
 
             <div id="reviewGrid" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {displayedReviews.map((r) => (
-                <article key={r.name} className="review-card flex gap-3 p-3.5">
-                  <div
-                    className="avatar h-12 w-12 text-[14px]"
-                    style={{ background: `linear-gradient(135deg, ${r.shade}, #f6ece3)` }}
-                  >
-                    {r.initial}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="stars">★★★★★</div>
-                    <p className="mt-1 min-h-[36px] text-[10px] leading-[1.5] text-[#77716b]">
-                      “{r.quote}”
-                    </p>
-                    <p className="mt-1.5 text-[11px] font-bold">{r.name}</p>
-                    <p className="text-[9px] text-[#95918d]">{r.type}</p>
-                  </div>
-                </article>
-              ))}
+              {displayedReviews.map((r) => {
+                const ratingCount = Math.max(1, Math.min(5, r.rating || 5));
+                return (
+                  <article key={r.id || r.name} className="review-card flex gap-3 p-3.5">
+                    {r.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.avatarUrl}
+                        alt={r.name}
+                        className="h-12 w-12 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="avatar h-12 w-12 text-[14px] shrink-0 font-bold"
+                        style={{ background: `linear-gradient(135deg, ${r.shade}, #f6ece3)` }}
+                      >
+                        {r.initial}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="stars text-[#f59e0b] text-[12px] tracking-wide"
+                        aria-label={`${ratingCount} dari 5 bintang`}
+                      >
+                        {"★".repeat(ratingCount)}
+                        {"☆".repeat(5 - ratingCount)}
+                      </div>
+                      <p className="mt-1 min-h-[36px] text-[10px] leading-[1.5] text-[#77716b]">
+                        “{r.quote}”
+                      </p>
+                      <p className="mt-1.5 text-[11px] font-bold">{r.name}</p>
+                      <p className="text-[9px] text-[#95918d]">{r.type}</p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -1185,16 +1336,30 @@ export function LandingView({ currentUser, appSettings, catalogTemplates }: Land
               <p id="modalPrice" className="mt-5 text-[19px] font-semibold text-[#925003]">
                 {formatRupiah(modalTemplate.price)}
               </p>
-              <Link
-                href={currentUser ? "/dashboard/templates" : `/login?next=/dashboard/templates`}
-                className="button-primary mt-5 px-5 py-3 text-[13px]"
-                onClick={() => setModalTemplate(null)}
-              >
-                <span>Gunakan Template</span>
-                <svg className="h-4 w-4">
-                  <use href="#i-arrow-right" />
-                </svg>
-              </Link>
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                {modalTemplate.previewUrl && modalTemplate.previewUrl !== "#" ? (
+                  <a
+                    href={modalTemplate.previewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button-outline flex items-center justify-center gap-1.5 px-4 py-3 text-[12.5px] font-semibold text-[#925003] border-[#925003] hover:bg-[#925003]/10"
+                    title="Buka Live Preview di tab baru"
+                  >
+                    <span>Live Preview</span>
+                    <span className="font-bold">↗</span>
+                  </a>
+                ) : null}
+                <Link
+                  href={currentUser ? "/dashboard/templates" : `/login?next=/dashboard/templates`}
+                  className="button-primary flex-1 px-5 py-3 text-[13px] flex items-center justify-center gap-2"
+                  onClick={() => setModalTemplate(null)}
+                >
+                  <span>Gunakan Template</span>
+                  <svg className="h-4 w-4">
+                    <use href="#i-arrow-right" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

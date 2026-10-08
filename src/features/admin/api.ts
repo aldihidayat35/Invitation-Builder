@@ -6,7 +6,8 @@ import { getDb } from "@/lib/db/client";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   createResellerWithProfile as repoCreateReseller,
-  getAdminResellerStats as repoGetStats,
+  getAdminResellerStats as repoGetResellerStats,
+  getTopResellersByOrders as repoGetTopResellers,
   listResellers as repoListResellers,
   updateResellerStatus as repoUpdateStatus,
 } from "@/lib/db/repositories/resellers";
@@ -16,6 +17,7 @@ import {
   findCustomerOrderById,
   getOrderTrends,
   getMonthlyOrderTrends,
+  getGlobalOrderStats,
 } from "@/lib/db/repositories/orders";
 import {
   getAppSettings,
@@ -25,8 +27,11 @@ import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import type {
   AdminOrderItem,
+  AdminOrderStats,
   AdminResellerItem,
+  AdminResellerStats,
   AdminStats,
+  TopResellerTrendItem,
 } from "./types";
 
 export interface CreateResellerServiceInput {
@@ -39,11 +44,39 @@ export interface CreateResellerServiceInput {
   customDomain?: string;
 }
 
-/** Fetches platform statistics for the Admin dashboard. */
+/** Fetches platform statistics for backward compatibility. */
 export async function getAdminStats(): Promise<AdminStats> {
   await requireOwner();
   const db = await getDb();
-  return repoGetStats(db);
+  const res = await repoGetResellerStats(db);
+  return {
+    totalResellers: res.totalResellers,
+    activeResellers: res.activeResellers,
+    totalOrders: res.totalOrders,
+    newOrders: res.newOrders,
+    completedOrders: res.completedOrders,
+  };
+}
+
+/** Fetches order-specific statistics for the Admin Orders dashboard (maximal 4 KPIs). */
+export async function getAdminOrderStats(): Promise<AdminOrderStats> {
+  await requireOwner();
+  const db = await getDb();
+  return getGlobalOrderStats(db);
+}
+
+/** Fetches reseller-specific statistics for the Admin Resellers dashboard (maximal 4 KPIs). */
+export async function getAdminResellerStats(): Promise<AdminResellerStats> {
+  await requireOwner();
+  const db = await getDb();
+  return repoGetResellerStats(db);
+}
+
+/** Fetches top resellers ranked by order volume for the seller trend chart. */
+export async function getAdminTopResellers(limit: number = 8): Promise<TopResellerTrendItem[]> {
+  await requireOwner();
+  const db = await getDb();
+  return repoGetTopResellers(db, limit);
 }
 
 /** Fetches platform order volume trends for the Admin dashboard. */

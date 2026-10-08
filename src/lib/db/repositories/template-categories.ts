@@ -6,7 +6,55 @@ export interface TemplateCategoryWithCount extends TemplateCategoryRow {
   templateCount: number;
 }
 
+export const DEFAULT_TEMPLATE_CATEGORIES: Array<
+  Omit<NewTemplateCategoryRow, "id" | "createdAt" | "updatedAt">
+> = [
+  { slug: "wedding", name: "Pernikahan", icon: "rings", sortOrder: 1, description: "Undangan pernikahan elegan & sakral" },
+  { slug: "engagement", name: "Tunangan", icon: "leaf", sortOrder: 2, description: "Momen lamaran dan pertunangan manis" },
+  { slug: "birthday", name: "Ulang Tahun", icon: "cake", sortOrder: 3, description: "Perayaan ulang tahun spesial & meriah" },
+  { slug: "aqiqah", name: "Aqiqah", icon: "moon", sortOrder: 4, description: "Tasyakuran kelahiran dan aqiqah buah hati" },
+  { slug: "tasyakuran", name: "Tasyakuran", icon: "leaf", sortOrder: 5, description: "Acara doa syukur dan syukuran keluarga" },
+  { slug: "event", name: "Event Lainnya", icon: "gift", sortOrder: 6, description: "Seminar, reuni, peresmian, dan event" },
+];
+
+/**
+ * Ensures table existence and seeds default categories if empty.
+ */
+export async function ensureTemplateCategoriesTable(db: Database): Promise<void> {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "template_categories" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "slug" text NOT NULL UNIQUE,
+        "name" text NOT NULL,
+        "description" text,
+        "icon" text,
+        "sort_order" integer DEFAULT 0 NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS "template_categories_sort_idx" ON "template_categories" ("sort_order");
+    `);
+
+    // Check count and seed initial categories if table is empty
+    const [countRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(templateCategories);
+
+    if ((countRow?.count ?? 0) === 0) {
+      for (const item of DEFAULT_TEMPLATE_CATEGORIES) {
+        await db.insert(templateCategories).values(item).onConflictDoNothing();
+      }
+    }
+  } catch (err) {
+    console.warn("[ensureTemplateCategoriesTable] notice:", err);
+  }
+}
+
 export async function listTemplateCategories(db: Database): Promise<TemplateCategoryWithCount[]> {
+  await ensureTemplateCategoriesTable(db);
   const rows = await db
     .select({
       id: templateCategories.id,
@@ -21,7 +69,16 @@ export async function listTemplateCategories(db: Database): Promise<TemplateCate
     })
     .from(templateCategories)
     .leftJoin(templates, eq(templates.category, templateCategories.slug))
-    .groupBy(templateCategories.id)
+    .groupBy(
+      templateCategories.id,
+      templateCategories.slug,
+      templateCategories.name,
+      templateCategories.description,
+      templateCategories.icon,
+      templateCategories.sortOrder,
+      templateCategories.createdAt,
+      templateCategories.updatedAt,
+    )
     .orderBy(asc(templateCategories.sortOrder), asc(templateCategories.name));
 
   return rows;
@@ -31,6 +88,7 @@ export async function findTemplateCategoryById(
   db: Database,
   id: string,
 ): Promise<TemplateCategoryRow | undefined> {
+  await ensureTemplateCategoriesTable(db);
   const [row] = await db
     .select()
     .from(templateCategories)
@@ -43,6 +101,7 @@ export async function findTemplateCategoryBySlug(
   db: Database,
   slug: string,
 ): Promise<TemplateCategoryRow | undefined> {
+  await ensureTemplateCategoriesTable(db);
   const [row] = await db
     .select()
     .from(templateCategories)
@@ -61,6 +120,7 @@ export async function insertTemplateCategory(
     sortOrder?: number;
   },
 ): Promise<TemplateCategoryRow> {
+  await ensureTemplateCategoriesTable(db);
   const [row] = await db
     .insert(templateCategories)
     .values({
@@ -85,6 +145,7 @@ export async function updateTemplateCategory(
     sortOrder?: number;
   },
 ): Promise<TemplateCategoryRow> {
+  await ensureTemplateCategoriesTable(db);
   const values: Partial<NewTemplateCategoryRow> = {
     updatedAt: new Date(),
   };

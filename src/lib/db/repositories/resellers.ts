@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
+  customerOrders,
   resellerProfiles,
   users,
   workspaceMembers,
@@ -239,11 +240,30 @@ export async function updateResellerBranding(
   return updated;
 }
 
-/** Aggregates platform-wide reseller and order statistics for the Owner dashboard. */
+export interface TopResellerTrendItem {
+  sellerId: string;
+  agencyName: string;
+  slug: string;
+  logoUrl: string | null;
+  whatsappContact: string;
+  customDomain: string | null;
+  isActive: boolean;
+  ownerName: string;
+  ownerEmail: string;
+  totalOrders: number;
+  completedOrders: number;
+  newOrders: number;
+  inProgressOrders: number;
+  percentageOfTotal: number;
+}
+
+/** Aggregates platform-wide reseller statistics for the Admin Resellers dashboard. */
 export async function getAdminResellerStats(db: Database): Promise<{
   totalResellers: number;
   activeResellers: number;
+  inactiveResellers: number;
   totalOrders: number;
+  resellersWithOrders: number;
   newOrders: number;
   completedOrders: number;
 }> {
@@ -251,18 +271,76 @@ export async function getAdminResellerStats(db: Database): Promise<{
     .select({
       total: sql<number>`count(*)::int`,
       active: sql<number>`count(case when ${resellerProfiles.isActive} then 1 end)::int`,
+      inactive: sql<number>`count(case when not ${resellerProfiles.isActive} then 1 end)::int`,
     })
     .from(resellerProfiles);
 
-  const orderStats = await getGlobalOrderStats(db);
+  const [ordersSummary] = await db
+    .select({
+      totalOrders: sql<number>`count(*)::int`,
+      resellersWithOrders: sql<number>`count(distinct ${customerOrders.sellerId})::int`,
+      newOrders: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
+      completedOrders: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
+    })
+    .from(customerOrders);
 
   return {
     totalResellers: resellersRow?.total ?? 0,
     activeResellers: resellersRow?.active ?? 0,
-    totalOrders: orderStats.totalOrders,
-    newOrders: orderStats.newOrders,
-    completedOrders: orderStats.completedOrders,
+    inactiveResellers: resellersRow?.inactive ?? 0,
+    totalOrders: ordersSummary?.totalOrders ?? 0,
+    resellersWithOrders: ordersSummary?.resellersWithOrders ?? 0,
+    newOrders: ordersSummary?.newOrders ?? 0,
+    completedOrders: ordersSummary?.completedOrders ?? 0,
   };
+}
+
+/** Queries top sellers ranked by customer order count for performance & trend tracking. */
+export async function getTopResellersByOrders(
+  db: Database,
+  limit: number = 8,
+): Promise<TopResellerTrendItem[]> {
+  const rows = await db
+    .select({
+      sellerId: resellerProfiles.id,
+      agencyName: resellerProfiles.agencyName,
+      slug: resellerProfiles.slug,
+      logoUrl: resellerProfiles.logoUrl,
+      whatsappContact: resellerProfiles.whatsappContact,
+      customDomain: resellerProfiles.customDomain,
+      isActive: resellerProfiles.isActive,
+      ownerName: users.name,
+      ownerEmail: users.email,
+      totalOrders: sql<number>`count(${customerOrders.id})::int`,
+      completedOrders: sql<number>`count(case when ${customerOrders.status} = 'completed' then 1 end)::int`,
+      newOrders: sql<number>`count(case when ${customerOrders.status} = 'new' then 1 end)::int`,
+      inProgressOrders: sql<number>`count(case when ${customerOrders.status} in ('in_progress', 'in_review') then 1 end)::int`,
+    })
+    .from(resellerProfiles)
+    .innerJoin(users, eq(users.id, resellerProfiles.userId))
+    .leftJoin(customerOrders, eq(customerOrders.sellerId, resellerProfiles.id))
+    .groupBy(resellerProfiles.id, users.id)
+    .orderBy(desc(sql`count(${customerOrders.id})`), desc(resellerProfiles.createdAt))
+    .limit(limit);
+
+  const totalAllOrders = rows.reduce((sum, r) => sum + r.totalOrders, 0);
+
+  return rows.map((r) => ({
+    sellerId: r.sellerId,
+    agencyName: r.agencyName,
+    slug: r.slug,
+    logoUrl: r.logoUrl,
+    whatsappContact: r.whatsappContact,
+    customDomain: r.customDomain,
+    isActive: r.isActive,
+    ownerName: r.ownerName,
+    ownerEmail: r.ownerEmail,
+    totalOrders: r.totalOrders,
+    completedOrders: r.completedOrders,
+    newOrders: r.newOrders,
+    inProgressOrders: r.inProgressOrders,
+    percentageOfTotal: totalAllOrders > 0 ? Math.round((r.totalOrders / totalAllOrders) * 100) : 0,
+  }));
 }
 
 /**

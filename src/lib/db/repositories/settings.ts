@@ -14,6 +14,7 @@ export const DEFAULT_APP_SETTINGS: AppSettingRow = {
   address: "Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190",
   footerDescription:
     "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
+  heroBackgroundImage: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -35,9 +36,13 @@ export async function ensureAppSettingsTable(db: Database): Promise<void> {
         "contact_email" text DEFAULT 'support@undangan.id' NOT NULL,
         "address" text DEFAULT 'Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190' NOT NULL,
         "footer_description" text DEFAULT 'Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.' NOT NULL,
+        "hero_background_image" text,
         "created_at" timestamp with time zone DEFAULT now() NOT NULL,
         "updated_at" timestamp with time zone DEFAULT now() NOT NULL
       );
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "hero_background_image" text;
     `);
   } catch (err) {
     console.warn("[ensureAppSettingsTable] notice:", err);
@@ -75,6 +80,7 @@ export async function getAppSettings(database?: Database): Promise<AppSettingRow
         contactEmail: DEFAULT_APP_SETTINGS.contactEmail,
         address: DEFAULT_APP_SETTINGS.address,
         footerDescription: DEFAULT_APP_SETTINGS.footerDescription,
+        heroBackgroundImage: DEFAULT_APP_SETTINGS.heroBackgroundImage,
       })
       .onConflictDoNothing()
       .returning();

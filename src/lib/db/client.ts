@@ -25,13 +25,8 @@ async function open(url: string): Promise<Database> {
     let conn;
     try {
       conn = await connectPglite(dataDir);
-      // Run sanity check to verify database health and whether tables are initialized
-      const check = await conn.client.query<{ count: string }>(
-        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'templates'",
-      );
-      if (Number(check.rows[0]?.count ?? 0) === 0) {
-        await migratePglite(conn);
-      }
+      // Automatically apply any pending migrations to keep local dev database in sync
+      await migratePglite(conn);
     } catch (err) {
       console.warn("[pglite] Corrupted data directory or query failure detected; recovering dev instance:", err);
       if (dataDir && existsSync(dataDir)) {

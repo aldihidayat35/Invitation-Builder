@@ -53,4 +53,5 @@ export interface AppSettingsData {
   readonly contactEmail: string;
   readonly address: string;
   readonly footerDescription: string;
+  readonly heroBackgroundImage?: string | null;
 }

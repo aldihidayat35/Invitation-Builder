@@ -20,6 +20,7 @@ export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {
     footerDescription:
       initialSettings.footerDescription ||
       "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
+    heroBackgroundImage: initialSettings.heroBackgroundImage || "",
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -69,6 +70,42 @@ export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {
 
   const handleRemoveLogo = () => {
     setFormData((prev) => ({ ...prev, appLogo: "" }));
+  };
+
+  const handleHeroBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setNotification({
+        type: "error",
+        message: "File yang dipilih harus berupa gambar (PNG, JPG, WebP).",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setNotification({
+        type: "error",
+        message: "Ukuran file background maksimal 5MB.",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setFormData((prev) => ({ ...prev, heroBackgroundImage: result }));
+      setNotification({
+        type: "success",
+        message: "Gambar background hero berhasil diunggah. Klik 'Simpan Pengaturan' untuk menerapkan perubahan.",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveHeroBg = () => {
+    setFormData((prev) => ({ ...prev, heroBackgroundImage: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,10 +199,17 @@ export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {
           {/* Header Preview */}
           <div className="space-y-2">
             <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">
-              1. Header Landing Page (Navbar)
+              1. Header Landing Page (Navbar & Hero)
             </span>
-            <div className="overflow-hidden rounded-xl border border-stone-800 bg-[#161616] p-4 text-white shadow-inner flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div
+              className="overflow-hidden rounded-xl border border-stone-800 p-4 text-white shadow-inner flex items-center justify-between relative"
+              style={{
+                background: formData.heroBackgroundImage
+                  ? `linear-gradient(90deg, rgba(15,15,15,0.88) 0%, rgba(18,18,18,0.7) 100%), url('${formData.heroBackgroundImage}') center/cover no-repeat`
+                  : `linear-gradient(90deg, rgba(15,15,15,0.92) 0%, rgba(20,20,20,0.8) 100%), url('/images/landing-hero.jpg') center/cover no-repeat, #161616`,
+              }}
+            >
+              <div className="flex items-center gap-3 relative z-10">
                 {formData.appLogo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -182,7 +226,7 @@ export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {
                   {formData.appName}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-xs text-stone-300">
+              <div className="flex items-center gap-3 text-xs text-stone-300 relative z-10">
                 <span className="hover:text-amber-400 cursor-pointer">Template</span>
                 <span className="hover:text-amber-400 cursor-pointer">Harga</span>
                 <span className="rounded bg-[#925003] px-3 py-1 text-[11px] font-semibold text-white">
@@ -328,6 +372,96 @@ export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {
                   placeholder="https://domain.com/logo.png"
                   className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs text-stone-700 placeholder-stone-400 focus:bg-white focus:border-amber-500 focus:outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Background Hero Landing Page */}
+            <div className="border-t border-stone-200/70 pt-5">
+              <label className="block text-xs font-bold text-stone-700 uppercase tracking-wide mb-1">
+                Background Hero Landing Page
+              </label>
+              <p className="text-xs text-stone-500 mb-3">
+                Gambar latar belakang utama untuk header & hero section paling atas di halaman depan (Landing Page).
+              </p>
+
+              <div className="space-y-3">
+                <div className="relative overflow-hidden rounded-xl border border-stone-300 bg-stone-100 h-36 max-w-lg shadow-inner group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={formData.heroBackgroundImage || "/images/landing-hero.jpg"}
+                    alt="Preview Background Hero"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end justify-between p-3 text-white text-xs">
+                    <div>
+                      <span className="font-bold block">
+                        {formData.heroBackgroundImage ? "Background Kustom Aktif" : "Background Bawaan (Default)"}
+                      </span>
+                      <span className="text-[10px] text-stone-300">
+                        {formData.heroBackgroundImage ? "Diterapkan dinamis di halaman depan" : "/images/landing-hero.jpg"}
+                      </span>
+                    </div>
+                    {formData.heroBackgroundImage && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveHeroBg}
+                        className="rounded-lg bg-rose-600/90 hover:bg-rose-700 px-2.5 py-1 text-[11px] font-semibold text-white transition shadow"
+                      >
+                        Gunakan Default
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-bold text-stone-700 shadow-2xs hover:bg-stone-50 transition-colors">
+                    <span>Unggah Background Hero Baru</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleHeroBgUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-stone-400">
+                    Format JPG, PNG, WebP (Maks. 5MB)
+                  </span>
+                </div>
+
+                {/* Rekomendasi Kualitas & Rasio Gambar */}
+                <div className="rounded-xl border border-amber-200/90 bg-amber-50/70 p-4 text-xs text-amber-950 space-y-2">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-900 text-xs tracking-wide">
+                    <span>💡</span> Rekomendasi Format, Rasio & Kualitas Gambar Background:
+                  </div>
+                  <ul className="list-disc list-inside space-y-1.5 text-[11.5px] text-amber-800 leading-relaxed">
+                    <li>
+                      <strong>Rasio Aspek (Aspect Ratio):</strong> Disarankan rasio <strong>16:9</strong> atau <strong>16:10</strong> (Format Lanskap / Widescreen Desktop).
+                    </li>
+                    <li>
+                      <strong>Resolusi & Dimensi:</strong> Minimal <strong>1920 × 1080 px</strong> (Full HD) atau <strong>2560 × 1440 px</strong> (2K/QHD) agar gambar tetap tajam dan tidak pecah di layar besar.
+                    </li>
+                    <li>
+                      <strong>Kualitas Gambar:</strong> Gunakan foto beresolusi tinggi dengan pencahayaan seimbang. Gambar akan ditampilkan <em>natural dan jernih tanpa pelapis gelap</em> di halaman depan.
+                    </li>
+                    <li>
+                      <strong>Format & Ukuran Berkas:</strong> Disarankan format <strong>WebP</strong> atau <strong>JPG</strong> (Quality 85–90%) dengan ukuran di bawah <strong>2 MB</strong> (maksimal 5 MB) agar loading halaman tetap cepat.
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-stone-500 mb-1">
+                    Atau gunakan URL gambar online langsung:
+                  </label>
+                  <input
+                    type="url"
+                    name="heroBackgroundImage"
+                    value={formData.heroBackgroundImage}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/banner-hero.jpg"
+                    className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs text-stone-700 placeholder-stone-400 focus:bg-white focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -34,6 +34,40 @@ export interface AdminStats {
   completedOrders: number;
 }
 
+export interface AdminOrderStats {
+  totalOrders: number;
+  newOrders: number;
+  inProgressOrders: number;
+  completedOrders: number;
+}
+
+export interface AdminResellerStats {
+  totalResellers: number;
+  activeResellers: number;
+  inactiveResellers: number;
+  totalOrders: number;
+  resellersWithOrders: number;
+  newOrders: number;
+  completedOrders: number;
+}
+
+export interface TopResellerTrendItem {
+  sellerId: string;
+  agencyName: string;
+  slug: string;
+  logoUrl: string | null;
+  whatsappContact: string;
+  customDomain: string | null;
+  isActive: boolean;
+  ownerName: string;
+  ownerEmail: string;
+  totalOrders: number;
+  completedOrders: number;
+  newOrders: number;
+  inProgressOrders: number;
+  percentageOfTotal: number;
+}
+
 export interface ActionState {
   ok?: boolean;
   error?: string;

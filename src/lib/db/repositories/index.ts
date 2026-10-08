@@ -8,3 +8,5 @@ export * from "./invitations";
 export * from "./resellers";
 export * from "./orders";
 export * from "./settings";
+export * from "./template-categories";
+export * from "./testimonials";

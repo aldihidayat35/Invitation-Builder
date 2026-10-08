@@ -416,6 +416,7 @@ export const appSettings = pgTable("app_settings", {
   footerDescription: text("footer_description").notNull().default(
     "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia."
   ),
+  heroBackgroundImage: text("hero_background_image"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -435,6 +436,27 @@ export const templateCategories = pgTable(
   (t) => [
     uniqueIndex("template_categories_slug_uq").on(t.slug),
     index("template_categories_sort_idx").on(t.sortOrder),
+  ],
+);
+
+export const testimonials = pgTable(
+  "testimonials",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    role: text("role").notNull().default("Pelanggan Premium"),
+    quote: text("quote").notNull(),
+    rating: integer("rating").notNull().default(5),
+    avatarUrl: text("avatar_url"),
+    initials: text("initials"),
+    shade: text("shade").notNull().default("#e7c9b3"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isActive: pgBoolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("testimonials_sort_idx").on(t.isActive, t.sortOrder),
   ],
 );
 
@@ -460,5 +482,7 @@ export type AppSettingRow = typeof appSettings.$inferSelect;
 export type NewAppSettingRow = typeof appSettings.$inferInsert;
 export type TemplateCategoryRow = typeof templateCategories.$inferSelect;
 export type NewTemplateCategoryRow = typeof templateCategories.$inferInsert;
+export type TestimonialRow = typeof testimonials.$inferSelect;
+export type NewTestimonialRow = typeof testimonials.$inferInsert;
 
 

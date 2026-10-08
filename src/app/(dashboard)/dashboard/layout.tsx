@@ -18,6 +18,7 @@ import {
   IconUsers,
   IconUserShield,
   IconSettings,
+  IconStar,
 } from "./nav-icons";
 import { getAppSettings } from "@/lib/db/repositories/settings";
 
@@ -116,6 +117,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Manajemen Storage",
           icon: <IconStorage />,
           hint: "Kapasitas & kelola seluruh berkas media",
+        },
+        {
+          href: "/dashboard/admin/reviews",
+          label: "Ulasan Pelanggan",
+          icon: <IconStar />,
+          hint: "Kelola review & testimoni landing page",
         },
         {
           href: "/dashboard/admin/settings",

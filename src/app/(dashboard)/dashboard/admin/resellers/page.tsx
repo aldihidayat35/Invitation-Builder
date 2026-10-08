@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
-import { getAdminResellers, getAdminStats } from "@/features/admin/api";
-import { AdminStatsCards, CreateResellerModal, ResellersManager } from "@/features/admin/components";
+import {
+  getAdminResellers,
+  getAdminResellerStats,
+  getAdminTopResellers,
+} from "@/features/admin/api";
+import {
+  AdminResellerStatsCards,
+  CreateResellerModal,
+  ResellersManager,
+  TopResellersTrendChart,
+} from "@/features/admin/components";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { requireOwner } from "@/lib/auth/server";
 import { createResellerAction, toggleResellerStatusAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -9,9 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminResellersPage() {
-  const [resellers, stats] = await Promise.all([
+  await requireOwner();
+  const [resellers, stats, topSellers] = await Promise.all([
     getAdminResellers(),
-    getAdminStats(),
+    getAdminResellerStats(),
+    getAdminTopResellers(10),
   ]);
 
   return (
@@ -23,8 +35,13 @@ export default async function AdminResellersPage() {
         actions={<CreateResellerModal action={createResellerAction} />}
       />
 
-      <AdminStatsCards stats={stats} />
+      {/* 4 Kartu Metrik Khusus Konteks Mitra Seller */}
+      <AdminResellerStatsCards stats={stats} />
 
+      {/* Grafik Tren Seller Terbanyak Mendapat Orderan */}
+      <TopResellersTrendChart topSellers={topSellers} />
+
+      {/* Tabel Manajemen Mitra Seller */}
       <ResellersManager
         resellers={resellers}
         toggleStatusAction={toggleResellerStatusAction}

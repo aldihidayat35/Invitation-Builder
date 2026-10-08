@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAdminOrders, getAdminStats } from "@/features/admin/api";
-import { AdminOrdersTable, AdminStatsCards } from "@/features/admin/components";
+import {
+  getAdminOrders,
+  getAdminOrderStats,
+  getAdminMonthlyOrderTrends,
+  getAdminOrderTrends,
+} from "@/features/admin/api";
+import {
+  AdminOrdersTable,
+  AdminOrderStatsCards,
+} from "@/features/admin/components";
+import { OrderTrendAnalytics } from "@/features/analytics";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { requireOwner } from "@/lib/auth/server";
 import { updateOrderStatusAction } from "./actions";
@@ -12,9 +21,13 @@ export const metadata: Metadata = {
 
 export default async function AdminOrdersPage() {
   await requireOwner();
-  const [orders, stats] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+
+  const [orders, stats, monthlyTrends, dailyTrends] = await Promise.all([
     getAdminOrders(),
-    getAdminStats(),
+    getAdminOrderStats(),
+    getAdminMonthlyOrderTrends(currentYear),
+    getAdminOrderTrends(30),
   ]);
 
   return (
@@ -34,7 +47,18 @@ export default async function AdminOrdersPage() {
         }
       />
 
-      <AdminStatsCards stats={stats} />
+      {/* 4 Kartu Metrik Khusus Konteks Pesanan */}
+      <AdminOrderStatsCards stats={stats} />
+
+      {/* Grafik Tren Pemesanan Setahun */}
+      <OrderTrendAnalytics
+        title={`Tren Pemesanan Setahun (${currentYear})`}
+        subtitle={`Grafik fluktuasi dan akumulasi pesanan customer per bulan (Jan – Des ${currentYear})`}
+        monthlyData={monthlyTrends}
+        dailyData={dailyTrends}
+        year={currentYear}
+        valueSuffix=" pesanan"
+      />
 
       <AdminOrdersTable
         orders={orders}

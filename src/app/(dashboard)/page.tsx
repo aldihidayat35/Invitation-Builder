@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/server";
 import { getAppSettings } from "@/lib/db/repositories/settings";
-import { getPublicCatalog } from "@/features/templates/api";
+import { getPublicCatalog, getTemplateCategories } from "@/features/templates/api";
+import { getDb } from "@/lib/db/client";
+import { listPublicTestimonials } from "@/lib/db/repositories/testimonials";
 import { LandingView } from "./landing-view";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,10 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [currentUser, appSettings, catalog] = await Promise.all([
+  const dbPromise = getDb().catch(() => null);
+
+  const [currentUser, appSettings, catalog, categories, reviews] = await Promise.all([
     getCurrentUser().catch(() => null),
     getAppSettings().catch(() => null),
     getPublicCatalog().catch(() => null),
+    getTemplateCategories().catch(() => []),
+    dbPromise.then((db) => (db ? listPublicTestimonials(db) : [])).catch(() => []),
   ]);
 
   return (
@@ -28,6 +34,9 @@ export default async function HomePage() {
       currentUser={currentUser}
       appSettings={appSettings}
       catalogTemplates={catalog?.items}
+      categories={categories}
+      reviews={reviews}
     />
   );
 }
+
