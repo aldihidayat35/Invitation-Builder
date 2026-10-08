@@ -115,7 +115,6 @@ export default async function DashboardPage() {
         <KpiStatCard
           title="Total Template Desain"
           value={templates.length}
-          subtitle={`${draftTemplates} masih berstatus draft`}
           tone="bronze"
           icon={<IconTemplate />}
         />
@@ -123,16 +122,13 @@ export default async function DashboardPage() {
         <KpiStatCard
           title="Template Siap Pakai"
           value={publishedTemplates}
-          subtitle="Terkunci & siap diduplikasi"
           tone="gold"
-          trend={{ value: `${publishedTemplates} Desain Resmi`, positive: true }}
           icon={<IconTemplate />}
         />
 
         <KpiStatCard
           title="Total Website Undangan"
           value={invitations.length}
-          subtitle="Seluruh undangan di workspace"
           tone="default"
           icon={<IconInvitation />}
         />
@@ -140,9 +136,7 @@ export default async function DashboardPage() {
         <KpiStatCard
           title="Undangan Sudah Terbit"
           value={publishedInvitations}
-          subtitle="Tautan aktif dapat dibagikan"
           tone="emerald"
-          trend={{ value: invitations.length > 0 ? `${Math.round((publishedInvitations / invitations.length) * 100)}% Live` : "0%", positive: true }}
           icon={<IconInvitation />}
         />
       </div>

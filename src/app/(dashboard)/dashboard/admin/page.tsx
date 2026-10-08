@@ -119,9 +119,7 @@ export default async function AdminDashboardPage() {
         <KpiStatCard
           title="Total Pesanan Masuk"
           value={stats.totalOrders}
-          subtitle="Akumulasi seluruh pesanan toko"
           tone="bronze"
-          trend={{ value: "100%", neutral: true }}
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -132,9 +130,7 @@ export default async function AdminDashboardPage() {
         <KpiStatCard
           title="Pesanan Baru (Antrean)"
           value={stats.newOrders}
-          subtitle="Memerlukan pembuatan di kanvas"
           tone="gold"
-          trend={stats.newOrders > 0 ? { value: "Perlu Diproses", positive: true } : { value: "Bersih", neutral: true }}
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -145,9 +141,7 @@ export default async function AdminDashboardPage() {
         <KpiStatCard
           title="Undangan Selesai Terbit"
           value={stats.completedOrders}
-          subtitle="Customer telah menerima tautan live"
           tone="emerald"
-          trend={{ value: stats.totalOrders > 0 ? `${Math.round((stats.completedOrders / stats.totalOrders) * 100)}% Rasio` : "0%", positive: true }}
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -158,7 +152,6 @@ export default async function AdminDashboardPage() {
         <KpiStatCard
           title="Mitra Seller Terdaftar"
           value={stats.totalResellers}
-          subtitle={`${stats.activeResellers} seller aktif memiliki toko`}
           tone="default"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
