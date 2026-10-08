@@ -6,7 +6,7 @@
  * Migrations are NOT run here: use `npm run db:migrate`.
  */
 import "server-only";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, renameSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { connectPostgres } from "./connect";
 import type { Database } from "./types";
@@ -21,22 +21,29 @@ async function open(url: string): Promise<Database> {
     const dataDir = url.slice("pglite://".length) || undefined;
     if (dataDir) mkdirSync(dirname(dataDir), { recursive: true });
     const { connectPglite, migratePglite } = await import("./pglite");
-    const conn = await connectPglite(dataDir);
 
-    // Only run migrations if tables are not initialized yet, preventing lock contention & "CREATE SCHEMA" race errors
+    let conn;
     try {
+      conn = await connectPglite(dataDir);
+      // Run sanity check to verify database health and whether tables are initialized
       const check = await conn.client.query<{ count: string }>(
         "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'templates'",
       );
       if (Number(check.rows[0]?.count ?? 0) === 0) {
         await migratePglite(conn);
       }
-    } catch {
-      try {
-        await migratePglite(conn);
-      } catch (err) {
-        console.warn("[pglite] auto-migration skipped:", err);
+    } catch (err) {
+      console.warn("[pglite] Corrupted data directory or query failure detected; recovering dev instance:", err);
+      if (dataDir && existsSync(dataDir)) {
+        try {
+          const backupDir = `${dataDir}_corrupted_${Date.now()}`;
+          renameSync(dataDir, backupDir);
+        } catch {
+          // Ignore rename error
+        }
       }
+      conn = await connectPglite(dataDir);
+      await migratePglite(conn);
     }
     return conn.db;
   }

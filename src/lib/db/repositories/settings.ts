@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import { appSettings, type AppSettingRow, type NewAppSettingRow } from "../schema";
 import type { Database } from "../types";
-import { getDb } from "../client";
 
 export const DEFAULT_APP_SETTINGS: AppSettingRow = {
   id: "global",
@@ -50,7 +49,11 @@ export async function ensureAppSettingsTable(db: Database): Promise<void> {
  */
 export async function getAppSettings(database?: Database): Promise<AppSettingRow> {
   try {
-    const db = database || (await getDb());
+    let db = database;
+    if (!db) {
+      const { getDb } = await import("../client");
+      db = await getDb();
+    }
     await ensureAppSettingsTable(db);
 
     const [row] = await db.select().from(appSettings).limit(1);
