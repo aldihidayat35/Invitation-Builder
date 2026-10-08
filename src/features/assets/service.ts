@@ -40,7 +40,7 @@ import { sniffImage } from "@/lib/storage/image-sniff";
 import { sniffVideo } from "@/lib/storage/video-sniff";
 import type { PresignedUpload, StorageDriver } from "@/lib/storage/types";
 import { z } from "zod";
-import { assetContentUrl } from "./urls";
+import { assetContentUrl, assetUrl } from "./urls";
 
 export class AssetNotFoundError extends Error {
   constructor() {
@@ -412,7 +412,7 @@ export async function listAllStorageAssets(
     createdAt: r.createdAt,
     workspaceId: r.workspaceId,
     storageKey: r.storageKey,
-    url: assetContentUrl(r.id),
+    url: assetUrl(r.id),
     status: r.status,
   }));
 
