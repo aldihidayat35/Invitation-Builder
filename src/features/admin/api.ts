@@ -15,6 +15,7 @@ import {
   updateCustomerOrder,
   findCustomerOrderById,
   getOrderTrends,
+  getMonthlyOrderTrends,
 } from "@/lib/db/repositories/orders";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import type {
@@ -41,10 +42,17 @@ export async function getAdminStats(): Promise<AdminStats> {
 }
 
 /** Fetches platform order volume trends for the Admin dashboard. */
-export async function getAdminOrderTrends(days: number = 14) {
+export async function getAdminOrderTrends(days: number = 30) {
   await requireOwner();
   const db = await getDb();
   return getOrderTrends(db, { days });
+}
+
+/** Fetches monthly order volume trends for the Admin platform dashboard (Bulan ke Bulan). */
+export async function getAdminMonthlyOrderTrends(year?: number) {
+  await requireOwner();
+  const db = await getDb();
+  return getMonthlyOrderTrends(db, { year });
 }
 
 /** Lists all registered resellers with profiles. */

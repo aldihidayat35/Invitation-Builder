@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAdminStats, getAdminOrders, getAdminOrderTrends } from "@/features/admin/api";
-import { KpiStatCard, TrendLineChart, StatusDonutChart } from "@/features/analytics";
+import {
+  getAdminStats,
+  getAdminOrders,
+  getAdminOrderTrends,
+  getAdminMonthlyOrderTrends,
+} from "@/features/admin/api";
+import {
+  KpiStatCard,
+  OrderTrendAnalytics,
+  StatusDonutChart,
+} from "@/features/analytics";
 import { requireOwner } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -43,10 +52,13 @@ const STATUS_CONFIG: Record<
 export default async function AdminDashboardPage() {
   await requireOwner();
 
-  const [stats, orders, trends] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+
+  const [stats, orders, monthlyTrends, dailyTrends] = await Promise.all([
     getAdminStats(),
     getAdminOrders(undefined, 5),
-    getAdminOrderTrends(14),
+    getAdminMonthlyOrderTrends(currentYear),
+    getAdminOrderTrends(30),
   ]);
 
   const inProgressCount = stats.totalOrders - stats.newOrders - stats.completedOrders;
@@ -159,10 +171,12 @@ export default async function AdminDashboardPage() {
       {/* Analytics Charts Grid */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <TrendLineChart
-            title="Tren Volume Pesanan Harian"
-            subtitle="Grafik fluktuasi pesanan masuk selama 14 hari terakhir"
-            data={trends}
+          <OrderTrendAnalytics
+            title="Tren Volume Pesanan (Bulan ke Bulan)"
+            subtitle={`Grafik akumulasi pesanan masuk per bulan (Jan – Des ${currentYear})`}
+            monthlyData={monthlyTrends}
+            dailyData={dailyTrends}
+            year={currentYear}
             valueSuffix=" pesanan"
           />
         </div>
