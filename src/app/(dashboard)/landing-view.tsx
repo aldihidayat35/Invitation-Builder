@@ -3,10 +3,11 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import type { AppSettingsData } from "@/features/dashboard-layout";
+import type { CatalogTemplateItem } from "@/features/templates/types";
 import "./landing.css";
 
 export interface TemplateItem {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   person1: string;
@@ -230,17 +231,48 @@ const formatRupiah = (n: number) =>
 interface LandingViewProps {
   currentUser?: { id: string; name: string; email: string } | null;
   appSettings?: AppSettingsData | null;
+  catalogTemplates?: CatalogTemplateItem[] | null;
 }
 
-export function LandingView({ currentUser, appSettings }: LandingViewProps) {
+export function LandingView({ currentUser, appSettings, catalogTemplates }: LandingViewProps) {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [favorites, setFavorites] = useState<Set<number | string>>(new Set());
   const [modalTemplate, setModalTemplate] = useState<TemplateItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const templateList: TemplateItem[] =
+    catalogTemplates && catalogTemplates.length > 0
+      ? catalogTemplates.map((c, idx) => ({
+          id: c.id,
+          name: c.name,
+          category:
+            c.category === "wedding"
+              ? "Pernikahan"
+              : c.category === "engagement"
+                ? "Tunangan"
+                : c.category === "birthday"
+                  ? "Ulang Tahun"
+                  : c.category === "aqiqah"
+                    ? "Aqiqah"
+                    : "Acara",
+          person1: c.name.split(" ")[0] || "Mempelai",
+          person2: c.name.split(" ")[1] || "",
+          date: "2026",
+          price: c.price || 89000,
+          theme: c.style.includes("jawa")
+            ? "dark"
+            : c.style.includes("boho")
+              ? "terracotta"
+              : c.style.includes("sage")
+                ? "sage"
+                : "ivory",
+          image: c.thumbnailUrl || "",
+        }))
+      : TEMPLATES;
 
   useEffect(() => {
     try {
@@ -273,7 +305,7 @@ export function LandingView({ currentUser, appSettings }: LandingViewProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [modalTemplate]);
 
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = (id: number | string) => {
     setFavorites((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -287,7 +319,7 @@ export function LandingView({ currentUser, appSettings }: LandingViewProps) {
     });
   };
 
-  const filteredTemplates = TEMPLATES.filter((t) => {
+  const filteredTemplates = templateList.filter((t) => {
     const matchesCategory = selectedCategory === "Semua" || t.category === selectedCategory;
     const matchesSearch = `${t.name} ${t.category} ${t.person1} ${t.person2}`
       .toLowerCase()

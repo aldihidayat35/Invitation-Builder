@@ -75,5 +75,40 @@ export const AUDIT_ACTIONS = [
   "user.update",
   "user.delete",
   "settings.update",
+  "template.update_metadata",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export const TEMPLATE_CATEGORIES = [
+  "wedding",
+  "engagement",
+  "birthday",
+  "aqiqah",
+  "graduation",
+  "corporate",
+  "other",
+] as const;
+export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
+
+export const TEMPLATE_STYLES = [
+  "modern_minimalist",
+  "rustic_boho",
+  "traditional_jawa",
+  "traditional_sunda",
+  "traditional_minang",
+  "botanical_sage",
+  "islamic_syari",
+  "luxury_elegant",
+  "clean_editorial",
+] as const;
+export type TemplateStyle = (typeof TEMPLATE_STYLES)[number];
+
+export const TEMPLATE_TIERS = ["free", "standard", "premium", "exclusive"] as const;
+export type TemplateTier = (typeof TEMPLATE_TIERS)[number];
+
+export const TEMPLATE_LAYOUT_FORMATS = [
+  "vertical_scroll",
+  "story_slide",
+  "interactive_envelope",
+] as const;
+export type TemplateLayoutFormat = (typeof TEMPLATE_LAYOUT_FORMATS)[number];

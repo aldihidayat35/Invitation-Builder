@@ -86,6 +86,36 @@ export async function importTemplate(workspaceId: string, zipBytes: Uint8Array) 
   return importTemplatePackage(db, getStorage(), actor, workspaceId, zipBytes);
 }
 
+/**
+ * Public catalog query function (no auth required - safe for landing page & public catalog).
+ */
+export async function getPublicCatalog(options: import("./catalog-service").CatalogFilterOptions = {}) {
+  const db = await getDb();
+  const { getPublicCatalogTemplates } = await import("./catalog-service");
+  return getPublicCatalogTemplates(db, options);
+}
+
+/**
+ * Public template preview query by slug.
+ */
+export async function getCatalogDetail(slug: string) {
+  const db = await getDb();
+  const { getCatalogTemplateBySlug } = await import("./catalog-service");
+  return getCatalogTemplateBySlug(db, slug);
+}
+
+/**
+ * Updates catalog metadata for a template (requires authenticated workspace member).
+ */
+export async function updateCatalogMetadata(
+  templateId: string,
+  input: Partial<import("./types").TemplateCatalogMetadata>,
+) {
+  const { db, actor } = await context();
+  const { updateTemplateCatalogMetadata } = await import("./catalog-service");
+  return updateTemplateCatalogMetadata(db, templateId, input, actor.userId);
+}
+
 export {
   NothingToPublishError,
   PublishBlockedError,

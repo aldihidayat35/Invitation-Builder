@@ -9,7 +9,7 @@ import type { Database } from "../types";
  */
 export async function insertTemplate(
   db: Database,
-  input: { workspaceId: string; name: string; draftDocument: unknown; createdBy?: string },
+  input: typeof templates.$inferInsert,
 ): Promise<TemplateRow> {
   const [row] = await db.insert(templates).values(input).returning();
   if (!row) throw new Error("insertTemplate returned no row");

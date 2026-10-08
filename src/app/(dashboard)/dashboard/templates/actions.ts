@@ -106,3 +106,51 @@ export async function publishTemplateAction(
     return failure(error);
   }
 }
+
+export async function updateTemplateCatalogAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(field(formData, "templateId"));
+  if (!id.success) return { error: "Template tidak valid." };
+
+  try {
+    const rawTags = field(formData, "tags");
+    const tags = rawTags
+      ? rawTags
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const rawFeatures = formData.getAll("supportedFeatures").map(String);
+    const price = parseInt(field(formData, "price"), 10) || 0;
+    const isPublic = formData.get("isPublic") === "on" || formData.get("isPublic") === "true";
+    const isFeatured = formData.get("isFeatured") === "on" || formData.get("isFeatured") === "true";
+
+    const { updateCatalogMetadata } = await import("@/features/templates/api");
+    await updateCatalogMetadata(id.data, {
+      slug: field(formData, "slug").trim() || null,
+      description: field(formData, "description").trim() || null,
+      category: (field(formData, "category") || "wedding") as any,
+      style: (field(formData, "style") || "modern_minimalist") as any,
+      tier: (field(formData, "tier") || "standard") as any,
+      price,
+      isPublic,
+      isFeatured,
+      thumbnailUrl: field(formData, "thumbnailUrl").trim() || null,
+      previewMockupUrl: field(formData, "previewMockupUrl").trim() || null,
+      tags,
+      metadata: {
+        supportedFeatures: rawFeatures as any,
+        demoInvitationSlug: field(formData, "demoInvitationSlug").trim() || undefined,
+      },
+    });
+
+    revalidatePath(LIBRARY);
+    revalidatePath(`${LIBRARY}/${id.data}`);
+    return { ok: true, message: "Metadata katalog berhasil disimpan." };
+  } catch (error) {
+    return failure(error);
+  }
+}

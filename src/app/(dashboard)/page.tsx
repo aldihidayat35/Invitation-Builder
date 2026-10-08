@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/server";
 import { getAppSettings } from "@/lib/db/repositories/settings";
+import { getPublicCatalog } from "@/features/templates/api";
 import { LandingView } from "./landing-view";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,10 +17,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [currentUser, appSettings] = await Promise.all([
+  const [currentUser, appSettings, catalog] = await Promise.all([
     getCurrentUser().catch(() => null),
     getAppSettings().catch(() => null),
+    getPublicCatalog().catch(() => null),
   ]);
 
-  return <LandingView currentUser={currentUser} appSettings={appSettings} />;
+  return (
+    <LandingView
+      currentUser={currentUser}
+      appSettings={appSettings}
+      catalogTemplates={catalog?.items}
+    />
+  );
 }

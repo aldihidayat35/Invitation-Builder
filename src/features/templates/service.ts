@@ -125,6 +125,20 @@ function toSummary(row: TemplateRow): TemplateSummary {
     publishedVersionNo: row.publishedVersionNo,
     hasUnpublishedChanges: lifecycle === "published-with-changes",
     updatedAt: row.updatedAt,
+    slug: row.slug,
+    description: row.description,
+    category: (row.category || "wedding") as any,
+    style: (row.style || "modern_minimalist") as any,
+    thumbnailUrl: row.thumbnailUrl,
+    previewMockupUrl: row.previewMockupUrl,
+    tier: (row.tier || "standard") as any,
+    price: row.price ?? 0,
+    isPublic: row.isPublic ?? false,
+    isFeatured: row.isFeatured ?? false,
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+    metadata: (row.metadata as any) || {},
+    viewCount: row.viewCount ?? 0,
+    useCount: row.useCount ?? 0,
   };
 }
 

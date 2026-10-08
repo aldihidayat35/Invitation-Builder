@@ -26,8 +26,9 @@ describe("seed", () => {
     expect(again).toEqual(seed);
     expect(await getMemberRole(conn.db, seed.workspaceId, seed.userId)).toBe("owner");
     const templates = await listTemplates(conn.db, seed.workspaceId);
-    expect(templates).toHaveLength(1);
-    expect(templates[0]?.name).toBe(DEV_TEMPLATE_NAME);
+    expect(templates.length).toBeGreaterThanOrEqual(1);
+    const emptyTemplate = templates.find((t) => t.id === seed.templateId);
+    expect(emptyTemplate?.name).toBe(DEV_TEMPLATE_NAME);
     const row = await findTemplate(conn.db, seed.workspaceId, seed.templateId);
     expect(migrateDocument(row?.draftDocument)).toEqual(createEmptyDocument());
   });

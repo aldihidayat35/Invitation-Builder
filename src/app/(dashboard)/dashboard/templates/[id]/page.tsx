@@ -6,6 +6,7 @@ import {
   PublishPanel,
   StatusBadge,
   TemplateActions,
+  TemplateMetadataForm,
   ValidationPanel,
 } from "@/features/templates/components";
 import {
@@ -27,6 +28,7 @@ import {
   duplicateTemplateAction,
   publishTemplateAction,
   renameTemplateAction,
+  updateTemplateCatalogAction,
 } from "../actions";
 
 export const metadata: Metadata = { title: "Detail template" };
@@ -367,6 +369,13 @@ export default async function TemplateDetailPage({
           </div>
         ) : null}
       </div>
+
+      {/* Catalog Metadata & Showcase Settings */}
+      {permissions.write && !archived ? (
+        <section style={{ marginBottom: "2rem" }}>
+          <TemplateMetadataForm template={template} action={updateTemplateCatalogAction} />
+        </section>
+      ) : null}
 
       {/* Version History Card */}
       <section className={styles.interactiveCard} aria-labelledby="versions-heading">

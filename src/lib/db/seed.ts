@@ -115,6 +115,147 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       createdBy: user.id,
     }));
 
+  const catalogTemplatesSeed = [
+    {
+      name: "Classic Floral",
+      slug: "classic-floral-botanical",
+      description: "Desain undangan botanical dengan sentuhan floral lembut dan aksen sage green yang menenangkan.",
+      category: "wedding",
+      style: "botanical_sage",
+      price: 89000,
+      tier: "standard",
+      isPublic: true,
+      isFeatured: true,
+      thumbnailUrl: "/images/template-botanical.jpg",
+      previewMockupUrl: "/images/template-botanical.jpg",
+      tags: ["floral", "botanical", "sage", "pernikahan", "elegan"],
+      metadata: {
+        colorPalette: [
+          { hex: "#8A9A86", name: "Sage Green", isPrimary: true },
+          { hex: "#F4F1EA", name: "Ivory Warm" },
+          { hex: "#4A5847", name: "Forest Green" },
+        ],
+        supportedFeatures: ["rsvp", "google_maps", "digital_gift", "audio_player", "countdown", "gallery_slider"],
+        layoutFormat: "vertical_scroll",
+      },
+    },
+    {
+      name: "Royal Elegant",
+      slug: "royal-elegant-jawa",
+      description: "Kemewahan motif batik Kencana dan aksen emas megah untuk perayaan agung adat Nusantara.",
+      category: "wedding",
+      style: "traditional_jawa",
+      price: 119000,
+      tier: "premium",
+      isPublic: true,
+      isFeatured: true,
+      thumbnailUrl: "/images/template-jawa.jpg",
+      previewMockupUrl: "/images/template-jawa.jpg",
+      tags: ["jawa", "tradisional", "gold", "batik", "luxury"],
+      metadata: {
+        colorPalette: [
+          { hex: "#D4AF37", name: "Gold Kencana", isPrimary: true },
+          { hex: "#2C221E", name: "Dark Walnut" },
+        ],
+        supportedFeatures: ["rsvp", "google_maps", "digital_gift", "audio_player", "countdown", "envelope_cover"],
+        layoutFormat: "vertical_scroll",
+      },
+    },
+    {
+      name: "Modern Minimal",
+      slug: "modern-minimal-boho",
+      description: "Konsep rustic terracotta kontemporer dengan tipografi editorial modern yang bersih dan berkarakter.",
+      category: "wedding",
+      style: "rustic_boho",
+      price: 99000,
+      tier: "standard",
+      isPublic: true,
+      isFeatured: true,
+      thumbnailUrl: "/images/template-boho.jpg",
+      previewMockupUrl: "/images/template-boho.jpg",
+      tags: ["boho", "terracotta", "minimalis", "modern", "aesthetic"],
+      metadata: {
+        colorPalette: [
+          { hex: "#C86D51", name: "Terracotta", isPrimary: true },
+          { hex: "#F7F2EE", name: "Sand Cream" },
+        ],
+        supportedFeatures: ["rsvp", "google_maps", "digital_gift", "audio_player", "countdown", "story_timeline"],
+        layoutFormat: "vertical_scroll",
+      },
+    },
+    {
+      name: "Serene Promise",
+      slug: "serene-promise-tunangan",
+      description: "Nuansa blush pastel romantis untuk momen lamaran dan pertunangan yang penuh kehangatan.",
+      category: "engagement",
+      style: "modern_minimalist",
+      price: 79000,
+      tier: "standard",
+      isPublic: true,
+      isFeatured: false,
+      thumbnailUrl: "/images/template-botanical.jpg",
+      previewMockupUrl: "/images/template-botanical.jpg",
+      tags: ["tunangan", "engagement", "blush", "pastel", "romantis"],
+      metadata: {
+        colorPalette: [
+          { hex: "#E8B4B8", name: "Blush Rose", isPrimary: true },
+          { hex: "#FFFFFF", name: "Pure White" },
+        ],
+        supportedFeatures: ["rsvp", "google_maps", "countdown"],
+        layoutFormat: "vertical_scroll",
+      },
+    },
+    {
+      name: "Sweet Seventeen",
+      slug: "sweet-seventeen-celebration",
+      description: "Undangan ulang tahun ke-17 yang ceria, modis, dan interaktif dengan hitung mundur acara.",
+      category: "birthday",
+      style: "clean_editorial",
+      price: 69000,
+      tier: "standard",
+      isPublic: true,
+      isFeatured: false,
+      thumbnailUrl: "/images/template-boho.jpg",
+      previewMockupUrl: "/images/template-boho.jpg",
+      tags: ["ulang tahun", "birthday", "sweet seventeen", "party"],
+      metadata: {
+        colorPalette: [
+          { hex: "#D87093", name: "Berry Pink", isPrimary: true },
+        ],
+        supportedFeatures: ["rsvp", "google_maps", "countdown", "audio_player"],
+        layoutFormat: "vertical_scroll",
+      },
+    },
+  ];
+
+  for (const tpl of catalogTemplatesSeed) {
+    const existing = await findTemplateByName(db, workspace.id, tpl.name);
+    if (!existing) {
+      await insertTemplate(db, {
+        workspaceId: workspace.id,
+        name: tpl.name,
+        slug: tpl.slug,
+        description: tpl.description,
+        category: tpl.category,
+        style: tpl.style,
+        price: tpl.price,
+        tier: tpl.tier,
+        isPublic: tpl.isPublic,
+        isFeatured: tpl.isFeatured,
+        thumbnailUrl: tpl.thumbnailUrl,
+        previewMockupUrl: tpl.previewMockupUrl,
+        tags: tpl.tags,
+        metadata: tpl.metadata as any,
+        status: "published",
+        publishedVersionNo: 1,
+        publishedRevision: 1,
+        revision: 1,
+        draftDocument: createEmptyDocument(),
+        createdBy: user.id,
+      });
+    }
+  }
+
   let resellerUserId: string | undefined;
   if (options.withDemoReseller !== false) {
     const existingReseller = await findUserByEmail(db, DEMO_RESELLER_EMAIL);

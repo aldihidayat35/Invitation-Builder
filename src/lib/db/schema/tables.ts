@@ -36,6 +36,7 @@ import {
   userStatusEnum,
   workspaceRoleEnum,
 } from "./enums";
+import type { TemplateExtendedMetadata } from "../../../features/templates/types";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -131,6 +132,34 @@ export const templates = pgTable(
       .references(() => workspaces.id),
     name: text("name").notNull(),
     status: templateStatusEnum("status").notNull().default("draft"),
+    /** Public URL slug for catalog preview and shareable links */
+    slug: text("slug").unique(),
+    /** Brief marketing/template description */
+    description: text("description"),
+    /** Event type category (wedding, engagement, birthday, etc.) */
+    category: text("category").notNull().default("wedding"),
+    /** Visual aesthetic style (modern_minimalist, rustic_boho, traditional_jawa, etc.) */
+    style: text("style").notNull().default("modern_minimalist"),
+    /** Primary cover preview image (3:4 or 9:16 aspect ratio) */
+    thumbnailUrl: text("thumbnail_url"),
+    /** Smartphone 3D mockup frame image */
+    previewMockupUrl: text("preview_mockup_url"),
+    /** Access tier: free | standard | premium | exclusive */
+    tier: text("tier").notNull().default("standard"),
+    /** Price in IDR (0 for free) */
+    price: integer("price").notNull().default(0),
+    /** Whether visible in public catalog */
+    isPublic: pgBoolean("is_public").notNull().default(false),
+    /** Whether featured in homepage / editor picks */
+    isFeatured: pgBoolean("is_featured").notNull().default(false),
+    /** Search tags/keywords */
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    /** Extended metadata (colorPalette, supportedFeatures, galleryUrls, etc.) */
+    metadata: jsonb("metadata").$type<TemplateExtendedMetadata>().notNull().default({}),
+    /** Total view count in catalog */
+    viewCount: integer("view_count").notNull().default(0),
+    /** Total invitations created using this template */
+    useCount: integer("use_count").notNull().default(0),
     /** Working draft. `unknown`: always read through migrateDocument. */
     draftDocument: jsonb("draft_document").$type<unknown>().notNull(),
     /** Optimistic concurrency counter, bumped on every draft save. */
@@ -145,7 +174,10 @@ export const templates = pgTable(
   },
   (t) => [
     index("templates_workspace_idx").on(t.workspaceId, t.status),
+    index("templates_catalog_filter_idx").on(t.isPublic, t.category, t.style, t.tier),
+    index("templates_catalog_sort_idx").on(t.isPublic, t.isFeatured, t.useCount),
     check("templates_revision_positive", sql`${t.revision} >= 1`),
+    check("templates_price_non_negative", sql`${t.price} >= 0`),
     check(
       "templates_published_pair",
       sql`(${t.publishedVersionNo} is null) = (${t.publishedRevision} is null)`,
