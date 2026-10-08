@@ -11,7 +11,7 @@ async function main(): Promise<void> {
         ? rawPassword
         : process.env.NODE_ENV === "production"
           ? undefined
-          : "dev-password-change-me";
+          : ADMIN_DEFAULT_PASSWORD;
     const result = await seedDev(conn.db, { password });
     console.log("Seed OK:", result);
     console.log(`Admin login: ${ADMIN_USER_EMAIL} / ${ADMIN_DEFAULT_PASSWORD}`);

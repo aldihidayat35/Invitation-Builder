@@ -122,7 +122,7 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       const res = await createResellerWithProfile(db, {
         email: DEMO_RESELLER_EMAIL,
         name: "Mitra Berkah Admin",
-        passwordHash: options.password ? await hashPassword(options.password) : null,
+        passwordHash: password ? await hashPassword(password) : null,
         agencyName: "Mitra Berkah Wedding",
         slug: DEMO_RESELLER_SLUG,
         whatsappContact: "6281234567890",
@@ -131,6 +131,12 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       resellerUserId = res.user.id;
     } else {
       resellerUserId = existingReseller.id;
+      if (password) {
+        await db
+          .update(users)
+          .set({ passwordHash: await hashPassword(password), status: "active", updatedAt: new Date() })
+          .where(eq(users.id, existingReseller.id));
+      }
     }
 
     let clientUserId: string | undefined;
@@ -141,13 +147,19 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
           resellerUserId,
           clientName: "Demo Client",
           clientEmail: DEMO_CLIENT_EMAIL,
-          passwordHash: options.password ? await hashPassword(options.password) : null,
+          passwordHash: password ? await hashPassword(password) : null,
           workspaceName: "Demo Client Workspace",
           workspaceSlug: DEMO_CLIENT_SLUG,
         });
         clientUserId = clientRes.clientUser.id;
       } else {
         clientUserId = existingClient.id;
+        if (password) {
+          await db
+            .update(users)
+            .set({ passwordHash: await hashPassword(password), status: "active", updatedAt: new Date() })
+            .where(eq(users.id, existingClient.id));
+        }
       }
     }
 
