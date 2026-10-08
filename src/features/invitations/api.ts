@@ -48,6 +48,16 @@ export async function archive(invitationId: string) {
   return service.archiveInvitation(db, actor, invitationId);
 }
 
+export async function restore(invitationId: string) {
+  const { db, actor } = await context();
+  return service.restoreInvitation(db, actor, invitationId);
+}
+
+export async function remove(invitationId: string) {
+  const { db, actor } = await context();
+  return service.deleteInvitation(db, actor, invitationId);
+}
+
 export async function saveData(
   invitationId: string,
   values: Record<string, string | undefined>,

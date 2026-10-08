@@ -1,8 +1,10 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import {
+  customerOrders,
   guests,
   invitations,
   publishedSnapshots,
+  rsvps,
   templates,
   templateVersions,
   type GuestRow,
@@ -104,6 +106,51 @@ export async function archiveInvitationRow(
     .where(and(eq(invitations.id, invitationId), ne(invitations.status, "archived")))
     .returning();
   return row;
+}
+
+export async function restoreInvitationRow(
+  db: Database,
+  invitationId: string,
+): Promise<InvitationRow | undefined> {
+  const [row] = await db
+    .update(invitations)
+    .set({ status: "draft", updatedAt: new Date() })
+    .where(and(eq(invitations.id, invitationId), eq(invitations.status, "archived")))
+    .returning();
+  return row;
+}
+
+export async function hasPublishedSnapshots(
+  db: Database,
+  invitationId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: publishedSnapshots.id })
+    .from(publishedSnapshots)
+    .where(eq(publishedSnapshots.invitationId, invitationId))
+    .limit(1);
+  return !!row;
+}
+
+export async function deleteInvitationRow(
+  db: Database,
+  invitationId: string,
+): Promise<boolean> {
+  // 1. Delete associated RSVPs
+  await db.delete(rsvps).where(eq(rsvps.invitationId, invitationId));
+  // 2. Delete associated guests
+  await db.delete(guests).where(eq(guests.invitationId, invitationId));
+  // 3. Unlink customer orders if linked
+  await db
+    .update(customerOrders)
+    .set({ invitationId: null })
+    .where(eq(customerOrders.invitationId, invitationId));
+  // 4. Delete the invitation row
+  const [deleted] = await db
+    .delete(invitations)
+    .where(eq(invitations.id, invitationId))
+    .returning();
+  return !!deleted;
 }
 
 /** Template version + its owning workspace (for same-workspace checks). */

@@ -26,6 +26,7 @@ import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   archiveGuestRow,
   archiveInvitationRow,
+  deleteInvitationRow,
   findGuest,
   findGuestByToken,
   findInvitationById,
@@ -33,6 +34,7 @@ import {
   findSnapshotById,
   findSnapshotByRevision,
   findTemplateVersionWithWorkspace,
+  hasPublishedSnapshots,
   insertGuest,
   insertInvitation,
   insertPublishedSnapshot,
@@ -40,6 +42,7 @@ import {
   listInvitations as listInvitationRows,
   listSnapshotSummaries,
   nextRevisionNo,
+  restoreInvitationRow,
   setActiveSnapshot,
   updateGuestRow,
   updateInvitationData,
@@ -369,6 +372,56 @@ export async function archiveInvitation(
     });
     return toSummary(updated);
   });
+}
+
+export async function restoreInvitation(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<InvitationSummary> {
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  return db.transaction(async (tx) => {
+    const updated = await restoreInvitationRow(tx, row.id);
+    if (!updated) throw new InvitationNotFoundError(row.id);
+    await insertAuditLog(tx, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "invitation.restore",
+      entityType: "invitation",
+      entityId: row.id,
+      metadata: { title: row.title },
+    });
+    return toSummary(updated);
+  });
+}
+
+export async function deleteInvitation(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<{ deleted: boolean; archived: boolean }> {
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const hasSnapshots = await hasPublishedSnapshots(db, row.id);
+
+  if (!hasSnapshots) {
+    // No immutable snapshots exist: safe to hard-delete
+    return db.transaction(async (tx) => {
+      await deleteInvitationRow(tx, row.id);
+      await insertAuditLog(tx, {
+        workspaceId: row.workspaceId,
+        actorId: actor.userId,
+        action: "invitation.delete",
+        entityType: "invitation",
+        entityId: row.id,
+        metadata: { title: row.title, hardDeleted: true },
+      });
+      return { deleted: true, archived: false };
+    });
+  } else {
+    // Immutable snapshots exist: soft-delete via archive
+    await archiveInvitation(db, actor, invitationId);
+    return { deleted: false, archived: true };
+  }
 }
 
 /* ---------------------------------------------------------------- data mode */

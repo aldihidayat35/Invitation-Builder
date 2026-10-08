@@ -57,6 +57,8 @@ export const AUDIT_ACTIONS = [
   "invitation.create",
   "invitation.rename",
   "invitation.archive",
+  "invitation.restore",
+  "invitation.delete",
   "guest.create",
   "guest.archive",
   "invitation.publish",

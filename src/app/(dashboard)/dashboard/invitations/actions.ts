@@ -5,11 +5,14 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   addGuest,
+  archive,
   archiveGuest,
   create,
   describeInvitationError,
   importGuestsCsv,
   publish,
+  remove,
+  restore,
   rollback,
   saveData,
 } from "@/features/invitations/api";
@@ -156,5 +159,52 @@ export async function importGuestsAction(
     return { plan, ...(commit && { created }) };
   } catch (error) {
     return { error: failure(error).error ?? "Gagal mengimpor." };
+  }
+}
+
+export async function deleteInvitationAction(
+  invitationId: string,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(invitationId);
+  if (!id.success) return { error: "Undangan tidak valid." };
+  try {
+    const res = await remove(id.data);
+    revalidatePath(LIST);
+    return {
+      ok: true,
+      message: res.deleted
+        ? "Undangan berhasil dihapus permanen."
+        : "Undangan telah dipindahkan ke tab Diarsipkan.",
+    };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function archiveInvitationAction(
+  invitationId: string,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(invitationId);
+  if (!id.success) return { error: "Undangan tidak valid." };
+  try {
+    await archive(id.data);
+    revalidatePath(LIST);
+    return { ok: true, message: "Undangan berhasil diarsipkan." };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function restoreInvitationAction(
+  invitationId: string,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(invitationId);
+  if (!id.success) return { error: "Undangan tidak valid." };
+  try {
+    await restore(id.data);
+    revalidatePath(LIST);
+    return { ok: true, message: "Undangan berhasil dipulihkan ke status aktif." };
+  } catch (error) {
+    return failure(error);
   }
 }

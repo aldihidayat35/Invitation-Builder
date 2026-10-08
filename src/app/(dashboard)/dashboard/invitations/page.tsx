@@ -6,7 +6,11 @@ import { InvitationsView } from "@/features/invitations/components/InvitationsVi
 import { KpiStatCard } from "@/features/analytics";
 import { listLibrary } from "@/features/templates/api";
 import { getWorkspaceContext } from "@/lib/auth/server";
-import { createInvitationAction } from "./actions";
+import {
+  createInvitationAction,
+  deleteInvitationAction,
+  restoreInvitationAction,
+} from "./actions";
 
 export const metadata: Metadata = {
   title: "Kelola Undangan Digital | Dashboard",
@@ -111,7 +115,6 @@ export default async function InvitationsPage({
         <KpiStatCard
           title="TOTAL UNDANGAN"
           value={totalCount}
-          subtitle={`${activeInvitations.length} aktif · ${archivedCount} diarsipkan`}
           tone="bronze"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -128,9 +131,7 @@ export default async function InvitationsPage({
         <KpiStatCard
           title="DIPUBLISH (LIVE)"
           value={publishedCount}
-          subtitle="Undangan aktif & dapat diakses publik"
           tone="emerald"
-          trend={totalCount > 0 ? { value: `${publishedRate}%`, positive: true } : undefined}
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -146,7 +147,6 @@ export default async function InvitationsPage({
         <KpiStatCard
           title="DRAFT AKTIF"
           value={draftCount}
-          subtitle="Dalam proses pengisian data"
           tone="gold"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,7 +163,6 @@ export default async function InvitationsPage({
         <KpiStatCard
           title="TEMPLATE MASTER SIAP"
           value={published.length}
-          subtitle={`Dari ${templates.length} total master template`}
           tone="default"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -249,6 +248,9 @@ export default async function InvitationsPage({
           invitations={allInvitations}
           initialStatus={archivedView ? "archived" : "all"}
           emptyMessage="Belum ada undangan yang dibuat. Silakan pilih template master dan buat undangan baru di atas."
+          canWrite={permissions.write}
+          deleteAction={deleteInvitationAction}
+          restoreAction={restoreInvitationAction}
         />
       </section>
     </main>

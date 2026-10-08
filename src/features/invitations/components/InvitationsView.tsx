@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { InvitationSummary } from "../types";
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
@@ -35,32 +35,55 @@ interface InvitationsViewProps {
   readonly invitations: readonly InvitationSummary[];
   readonly emptyMessage?: string;
   readonly initialStatus?: "all" | "published" | "draft" | "archived";
+  readonly canWrite?: boolean;
+  readonly deleteAction?: (invitationId: string) => Promise<{ ok?: boolean; error?: string; message?: string }>;
+  readonly restoreAction?: (invitationId: string) => Promise<{ ok?: boolean; error?: string; message?: string }>;
 }
 
 export function InvitationsView({
   invitations,
   emptyMessage = "Belum ada undangan dibuat. Mulai buat undangan pertama Anda.",
   initialStatus = "all",
+  canWrite = true,
+  deleteAction,
+  restoreAction,
 }: InvitationsViewProps) {
+  const [items, setItems] = useState<readonly InvitationSummary[]>(invitations);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft" | "archived">(initialStatus);
   const [sortBy, setSortBy] = useState<"updated-desc" | "updated-asc" | "title-asc">("updated-desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Delete & Restore state
+  const [deletingInvitation, setDeletingInvitation] = useState<InvitationSummary | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    setItems(invitations);
+  }, [invitations]);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 4000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+
   // Counts for tabs
   const counts = useMemo(() => {
     return {
-      all: invitations.length,
-      published: invitations.filter((i) => i.status === "published").length,
-      draft: invitations.filter((i) => i.status === "draft").length,
-      archived: invitations.filter((i) => i.status === "archived").length,
+      all: items.length,
+      published: items.filter((i) => i.status === "published").length,
+      draft: items.filter((i) => i.status === "draft").length,
+      archived: items.filter((i) => i.status === "archived").length,
     };
-  }, [invitations]);
+  }, [items]);
 
   // Filtered and sorted list
   const filtered = useMemo(() => {
-    return invitations
+    return items
       .filter((inv) => {
         if (statusFilter !== "all" && inv.status !== statusFilter) return false;
         if (!search.trim()) return true;
@@ -79,7 +102,7 @@ export function InvitationsView({
         }
         return a.title.localeCompare(b.title);
       });
-  }, [invitations, statusFilter, search, sortBy]);
+  }, [items, statusFilter, search, sortBy]);
 
   const handleCopyLink = async (inv: InvitationSummary) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -93,8 +116,75 @@ export function InvitationsView({
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingInvitation || !deleteAction) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteAction(deletingInvitation.id);
+      if (res.error) {
+        setFeedback({ type: "error", text: res.error });
+      } else {
+        setFeedback({ type: "success", text: res.message ?? "Undangan berhasil diproses." });
+        setItems((prev) =>
+          deletingInvitation.status === "archived"
+            ? prev.filter((i) => i.id !== deletingInvitation.id)
+            : prev.map((i) => (i.id === deletingInvitation.id ? { ...i, status: "archived" as const } : i)),
+        );
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Terjadi kesalahan saat memproses penghapusan." });
+    } finally {
+      setIsDeleting(false);
+      setDeletingInvitation(null);
+    }
+  };
+
+  const handleRestore = async (inv: InvitationSummary) => {
+    if (!restoreAction) return;
+    setRestoringId(inv.id);
+    try {
+      const res = await restoreAction(inv.id);
+      if (res.error) {
+        setFeedback({ type: "error", text: res.error });
+      } else {
+        setFeedback({ type: "success", text: res.message ?? "Undangan berhasil dipulihkan." });
+        setItems((prev) =>
+          prev.map((i) => (i.id === inv.id ? { ...i, status: "draft" as const } : i)),
+        );
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Terjadi kesalahan saat memulihkan undangan." });
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Feedback Toast Notification */}
+      {feedback && (
+        <div
+          role="status"
+          className={`flex items-center justify-between rounded-xl border p-3.5 text-xs font-medium shadow-sm transition animate-in fade-in slide-in-from-top-2 ${
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-rose-200 bg-rose-50 text-rose-900"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span>{feedback.type === "success" ? "✓" : "⚠️"}</span>
+            <span>{feedback.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            className="text-stone-400 hover:text-stone-600 text-sm font-bold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Interactive Toolbar: Filter, Search & View Switcher */}
       <div className="flex flex-col gap-4 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
         {/* Left: Filter Tabs */}
@@ -401,6 +491,39 @@ export function InvitationsView({
                       />
                     </svg>
                   </Link>
+
+                  {/* Restore button if archived */}
+                  {canWrite && invitation.status === "archived" && restoreAction && (
+                    <button
+                      type="button"
+                      onClick={() => void handleRestore(invitation)}
+                      disabled={restoringId === invitation.id}
+                      className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                      title="Pulihkan Undangan"
+                    >
+                      {restoringId === invitation.id ? "…" : "Pulihkan"}
+                    </button>
+                  )}
+
+                  {/* Delete / Archive button */}
+                  {canWrite && deleteAction && (
+                    <button
+                      type="button"
+                      onClick={() => setDeletingInvitation(invitation)}
+                      className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-xs font-medium text-stone-400 shadow-2xs transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                      title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
+                      aria-label="Hapus Undangan"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </li>
             );
@@ -485,6 +608,37 @@ export function InvitationsView({
                           >
                             Preview
                           </Link>
+
+                          {canWrite && invitation.status === "archived" && restoreAction && (
+                            <button
+                              type="button"
+                              onClick={() => void handleRestore(invitation)}
+                              disabled={restoringId === invitation.id}
+                              className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                              title="Pulihkan Undangan"
+                            >
+                              {restoringId === invitation.id ? "…" : "Pulihkan"}
+                            </button>
+                          )}
+
+                          {canWrite && deleteAction && (
+                            <button
+                              type="button"
+                              onClick={() => setDeletingInvitation(invitation)}
+                              className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition"
+                              title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
+                              aria-label="Hapus Undangan"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -492,6 +646,79 @@ export function InvitationsView({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingInvitation && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs animate-in fade-in"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-xl text-rose-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-[#2C221E]">
+                  {deletingInvitation.status === "archived" ? "Hapus Permanen Undangan?" : "Hapus Undangan?"}
+                </h3>
+                <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
+                  Apakah Anda yakin ingin menghapus undangan{" "}
+                  <strong className="text-[#2C221E]">"{deletingInvitation.title}"</strong>?
+                </p>
+                <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-500">
+                  {deletingInvitation.status === "archived"
+                    ? "⚠️ Undangan ini akan dihapus secara permanen dari basis data jika belum pernah dipublish."
+                    : "💡 Undangan yang dihapus akan dinonaktifkan dan dipindahkan ke tab 'Diarsipkan'. Anda masih dapat memulihkannya nanti jika diperlukan."}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-stone-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setDeletingInvitation(null)}
+                disabled={isDeleting}
+                className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDeleteConfirm()}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    <span>Menghapus…</span>
+                  </>
+                ) : (
+                  <span>Ya, Hapus Undangan</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
