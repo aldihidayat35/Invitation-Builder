@@ -175,7 +175,7 @@ function escapeXML(s: string): string {
         ">": "&gt;",
         '"': "&quot;",
         "'": "&apos;",
-      }[c] || c),
+      })[c] || c,
   );
 }
 
@@ -191,14 +191,14 @@ function svgPreview(t: TemplateItem): string {
     t.category === "Pernikahan"
       ? "THE WEDDING OF"
       : t.category === "Tunangan"
-      ? "THE ENGAGEMENT OF"
-      : t.category === "Aqiqah"
-      ? "TASYAKURAN AQIQAH"
-      : t.category === "Ulang Tahun"
-      ? "SWEET CELEBRATION"
-      : t.category === "Tasyakuran"
-      ? "ACARA TASYAKURAN"
-      : "SPECIAL INVITATION";
+        ? "THE ENGAGEMENT OF"
+        : t.category === "Aqiqah"
+          ? "TASYAKURAN AQIQAH"
+          : t.category === "Ulang Tahun"
+            ? "SWEET CELEBRATION"
+            : t.category === "Tasyakuran"
+              ? "ACARA TASYAKURAN"
+              : "SPECIAL INVITATION";
   const art = simple
     ? `<path d="M75 428V155A95 95 0 0 1 265 155V428" fill="#edc8a8" fill-opacity=".45" stroke="#f5e0cd" stroke-width="4"/><path d="M94 426V155A76 76 0 0 1 246 155V426" fill="#f7e6d8" fill-opacity=".35"/>`
     : `<path d="M46 425V124A124 124 0 0 1 294 124V425" fill="none" stroke="${c.stem}" stroke-opacity=".37" stroke-width="2"/><path d="M62 416V126A108 108 0 0 1 278 126V416" fill="none" stroke="${c.stem}" stroke-opacity=".25" stroke-width="1"/>`;
@@ -220,7 +220,11 @@ function imageOf(t: TemplateItem): string {
 }
 
 const formatRupiah = (n: number) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 interface LandingViewProps {
   currentUser?: { id: string; name: string; email: string } | null;
@@ -290,41 +294,218 @@ export function LandingView({ currentUser }: LandingViewProps) {
   });
 
   const visibleTemplates =
-    showAll || selectedCategory !== "Semua" || searchTerm ? filteredTemplates : filteredTemplates.slice(0, 4);
-
+    showAll || selectedCategory !== "Semua" || searchTerm
+      ? filteredTemplates
+      : filteredTemplates.slice(0, 4);
 
   const displayedReviews = [0, 1, 2].map((n) => REVIEWS[(n + reviewIndex) % REVIEWS.length]!);
 
   return (
     <div className="landing-root">
       {/* Svg Symbol Sprite */}
-      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
-        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.1" fill="none" stroke="currentColor" strokeWidth="1.8"/><path d="m16.2 16.2 5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></symbol>
-        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></symbol>
-        <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></symbol>
-        <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></symbol>
-        <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.7 4.7c-2.2-2.1-5.6-1.8-7.5.3L12 6.3l-1.2-1.3C8.9 2.9 5.5 2.6 3.3 4.7a5.7 5.7 0 0 0 0 8.1L12 21l8.7-8.2a5.7 5.7 0 0 0 0-8.1Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></symbol>
-        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.6"/><path d="M2.4 20v-2.1c0-3.2 2.8-5.2 6.6-5.2s6.6 2 6.6 5.2V20M16.2 5.4c2.1.1 3.5 1.7 3.5 3.5s-1.4 3.4-3.5 3.5M18 14c2.5.5 3.5 2.2 3.5 4V20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></symbol>
-        <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2.7h8l4 4V21H6a2 2 0 0 1-2-2V4.7a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" strokeWidth="1.5"/><path d="M14 2.7v5h4M8 12h7M8 16h7" fill="none" stroke="currentColor" strokeWidth="1.4"/></symbol>
-        <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2.3 3 6.2 6.8 1-4.9 4.8 1.2 6.9L12 18l-6.1 3.2 1.2-6.9-4.9-4.8 6.8-1L12 2.3Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></symbol>
-        <symbol id="i-rings" viewBox="0 0 24 24"><circle cx="9" cy="12.5" r="6.1" fill="none" stroke="currentColor" strokeWidth="1.7"/><circle cx="15" cy="12.5" r="6.1" fill="none" stroke="currentColor" strokeWidth="1.7"/></symbol>
-        <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 20C5 10 10 4 21 3c-.3 12-6.7 17-16 17Zm0 0c3-5 8-10 14-13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></symbol>
-        <symbol id="i-cake" viewBox="0 0 24 24"><path d="M4 11h16v10H4zM4 16h16M8 7v4m4-4v4m4-4v4M8 5V3m4 2V3m4 2V3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></symbol>
-        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.4 15.6A9.1 9.1 0 0 1 8.4 3.5 9.2 9.2 0 1 0 20.4 15.6Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></symbol>
-        <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5"/><path d="M2 9h20V6H2v3Zm10 0v12M12 6C8 .5 4 4.4 7 6h5Zm0 0c4-5.5 8-1.6 5 0h-5Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></symbol>
-        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></symbol>
-        <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></symbol>
-        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 2 2.1 7.9L22 12l-7.9 2.1L12 22l-2.1-7.9L2 12l7.9-2.1L12 2Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></symbol>
-        <symbol id="i-mobile" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/><path d="M10 18.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></symbol>
-        <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.3" fill="none" stroke="currentColor" strokeWidth="1.5"/><path d="m10.7 2 2.6 0 .7 2.5c.8.2 1.5.5 2.1.9l2.3-1.2 1.8 1.8L19 8.3c.4.7.7 1.4.9 2.1l2.1.7v2.6l-2.1.7c-.2.8-.5 1.5-.9 2.1l1.2 2.3-1.8 1.8-2.3-1.2c-.7.4-1.4.7-2.1.9l-.7 2.1h-2.6l-.7-2.1c-.8-.2-1.5-.5-2.1-.9l-2.3 1.2-1.8-1.8L5 16.5c-.4-.7-.7-1.4-.9-2.1L2 13.7v-2.6l2.1-.7c.2-.8.5-1.5.9-2.1L3.8 6l1.8-1.8 2.3 1.2c.7-.4 1.4-.7 2.1-.9L10.7 2Z" fill="none" stroke="currentColor" strokeWidth="1.25"/></symbol>
-        <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></symbol>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
+      >
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="10.8" cy="10.8" r="7.1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="m16.2 16.2 5 5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24">
+          <path
+            d="M4 12h16m-7-7 7 7-7 7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path
+            d="m9 5 7 7-7 7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-chevron-down" viewBox="0 0 24 24">
+          <path
+            d="m5 9 7 7 7-7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24">
+          <path
+            d="M20.7 4.7c-2.2-2.1-5.6-1.8-7.5.3L12 6.3l-1.2-1.3C8.9 2.9 5.5 2.6 3.3 4.7a5.7 5.7 0 0 0 0 8.1L12 21l8.7-8.2a5.7 5.7 0 0 0 0-8.1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-users" viewBox="0 0 24 24">
+          <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <path
+            d="M2.4 20v-2.1c0-3.2 2.8-5.2 6.6-5.2s6.6 2 6.6 5.2V20M16.2 5.4c2.1.1 3.5 1.7 3.5 3.5s-1.4 3.4-3.5 3.5M18 14c2.5.5 3.5 2.2 3.5 4V20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <path
+            d="M6 2.7h8l4 4V21H6a2 2 0 0 1-2-2V4.7a2 2 0 0 1 2-2Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path d="M14 2.7v5h4M8 12h7M8 16h7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        </symbol>
+        <symbol id="i-star" viewBox="0 0 24 24">
+          <path
+            d="m12 2.3 3 6.2 6.8 1-4.9 4.8 1.2 6.9L12 18l-6.1 3.2 1.2-6.9-4.9-4.8 6.8-1L12 2.3Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-rings" viewBox="0 0 24 24">
+          <circle cx="9" cy="12.5" r="6.1" fill="none" stroke="currentColor" strokeWidth="1.7" />
+          <circle cx="15" cy="12.5" r="6.1" fill="none" stroke="currentColor" strokeWidth="1.7" />
+        </symbol>
+        <symbol id="i-leaf" viewBox="0 0 24 24">
+          <path
+            d="M5 20C5 10 10 4 21 3c-.3 12-6.7 17-16 17Zm0 0c3-5 8-10 14-13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </symbol>
+        <symbol id="i-cake" viewBox="0 0 24 24">
+          <path
+            d="M4 11h16v10H4zM4 16h16M8 7v4m4-4v4m4-4v4M8 5V3m4 2V3m4 2V3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24">
+          <path
+            d="M20.4 15.6A9.1 9.1 0 0 1 8.4 3.5 9.2 9.2 0 1 0 20.4 15.6Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-gift" viewBox="0 0 24 24">
+          <rect
+            x="3"
+            y="9"
+            width="18"
+            height="12"
+            rx="1.2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M2 9h20V6H2v3Zm10 0v12M12 6C8 .5 4 4.4 7 6h5Zm0 0c4-5.5 8-1.6 5 0h-5Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path
+            d="M5 5 19 19M19 5 5 19"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24">
+          <path
+            d="m12 2 2.1 7.9L22 12l-7.9 2.1L12 22l-2.1-7.9L2 12l7.9-2.1L12 2Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+        </symbol>
+        <symbol id="i-mobile" viewBox="0 0 24 24">
+          <rect
+            x="6"
+            y="2"
+            width="12"
+            height="20"
+            rx="2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path d="M10 18.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3.3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path
+            d="m10.7 2 2.6 0 .7 2.5c.8.2 1.5.5 2.1.9l2.3-1.2 1.8 1.8L19 8.3c.4.7.7 1.4.9 2.1l2.1.7v2.6l-2.1.7c-.2.8-.5 1.5-.9 2.1l1.2 2.3-1.8 1.8-2.3-1.2c-.7.4-1.4.7-2.1.9l-.7 2.1h-2.6l-.7-2.1c-.8-.2-1.5-.5-2.1-.9l-2.3 1.2-1.8-1.8L5 16.5c-.4-.7-.7-1.4-.9-2.1L2 13.7v-2.6l2.1-.7c.2-.8.5-1.5.9-2.1L3.8 6l1.8-1.8 2.3 1.2c.7-.4 1.4-.7 2.1-.9L10.7 2Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+          />
+        </symbol>
+        <symbol id="i-send" viewBox="0 0 24 24">
+          <path
+            d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </symbol>
       </svg>
 
       {/* Header & Hero */}
       <header className="hero-bg text-white" id="beranda">
         <div className="hero-glow"></div>
-        <nav className="relative z-30 mx-auto flex h-[72px] max-w-[1240px] items-center justify-between px-5 lg:px-0" aria-label="Navigasi utama">
-          <Link className="font-display text-[23px] font-bold tracking-[-.04em] text-white" href="/">
+        <nav
+          className="relative z-30 mx-auto flex h-[72px] max-w-[1240px] items-center justify-between px-5 lg:px-0"
+          aria-label="Navigasi utama"
+        >
+          <Link
+            className="font-display text-[23px] font-bold tracking-[-.04em] text-white"
+            href="/"
+          >
             Undangan.id
           </Link>
           <div className="hidden items-center gap-9 text-[13px] font-medium text-[#e6e3df] md:flex">
@@ -355,7 +536,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
               }}
               className="grid h-10 w-10 place-items-center rounded-full border border-[#555653] hover:bg-white/10"
             >
-              <svg className="h-[19px] w-[19px]"><use href="#i-search" /></svg>
+              <svg className="h-[19px] w-[19px]">
+                <use href="#i-search" />
+              </svg>
             </button>
 
             {currentUser ? (
@@ -367,7 +550,10 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 <Link href="/login" className="button-outline px-6 py-3 text-[12px]">
                   Masuk
                 </Link>
-                <Link href="/login?next=/dashboard" className="button-primary px-6 py-3 text-[12px]">
+                <Link
+                  href="/login?next=/dashboard"
+                  className="button-primary px-6 py-3 text-[12px]"
+                >
                   Daftar Gratis
                 </Link>
               </>
@@ -382,22 +568,43 @@ export function LandingView({ currentUser }: LandingViewProps) {
             aria-label="Buka menu"
             aria-expanded={mobileNavOpen}
           >
-            <svg className="h-6 w-6"><use href="#i-menu" /></svg>
+            <svg className="h-6 w-6">
+              <use href="#i-menu" />
+            </svg>
           </button>
         </nav>
 
         {mobileNavOpen && (
-          <div id="mobileNav" className="relative z-40 mx-5 mb-3 space-y-1 rounded-xl border border-white/10 bg-[#333333] p-4 text-sm md:hidden">
-            <a className="block rounded-lg px-3 py-2 hover:bg-white/10" href="#beranda" onClick={() => setMobileNavOpen(false)}>
+          <div
+            id="mobileNav"
+            className="relative z-40 mx-5 mb-3 space-y-1 rounded-xl border border-white/10 bg-[#333333] p-4 text-sm md:hidden"
+          >
+            <a
+              className="block rounded-lg px-3 py-2 hover:bg-white/10"
+              href="#beranda"
+              onClick={() => setMobileNavOpen(false)}
+            >
               Beranda
             </a>
-            <a className="block rounded-lg px-3 py-2 hover:bg-white/10" href="#template" onClick={() => setMobileNavOpen(false)}>
+            <a
+              className="block rounded-lg px-3 py-2 hover:bg-white/10"
+              href="#template"
+              onClick={() => setMobileNavOpen(false)}
+            >
               Template
             </a>
-            <a className="block rounded-lg px-3 py-2 hover:bg-white/10" href="#harga" onClick={() => setMobileNavOpen(false)}>
+            <a
+              className="block rounded-lg px-3 py-2 hover:bg-white/10"
+              href="#harga"
+              onClick={() => setMobileNavOpen(false)}
+            >
               Harga
             </a>
-            <a className="block rounded-lg px-3 py-2 hover:bg-white/10" href="#cara-kerja" onClick={() => setMobileNavOpen(false)}>
+            <a
+              className="block rounded-lg px-3 py-2 hover:bg-white/10"
+              href="#cara-kerja"
+              onClick={() => setMobileNavOpen(false)}
+            >
               Cara Kerja
             </a>
             <Link
@@ -414,10 +621,12 @@ export function LandingView({ currentUser }: LandingViewProps) {
           <div className="relative z-20 max-w-[690px] pb-6 pt-3 md:pb-[42px] md:pt-8 lg:pt-10">
             <p className="eyebrow mb-3">UNDANGAN DIGITAL, LEBIH BERKESAN</p>
             <h1 className="font-display max-w-[680px] text-[42px] font-medium leading-[1.12] tracking-[-.045em] sm:text-[56px] lg:text-[59px]">
-              Temukan Template<br /> Undangan <span className="text-[#c58b55]">Impianmu</span>
+              Temukan Template
+              <br /> Undangan <span className="text-[#c58b55]">Impianmu</span>
             </h1>
             <p className="mt-3 max-w-[535px] text-[14px] leading-[1.7] text-[#dddddc] sm:text-[15px]">
-              Buat undangan digital yang elegan, praktis, dan penuh makna untuk momen spesialmu. Ribuan template siap digunakan.
+              Buat undangan digital yang elegan, praktis, dan penuh makna untuk momen spesialmu.
+              Ribuan template siap digunakan.
             </p>
 
             <form
@@ -430,7 +639,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 document.getElementById("template")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              <svg className="ml-2 mr-2 h-5 w-5 shrink-0 text-[#2d2d2d]"><use href="#i-search" /></svg>
+              <svg className="ml-2 mr-2 h-5 w-5 shrink-0 text-[#2d2d2d]">
+                <use href="#i-search" />
+              </svg>
               <input
                 id="searchInput"
                 className="min-w-0 flex-1 border-0 bg-transparent text-[12px] text-[#2e2e2e] outline-none placeholder:text-[#969696]"
@@ -455,35 +666,46 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 <option value="Tasyakuran">Tasyakuran</option>
                 <option value="Event Lainnya">Event Lainnya</option>
               </select>
-              <button type="submit" className="button-primary ml-2 h-[38px] shrink-0 px-3 text-[11px] sm:px-7">
+              <button
+                type="submit"
+                className="button-primary ml-2 h-[38px] shrink-0 px-3 text-[11px] sm:px-7"
+              >
                 Cari Template
               </button>
             </form>
 
             <div className="mt-[27px] grid max-w-[620px] grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-4">
               <div className="flex items-center gap-3">
-                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]"><use href="#i-users" /></svg>
+                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]">
+                  <use href="#i-users" />
+                </svg>
                 <div>
                   <div className="text-[17px] font-medium">250K+</div>
                   <div className="text-[10px] leading-4 text-[#b7b6b5]">Pengguna Aktif</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <svg className="h-[28px] w-[28px] shrink-0 text-[#bd8b58]"><use href="#i-file" /></svg>
+                <svg className="h-[28px] w-[28px] shrink-0 text-[#bd8b58]">
+                  <use href="#i-file" />
+                </svg>
                 <div>
                   <div className="text-[17px] font-medium">1.000+</div>
                   <div className="text-[10px] leading-4 text-[#b7b6b5]">Template Premium</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]"><use href="#i-star" /></svg>
+                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]">
+                  <use href="#i-star" />
+                </svg>
                 <div>
                   <div className="text-[17px] font-medium">4.9/5</div>
                   <div className="text-[10px] leading-4 text-[#b7b6b5]">Dari 100K+ Review</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]"><use href="#i-heart" /></svg>
+                <svg className="h-[29px] w-[29px] shrink-0 text-[#bd8b58]">
+                  <use href="#i-heart" />
+                </svg>
                 <div>
                   <div className="text-[17px] font-medium">99%</div>
                   <div className="text-[10px] leading-4 text-[#b7b6b5]">Puas dengan Hasil</div>
@@ -514,19 +736,29 @@ export function LandingView({ currentUser }: LandingViewProps) {
                   className="mb-1 inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#925003] hover:underline"
                 >
                   {showAll ? "Tampilkan Sedikit ↑" : "Lihat Semua →"}
-                  <svg className="h-3 w-3"><use href="#i-arrow-right" /></svg>
+                  <svg className="h-3 w-3">
+                    <use href="#i-arrow-right" />
+                  </svg>
                 </button>
               </div>
 
               {(searchTerm || selectedCategory !== "Semua") && (
-                <div id="filterStatus" className="mt-1 text-[11px] text-[#76716d]" aria-live="polite">
+                <div
+                  id="filterStatus"
+                  className="mt-1 text-[11px] text-[#76716d]"
+                  aria-live="polite"
+                >
                   {filteredTemplates.length} template ditemukan
                   {selectedCategory !== "Semua" ? ` dalam kategori ${selectedCategory}` : ""}
                   {searchTerm ? ` untuk “${searchTerm}”` : ""}.
                 </div>
               )}
 
-              <div id="templateGrid" className="mt-[17px] grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Katalog template undangan">
+              <div
+                id="templateGrid"
+                className="mt-[17px] grid grid-cols-2 gap-3 sm:grid-cols-4"
+                aria-label="Katalog template undangan"
+              >
                 {visibleTemplates.map((t) => {
                   const isFav = favorites.has(t.id);
                   return (
@@ -542,7 +774,10 @@ export function LandingView({ currentUser }: LandingViewProps) {
                             aria-pressed={isFav}
                             onClick={() => toggleFavorite(t.id)}
                           >
-                            <svg className="h-[17px] w-[17px]" fill={isFav ? "currentColor" : "none"}>
+                            <svg
+                              className="h-[17px] w-[17px]"
+                              fill={isFav ? "currentColor" : "none"}
+                            >
                               <use href="#i-heart" />
                             </svg>
                           </button>
@@ -559,7 +794,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                           onClick={() => setModalTemplate(t)}
                           aria-label={`Lihat detail ${t.name}`}
                         >
-                          <svg className="h-[14px] w-[14px]"><use href="#i-chevron-right" /></svg>
+                          <svg className="h-[14px] w-[14px]">
+                            <use href="#i-chevron-right" />
+                          </svg>
                         </button>
                       </div>
                     </article>
@@ -568,14 +805,20 @@ export function LandingView({ currentUser }: LandingViewProps) {
               </div>
 
               {filteredTemplates.length === 0 && (
-                <div id="emptyState" className="mt-4 rounded-xl border border-dashed border-[#d8d0c8] bg-[#faf7f2] p-8 text-center text-sm text-[#6a6159]">
+                <div
+                  id="emptyState"
+                  className="mt-4 rounded-xl border border-dashed border-[#d8d0c8] bg-[#faf7f2] p-8 text-center text-sm text-[#6a6159]"
+                >
                   Tidak ada template yang cocok. Coba kata kunci lain.
                 </div>
               )}
             </div>
 
             {/* Categories Grid */}
-            <div className="border-t border-[#e9e5e1] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0" id="kategori">
+            <div
+              className="border-t border-[#e9e5e1] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"
+              id="kategori"
+            >
               <div className="flex items-end justify-between gap-2">
                 <div>
                   <p className="eyebrow !text-[#925003]">JELAJAHI KATEGORI</p>
@@ -615,7 +858,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                       document.getElementById("template")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
-                    <svg className="category-icon"><use href={cat.icon} /></svg>
+                    <svg className="category-icon">
+                      <use href={cat.icon} />
+                    </svg>
                     <span className="text-[12px] font-semibold">{cat.name}</span>
                     <span className="text-[10px] text-[#898581]">{cat.count}</span>
                   </button>
@@ -632,7 +877,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
               <div>
                 <p className="eyebrow !text-[#925003]">APA KATA MEREKA</p>
                 <h2 className="font-display mt-1 text-[25px] font-semibold leading-[1.27] tracking-[-.035em]">
-                  Dipercaya oleh<br />Ribuan Pengguna
+                  Dipercaya oleh
+                  <br />
+                  Ribuan Pengguna
                 </h2>
               </div>
               <div className="mt-3 flex gap-2">
@@ -641,7 +888,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                   type="button"
                   id="reviewPrev"
                   aria-label="Testimoni sebelumnya"
-                  onClick={() => setReviewIndex((reviewIndex - 1 + REVIEWS.length) % REVIEWS.length)}
+                  onClick={() =>
+                    setReviewIndex((reviewIndex - 1 + REVIEWS.length) % REVIEWS.length)
+                  }
                 >
                   ←
                 </button>
@@ -660,7 +909,10 @@ export function LandingView({ currentUser }: LandingViewProps) {
             <div id="reviewGrid" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {displayedReviews.map((r) => (
                 <article key={r.name} className="review-card flex gap-3 p-3.5">
-                  <div className="avatar h-12 w-12 text-[14px]" style={{ background: `linear-gradient(135deg, ${r.shade}, #f6ece3)` }}>
+                  <div
+                    className="avatar h-12 w-12 text-[14px]"
+                    style={{ background: `linear-gradient(135deg, ${r.shade}, #f6ece3)` }}
+                  >
                     {r.initial}
                   </div>
                   <div className="min-w-0">
@@ -680,9 +932,22 @@ export function LandingView({ currentUser }: LandingViewProps) {
         {/* CTA Banner Section */}
         <section id="harga" className="bg-[#fafafa] px-4 pb-5 sm:px-5">
           <div className="cta-bg mx-auto flex max-w-[1330px] flex-col gap-5 rounded-[13px] px-7 py-6 text-white md:flex-row md:items-center md:justify-between md:px-[70px] lg:px-[155px]">
-            <svg className="decor-sprig -left-2 bottom-0 h-32 w-36" viewBox="0 0 140 140" fill="none" aria-hidden="true">
-              <path d="M10 140Q55 90 65 8M45 102 4 83M54 76 107 52M59 43 32 20" stroke="#f8e8cb" strokeWidth="1.4" />
-              <path d="M30 117Q8 118 5 90q27 0 25 27ZM49 90q-32-9-31-32 25 10 31 32ZM57 64q27-24 49-24-2 26-49 24ZM65 35Q48 12 56 1q18 12 9 34Z" stroke="#f8e8cb" strokeWidth="1.5" />
+            <svg
+              className="decor-sprig -left-2 bottom-0 h-32 w-36"
+              viewBox="0 0 140 140"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M10 140Q55 90 65 8M45 102 4 83M54 76 107 52M59 43 32 20"
+                stroke="#f8e8cb"
+                strokeWidth="1.4"
+              />
+              <path
+                d="M30 117Q8 118 5 90q27 0 25 27ZM49 90q-32-9-31-32 25 10 31 32ZM57 64q27-24 49-24-2 26-49 24ZM65 35Q48 12 56 1q18 12 9 34Z"
+                stroke="#f8e8cb"
+                strokeWidth="1.5"
+              />
             </svg>
             <div className="relative z-10">
               <p className="eyebrow !text-[#e8c49d]">MOMEN SPESIAL, DIMULAI DARI SINI</p>
@@ -701,7 +966,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 onClick={() => showToast("Membuka studio pembuatan undangan...")}
               >
                 <span>Mulai Gratis Sekarang</span>
-                <svg className="h-4 w-4"><use href="#i-arrow-right" /></svg>
+                <svg className="h-4 w-4">
+                  <use href="#i-arrow-right" />
+                </svg>
               </Link>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-[#f7dec5]">
                 <span>✓ Mudah digunakan</span>
@@ -709,9 +976,22 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 <span>✓ Banyak pilihan template</span>
               </div>
             </div>
-            <svg className="decor-sprig -right-5 -top-2 h-32 w-36 rotate-180" viewBox="0 0 140 140" fill="none" aria-hidden="true">
-              <path d="M10 140Q55 90 65 8M45 102 4 83M54 76 107 52M59 43 32 20" stroke="#f8e8cb" strokeWidth="1.4" />
-              <path d="M30 117Q8 118 5 90q27 0 25 27ZM49 90q-32-9-31-32 25 10 31 32ZM57 64q27-24 49-24-2 26-49 24ZM65 35Q48 12 56 1q18 12 9 34Z" stroke="#f8e8cb" strokeWidth="1.5" />
+            <svg
+              className="decor-sprig -right-5 -top-2 h-32 w-36 rotate-180"
+              viewBox="0 0 140 140"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M10 140Q55 90 65 8M45 102 4 83M54 76 107 52M59 43 32 20"
+                stroke="#f8e8cb"
+                strokeWidth="1.4"
+              />
+              <path
+                d="M30 117Q8 118 5 90q27 0 25 27ZM49 90q-32-9-31-32 25 10 31 32ZM57 64q27-24 49-24-2 26-49 24ZM65 35Q48 12 56 1q18 12 9 34Z"
+                stroke="#f8e8cb"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
         </section>
@@ -748,7 +1028,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
               aria-label="Tutup detail"
               onClick={() => setModalTemplate(null)}
             >
-              <svg className="h-5 w-5"><use href="#i-close" /></svg>
+              <svg className="h-5 w-5">
+                <use href="#i-close" />
+              </svg>
             </button>
             <div className="h-[360px] bg-[#e5dfd5] sm:h-[420px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -779,7 +1061,9 @@ export function LandingView({ currentUser }: LandingViewProps) {
                 onClick={() => setModalTemplate(null)}
               >
                 <span>Gunakan Template</span>
-                <svg className="h-4 w-4"><use href="#i-arrow-right" /></svg>
+                <svg className="h-4 w-4">
+                  <use href="#i-arrow-right" />
+                </svg>
               </Link>
             </div>
           </div>
