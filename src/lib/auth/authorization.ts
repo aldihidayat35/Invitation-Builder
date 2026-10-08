@@ -64,7 +64,8 @@ export async function requireCapability(
     actor.systemRole === "reseller" &&
     (capability === "invitation:write" ||
       capability === "template:write" ||
-      capability === "template:publish")
+      capability === "template:publish" ||
+      capability === "template:archive")
   ) {
     throw new ForbiddenError(
       "Seller tidak memiliki hak akses untuk mengubah data website undangan yang menjadi kewenangan Admin.",

@@ -80,7 +80,7 @@ export const getResellerContext = cache(async (): Promise<ResellerContext> => {
   }
   const db = await getDb();
   const profile = await findResellerProfileByUserId(db, user.id);
-  if (!profile) {
+  if (!profile || !profile.isActive) {
     redirect("/dashboard");
   }
   return { user, profile };

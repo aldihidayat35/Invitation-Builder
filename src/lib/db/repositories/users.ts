@@ -101,11 +101,7 @@ export async function findUserById(db: Database, id: string): Promise<User | und
 }
 
 export async function listUsersByRole(db: Database, role: SystemRole): Promise<User[]> {
-  return db
-    .select()
-    .from(users)
-    .where(eq(users.systemRole, role))
-    .orderBy(desc(users.createdAt));
+  return db.select().from(users).where(eq(users.systemRole, role)).orderBy(desc(users.createdAt));
 }
 
 export async function listUsersByReseller(db: Database, resellerId: string): Promise<User[]> {
@@ -164,9 +160,7 @@ export async function listUsersWithDetails(
 
   if (options.search?.trim()) {
     const q = `%${options.search.trim().toLowerCase()}%`;
-    conditions.push(
-      sql`(lower(${users.name}) like ${q} or lower(${users.email}) like ${q})`,
-    );
+    conditions.push(sql`(lower(${users.name}) like ${q} or lower(${users.email}) like ${q})`);
   }
 
   const query = db.select().from(users);
@@ -300,7 +294,7 @@ export async function createUserWithWorkspace(
         passwordHash,
         systemRole: input.systemRole,
         status: input.status ?? "active",
-        resellerId: input.systemRole === "client" ? input.resellerId ?? null : null,
+        resellerId: input.systemRole === "client" ? (input.resellerId ?? null) : null,
       })
       .returning();
 
@@ -348,10 +342,7 @@ export async function createUserWithWorkspace(
 }
 
 /** Updates user core fields, role, status, and optionally password. */
-export async function updateUserDetails(
-  db: Database,
-  input: UpdateUserInput,
-): Promise<User> {
+export async function updateUserDetails(db: Database, input: UpdateUserInput): Promise<User> {
   return db.transaction(async (tx) => {
     const existing = await findUserById(tx, input.userId);
     if (!existing) {
@@ -392,6 +383,14 @@ export async function updateUserDetails(
       throw new Error("Gagal memperbarui data pengguna.");
     }
 
+    if (
+      input.password?.trim() ||
+      (input.systemRole !== undefined && input.systemRole !== existing.systemRole) ||
+      (input.status !== undefined && input.status !== existing.status)
+    ) {
+      await tx.delete(sessions).where(eq(sessions.userId, input.userId));
+    }
+
     // Sync status with reseller profile if active/disabled changed
     if (input.status !== undefined && updated.systemRole === "reseller") {
       await tx
@@ -414,10 +413,7 @@ export async function updateUserDetails(
  * - Cleans up dependent foreign keys.
  * - If immutable audit log constraints prevent hard delete, archives & anonymizes the account safely.
  */
-export async function deleteUserAccount(
-  db: Database,
-  userId: string,
-): Promise<DeleteUserResult> {
+export async function deleteUserAccount(db: Database, userId: string): Promise<DeleteUserResult> {
   const existing = await findUserById(db, userId);
   if (!existing) {
     throw new Error("Pengguna tidak ditemukan.");
@@ -441,10 +437,7 @@ export async function deleteUserAccount(
     await tx.delete(workspaceMembers).where(eq(workspaceMembers.userId, userId));
 
     // 3. Unlink client assignments from other users
-    await tx
-      .update(users)
-      .set({ resellerId: null })
-      .where(eq(users.resellerId, userId));
+    await tx.update(users).set({ resellerId: null }).where(eq(users.resellerId, userId));
 
     // 4. Unlink client orders
     await tx
@@ -475,27 +468,15 @@ export async function deleteUserAccount(
     }
 
     // 6. Clear nullable user references on created templates/invitations/assets
-    await tx
-      .update(templates)
-      .set({ createdBy: null })
-      .where(eq(templates.createdBy, userId));
+    await tx.update(templates).set({ createdBy: null }).where(eq(templates.createdBy, userId));
 
-    await tx
-      .update(invitations)
-      .set({ createdBy: null })
-      .where(eq(invitations.createdBy, userId));
+    await tx.update(invitations).set({ createdBy: null }).where(eq(invitations.createdBy, userId));
 
-    await tx
-      .update(assets)
-      .set({ uploadedBy: null })
-      .where(eq(assets.uploadedBy, userId));
+    await tx.update(assets).set({ uploadedBy: null }).where(eq(assets.uploadedBy, userId));
 
     // 7. Attempt hard delete of users row
     try {
-      const [deleted] = await tx
-        .delete(users)
-        .where(eq(users.id, userId))
-        .returning();
+      const [deleted] = await tx.delete(users).where(eq(users.id, userId)).returning();
 
       if (!deleted) {
         throw new Error("Gagal menghapus akun pengguna.");

@@ -1,24 +1,24 @@
 "use server";
 
 import { z } from "zod";
-import { getDb } from "@/lib/db/client";
-import { createCustomerOrder } from "@/lib/db/repositories/orders";
-import { insertAuditLog } from "@/lib/db/repositories/audit";
-import { buildCustomerOrderWhatsAppUrl } from "@/features/reseller/whatsapp";
+import { createTrustedPublicOrder, PublicOrderInputError } from "@/features/orders/public-order";
+import { createRateLimiter } from "@/lib/rate-limit";
+
+const orderLimiter = createRateLimiter({ limit: 5, windowMs: 10 * 60_000 });
 
 const orderBookingSchema = z.object({
-  sellerId: z.string().uuid("ID seller tidak valid"),
-  agencyName: z.string().trim().min(1),
-  sellerWhatsapp: z.string().trim().min(6),
-  customerName: z.string().trim().min(2, "Nama lengkap pemesan minimal 2 karakter"),
-  customerEmail: z.string().trim().email("Format email tidak valid"),
-  customerWhatsapp: z.string().trim().min(8, "Nomor WhatsApp minimal 8 digit"),
-  groomBrideNames: z.string().trim().optional(),
+  sellerSlug: z.string().trim().toLowerCase().min(1).max(253),
+  idempotencyKey: z.string().uuid("Identitas permintaan tidak valid"),
+  website: z.string().max(0, "Permintaan tidak valid"),
+  privacyConsent: z.literal("on", "Persetujuan pemrosesan data wajib diberikan"),
+  customerName: z.string().trim().min(2, "Nama lengkap pemesan minimal 2 karakter").max(120),
+  customerEmail: z.string().trim().email("Format email tidak valid").max(254).toLowerCase(),
+  customerWhatsapp: z.string().trim().min(8, "Nomor WhatsApp minimal 8 digit").max(30),
+  groomBrideNames: z.string().trim().max(160).optional(),
   templateId: z.string().uuid().optional().or(z.literal("")),
-  templateTitle: z.string().trim().optional(),
-  eventDate: z.string().trim().optional(),
-  eventLocation: z.string().trim().optional(),
-  notes: z.string().trim().optional(),
+  eventDate: z.string().trim().max(32).optional(),
+  eventLocation: z.string().trim().max(240).optional(),
+  notes: z.string().trim().max(2_000).optional(),
 });
 
 export interface OrderBookingState {
@@ -38,15 +38,15 @@ export async function submitCustomerOrderAction(
   formData: FormData,
 ): Promise<OrderBookingState> {
   const parsed = orderBookingSchema.safeParse({
-    sellerId: field(formData, "sellerId"),
-    agencyName: field(formData, "agencyName"),
-    sellerWhatsapp: field(formData, "sellerWhatsapp"),
+    sellerSlug: field(formData, "sellerSlug"),
+    idempotencyKey: field(formData, "idempotencyKey"),
+    website: field(formData, "website"),
+    privacyConsent: field(formData, "privacyConsent"),
     customerName: field(formData, "customerName"),
     customerEmail: field(formData, "customerEmail"),
     customerWhatsapp: field(formData, "customerWhatsapp"),
     groomBrideNames: field(formData, "groomBrideNames"),
     templateId: field(formData, "templateId"),
-    templateTitle: field(formData, "templateTitle"),
     eventDate: field(formData, "eventDate"),
     eventLocation: field(formData, "eventLocation"),
     notes: field(formData, "notes"),
@@ -57,56 +57,20 @@ export async function submitCustomerOrderAction(
   }
 
   const data = parsed.data;
-  const db = await getDb();
+  const rateKey = `${data.sellerSlug}|${data.customerEmail}|${data.customerWhatsapp.replace(/\D/g, "")}`;
+  const gate = orderLimiter.check(rateKey);
+  if (!gate.allowed) {
+    return { error: `Terlalu banyak percobaan. Coba lagi dalam ${gate.retryAfterSeconds} detik.` };
+  }
 
   try {
-    const parsedDate = data.eventDate ? new Date(data.eventDate) : null;
-
-    const created = await createCustomerOrder(db, {
-      sellerId: data.sellerId,
-      templateId: data.templateId ? data.templateId : null,
-      customerName: data.customerName,
-      customerEmail: data.customerEmail,
-      customerWhatsapp: data.customerWhatsapp,
-      groomBrideNames: data.groomBrideNames || null,
-      eventDate: parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null,
-      eventLocation: data.eventLocation || null,
-      notes: data.notes || null,
+    const result = await createTrustedPublicOrder({
+      ...data,
+      templateId: data.templateId || undefined,
     });
-
-    await insertAuditLog(db, {
-      workspaceId: null,
-      actorId: null,
-      action: "order.create",
-      entityType: "customer_order",
-      entityId: created.id,
-      metadata: {
-        sellerId: data.sellerId,
-        customerEmail: data.customerEmail,
-        customerWhatsapp: data.customerWhatsapp,
-      },
-    });
-
-    const whatsappUrl = buildCustomerOrderWhatsAppUrl({
-      sellerPhone: data.sellerWhatsapp,
-      agencyName: data.agencyName,
-      orderId: created.id,
-      customerName: data.customerName,
-      customerWhatsapp: data.customerWhatsapp,
-      templateTitle: data.templateTitle,
-      groomBrideNames: data.groomBrideNames,
-      eventDate: data.eventDate,
-      eventLocation: data.eventLocation,
-      notes: data.notes,
-    });
-
-    return {
-      ok: true,
-      orderId: created.id,
-      whatsappUrl,
-    };
+    return { ok: true, ...result };
   } catch (error) {
-    const errText = error instanceof Error ? error.message : String(error);
-    return { error: `Gagal mengirimkan formulir pesanan: ${errText}` };
+    if (error instanceof PublicOrderInputError) return { error: error.message };
+    return { error: "Pesanan belum dapat diproses. Silakan coba kembali." };
   }
 }

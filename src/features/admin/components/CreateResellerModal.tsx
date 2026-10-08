@@ -41,7 +41,12 @@ function CreateResellerDialog({
   };
 
   return (
-    <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div
+      className={styles.modalBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className={styles.modalDialog}>
         <div className={styles.modalHeader}>
           <h3 id="modal-title">Tambah Mitra Reseller Baru</h3>
@@ -92,7 +97,9 @@ function CreateResellerDialog({
                 className={styles.inputControl}
                 disabled={isPending}
               />
-              <span className={styles.fieldHint}>Email akan digunakan oleh mitra untuk login ke portal reseller.</span>
+              <span className={styles.fieldHint}>
+                Email akan digunakan oleh mitra untuk login ke portal reseller.
+              </span>
             </div>
 
             <div className={styles.fieldGroup}>
@@ -103,11 +110,15 @@ function CreateResellerDialog({
                 id="field-password"
                 name="password"
                 type="password"
-                placeholder="Minimal 10 karakter (default jika kosong: reseller12345#)"
+                required
+                minLength={10}
+                placeholder="Minimal 10 karakter"
                 className={styles.inputControl}
                 disabled={isPending}
               />
-              <span className={styles.fieldHint}>Dapat diubah oleh mitra setelah login pertama.</span>
+              <span className={styles.fieldHint}>
+                Gunakan password unik dan kirimkan melalui kanal yang aman.
+              </span>
             </div>
 
             <div className={styles.fieldGroup}>
@@ -146,7 +157,9 @@ function CreateResellerDialog({
                 className={styles.inputControl}
                 disabled={isPending}
               />
-              <span className={styles.fieldHint}>Hanya huruf kecil, angka, dan tanda hubung (-).</span>
+              <span className={styles.fieldHint}>
+                Hanya huruf kecil, angka, dan tanda hubung (-).
+              </span>
             </div>
 
             <div className={styles.fieldGroup}>
@@ -177,7 +190,9 @@ function CreateResellerDialog({
                 className={styles.inputControl}
                 disabled={isPending}
               />
-              <span className={styles.fieldHint}>Website / domain khusus untuk identitas seller melayani customer.</span>
+              <span className={styles.fieldHint}>
+                Website / domain khusus untuk identitas seller melayani customer.
+              </span>
             </div>
           </div>
 
@@ -216,15 +231,20 @@ export function CreateResellerModal({ action }: CreateResellerModalProps) {
         onClick={() => setIsOpen(true)}
         id="btn-tambah-reseller"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
           <path d="M12 5v14M5 12h14" />
         </svg>
         Tambah Reseller Baru
       </button>
 
-      {isOpen ? (
-        <CreateResellerDialog action={action} onClose={() => setIsOpen(false)} />
-      ) : null}
+      {isOpen ? <CreateResellerDialog action={action} onClose={() => setIsOpen(false)} /> : null}
     </>
   );
 }

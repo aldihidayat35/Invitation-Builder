@@ -4,6 +4,7 @@
  */
 import "server-only";
 import { requireUser } from "@/lib/auth/server";
+import { downloadRemoteImage, UnsafeRemoteUrlError } from "@/lib/security/remote-download";
 import { ForbiddenError } from "@/lib/auth/errors";
 import { getDb } from "@/lib/db/client";
 import { getStorage } from "@/lib/storage";
@@ -44,13 +45,15 @@ export async function fetchStorageOverview(workspaceId?: string) {
   return service.getStorageOverview(db, actor, workspaceId);
 }
 
-export async function fetchAllStorageAssets(options: {
-  workspaceId?: string;
-  search?: string;
-  type?: "all" | "image" | "video";
-  limit?: number;
-  offset?: number;
-} = {}) {
+export async function fetchAllStorageAssets(
+  options: {
+    workspaceId?: string;
+    search?: string;
+    type?: "all" | "image" | "video";
+    limit?: number;
+    offset?: number;
+  } = {},
+) {
   const { db, actor } = await context();
   return service.listAllStorageAssets(db, actor, options);
 }
@@ -72,19 +75,23 @@ export async function saveAssetFromUrl(
 ): Promise<service.AssetSummary> {
   const { db, actor } = await context();
   let bytes: Uint8Array;
+  const maxBytes = 10 * 1024 * 1024;
 
   if (url.startsWith("data:")) {
     const comma = url.indexOf(",");
     if (comma === -1) throw new service.AssetRejectedError("Data URL tidak valid.");
     const base64 = url.slice(comma + 1);
+    if (base64.length > Math.ceil((maxBytes * 4) / 3) + 4) {
+      throw new service.AssetRejectedError("Ukuran berkas melebihi batas 10MB.");
+    }
     bytes = new Uint8Array(Buffer.from(base64, "base64"));
   } else if (url.startsWith("http://") || url.startsWith("https://")) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arrayBuf = await res.arrayBuffer();
-      bytes = new Uint8Array(arrayBuf);
-    } catch {
+      bytes = await downloadRemoteImage(url, { maxBytes });
+    } catch (error) {
+      if (error instanceof UnsafeRemoteUrlError) {
+        throw new service.AssetRejectedError(error.message);
+      }
       throw new service.AssetRejectedError("Gagal mengunduh berkas dari URL.");
     }
   } else {
@@ -96,7 +103,7 @@ export async function saveAssetFromUrl(
   if (bytes.byteLength === 0) {
     throw new service.AssetRejectedError("Berkas kosong.");
   }
-  if (bytes.byteLength > 10 * 1024 * 1024) {
+  if (bytes.byteLength > maxBytes) {
     throw new service.AssetRejectedError("Ukuran berkas melebihi batas 10MB.");
   }
 

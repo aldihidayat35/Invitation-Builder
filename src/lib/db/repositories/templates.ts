@@ -1,5 +1,12 @@
-import { and, desc, eq, ne, sql } from "drizzle-orm";
-import { customerOrders, invitations, templates, templateVersions, type TemplateRow, type TemplateVersionRow } from "../schema";
+import { and, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
+import {
+  customerOrders,
+  invitations,
+  templates,
+  templateVersions,
+  type TemplateRow,
+  type TemplateVersionRow,
+} from "../schema";
 import type { Database } from "../types";
 
 /**
@@ -206,7 +213,13 @@ export async function listPublicTemplates(db: Database): Promise<TemplateRow[]> 
   return db
     .select()
     .from(templates)
-    .where(ne(templates.status, "archived"))
+    .where(
+      and(
+        eq(templates.status, "published"),
+        eq(templates.isPublic, true),
+        isNotNull(templates.publishedVersionNo),
+      ),
+    )
     .orderBy(desc(templates.createdAt))
     .limit(50);
 }
@@ -239,16 +252,10 @@ export async function deleteTemplateRow(
     .where(eq(customerOrders.templateId, templateId));
 
   // Delete versions
-  await db
-    .delete(templateVersions)
-    .where(eq(templateVersions.templateId, templateId));
+  await db.delete(templateVersions).where(eq(templateVersions.templateId, templateId));
 
   // Delete the template row
-  const [deleted] = await db
-    .delete(templates)
-    .where(eq(templates.id, templateId))
-    .returning();
+  const [deleted] = await db.delete(templates).where(eq(templates.id, templateId)).returning();
 
   return deleted;
 }
-

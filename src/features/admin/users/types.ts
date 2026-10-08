@@ -13,7 +13,7 @@ export interface AvailableResellerOption {
 export interface CreateUserInputForm {
   name: string;
   email: string;
-  password?: string;
+  password: string;
   systemRole: SystemRole;
   status: UserStatus;
   resellerId?: string;

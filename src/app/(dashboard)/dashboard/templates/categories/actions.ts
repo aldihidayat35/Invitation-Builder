@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { requireUser } from "@/lib/auth/server";
+import { requireOwner } from "@/lib/auth/server";
 import {
   deleteTemplateCategory,
   insertTemplateCategory,
@@ -30,7 +30,7 @@ export async function createCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireUser();
+  await requireOwner();
   const db = await getDb();
 
   const name = field(formData, "name").trim();
@@ -51,7 +51,10 @@ export async function createCategoryAction(
 
   const slugSchema = z
     .string()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Format slug hanya boleh huruf kecil, angka, dan strip (-).");
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Format slug hanya boleh huruf kecil, angka, dan strip (-).",
+    );
   const parsedSlug = slugSchema.safeParse(slug);
   if (!parsedSlug.success) {
     return { error: parsedSlug.error.issues[0]?.message ?? "Slug tidak valid." };
@@ -77,7 +80,7 @@ export async function updateCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireUser();
+  await requireOwner();
   const db = await getDb();
 
   const id = field(formData, "id").trim();
@@ -91,7 +94,10 @@ export async function updateCategoryAction(
 
   const slugSchema = z
     .string()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Format slug hanya boleh huruf kecil, angka, dan strip (-).");
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Format slug hanya boleh huruf kecil, angka, dan strip (-).",
+    );
   const parsedSlug = slugSchema.safeParse(slug);
   if (!parsedSlug.success) {
     return { error: parsedSlug.error.issues[0]?.message ?? "Slug tidak valid." };
@@ -117,7 +123,7 @@ export async function deleteCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireUser();
+  await requireOwner();
   const db = await getDb();
 
   const id = field(formData, "id").trim();

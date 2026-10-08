@@ -2,6 +2,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import {
   customerOrders,
   resellerProfiles,
+  sessions,
   users,
   workspaceMembers,
   workspaces,
@@ -10,7 +11,6 @@ import {
   type Workspace,
 } from "../schema";
 import type { Database } from "../types";
-import { getGlobalOrderStats } from "./orders";
 
 export interface CreateResellerInput {
   email: string;
@@ -202,13 +202,22 @@ export async function updateResellerStatus(
   resellerProfileId: string,
   isActive: boolean,
 ): Promise<ResellerProfile> {
-  const [updated] = await db
-    .update(resellerProfiles)
-    .set({ isActive })
-    .where(eq(resellerProfiles.id, resellerProfileId))
-    .returning();
-  if (!updated) throw new Error(`Reseller profile not found: ${resellerProfileId}`);
-  return updated;
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(resellerProfiles)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(resellerProfiles.id, resellerProfileId))
+      .returning();
+    if (!updated) throw new Error(`Reseller profile not found: ${resellerProfileId}`);
+
+    await tx
+      .update(users)
+      .set({ status: isActive ? "active" : "disabled", updatedAt: new Date() })
+      .where(eq(users.id, updated.userId));
+    await tx.delete(sessions).where(eq(sessions.userId, updated.userId));
+
+    return updated;
+  });
 }
 
 export interface UpdateResellerBrandingInput {

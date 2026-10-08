@@ -8,7 +8,7 @@ import type { ActionState } from "@/features/reseller/types";
 const createClientSchema = z.object({
   clientName: z.string().trim().min(2, "Nama minimal 2 karakter"),
   clientEmail: z.string().trim().email("Format email tidak valid").toLowerCase(),
-  password: z.string().optional(),
+  password: z.string().min(10, "Password minimal 10 karakter"),
 });
 
 function field(formData: FormData, key: string): string {

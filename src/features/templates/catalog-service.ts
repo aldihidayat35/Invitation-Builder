@@ -9,6 +9,8 @@ import type {
 } from "./types";
 import { templateCatalogMetadataSchema } from "./schemas";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
+import { ForbiddenError } from "@/lib/auth/errors";
+import { requireCapability, type Actor } from "@/lib/auth/authorization";
 
 export interface CatalogFilterOptions {
   category?: string;
@@ -67,10 +69,7 @@ export async function getPublicCatalogTemplates(
   const limit = Math.min(100, Math.max(1, options.limit ?? 24));
   const offset = (page - 1) * limit;
 
-  const conditions = [
-    eq(templates.status, "published"),
-    eq(templates.isPublic, true),
-  ];
+  const conditions = [eq(templates.status, "published"), eq(templates.isPublic, true)];
 
   if (options.workspaceId) {
     conditions.push(eq(templates.workspaceId, options.workspaceId));
@@ -128,7 +127,12 @@ export async function getPublicCatalogTemplates(
       break;
     case "popular":
     default:
-      order = [desc(templates.isFeatured), desc(templates.useCount), desc(templates.viewCount), desc(templates.createdAt)];
+      order = [
+        desc(templates.isFeatured),
+        desc(templates.useCount),
+        desc(templates.viewCount),
+        desc(templates.createdAt),
+      ];
       break;
   }
 
@@ -188,19 +192,20 @@ export async function getCatalogTemplateBySlug(
  */
 export async function updateTemplateCatalogMetadata(
   db: Database,
+  actor: Actor,
   templateId: string,
   input: UpdateTemplateMetadataInput,
-  actorUserId?: string,
 ): Promise<CatalogTemplateItem> {
-  const [existing] = await db
-    .select()
-    .from(templates)
-    .where(eq(templates.id, templateId))
-    .limit(1);
+  const [existing] = await db.select().from(templates).where(eq(templates.id, templateId)).limit(1);
 
   if (!existing) {
     throw new Error("Template tidak ditemukan.");
   }
+
+  if (actor.systemRole !== "owner") {
+    throw new ForbiddenError("Hanya Super Admin yang dapat mengubah metadata katalog.");
+  }
+  await requireCapability(db, actor, existing.workspaceId, "template:write");
 
   const validated = templateCatalogMetadataSchema.partial().parse(input);
 
@@ -222,8 +227,12 @@ export async function updateTemplateCatalogMetadata(
     ...(validated.galleryUrls ? { galleryUrls: validated.galleryUrls } : {}),
     ...(validated.colorPalette ? { colorPalette: validated.colorPalette } : {}),
     ...(validated.supportedFeatures ? { supportedFeatures: validated.supportedFeatures } : {}),
-    ...(validated.demoInvitationSlug !== undefined ? { demoInvitationSlug: validated.demoInvitationSlug ?? undefined } : {}),
-    ...(validated.previewVideoUrl !== undefined ? { previewVideoUrl: validated.previewVideoUrl ?? undefined } : {}),
+    ...(validated.demoInvitationSlug !== undefined
+      ? { demoInvitationSlug: validated.demoInvitationSlug ?? undefined }
+      : {}),
+    ...(validated.previewVideoUrl !== undefined
+      ? { previewVideoUrl: validated.previewVideoUrl ?? undefined }
+      : {}),
     ...(validated.layoutFormat ? { layoutFormat: validated.layoutFormat } : {}),
   };
 
@@ -236,7 +245,8 @@ export async function updateTemplateCatalogMetadata(
   if (validated.category !== undefined) updateValues.category = validated.category;
   if (validated.style !== undefined) updateValues.style = validated.style;
   if (validated.thumbnailUrl !== undefined) updateValues.thumbnailUrl = validated.thumbnailUrl;
-  if (validated.previewMockupUrl !== undefined) updateValues.previewMockupUrl = validated.previewMockupUrl;
+  if (validated.previewMockupUrl !== undefined)
+    updateValues.previewMockupUrl = validated.previewMockupUrl;
   if (validated.tier !== undefined) updateValues.tier = validated.tier;
   if (validated.price !== undefined) updateValues.price = validated.price;
   if (validated.isPublic !== undefined) updateValues.isPublic = validated.isPublic;
@@ -254,15 +264,13 @@ export async function updateTemplateCatalogMetadata(
     throw new Error("Gagal memperbarui metadata template.");
   }
 
-  if (actorUserId) {
-    await insertAuditLog(db, {
-      workspaceId: existing.workspaceId,
-      actorId: actorUserId,
-      action: "template.update_metadata",
-      entityType: "template",
-      entityId: templateId,
-    }).catch(() => {});
-  }
+  await insertAuditLog(db, {
+    workspaceId: existing.workspaceId,
+    actorId: actor.userId,
+    action: "template.update_metadata",
+    entityType: "template",
+    entityId: templateId,
+  });
 
   return mapToCatalogItem(updated);
 }

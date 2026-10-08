@@ -382,6 +382,7 @@ export const customerOrders = pgTable(
     sellerId: uuid("seller_id")
       .notNull()
       .references(() => resellerProfiles.id),
+    idempotencyKey: text("idempotency_key"),
     clientUserId: uuid("client_user_id").references(() => users.id),
     invitationId: uuid("invitation_id").references(() => invitations.id),
     templateId: uuid("template_id").references(() => templates.id),
@@ -400,6 +401,9 @@ export const customerOrders = pgTable(
   (t) => [
     index("customer_orders_seller_idx").on(t.sellerId, t.createdAt),
     index("customer_orders_status_idx").on(t.status, t.createdAt),
+    uniqueIndex("customer_orders_idempotency_uq")
+      .on(t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} is not null`),
   ],
 );
 
@@ -412,10 +416,14 @@ export const appSettings = pgTable("app_settings", {
   contactPhone: text("contact_phone").notNull().default("+62 812-3456-7890"),
   contactWhatsapp: text("contact_whatsapp").notNull().default("6281234567890"),
   contactEmail: text("contact_email").notNull().default("support@undangan.id"),
-  address: text("address").notNull().default("Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190"),
-  footerDescription: text("footer_description").notNull().default(
-    "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia."
-  ),
+  address: text("address")
+    .notNull()
+    .default("Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190"),
+  footerDescription: text("footer_description")
+    .notNull()
+    .default(
+      "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
+    ),
   heroBackgroundImage: text("hero_background_image"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
@@ -455,9 +463,7 @@ export const testimonials = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index("testimonials_sort_idx").on(t.isActive, t.sortOrder),
-  ],
+  (t) => [index("testimonials_sort_idx").on(t.isActive, t.sortOrder)],
 );
 
 export type User = typeof users.$inferSelect;
@@ -484,5 +490,3 @@ export type TemplateCategoryRow = typeof templateCategories.$inferSelect;
 export type NewTemplateCategoryRow = typeof templateCategories.$inferInsert;
 export type TestimonialRow = typeof testimonials.$inferSelect;
 export type NewTestimonialRow = typeof testimonials.$inferInsert;
-
-

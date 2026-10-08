@@ -5,7 +5,6 @@ import {
   invitations,
   resellerProfiles,
   templates,
-  users,
   type CustomerOrder,
   type ResellerProfile,
 } from "../schema";
@@ -13,6 +12,7 @@ import type { Database } from "../types";
 
 export interface CreateCustomerOrderInput {
   sellerId: string;
+  idempotencyKey?: string | null;
   templateId?: string | null;
   customerName: string;
   customerEmail: string;
@@ -46,6 +46,7 @@ export async function createCustomerOrder(
     .insert(customerOrders)
     .values({
       sellerId: input.sellerId,
+      idempotencyKey: input.idempotencyKey ?? null,
       templateId: input.templateId ?? null,
       customerName: input.customerName.trim(),
       customerEmail: input.customerEmail.trim().toLowerCase(),
@@ -63,6 +64,18 @@ export async function createCustomerOrder(
   }
 
   return created;
+}
+
+export async function findCustomerOrderByIdempotencyKey(
+  db: Database,
+  idempotencyKey: string,
+): Promise<CustomerOrder | undefined> {
+  const [order] = await db
+    .select()
+    .from(customerOrders)
+    .where(eq(customerOrders.idempotencyKey, idempotencyKey))
+    .limit(1);
+  return order;
 }
 
 /** Finds a specific customer order by ID. */
@@ -112,7 +125,10 @@ export async function listAllOrders(
     .leftJoin(invitations, eq(customerOrders.invitationId, invitations.id));
 
   const rows = filterStatus
-    ? await query.where(eq(customerOrders.status, filterStatus)).orderBy(desc(customerOrders.createdAt)).limit(limit)
+    ? await query
+        .where(eq(customerOrders.status, filterStatus))
+        .orderBy(desc(customerOrders.createdAt))
+        .limit(limit)
     : await query.orderBy(desc(customerOrders.createdAt)).limit(limit);
 
   return rows;
@@ -298,8 +314,18 @@ export async function getMonthlyOrderTrends(
   }
 
   const MONTH_NAMES = [
-    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-    "Jul", "Ags", "Sep", "Okt", "Nov", "Des",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Ags",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Des",
   ];
 
   return MONTH_NAMES.map((label, idx) => {

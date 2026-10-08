@@ -2,6 +2,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createMigratedDb } from "../helpers/db";
 import { seedDev } from "@/lib/db/seed";
+import { makeUser } from "../helpers/world";
+import { ForbiddenError } from "@/lib/auth/errors";
 import {
   getCatalogTemplateBySlug,
   getPublicCatalogTemplates,
@@ -10,10 +12,12 @@ import {
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 const db = () => conn.db;
+let ownerUserId: string;
 
 beforeAll(async () => {
   conn = await createMigratedDb();
-  await seedDev(db());
+  const seed = await seedDev(db());
+  ownerUserId = seed.userId;
 });
 
 afterAll(async () => {
@@ -72,14 +76,19 @@ describe("Template Catalog & Metadata Feature", () => {
     const list = await getPublicCatalogTemplates(db());
     const target = list.items[0]!;
 
-    const updated = await updateTemplateCatalogMetadata(db(), target.id, {
-      description: "Deskripsi katalog baru yang diperbarui untuk pengujian.",
-      tier: "exclusive",
-      price: 150000,
-      tags: ["update", "katalog", "test"],
-      colorPalette: [{ hex: "#112233", name: "Midnight Navy", isPrimary: true }],
-      supportedFeatures: ["rsvp", "digital_gift"],
-    });
+    const updated = await updateTemplateCatalogMetadata(
+      db(),
+      { userId: ownerUserId, systemRole: "owner" },
+      target.id,
+      {
+        description: "Deskripsi katalog baru yang diperbarui untuk pengujian.",
+        tier: "exclusive",
+        price: 150000,
+        tags: ["update", "katalog", "test"],
+        colorPalette: [{ hex: "#112233", name: "Midnight Navy", isPrimary: true }],
+        supportedFeatures: ["rsvp", "digital_gift"],
+      },
+    );
 
     expect(updated.description).toBe("Deskripsi katalog baru yang diperbarui untuk pengujian.");
     expect(updated.tier).toBe("exclusive");
@@ -90,9 +99,26 @@ describe("Template Catalog & Metadata Feature", () => {
     // Rejects duplicate slug
     const another = list.items[1]!;
     await expect(
-      updateTemplateCatalogMetadata(db(), another.id, {
-        slug: target.slug!,
-      }),
+      updateTemplateCatalogMetadata(
+        db(),
+        { userId: ownerUserId, systemRole: "owner" },
+        another.id,
+        {
+          slug: target.slug!,
+        },
+      ),
     ).rejects.toThrow(/sudah digunakan/);
+  });
+
+  it("rejects catalog metadata changes from non-owner users", async () => {
+    const target = (await getPublicCatalogTemplates(db())).items[0]!;
+    const client = await makeUser(db(), "catalog-client");
+
+    await expect(
+      updateTemplateCatalogMetadata(db(), { userId: client.id, systemRole: "client" }, target.id, {
+        price: 1,
+        isPublic: false,
+      }),
+    ).rejects.toThrow(ForbiddenError);
   });
 });

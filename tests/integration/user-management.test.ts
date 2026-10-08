@@ -95,6 +95,14 @@ describe("Super Admin User Management Feature", () => {
     const user = await findUserByEmail(db(), "budi.client@test.local");
     expect(user).toBeDefined();
 
+    await db()
+      .insert(sessions)
+      .values({
+        userId: user!.id,
+        tokenHash: "session-revoked-on-security-change",
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
     const updated = await updateUserDetails(db(), {
       userId: user!.id,
       name: "Budi Pratama Edited",
@@ -105,6 +113,7 @@ describe("Super Admin User Management Feature", () => {
     expect(updated.name).toBe("Budi Pratama Edited");
     expect(updated.status).toBe("disabled");
     expect(await verifyPassword("newSecurePassword456!", updated.passwordHash!)).toBe(true);
+    expect(await db().select().from(sessions).where(eq(sessions.userId, user!.id))).toHaveLength(0);
   });
 
   it("prevents deleting the only Super Admin in the system", async () => {
@@ -127,11 +136,13 @@ describe("Super Admin User Management Feature", () => {
     });
 
     // Create a session for this user
-    await db().insert(sessions).values({
-      userId: temp.user.id,
-      tokenHash: "fake_token_hash_for_test",
-      expiresAt: new Date(Date.now() + 3600000),
-    });
+    await db()
+      .insert(sessions)
+      .values({
+        userId: temp.user.id,
+        tokenHash: "fake_token_hash_for_test",
+        expiresAt: new Date(Date.now() + 3600000),
+      });
 
     // Verify session exists
     const existingSessions = await db()

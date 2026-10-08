@@ -36,6 +36,10 @@ export async function createUserAction(
       return { ok: false, error: "Format alamat email tidak valid." };
     }
 
+    if (!input.password || input.password.length < 10) {
+      return { ok: false, error: "Kata sandi awal wajib diisi dan minimal 10 karakter." };
+    }
+
     const created = await createUserWithWorkspace(db, {
       name: input.name,
       email: input.email,
@@ -156,7 +160,8 @@ export async function updateUserAction(
       message: `Data pengguna "${input.name}" berhasil diperbarui.`,
     };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Terjadi kesalahan saat memperbarui pengguna.";
+    const message =
+      err instanceof Error ? err.message : "Terjadi kesalahan saat memperbarui pengguna.";
     return { ok: false, error: message };
   }
 }

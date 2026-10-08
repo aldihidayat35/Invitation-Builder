@@ -71,6 +71,13 @@
       "when": 1791490000000,
       "tag": "0009_testimonials_and_hero_bg",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791510000000,
+      "tag": "0010_phase0_security_hardening",
+      "breakpoints": true
     }
   ]
 }

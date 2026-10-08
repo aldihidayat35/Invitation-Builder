@@ -19,10 +19,7 @@ import {
   getMonthlyOrderTrends,
   getGlobalOrderStats,
 } from "@/lib/db/repositories/orders";
-import {
-  getAppSettings,
-  updateAppSettings,
-} from "@/lib/db/repositories/settings";
+import { getAppSettings, updateAppSettings } from "@/lib/db/repositories/settings";
 import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import type {
@@ -37,7 +34,7 @@ import type {
 export interface CreateResellerServiceInput {
   name: string;
   email: string;
-  password?: string;
+  password: string;
   agencyName: string;
   slug: string;
   whatsappContact: string;
@@ -134,8 +131,7 @@ export async function createReseller(input: CreateResellerServiceInput) {
   const actor = await requireOwner();
   const db = await getDb();
 
-  const effectivePassword =
-    input.password && input.password.trim().length > 0 ? input.password.trim() : "reseller12345#";
+  const effectivePassword = input.password.trim();
   assertPasswordPolicy(effectivePassword);
   const passwordHash = await hashPassword(effectivePassword);
 
@@ -231,7 +227,7 @@ export async function getAdminAppSettings(): Promise<AppSettingRow> {
 
 /** Saves application branding and general settings. */
 export async function saveAdminAppSettings(
-  input: Partial<Omit<NewAppSettingRow, "id" | "createdAt" | "updatedAt">>
+  input: Partial<Omit<NewAppSettingRow, "id" | "createdAt" | "updatedAt">>,
 ): Promise<AppSettingRow> {
   const actor = await requireOwner();
   const db = await getDb();

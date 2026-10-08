@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getDb } from "@/lib/db/client";
-import { requireUser } from "@/lib/auth/server";
-import { listTemplateCategories } from "@/lib/db/repositories/template-categories";
+import { requireOwner } from "@/lib/auth/server";
+import { getTemplateCategories } from "@/features/templates/api";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { CategoryManagementClient } from "./CategoryManagementClient";
 
@@ -11,9 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplateCategoriesPage() {
-  await requireUser();
-  const db = await getDb();
-  const categories = await listTemplateCategories(db);
+  await requireOwner();
+  const categories = await getTemplateCategories();
 
   return (
     <main className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">

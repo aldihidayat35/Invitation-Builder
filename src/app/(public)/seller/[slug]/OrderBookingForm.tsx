@@ -5,18 +5,18 @@ import { submitCustomerOrderAction, type OrderBookingState } from "./actions";
 import styles from "./seller-storefront.module.css";
 
 interface OrderBookingFormProps {
-  sellerId: string;
+  sellerSlug: string;
+  idempotencyKey: string;
   agencyName: string;
-  sellerWhatsapp: string;
   templates: Array<{ id: string; name: string }>;
   selectedTemplateId?: string;
   onSelectTemplate?: (id: string) => void;
 }
 
 export function OrderBookingForm({
-  sellerId,
+  sellerSlug,
+  idempotencyKey,
   agencyName,
-  sellerWhatsapp,
   templates,
   selectedTemplateId = "",
   onSelectTemplate,
@@ -26,8 +26,6 @@ export function OrderBookingForm({
     submitCustomerOrderAction,
     {},
   );
-
-  const selectedTemplate = templates.find((t) => t.id === templateId);
 
   const handleTemplateChange = (id: string) => {
     setTemplateId(id);
@@ -39,15 +37,23 @@ export function OrderBookingForm({
       <div className={styles.orderSection}>
         <div className={styles.successCard}>
           <div className={styles.successIcon} aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
           <h3 className={styles.successTitle}>Pesanan Berhasil Dicatat!</h3>
           <p className={styles.successText}>
-            Terima kasih! Formulir pemesanan website undangan Anda telah kami terima di sistem utama.
-            Silakan klik tombol di bawah untuk langsung terhubung dengan customer service {agencyName} melalui WhatsApp.
+            Terima kasih! Formulir pemesanan website undangan Anda telah kami terima di sistem
+            utama. Silakan klik tombol di bawah untuk langsung terhubung dengan customer service{" "}
+            {agencyName} melalui WhatsApp.
           </p>
           <a
             href={state.whatsappUrl}
@@ -93,10 +99,16 @@ export function OrderBookingForm({
         ) : null}
 
         {/* Hidden inputs */}
-        <input type="hidden" name="sellerId" value={sellerId} />
-        <input type="hidden" name="agencyName" value={agencyName} />
-        <input type="hidden" name="sellerWhatsapp" value={sellerWhatsapp} />
-        <input type="hidden" name="templateTitle" value={selectedTemplate?.name || ""} />
+        <input type="hidden" name="sellerSlug" value={sellerSlug} />
+        <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
+        <input
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          style={{ position: "absolute", left: "-10000px", width: 1, height: 1 }}
+        />
 
         <div className={styles.formGrid}>
           <div className={styles.fieldGroup}>
@@ -224,6 +236,23 @@ export function OrderBookingForm({
             </div>
           </div>
         </div>
+
+        <label
+          style={{
+            display: "flex",
+            gap: "0.6rem",
+            alignItems: "flex-start",
+            marginTop: "1.25rem",
+            fontSize: "0.82rem",
+            color: "#63554e",
+          }}
+        >
+          <input type="checkbox" name="privacyConsent" required disabled={isPending} />
+          <span>
+            Saya menyetujui data yang saya kirim diproses untuk kebutuhan pemesanan dan komunikasi
+            layanan undangan.
+          </span>
+        </label>
 
         <div style={{ marginTop: "1.75rem", textAlign: "center" }}>
           <button

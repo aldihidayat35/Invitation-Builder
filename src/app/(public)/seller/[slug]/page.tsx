@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { randomUUID } from "node:crypto";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import {
@@ -13,9 +14,7 @@ interface SellerStorefrontPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: SellerStorefrontPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: SellerStorefrontPageProps): Promise<Metadata> {
   const { slug } = await params;
   const db = await getDb();
   const profile =
@@ -32,9 +31,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function SellerStorefrontPage({
-  params,
-}: SellerStorefrontPageProps) {
+export default async function SellerStorefrontPage({ params }: SellerStorefrontPageProps) {
   const { slug } = await params;
   const db = await getDb();
 
@@ -61,12 +58,11 @@ export default async function SellerStorefrontPage({
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <div className={styles.badge}>
-            ★ Mitra Resmi Invitation Studio
-          </div>
+          <div className={styles.badge}>★ Mitra Resmi Invitation Studio</div>
           <h1 className={styles.title}>{profile.agencyName}</h1>
           <p className={styles.subtitle}>
-            Wujudkan momen pernikahan istimewa dengan website undangan digital elegan, modern, dan praktis untuk seluruh tamu Anda.
+            Wujudkan momen pernikahan istimewa dengan website undangan digital elegan, modern, dan
+            praktis untuk seluruh tamu Anda.
           </p>
 
           <div className={styles.heroActions}>
@@ -93,7 +89,8 @@ export default async function SellerStorefrontPage({
             <div className={styles.sectionEyebrow}>Koleksi Eksklusif</div>
             <h2 className={styles.sectionTitle}>Pilihan Tema & Desain Undangan</h2>
             <p className={styles.sectionLead}>
-              Pilih gaya desain yang paling sesuai dengan impian pernikahan Anda, lalu isi formulir pemesanan di bawah.
+              Pilih gaya desain yang paling sesuai dengan impian pernikahan Anda, lalu isi formulir
+              pemesanan di bawah.
             </p>
           </div>
 
@@ -110,7 +107,8 @@ export default async function SellerStorefrontPage({
                 }}
               >
                 <p style={{ margin: 0, color: "#63554e" }}>
-                  Desain tema sedang dipersiapkan. Anda tetap dapat melakukan pemesanan kustom langsung melalui formulir di bawah.
+                  Desain tema sedang dipersiapkan. Anda tetap dapat melakukan pemesanan kustom
+                  langsung melalui formulir di bawah.
                 </p>
               </div>
             ) : (
@@ -141,9 +139,9 @@ export default async function SellerStorefrontPage({
         {/* Order Booking Section */}
         <section>
           <OrderBookingForm
-            sellerId={profile.id}
+            sellerSlug={slug}
+            idempotencyKey={randomUUID()}
             agencyName={profile.agencyName}
-            sellerWhatsapp={profile.whatsappContact}
             templates={templateList}
           />
         </section>
@@ -159,7 +157,8 @@ export default async function SellerStorefrontPage({
             Layanan Pemesanan Website Undangan Digital · WhatsApp: +{profile.whatsappContact}
           </p>
           <p style={{ fontSize: "0.78rem", color: "#a89b93", margin: 0 }}>
-            Didukung oleh infrastruktur Invitation Studio Platform. Seluruh data diproses secara aman.
+            Didukung oleh infrastruktur Invitation Studio Platform. Seluruh data diproses secara
+            aman.
           </p>
         </div>
       </footer>

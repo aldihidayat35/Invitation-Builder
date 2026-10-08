@@ -14,7 +14,7 @@ import {
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { getActorRole } from "@/lib/auth/server";
 import { seedDev } from "@/lib/db/seed";
-import { auditLogs } from "@/lib/db/schema";
+import { auditLogs, sessions, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
@@ -72,13 +72,28 @@ describe("Super Admin & Order Authority Portal", () => {
 
     expect(res.profile.isActive).toBe(true);
 
+    await db()
+      .insert(sessions)
+      .values({
+        userId: res.user.id,
+        tokenHash: "seller-status-session",
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
     // Deactivate
     const deactivated = await updateResellerStatus(db(), res.profile.id, false);
     expect(deactivated.isActive).toBe(false);
+    const [disabledUser] = await db().select().from(users).where(eq(users.id, res.user.id));
+    expect(disabledUser?.status).toBe("disabled");
+    expect(await db().select().from(sessions).where(eq(sessions.userId, res.user.id))).toHaveLength(
+      0,
+    );
 
     // Reactivate
     const reactivated = await updateResellerStatus(db(), res.profile.id, true);
     expect(reactivated.isActive).toBe(true);
+    const [activeUser] = await db().select().from(users).where(eq(users.id, res.user.id));
+    expect(activeUser?.status).toBe("active");
   });
 
   it("aggregates platform statistics for admin dashboard", async () => {
@@ -107,10 +122,7 @@ describe("Super Admin & Order Authority Portal", () => {
       },
     });
 
-    const logs = await db()
-      .select()
-      .from(auditLogs)
-      .where(eq(auditLogs.action, "reseller.create"));
+    const logs = await db().select().from(auditLogs).where(eq(auditLogs.action, "reseller.create"));
 
     expect(logs.length).toBeGreaterThanOrEqual(1);
     const log = logs[logs.length - 1];

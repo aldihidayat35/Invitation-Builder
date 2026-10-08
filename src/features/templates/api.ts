@@ -104,7 +104,9 @@ export async function importTemplate(workspaceId: string, zipBytes: Uint8Array) 
 /**
  * Public catalog query function (no auth required - safe for landing page & public catalog).
  */
-export async function getPublicCatalog(options: import("./catalog-service").CatalogFilterOptions = {}) {
+export async function getPublicCatalog(
+  options: import("./catalog-service").CatalogFilterOptions = {},
+) {
   const db = await getDb();
   const { getPublicCatalogTemplates } = await import("./catalog-service");
   return getPublicCatalogTemplates(db, options);
@@ -128,7 +130,7 @@ export async function updateCatalogMetadata(
 ) {
   const { db, actor } = await context();
   const { updateTemplateCatalogMetadata } = await import("./catalog-service");
-  return updateTemplateCatalogMetadata(db, templateId, input, actor.userId);
+  return updateTemplateCatalogMetadata(db, actor, templateId, input);
 }
 
 export {

@@ -69,15 +69,19 @@ export function CreateClientModal({ isOpen, onClose, action }: CreateClientModal
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Password Akun Klien (Opsional)</label>
+            <label className={styles.label}>
+              Password Akun Klien <span style={{ color: "var(--dash-danger)" }}>*</span>
+            </label>
             <input
               type="password"
               name="password"
-              placeholder="Default: klien12345#"
+              required
+              minLength={10}
+              placeholder="Minimal 10 karakter"
               className={styles.inputControl}
             />
             <span style={{ fontSize: 11, color: "var(--dash-muted)" }}>
-              Biarkan kosong jika ingin menggunakan password default.
+              Gunakan password unik dan sampaikan kepada klien melalui kanal yang aman.
             </span>
           </div>
 
@@ -90,11 +94,7 @@ export function CreateClientModal({ isOpen, onClose, action }: CreateClientModal
             >
               Batal
             </button>
-            <button
-              type="submit"
-              className={styles.btnPrimary}
-              disabled={isPending}
-            >
+            <button type="submit" className={styles.btnPrimary} disabled={isPending}>
               {isPending ? "Membuat Klien..." : "Buat Akun Klien"}
             </button>
           </div>

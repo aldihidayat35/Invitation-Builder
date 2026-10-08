@@ -10,7 +10,7 @@ const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const createResellerSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter"),
   email: z.string().trim().email("Format email tidak valid").toLowerCase(),
-  password: z.string().optional(),
+  password: z.string().min(10, "Password minimal 10 karakter"),
   agencyName: z.string().trim().min(2, "Nama seller/toko minimal 2 karakter"),
   slug: z
     .string()

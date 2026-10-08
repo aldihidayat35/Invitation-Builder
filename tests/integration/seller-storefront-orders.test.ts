@@ -23,6 +23,7 @@ import {
   saveInvitationData,
 } from "@/features/invitations/service";
 import {
+  archiveTemplate,
   createTemplate,
   publishTemplate,
   templatePermissions,
@@ -118,15 +119,23 @@ describe("Seller Storefront, Order Intake & Admin Authority Lock", () => {
       ownerUserId: adminUser.id,
     });
 
-    const template = await createTemplate(db(), { userId: adminUser.id }, {
-      workspaceId: adminWs.id,
-      name: "Platform Template",
-      document: fullDocument(),
-    });
-    await publishTemplate(db(), { userId: adminUser.id }, {
-      templateId: template.id,
-      expectedRevision: template.revision,
-    });
+    const template = await createTemplate(
+      db(),
+      { userId: adminUser.id },
+      {
+        workspaceId: adminWs.id,
+        name: "Platform Template",
+        document: fullDocument(),
+      },
+    );
+    await publishTemplate(
+      db(),
+      { userId: adminUser.id },
+      {
+        templateId: template.id,
+        expectedRevision: template.revision,
+      },
+    );
 
     const reseller = await createResellerWithProfile(db(), {
       email: "mitra-lock@test.com",
@@ -166,6 +175,23 @@ describe("Seller Storefront, Order Intake & Admin Authority Lock", () => {
     expect(tplPerms.write).toBe(false);
     expect(tplPerms.publish).toBe(false);
     expect(tplPerms.archive).toBe(false);
+
+    const sellerOwnedTemplate = await createTemplate(
+      db(),
+      { userId: reseller.user.id },
+      {
+        workspaceId: reseller.workspace.id,
+        name: "Seller Owned Template",
+        document: fullDocument(),
+      },
+    );
+    await expect(
+      archiveTemplate(
+        db(),
+        { userId: reseller.user.id, systemRole: "reseller" },
+        sellerOwnedTemplate.id,
+      ),
+    ).rejects.toThrow(ForbiddenError);
 
     // 4. Verify reseller trying to update invitation data is blocked by ForbiddenError
     await expect(

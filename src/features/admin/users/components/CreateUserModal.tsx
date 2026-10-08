@@ -57,8 +57,8 @@ export function CreateUserModal({
       return;
     }
 
-    if (password && password.length < 10) {
-      setErrorMessage("Kata sandi minimal 10 karakter sesuai kebijakan keamanan sistem.");
+    if (password.length < 10) {
+      setErrorMessage("Kata sandi awal wajib diisi dan minimal 10 karakter.");
       return;
     }
 
@@ -67,7 +67,7 @@ export function CreateUserModal({
       const ok = await onSubmit({
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        password: password.trim() ? password.trim() : undefined,
+        password: password.trim(),
         systemRole,
         status,
         resellerId: systemRole === "client" && resellerId ? resellerId : undefined,
@@ -109,11 +109,19 @@ export function CreateUserModal({
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 border border-amber-200/80">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                />
               </svg>
             </div>
             <div>
-              <h3 id="create-user-modal-title" className="text-lg font-bold tracking-tight text-[#2C221E]">
+              <h3
+                id="create-user-modal-title"
+                className="text-lg font-bold tracking-tight text-[#2C221E]"
+              >
                 Tambah Pengguna Baru
               </h3>
               <p className="text-xs text-stone-500">
@@ -129,7 +137,12 @@ export function CreateUserModal({
             aria-label="Tutup modal"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -137,8 +150,18 @@ export function CreateUserModal({
         {/* Error message */}
         {errorMessage && (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-800 flex items-start gap-2">
-            <svg className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="h-4 w-4 text-rose-600 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span>{errorMessage}</span>
           </div>
@@ -147,7 +170,10 @@ export function CreateUserModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="new-user-name">
+            <label
+              className="block text-xs font-semibold text-stone-700 mb-1"
+              htmlFor="new-user-name"
+            >
               Nama Lengkap <span className="text-rose-500">*</span>
             </label>
             <input
@@ -163,7 +189,10 @@ export function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="new-user-email">
+            <label
+              className="block text-xs font-semibold text-stone-700 mb-1"
+              htmlFor="new-user-email"
+            >
               Alamat Email (Login) <span className="text-rose-500">*</span>
             </label>
             <input
@@ -180,7 +209,10 @@ export function CreateUserModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="new-user-role">
+              <label
+                className="block text-xs font-semibold text-stone-700 mb-1"
+                htmlFor="new-user-role"
+              >
                 Peran Sistem <span className="text-rose-500">*</span>
               </label>
               <select
@@ -197,7 +229,10 @@ export function CreateUserModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="new-user-status">
+              <label
+                className="block text-xs font-semibold text-stone-700 mb-1"
+                htmlFor="new-user-status"
+              >
                 Status Akun
               </label>
               <select
@@ -220,7 +255,10 @@ export function CreateUserModal({
                 Profil Toko Mitra Seller
               </span>
               <div>
-                <label className="block text-xs font-medium text-stone-700 mb-1" htmlFor="reseller-agency-name">
+                <label
+                  className="block text-xs font-medium text-stone-700 mb-1"
+                  htmlFor="reseller-agency-name"
+                >
                   Nama Agensi / Brand Toko
                 </label>
                 <input
@@ -245,7 +283,10 @@ export function CreateUserModal({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1" htmlFor="reseller-slug">
+                  <label
+                    className="block text-xs font-medium text-stone-700 mb-1"
+                    htmlFor="reseller-slug"
+                  >
                     Slug Toko (Subdomain)
                   </label>
                   <input
@@ -259,7 +300,10 @@ export function CreateUserModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1" htmlFor="reseller-whatsapp">
+                  <label
+                    className="block text-xs font-medium text-stone-700 mb-1"
+                    htmlFor="reseller-whatsapp"
+                  >
                     WhatsApp Kontak
                   </label>
                   <input
@@ -279,7 +323,10 @@ export function CreateUserModal({
           {/* Conditional Client Reseller Parent Selector */}
           {systemRole === "client" && availableResellers.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="client-reseller-parent">
+              <label
+                className="block text-xs font-semibold text-stone-700 mb-1"
+                htmlFor="client-reseller-parent"
+              >
                 Reseller Pembina (Opsional)
               </label>
               <select
@@ -297,7 +344,8 @@ export function CreateUserModal({
                 ))}
               </select>
               <span className="mt-1 text-[11px] text-stone-500 block">
-                Jika dihubungkan, reseller terkait dapat melihat pesanan dan mengelola undangan klien ini.
+                Jika dihubungkan, reseller terkait dapat melihat pesanan dan mengelola undangan
+                klien ini.
               </span>
             </div>
           )}
@@ -305,7 +353,10 @@ export function CreateUserModal({
           {/* Password field */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-stone-700" htmlFor="new-user-password">
+              <label
+                className="block text-xs font-semibold text-stone-700"
+                htmlFor="new-user-password"
+              >
                 Kata Sandi Awal
               </label>
               <button
@@ -320,7 +371,9 @@ export function CreateUserModal({
               <input
                 id="new-user-password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Minimal 10 karakter (opsional, dapat diatur nanti)"
+                required
+                minLength={10}
+                placeholder="Minimal 10 karakter"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 bg-[#FAF8F5] px-3.5 py-2.5 pr-10 text-xs font-mono text-stone-900 placeholder-stone-400 focus:border-[#84633F] focus:bg-white focus:outline-none"
@@ -334,12 +387,27 @@ export function CreateUserModal({
               >
                 {showPassword ? (
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"
+                    />
                   </svg>
                 ) : (
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                 )}
               </button>
@@ -375,7 +443,14 @@ export function CreateUserModal({
               {isSubmitting ? (
                 <>
                   <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
                   <span>Menyimpan...</span>

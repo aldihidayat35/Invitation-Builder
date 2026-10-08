@@ -20,7 +20,7 @@ export default async function TemplateLibraryPage({
 }: PageProps<"/dashboard/templates">) {
   const params = await searchParams;
   const archivedView = params.view === "archived";
-  const { active } = await getWorkspaceContext();
+  const { user, active } = await getWorkspaceContext();
 
   if (!active) {
     return (
@@ -50,12 +50,14 @@ export default async function TemplateLibraryPage({
         description="Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan."
         actions={
           <div className="flex items-center gap-2.5">
-            <Link
-              href="/dashboard/templates/categories"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white hover:bg-[#FAF8F5] px-4 py-2.5 text-xs font-bold text-[#5A4D44] shadow-xs transition-colors"
-            >
-              <span>Kelola Kategori</span>
-            </Link>
+            {user.systemRole === "owner" ? (
+              <Link
+                href="/dashboard/templates/categories"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white hover:bg-[#FAF8F5] px-4 py-2.5 text-xs font-bold text-[#5A4D44] shadow-xs transition-colors"
+              >
+                <span>Kelola Kategori</span>
+              </Link>
+            ) : null}
             <Link
               href="/dashboard/invitations"
               className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"

@@ -17,11 +17,7 @@ import {
   getOrderTrends,
 } from "@/lib/db/repositories/orders";
 import { listUsersByReseller } from "@/lib/db/repositories/users";
-import type {
-  ResellerClientItem,
-  ResellerOrderItem,
-  ResellerOverviewStats,
-} from "./types";
+import type { ResellerClientItem, ResellerOrderItem, ResellerOverviewStats } from "./types";
 
 /** Fetches dashboard summary statistics for the authenticated reseller. */
 export async function getResellerOverview(): Promise<ResellerOverviewStats> {
@@ -92,13 +88,12 @@ export async function getResellerClientsList(): Promise<ResellerClientItem[]> {
 export async function createClientForReseller(input: {
   clientName: string;
   clientEmail: string;
-  password?: string;
+  password: string;
 }) {
   const { user } = await requireReseller();
   const db = await getDb();
 
-  const effectivePassword =
-    input.password && input.password.trim().length > 0 ? input.password.trim() : "klien12345#";
+  const effectivePassword = input.password.trim();
   assertPasswordPolicy(effectivePassword);
   const passwordHash = await hashPassword(effectivePassword);
 
