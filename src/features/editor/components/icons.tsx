@@ -626,3 +626,11 @@ export const IconDatabase = (p: IconProps) => (
   </Svg>
 );
 
+export const IconSnapGuides = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3v18M3 12h18" strokeDasharray="3 3" />
+    <rect x="7" y="7" width="10" height="10" rx="2" />
+  </Svg>
+);
+
+

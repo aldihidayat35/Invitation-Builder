@@ -11,6 +11,7 @@ import {
   rotatedBounds,
   screenToCanvas,
   canvasToScreen,
+  snapToGuides,
   snapToSection,
   stepZoom,
   MAX_ZOOM,
@@ -147,6 +148,36 @@ describe("snapping to section edges/center (FR-EDT-005, P1)", () => {
     const far = snapToSection({ x: 20, y: 200, w: 100, h: 50, rotation: 0 }, section);
     expect(far).toMatchObject({ dx: 0, dy: 0 });
     expect(far.guides).toEqual({ vertical: [], horizontal: [] });
+  });
+
+  it("snaps to neighbour element left, center, and right edges (FR-EDT-005)", () => {
+    const neighbour = { x: 50, y: 100, w: 100, h: 60, rotation: 0 };
+    // Dragged object at x: 53 (near neighbour left 50) -> should snap dx: -3
+    const snapLeft = snapToGuides(
+      { x: 53, y: 250, w: 80, h: 40, rotation: 0 },
+      section,
+      [neighbour],
+    );
+    expect(snapLeft.dx).toBe(-3);
+    expect(snapLeft.guides.vertical).toContain(50);
+
+    // Dragged object center is 98 (near neighbour center 100) -> should snap dx: +2
+    const snapCenter = snapToGuides(
+      { x: 58, y: 250, w: 80, h: 40, rotation: 0 },
+      section,
+      [neighbour],
+    );
+    expect(snapCenter.dx).toBe(2);
+    expect(snapCenter.guides.vertical).toContain(100);
+
+    // Dragged object top is 98 (near neighbour top 100) -> should snap dy: +2
+    const snapTop = snapToGuides(
+      { x: 250, y: 98, w: 80, h: 40, rotation: 0 },
+      section,
+      [neighbour],
+    );
+    expect(snapTop.dy).toBe(2);
+    expect(snapTop.guides.horizontal).toContain(100);
   });
 });
 

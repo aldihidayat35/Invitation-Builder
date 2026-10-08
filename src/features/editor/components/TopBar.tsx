@@ -7,7 +7,7 @@ import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProv
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
-import { IconCardsView, IconEye, IconGridView, IconSmartphone } from "./icons";
+import { IconCardsView, IconEye, IconGridView, IconSmartphone, IconSnapGuides } from "./icons";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -31,6 +31,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const doc = useEditor(selectDoc);
   const artboardMode = useEditor((s) => s.artboardMode);
   const theme = useEditor((s) => s.theme);
+  const snapToGuides = useEditor((s) => s.snapToGuides);
   const canUndo = useEditor(selectCanUndo);
   const canRedo = useEditor(selectCanRedo);
   const zoom = useEditor((s) => s.zoom);
@@ -120,6 +121,25 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
           }}
         >
           Fit
+        </button>
+      </div>
+
+      {/* Fitur Perataan Otomatis (Snap to Guides) */}
+      <div className={styles.toolGroup} role="group" aria-label="Perataan Otomatis">
+        <button
+          type="button"
+          className={styles.toolButton}
+          data-active={snapToGuides}
+          data-testid="toggle-snap-guides"
+          onClick={() => store.getState().toggleSnapToGuides()}
+          title={
+            snapToGuides
+              ? "Perataan Otomatis (Snap to Guides) Aktif — Tekan Alt saat menggeser objek untuk nonaktifkan sementara"
+              : "Aktifkan Perataan Otomatis (Snap to Guides)"
+          }
+        >
+          <IconSnapGuides size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
+          <span>Snap {snapToGuides ? "Aktif" : "Mati"}</span>
         </button>
       </div>
 

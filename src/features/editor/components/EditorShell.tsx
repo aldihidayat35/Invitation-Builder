@@ -60,6 +60,7 @@ export function EditorShell(props: EditorShellProps) {
   useEffect(() => {
     store.getState().syncArtboardModeFromStorage();
     store.getState().syncThemeFromStorage();
+    store.getState().syncSnapToGuidesFromStorage();
   }, [store]);
 
   // Realtime Live Preview Cross-Tab Broadcaster (120ms debounce)

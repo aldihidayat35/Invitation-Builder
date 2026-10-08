@@ -23,7 +23,7 @@ import {
 } from "@/lib/schema";
 import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
 import { findElement } from "../core/ops";
-import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToSection } from "../core/geometry";
+import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides, snapToSection } from "../core/geometry";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
@@ -347,8 +347,8 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
   const motionGroupRef = useRef<Konva.Group | null>(null);
-  const vGuideRef = useRef<Konva.Line | null>(null);
-  const hGuideRef = useRef<Konva.Line | null>(null);
+  const vGuideRefs = useRef<(Konva.Line | null)[]>([]);
+  const hGuideRefs = useRef<(Konva.Line | null)[]>([]);
   const dragRef = useRef<{ moved: boolean; origins: Map<string, { x: number; y: number }> }>({
     moved: false,
     origins: new Map(),
@@ -497,32 +497,57 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   }, [transformableKey, elements, zoom]);
 
   const hideGuides = useCallback(() => {
-    vGuideRef.current?.visible(false);
-    hGuideRef.current?.visible(false);
-    vGuideRef.current?.getLayer()?.batchDraw();
+    vGuideRefs.current.forEach((line) => line?.visible(false));
+    hGuideRefs.current.forEach((line) => line?.visible(false));
+    vGuideRefs.current[0]?.getLayer()?.batchDraw();
   }, []);
 
   const showGuides = useCallback(
-    (vertical: number | undefined, horizontal: number | undefined) => {
-      const v = vGuideRef.current;
-      const h = hGuideRef.current;
-      if (v) {
-        if (vertical === undefined) v.visible(false);
-        else {
-          v.points([vertical, 0, vertical, baseHeight]);
-          v.visible(true);
+    (
+      verticals: number | readonly number[] | undefined,
+      horizontals: number | readonly number[] | undefined,
+    ) => {
+      const vList = Array.isArray(verticals)
+        ? verticals
+        : typeof verticals === "number"
+          ? [verticals]
+          : [];
+      const hList = Array.isArray(horizontals)
+        ? horizontals
+        : typeof horizontals === "number"
+          ? [horizontals]
+          : [];
+
+      for (let i = 0; i < 4; i++) {
+        const vLine = vGuideRefs.current[i];
+        if (vLine) {
+          const vx = vList[i];
+          if (vx === undefined) {
+            vLine.visible(false);
+          } else {
+            vLine.points([vx, 0, vx, baseHeight]);
+            vLine.strokeWidth(1.2 / zoom);
+            vLine.dash([4 / zoom, 4 / zoom]);
+            vLine.visible(true);
+          }
+        }
+
+        const hLine = hGuideRefs.current[i];
+        if (hLine) {
+          const hy = hList[i];
+          if (hy === undefined) {
+            hLine.visible(false);
+          } else {
+            hLine.points([0, hy, CANONICAL_BASE_WIDTH, hy]);
+            hLine.strokeWidth(1.2 / zoom);
+            hLine.dash([4 / zoom, 4 / zoom]);
+            hLine.visible(true);
+          }
         }
       }
-      if (h) {
-        if (horizontal === undefined) h.visible(false);
-        else {
-          h.points([0, horizontal, CANONICAL_BASE_WIDTH, horizontal]);
-          h.visible(true);
-        }
-      }
-      v?.getLayer()?.batchDraw();
+      vGuideRefs.current[0]?.getLayer()?.batchDraw();
     },
-    [baseHeight],
+    [baseHeight, zoom],
   );
 
   /** Reads final frames from Konva nodes, commits them once, then re-syncs the nodes. */
@@ -678,6 +703,33 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         drag.moved = true;
         if (!stage) return;
         const origin = drag.origins.get(id);
+        // Snapping: snap to section boundaries & neighbour elements unless Alt is held or snap is disabled
+        const snapEnabled = store.getState().snapToGuides && !e.evt.altKey;
+        if (!snapEnabled || !section) {
+          hideGuides();
+        } else {
+          const frame = frameFromNodeAttrs({
+            x: node.x(),
+            y: node.y(),
+            width: node.width(),
+            height: node.height(),
+            scaleX: node.scaleX(),
+            scaleY: node.scaleY(),
+            rotation: node.rotation(),
+          });
+          const otherFrames = section.elements
+            .filter((el) => !drag.origins.has(el.id))
+            .map((el) => el.frame);
+          const snap = snapToGuides(
+            frame,
+            { width: CANONICAL_BASE_WIDTH, height: section.baseHeight },
+            otherFrames,
+          );
+          if (snap.dx !== 0 || snap.dy !== 0) {
+            node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
+          }
+          showGuides(snap.guides.vertical, snap.guides.horizontal);
+        }
 
         if (drag.origins.size > 1 && origin) {
           const dx = node.x() - origin.x;
@@ -688,26 +740,6 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           }
           return;
         }
-
-        // Single element: snap to section edges/center unless Alt is held (FR-EDT-005, P1).
-        if (e.evt.altKey || !section) return hideGuides();
-        const frame = frameFromNodeAttrs({
-          x: node.x(),
-          y: node.y(),
-          width: node.width(),
-          height: node.height(),
-          scaleX: node.scaleX(),
-          scaleY: node.scaleY(),
-          rotation: node.rotation(),
-        });
-        const snap = snapToSection(frame, {
-          width: CANONICAL_BASE_WIDTH,
-          height: section.baseHeight,
-        });
-        if (snap.dx !== 0 || snap.dy !== 0) {
-          node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
-        }
-        showGuides(snap.guides.vertical[0], snap.guides.horizontal[0]);
 
         if (motion && id === motion.elementId) {
           const isNodeOutside =
@@ -977,22 +1009,32 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
             />
           </Layer>
           <Layer listening={false} x={bleedX} y={bleedY}>
-            <Line
-              ref={vGuideRef}
-              points={[0, 0, 0, 0]}
-              stroke={ACCENT}
-              strokeWidth={1 / zoom}
-              dash={[4, 4]}
-              visible={false}
-            />
-            <Line
-              ref={hGuideRef}
-              points={[0, 0, 0, 0]}
-              stroke={ACCENT}
-              strokeWidth={1 / zoom}
-              dash={[4, 4]}
-              visible={false}
-            />
+            {[0, 1, 2, 3].map((idx) => (
+              <Line
+                key={`v-guide-${idx}`}
+                ref={(el) => {
+                  vGuideRefs.current[idx] = el;
+                }}
+                points={[0, 0, 0, 0]}
+                stroke={ACCENT}
+                strokeWidth={1.2 / zoom}
+                dash={[4 / zoom, 4 / zoom]}
+                visible={false}
+              />
+            ))}
+            {[0, 1, 2, 3].map((idx) => (
+              <Line
+                key={`h-guide-${idx}`}
+                ref={(el) => {
+                  hGuideRefs.current[idx] = el;
+                }}
+                points={[0, 0, 0, 0]}
+                stroke={ACCENT}
+                strokeWidth={1.2 / zoom}
+                dash={[4 / zoom, 4 / zoom]}
+                visible={false}
+              />
+            ))}
             {!isEditingThisMotion && motionElement?.animations?.motion?.enabled && motionGuidePoints.length >= 4 && (
               <Group
                 x={motionElement.frame.x + motionElement.frame.w / 2}

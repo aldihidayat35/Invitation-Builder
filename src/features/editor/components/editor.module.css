@@ -196,6 +196,13 @@
   border-color: var(--dash-accent);
 }
 
+.toolButton[data-active="true"] {
+  background: var(--dash-accent-soft, rgba(124, 58, 237, 0.12));
+  border-color: var(--dash-accent, #7c3aed);
+  color: var(--dash-accent, #7c3aed);
+  font-weight: 600;
+}
+
 .toolButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;

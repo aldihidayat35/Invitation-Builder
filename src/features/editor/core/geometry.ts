@@ -140,40 +140,148 @@ export interface SnapResult {
 export const SNAP_THRESHOLD = 6;
 
 /**
- * Snaps the frame's edges/center to the section's edges/center (FR-EDT-005,
- * P1: section guides only - neighbour alignment is not implemented yet).
+ * Snaps a frame's edges and center to the section boundaries/center AND neighbour elements
+ * (FR-EDT-005: Snap to Guides / Perataan Otomatis).
+ */
+export function snapToGuides(
+  frame: Frame,
+  section: { readonly width: number; readonly height: number },
+  otherElements: readonly Frame[] = [],
+  threshold: number = SNAP_THRESHOLD,
+): SnapResult {
+  const b = rotatedBounds(frame);
+
+  // Dragged element candidates: left edge, center, right edge
+  const myX = [
+    { edge: b.x, isCenter: false },
+    { edge: b.x + b.w / 2, isCenter: true },
+    { edge: b.x + b.w, isCenter: false },
+  ];
+
+  // Dragged element candidates: top edge, center, bottom edge
+  const myY = [
+    { edge: b.y, isCenter: false },
+    { edge: b.y + b.h / 2, isCenter: true },
+    { edge: b.y + b.h, isCenter: false },
+  ];
+
+  // Target lines: Section boundaries & center
+  const targetsX: { target: number; isCenter: boolean }[] = [
+    { target: 0, isCenter: false },
+    { target: section.width / 2, isCenter: true },
+    { target: section.width, isCenter: false },
+  ];
+
+  const targetsY: { target: number; isCenter: boolean }[] = [
+    { target: 0, isCenter: false },
+    { target: section.height / 2, isCenter: true },
+    { target: section.height, isCenter: false },
+  ];
+
+  // Target lines: Neighbor elements (tetangga) in the section
+  for (const other of otherElements) {
+    const ob = rotatedBounds(other);
+    targetsX.push(
+      { target: ob.x, isCenter: false },
+      { target: ob.x + ob.w / 2, isCenter: true },
+      { target: ob.x + ob.w, isCenter: false },
+    );
+
+    targetsY.push(
+      { target: ob.y, isCenter: false },
+      { target: ob.y + ob.h / 2, isCenter: true },
+      { target: ob.y + ob.h, isCenter: false },
+    );
+  }
+
+  // Find best candidate for X
+  let bestX: { delta: number; target: number } | null = null;
+  for (const m of myX) {
+    for (const t of targetsX) {
+      const delta = t.target - m.edge;
+      const absDelta = Math.abs(delta);
+      if (absDelta <= threshold) {
+        if (
+          !bestX ||
+          absDelta < Math.abs(bestX.delta) ||
+          (absDelta === Math.abs(bestX.delta) && m.isCenter === t.isCenter)
+        ) {
+          bestX = { delta, target: t.target };
+        }
+      }
+    }
+  }
+
+  // Find best candidate for Y
+  let bestY: { delta: number; target: number } | null = null;
+  for (const m of myY) {
+    for (const t of targetsY) {
+      const delta = t.target - m.edge;
+      const absDelta = Math.abs(delta);
+      if (absDelta <= threshold) {
+        if (
+          !bestY ||
+          absDelta < Math.abs(bestY.delta) ||
+          (absDelta === Math.abs(bestY.delta) && m.isCenter === t.isCenter)
+        ) {
+          bestY = { delta, target: t.target };
+        }
+      }
+    }
+  }
+
+  const dx = bestX ? round2(bestX.delta) : 0;
+  const dy = bestY ? round2(bestY.delta) : 0;
+
+  // After applying snap dx & dy, collect all matching guide lines
+  const guidesX = new Set<number>();
+  if (bestX) {
+    const snappedX = [
+      round2(b.x + dx),
+      round2(b.x + b.w / 2 + dx),
+      round2(b.x + b.w + dx),
+    ];
+    for (const t of targetsX) {
+      const roundedT = round2(t.target);
+      if (snappedX.some((sx) => Math.abs(sx - roundedT) < 0.01)) {
+        guidesX.add(roundedT);
+      }
+    }
+  }
+
+  const guidesY = new Set<number>();
+  if (bestY) {
+    const snappedY = [
+      round2(b.y + dy),
+      round2(b.y + b.h / 2 + dy),
+      round2(b.y + b.h + dy),
+    ];
+    for (const t of targetsY) {
+      const roundedT = round2(t.target);
+      if (snappedY.some((sy) => Math.abs(sy - roundedT) < 0.01)) {
+        guidesY.add(roundedT);
+      }
+    }
+  }
+
+  return {
+    dx,
+    dy,
+    guides: {
+      vertical: Array.from(guidesX),
+      horizontal: Array.from(guidesY),
+    },
+  };
+}
+
+/**
+ * Snaps the frame's edges/center to the section's edges/center (FR-EDT-005).
  */
 export function snapToSection(
   frame: Frame,
   section: { readonly width: number; readonly height: number },
   threshold: number = SNAP_THRESHOLD,
 ): SnapResult {
-  const b = rotatedBounds(frame);
-  const candidatesX = [
-    { edge: b.x, target: 0 },
-    { edge: b.x + b.w / 2, target: section.width / 2 },
-    { edge: b.x + b.w, target: section.width },
-  ];
-  const candidatesY = [
-    { edge: b.y, target: 0 },
-    { edge: b.y + b.h / 2, target: section.height / 2 },
-    { edge: b.y + b.h, target: section.height },
-  ];
-  const pick = (list: { edge: number; target: number }[]) => {
-    let best: { delta: number; target: number } | null = null;
-    for (const c of list) {
-      const delta = c.target - c.edge;
-      if (Math.abs(delta) <= threshold && (!best || Math.abs(delta) < Math.abs(best.delta))) {
-        best = { delta, target: c.target };
-      }
-    }
-    return best;
-  };
-  const sx = pick(candidatesX);
-  const sy = pick(candidatesY);
-  return {
-    dx: sx ? round2(sx.delta) : 0,
-    dy: sy ? round2(sy.delta) : 0,
-    guides: { vertical: sx ? [sx.target] : [], horizontal: sy ? [sy.target] : [] },
-  };
+  return snapToGuides(frame, section, [], threshold);
 }
+

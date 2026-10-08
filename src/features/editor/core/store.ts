@@ -104,6 +104,23 @@ export function getInitialEditorTheme(): EditorTheme {
   return getStoredEditorTheme() ?? "light";
 }
 
+export const SNAP_TO_GUIDES_STORAGE_KEY = "dib_snap_to_guides";
+
+export function getStoredSnapToGuides(): boolean | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = window.localStorage.getItem(SNAP_TO_GUIDES_STORAGE_KEY);
+    if (saved !== null) return saved === "true";
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function getInitialSnapToGuides(): boolean {
+  return getStoredSnapToGuides() ?? true;
+}
+
 export interface MotionEditTarget {
   readonly sectionId: string;
   readonly elementId: string;
@@ -123,6 +140,8 @@ export interface EditorState {
   readonly artboardMode: ArtboardMode;
   /** Color theme for editor: 'light' (clean) or 'dark' (Netflix Dark with neon accents). */
   readonly theme: EditorTheme;
+  /** Snap to Guides (Perataan Otomatis): snaps to section boundaries and neighbour elements. */
+  readonly snapToGuides: boolean;
   /** Focused motion path editing mode: locks canvas clicks and enables waypoint dragging (Flash/Animate style). */
   readonly editingMotion: MotionEditTarget | null;
 
@@ -215,6 +234,9 @@ export interface EditorActions {
   syncArtboardModeFromStorage(): void;
   setTheme(theme: EditorTheme): void;
   syncThemeFromStorage(): void;
+  setSnapToGuides(enabled: boolean): void;
+  toggleSnapToGuides(): void;
+  syncSnapToGuidesFromStorage(): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -233,6 +255,7 @@ export interface EditorInit {
   readonly readOnly?: boolean;
   readonly artboardMode?: ArtboardMode;
   readonly theme?: EditorTheme;
+  readonly snapToGuides?: boolean;
 }
 
 export const isDirty = (s: Pick<EditorState, "history" | "savedDocument">): boolean =>
@@ -294,6 +317,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       panMode: false,
       artboardMode: init.artboardMode ?? "cards",
       theme: init.theme ?? "light",
+      snapToGuides: init.snapToGuides ?? getInitialSnapToGuides(),
       editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,
@@ -798,6 +822,27 @@ export function createEditorStore(init: EditorInit): EditorStore {
             document.documentElement.setAttribute("data-editor-theme", saved);
             document.body.setAttribute("data-editor-theme", saved);
           }
+        }
+      },
+      setSnapToGuides(enabled) {
+        if (get().snapToGuides !== enabled) {
+          set({ snapToGuides: enabled });
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem(SNAP_TO_GUIDES_STORAGE_KEY, String(enabled));
+            } catch {
+              // ignore
+            }
+          }
+        }
+      },
+      toggleSnapToGuides() {
+        get().setSnapToGuides(!get().snapToGuides);
+      },
+      syncSnapToGuidesFromStorage() {
+        const saved = getStoredSnapToGuides();
+        if (saved !== null && saved !== get().snapToGuides) {
+          set({ snapToGuides: saved });
         }
       },
 
