@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Circle, Group, Image as KonvaImage, Line, Path, Rect, Text } from "react-konva";
-import type { Element, ThemeTokens } from "@/lib/schema";
+import type { Element, ThemeTokens, VariableDefinition } from "@/lib/schema";
 import {
   DEFAULT_COUNTDOWN_LABELS,
   computeCountdown,
@@ -1646,12 +1646,20 @@ function CanvasEmptySlot({
   );
 }
 
-function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function GalleryVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color } = colors(element, tokens);
   const variant = element.style.variant || "editorial-collage";
   const props = element.props as Record<string, unknown>;
-  const images = parseGalleryItems(props.items);
+  const images = parseGalleryItems(props.items, variables);
   const radius = element.style.radius ?? 8;
   const top = 14;
 
@@ -2389,14 +2397,22 @@ function GalleryVisual({ element, tokens }: { element: WidgetElement; tokens?: T
   );
 }
 
-function PhotoFrameVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function PhotoFrameVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color } = colors(element, tokens);
   const variant = element.style.variant || "torn-rect";
   const props = element.props as Record<string, unknown>;
   const caption = typeof props.caption === "string" ? props.caption.trim() : "";
   const fit = props.fit === "contain" ? "contain" : "cover";
-  const src = parseFrameImage(props.image);
+  const src = parseFrameImage(props.image, variables);
   const image = useCanvasImage(src);
 
   const captionH = caption ? 24 : 0;
@@ -2484,18 +2500,33 @@ function PhotoFrameVisual({ element, tokens }: { element: WidgetElement; tokens?
           fill="#689f38"
           closed
         />
-        <Group x={cx + (cw - 80) / 2} y={cy + ch * 0.82}>
-          <Rect width={80} height={18} cornerRadius={9} fill="#ffffff" opacity={0.88} />
-          <Text
-            x={4}
-            y={4}
-            width={72}
-            text="Pilih Foto"
-            fontSize={9}
-            fontStyle="bold"
-            fill="#334155"
-            align="center"
-          />
+        <Group x={cx + (cw - Math.max(80, Math.min(160, cw - 20))) / 2} y={cy + ch * 0.82}>
+          {(() => {
+            const isBound =
+              typeof props.image === "object" &&
+              props.image !== null &&
+              "bind" in props.image &&
+              typeof (props.image as { bind: unknown }).bind === "string";
+            const label = isBound ? `{${(props.image as { bind: string }).bind}}` : "Pilih Foto";
+            const badgeW = Math.max(80, Math.min(160, cw - 20));
+            return (
+              <>
+                <Rect width={badgeW} height={18} cornerRadius={9} fill="#ffffff" opacity={0.88} />
+                <Text
+                  x={4}
+                  y={4}
+                  width={badgeW - 8}
+                  text={label}
+                  fontSize={9}
+                  fontStyle="bold"
+                  fill="#334155"
+                  align="center"
+                  ellipsis
+                  wrap="none"
+                />
+              </>
+            );
+          })()}
         </Group>
       </Group>
     );
@@ -3802,9 +3833,11 @@ function CoupleProfileVisual({
 function OrnamentFrameVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   const { color, background } = colors(element, tokens);
@@ -3821,7 +3854,7 @@ function OrnamentFrameVisual({
   const imageOpacity =
     (typeof props.imageOpacity === "number" ? Math.max(0, Math.min(100, props.imageOpacity)) : 100) / 100;
 
-  const src = parseFrameImage(props.image);
+  const src = parseFrameImage(props.image, variables);
   const canvasImage = useCanvasImage(src);
 
   return (
@@ -4271,9 +4304,11 @@ function GifVisual({ element, tokens }: { element: WidgetElement; tokens?: Theme
 export function CurrentWidgetVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   switch (element.widgetType) {
     case "countdown":
@@ -4289,9 +4324,9 @@ export function CurrentWidgetVisual({
     case "music":
       return <MusicVisual element={element} tokens={tokens} />;
     case "gallery":
-      return <GalleryVisual element={element} tokens={tokens} />;
+      return <GalleryVisual element={element} tokens={tokens} variables={variables} />;
     case "photoFrame":
-      return <PhotoFrameVisual element={element} tokens={tokens} />;
+      return <PhotoFrameVisual element={element} tokens={tokens} variables={variables} />;
     case "timeline":
       return <TimelineVisual element={element} tokens={tokens} />;
     case "wishes":
@@ -4299,7 +4334,7 @@ export function CurrentWidgetVisual({
     case "coupleProfile":
       return <CoupleProfileVisual element={element} tokens={tokens} />;
     case "ornamentFrame":
-      return <OrnamentFrameVisual element={element} tokens={tokens} />;
+      return <OrnamentFrameVisual element={element} tokens={tokens} variables={variables} />;
     case "video":
       return <VideoVisual element={element} tokens={tokens} />;
     case "gif":

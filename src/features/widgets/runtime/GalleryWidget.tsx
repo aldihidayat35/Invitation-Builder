@@ -11,36 +11,79 @@ export interface GalleryWidgetProps {
   readonly layout?: unknown;
   readonly items?: unknown;
   readonly style?: WidgetStyleProps | undefined;
+  readonly variables?: readonly { key: string; default?: unknown }[] | undefined;
 }
 
 interface GalleryImage {
   readonly src: string;
   readonly alt: string;
+  readonly bind?: string;
 }
 
 const ASSET_ID = /^[0-9a-f-]{36}$/i;
-const SAFE_SRC = /^(https?:\/\/|\/)/i;
+const SAFE_SRC = /^(https?:\/\/|\/|data:image\/)/i;
 
-/** Picks only known fields; accepts `assetId` (own asset) or a safe `src` URL. */
-export function parseGalleryItems(items: unknown): GalleryImage[] {
+/** Picks only known fields; accepts `assetId` (own asset), safe `src` URL, or `{ bind: string }`. */
+export function parseGalleryItems(
+  items: unknown,
+  variables?: readonly { key: string; default?: unknown }[],
+): GalleryImage[] {
   if (!Array.isArray(items)) return [];
   const out: GalleryImage[] = [];
   for (const raw of items) {
     if (typeof raw !== "object" || raw === null) continue;
     const rec = raw as Record<string, unknown>;
     const alt = typeof rec.alt === "string" ? rec.alt : "";
+    let src = "";
     if (typeof rec.assetId === "string" && ASSET_ID.test(rec.assetId)) {
-      out.push({ src: assetUrl(rec.assetId), alt });
+      src = assetUrl(rec.assetId);
     } else if (typeof rec.src === "string" && SAFE_SRC.test(rec.src)) {
-      out.push({ src: rec.src, alt });
+      src = rec.src;
+    } else if (typeof rec.url === "string" && SAFE_SRC.test(rec.url)) {
+      src = rec.url;
+    }
+
+    if (typeof rec.bind === "string") {
+      if (!src && typeof rec.fallback === "string") {
+        if (ASSET_ID.test(rec.fallback)) src = assetUrl(rec.fallback);
+        else if (SAFE_SRC.test(rec.fallback)) src = rec.fallback;
+      }
+      if (!src && variables) {
+        const matching = variables.find((v) => v.key === rec.bind);
+        if (matching?.default) {
+          if (typeof matching.default === "string") {
+            if (ASSET_ID.test(matching.default)) src = assetUrl(matching.default);
+            else if (SAFE_SRC.test(matching.default)) src = matching.default;
+          } else if (typeof matching.default === "object" && matching.default !== null) {
+            const defRec = matching.default as Record<string, unknown>;
+            if (typeof defRec.assetId === "string" && ASSET_ID.test(defRec.assetId)) {
+              src = assetUrl(defRec.assetId);
+            } else if (typeof defRec.src === "string" && SAFE_SRC.test(defRec.src)) {
+              src = defRec.src;
+            } else if (typeof defRec.url === "string" && SAFE_SRC.test(defRec.url)) {
+              src = defRec.url;
+            }
+          }
+        }
+      }
+      out.push({
+        src,
+        alt: alt || `{${rec.bind}}`,
+        bind: rec.bind,
+      });
+      continue;
+    }
+
+    if (src) {
+      out.push({ src, alt });
     }
   }
   return out;
 }
 
 /** Grid or slider gallery. Images are lazy; slider supports buttons, arrow keys and swipe (FR-WDG-006). */
-export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProps) {
-  const images = parseGalleryItems(items);
+export function GalleryWidget({ title, layout, items, style, variables }: GalleryWidgetProps) {
+  const images = parseGalleryItems(items, variables);
   const [index, setIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
   const heading = typeof title === "string" && title.trim() ? title.trim() : "Galeri";
@@ -78,9 +121,34 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
           data-testid="gallery-collection"
         >
           {images.map((img, i) => (
-            <li key={`${img.src}-${i}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- own asset route */}
-              <img src={img.src} alt={img.alt} loading="lazy" decoding="async" />
+            <li key={`${img.bind || img.src}-${i}`}>
+              {img.src ? (
+                // eslint-disable-next-line @next/next/no-img-element -- own asset route
+                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" />
+              ) : (
+                <div
+                  className={styles.galleryPlaceholderItem}
+                  data-testid="gallery-placeholder-item"
+                  aria-label={img.alt || "Placeholder Foto"}
+                >
+                  <svg
+                    width={22}
+                    height={22}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="m21 15-5-5L5 21" />
+                  </svg>
+                  <span className={styles.galleryPlaceholderText}>{img.bind ? `{${img.bind}}` : "Pilih Foto"}</span>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -122,8 +190,34 @@ export function GalleryWidget({ title, layout, items, style }: GalleryWidgetProp
           aria-roledescription="slide"
           aria-label={`${index + 1} dari ${images.length}`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- own asset route */}
-          <img src={current.src} alt={current.alt} loading="lazy" decoding="async" />
+          {current.src ? (
+            // eslint-disable-next-line @next/next/no-img-element -- own asset route
+            <img src={current.src} alt={current.alt} loading="lazy" decoding="async" />
+          ) : (
+            <div
+              className={styles.galleryPlaceholderItem}
+              data-testid="gallery-placeholder-item"
+              aria-label={current.alt || "Placeholder Foto"}
+              style={{ minHeight: "220px" }}
+            >
+              <svg
+                width={32}
+                height={32}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <span className={styles.galleryPlaceholderText}>{current.bind ? `{${current.bind}}` : "Pilih Foto"}</span>
+            </div>
+          )}
         </div>
         <div className={styles.sliderNav}>
           <button

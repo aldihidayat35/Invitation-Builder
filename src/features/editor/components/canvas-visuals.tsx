@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Circle, Group, Image as KonvaImage, Line, Rect, Text } from "react-konva";
-import type { Element, ImageFade, ThemeTokens } from "@/lib/schema";
+import type { Element, ImageFade, ThemeTokens, VariableDefinition } from "@/lib/schema";
 import { assetUrl } from "@/features/assets/urls";
 import { defaultWidgetRegistry, resolveWidgetStyleVariant } from "@/features/widgets";
 import {
@@ -1491,14 +1491,16 @@ function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens
 function GalleryWidgetVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
   const layout = props.layout === "slider" ? "slider" : "grid";
-  const images = parseGalleryItems(props.items);
+  const images = parseGalleryItems(props.items, variables);
 
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
@@ -1671,9 +1673,11 @@ function GalleryWidgetVisual({
 export function WidgetVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const styleResolution = resolveWidgetStyleVariant(element.widgetType, element.style.variant);
   if (styleResolution.kind === "current") {
@@ -1684,6 +1688,7 @@ export function WidgetVisual({
           style: { ...element.style, variant: styleResolution.variant.id },
         }}
         tokens={tokens}
+        variables={variables}
       />
     );
   }
@@ -1702,25 +1707,25 @@ export function WidgetVisual({
     case "rsvp":
       return <RsvpWidgetVisual element={legacyElement} tokens={tokens} />;
     case "gallery":
-      return <GalleryWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <GalleryWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "music":
       return <MusicWidgetVisual element={legacyElement} tokens={tokens} />;
     case "gift":
       return <GiftWidgetVisual element={legacyElement} tokens={tokens} />;
     case "photoFrame":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "timeline":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "wishes":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "coupleProfile":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "ornamentFrame":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "video":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "gif":
-      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     default: {
       const { w, h } = element.frame;
       const resolved = defaultWidgetRegistry.resolve(element.widgetType);

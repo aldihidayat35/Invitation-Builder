@@ -16,7 +16,10 @@ export interface PhotoFrameWidgetProps {
 const ASSET_ID = /^[0-9a-f-]{36}$/i;
 const SAFE_SRC = /^(https?:\/\/|\/|data:image\/)/i;
 
-export function parseFrameImage(image: unknown): string | null {
+export function parseFrameImage(
+  image: unknown,
+  variables?: readonly { key: string; default?: unknown }[],
+): string | null {
   if (typeof image === "string") {
     if (ASSET_ID.test(image)) return assetUrl(image);
     if (SAFE_SRC.test(image)) return image;
@@ -32,6 +35,18 @@ export function parseFrameImage(image: unknown): string | null {
     }
     if (typeof rec.url === "string" && SAFE_SRC.test(rec.url)) {
       return rec.url;
+    }
+    if (typeof rec.bind === "string") {
+      if (typeof rec.fallback === "string") {
+        if (ASSET_ID.test(rec.fallback)) return assetUrl(rec.fallback);
+        if (SAFE_SRC.test(rec.fallback)) return rec.fallback;
+      }
+      if (variables) {
+        const matching = variables.find((v) => v.key === rec.bind);
+        if (matching?.default) {
+          return parseFrameImage(matching.default, variables);
+        }
+      }
     }
   }
   return null;
@@ -116,7 +131,7 @@ function CanvaLandscapePlaceholder({ label }: { readonly label?: string }) {
             <path d="m21 15-5-5L5 21" />
           </svg>
         </span>
-        <span className={styles.canvaHintText}>Pilih Foto</span>
+        <span className={styles.canvaHintText}>{label || "Pilih Foto"}</span>
       </div>
     </div>
   );
@@ -174,7 +189,14 @@ export function PhotoFrameWidget({
                 data-testid="photo-frame-image"
               />
             ) : (
-              <CanvaLandscapePlaceholder label={captionText} />
+              <CanvaLandscapePlaceholder
+                label={
+                  captionText ||
+                  (typeof image === "object" && image && "bind" in image && typeof (image as { bind: unknown }).bind === "string"
+                    ? `{${(image as { bind: string }).bind}}`
+                    : undefined)
+                }
+              />
             )}
           </div>
 

@@ -225,6 +225,24 @@ export function resolveDocument(
               const resolved = resolveAt(value, [...path, "props", name], where);
               if (resolved.hidden) hiddenByBinding = true;
               props[name] = resolved.value === undefined ? null : structuredClone(resolved.value);
+            } else if (Array.isArray(value)) {
+              props[name] = value.map((item, itemIdx) => {
+                if (typeof item === "object" && item !== null && "bind" in item && typeof (item as { bind: unknown }).bind === "string") {
+                  const binding: Binding = {
+                    bind: (item as { bind: string }).bind,
+                    ...(typeof (item as { fallback?: unknown }).fallback === "string" && { fallback: (item as { fallback: string }).fallback }),
+                  };
+                  const resolved = resolveAt(binding, [...path, "props", name, itemIdx], where);
+                  if (resolved.value && typeof resolved.value === "object" && "assetId" in resolved.value) {
+                    return { ...item, assetId: (resolved.value as { assetId: string }).assetId };
+                  }
+                  if (typeof resolved.value === "string") {
+                    return { ...item, src: resolved.value };
+                  }
+                  return resolved.value !== undefined ? structuredClone(resolved.value) : structuredClone(item);
+                }
+                return structuredClone(item);
+              });
             } else {
               props[name] = structuredClone(value);
             }

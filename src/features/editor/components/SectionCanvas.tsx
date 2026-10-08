@@ -160,7 +160,7 @@ function Visual({
               {...shadowProps}
             />
           )}
-          <WidgetVisual element={element} tokens={tokens} />
+          <WidgetVisual element={element} tokens={tokens} variables={variables} />
         </Group>
       );
     }
