@@ -593,3 +593,21 @@ export const IconReverse = (p: IconProps) => (
     <path d="m7 16-4-4m0 0 4-4m-4 4h18" />
   </Svg>
 );
+
+export const IconGroup = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="8" height="8" rx="1.5" />
+    <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    <path d="M5 14v4a1 1 0 0 0 1 1h4" strokeDasharray="2 1.5" />
+    <path d="M14 5h4a1 1 0 0 1 1 1v4" strokeDasharray="2 1.5" />
+  </Svg>
+);
+
+export const IconUngroup = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    <line x1="8" y1="16" x2="16" y2="8" strokeDasharray="2 2" />
+  </Svg>
+);
+

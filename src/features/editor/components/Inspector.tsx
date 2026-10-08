@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Element } from "@/lib/schema";
 import { findElement, findSection, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
@@ -25,6 +25,7 @@ import {
   IconDuplicate,
   IconEyeOff,
   IconForward,
+  IconGroup,
   IconLayers,
   IconLock,
   IconOpacity,
@@ -35,6 +36,7 @@ import {
   IconSendBack,
   IconSparkle,
   IconTrash,
+  IconUngroup,
   IconUnlock,
 } from "./icons";
 import { ImagePanel } from "./ImagePanel";
@@ -429,6 +431,8 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
     .map((id) => findElement(doc, id)?.element)
     .filter((e): e is Element => e !== undefined);
   const allLocked = elements.length > 0 && elements.every((e) => e.locked);
+  const canGroup = ids.length >= 2;
+  const hasGroup = elements.some((e) => Boolean(e.groupId));
   const act = () => store.getState();
   const reorder = (mode: ReorderMode, label: string, testId: string, icon: ReactNode) => (
     <button
@@ -447,6 +451,32 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
   return (
     <div className={styles.actionsCard}>
       <div className={styles.actionGrid}>
+        {canGroup && (
+          <button
+            type="button"
+            className={styles.actionTile}
+            disabled={readOnly}
+            data-testid="action-group"
+            title="Grup elemen (Ctrl+G)"
+            onClick={() => act().groupSelected()}
+          >
+            <IconGroup size={15} />
+            <span>Grup</span>
+          </button>
+        )}
+        {hasGroup && (
+          <button
+            type="button"
+            className={styles.actionTile}
+            disabled={readOnly}
+            data-testid="action-ungroup"
+            title="Pisahkan grup (Ctrl+Shift+G)"
+            onClick={() => act().ungroupSelected()}
+          >
+            <IconUngroup size={15} />
+            <span>Pisahkan</span>
+          </button>
+        )}
         <button
           type="button"
           className={styles.actionTile}
@@ -536,6 +566,157 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const tokens = doc.design.tokens;
+
+  const locations = ids
+    .map((id) => findElement(doc, id))
+    .filter((loc): loc is NonNullable<typeof loc> => Boolean(loc));
+  const elements = locations.map((l) => l.element);
+  const firstEl = elements[0];
+  const sectionId = locations[0]?.section.id;
+
+  const isUnifiedGroup =
+    elements.length > 0 &&
+    Boolean(firstEl?.groupId) &&
+    elements.every((el) => el.groupId === firstEl?.groupId);
+
+  const sharedGroupId = isUnifiedGroup ? firstEl?.groupId : null;
+  const groupName = (isUnifiedGroup ? firstEl?.groupName : null) || "Grup";
+
+  const [isEditingGroupName, setIsEditingGroupName] = useState(false);
+  const [groupNameInput, setGroupNameInput] = useState(groupName);
+
+  if (isUnifiedGroup && sharedGroupId && firstEl && sectionId) {
+    return (
+      <div className={styles.inspStack} data-testid="group-inspector">
+        <div className={styles.groupHeaderWrapper}>
+          <div className={styles.groupHeaderTop}>
+            <div className={styles.groupHeaderIcon}>
+              <IconGroup size={18} />
+            </div>
+            <div className={styles.groupHeaderTitles}>
+              <span className={styles.eyebrow}>Grup Elemen</span>
+              {isEditingGroupName ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (groupNameInput.trim()) {
+                      store.getState().renameGroup(sharedGroupId, groupNameInput.trim());
+                    }
+                    setIsEditingGroupName(false);
+                  }}
+                  className={styles.groupRenameForm}
+                >
+                  <input
+                    type="text"
+                    value={groupNameInput}
+                    onChange={(e) => setGroupNameInput(e.target.value)}
+                    onBlur={() => {
+                      if (groupNameInput.trim()) {
+                        store.getState().renameGroup(sharedGroupId, groupNameInput.trim());
+                      }
+                      setIsEditingGroupName(false);
+                    }}
+                    autoFocus
+                    className={styles.groupRenameInput}
+                    maxLength={120}
+                  />
+                </form>
+              ) : (
+                <div className={styles.groupTitleRow}>
+                  <h3 className={styles.title}>{groupName}</h3>
+                  <button
+                    type="button"
+                    className={styles.iconButton}
+                    title="Ubah nama grup"
+                    onClick={() => {
+                      setGroupNameInput(groupName);
+                      setIsEditingGroupName(true);
+                    }}
+                  >
+                    <IconPencil size={13} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          <span className={styles.groupMetaBadge}>
+            {elements.length} elemen di dalam grup
+          </span>
+        </div>
+
+        <ElementActions ids={ids} readOnly={readOnly} />
+
+        <PanelSection
+          id="insp-group-anim-section"
+          title="Animasi Grup (Satu Animasi Bersama)"
+          icon={<IconSparkle size={14} />}
+          defaultOpen={true}
+        >
+          <AnimationPanel
+            element={firstEl}
+            readOnly={readOnly}
+            sectionId={sectionId}
+          />
+        </PanelSection>
+
+        <PanelSection
+          id="insp-group-opacity-section"
+          title="Transparansi & Opasitas Grup"
+          icon={<IconOpacity size={14} />}
+          defaultOpen={false}
+        >
+          <OpacityField
+            id="insp-group-opacity"
+            value={(firstEl.style as { opacity?: number }).opacity ?? 1}
+            disabled={readOnly}
+            onChange={(percent) => store.getState().patchGroupStyle(sharedGroupId, { opacity: percent })}
+          />
+        </PanelSection>
+
+        <PanelSection
+          id="insp-group-shadow-section"
+          title="Efek Bayangan (Shadow) Grup"
+          icon={<IconSparkle size={14} />}
+          defaultOpen={false}
+        >
+          <ShadowControl
+            tokens={tokens}
+            disabled={readOnly}
+            onChange={(shadow) => store.getState().patchGroupStyle(sharedGroupId, { shadow })}
+          />
+        </PanelSection>
+
+        <PanelSection
+          id="insp-group-members-section"
+          title="Elemen dalam Grup"
+          icon={<IconLayers size={14} />}
+          count={elements.length}
+          defaultOpen={false}
+        >
+          <div className={styles.groupMembersList}>
+            {elements.map((el) => (
+              <button
+                key={el.id}
+                type="button"
+                className={styles.groupMemberRow}
+                onClick={() => store.getState().selectElements([el.id])}
+                title={`Pilih elemen ${elementLabel(el)}`}
+              >
+                <span className={styles.groupMemberIcon}>
+                  <ElementIcon element={el} size={14} />
+                </span>
+                <span className={styles.groupMemberName}>{elementLabel(el)}</span>
+                <span className={styles.groupMemberType}>{elementTypeLabel(el)}</span>
+              </button>
+            ))}
+          </div>
+        </PanelSection>
+
+        <p className={styles.footHint}>Geser atau ubah ukuran langsung di artboard.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.inspStack} data-testid="multi-inspector">
       <InspectorHeader
@@ -837,6 +1018,44 @@ function ElementPanel({
           ) : null
         }
       />
+
+      {element.groupId && (
+        <div className={styles.elementGroupInfo} data-testid="element-group-info">
+          <div className={styles.elementGroupInfoLeft}>
+            <IconGroup size={14} />
+            <span>
+              Grup: <strong>{element.groupName || "Grup"}</strong>
+            </span>
+          </div>
+          <div className={styles.elementGroupInfoActions}>
+            <button
+              type="button"
+              className={styles.miniBtn}
+              onClick={() => {
+                const loc = findElement(doc, element.id);
+                if (loc) {
+                  const groupMemberIds = loc.section.elements
+                    .filter((e) => e.groupId === element.groupId)
+                    .map((e) => e.id);
+                  store.getState().selectElements(groupMemberIds);
+                }
+              }}
+              title="Pilih seluruh elemen dalam grup ini"
+            >
+              Pilih Seluruh Grup
+            </button>
+            <button
+              type="button"
+              className={styles.miniBtn}
+              disabled={readOnly}
+              onClick={() => store.getState().ungroupSelected()}
+              title="Keluarkan elemen dari grup"
+            >
+              Pisahkan
+            </button>
+          </div>
+        </div>
+      )}
 
       <ElementActions ids={[id]} readOnly={readOnly} />
 

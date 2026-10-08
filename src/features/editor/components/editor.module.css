@@ -5783,5 +5783,294 @@ textarea.input {
   border-top: 1px solid #232530;
 }
 
+/* ==========================================================================
+   Group and Ungroup Feature Styles
+   ========================================================================== */
+
+.groupHeaderWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--dash-surface-sunken, #f8f6f2);
+  border: 1px solid var(--dash-border, #e5e0d8);
+  border-radius: 8px;
+}
+
+.groupHeaderTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.groupHeaderIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(232, 93, 143, 0.12);
+  color: #e85d8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.groupHeaderTitles {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupRenameForm {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.groupRenameInput {
+  width: 100%;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid #e85d8f;
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #2c221e);
+  outline: none;
+}
+
+.groupMetaBadge {
+  font-size: 11px;
+  color: var(--dash-muted, #7c7267);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.groupAnimationBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  background: rgba(232, 93, 143, 0.08);
+  border: 1px solid rgba(232, 93, 143, 0.22);
+  border-radius: 7px;
+}
+
+.groupBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #d84b7f;
+}
+
+.groupAnimationHint {
+  font-size: 11px;
+  color: var(--dash-muted, #6b635b);
+  line-height: 1.4;
+}
+
+.groupMembersList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupMemberRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dash-text, #2c221e);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.groupMemberRow:hover {
+  background: var(--dash-surface-sunken, #f5f2eb);
+  border-color: var(--dash-border, #e5e0d8);
+}
+
+.groupMemberIcon {
+  color: var(--dash-muted, #7c7267);
+  display: flex;
+  align-items: center;
+}
+
+.groupMemberName {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupMemberType {
+  font-size: 10.5px;
+  color: var(--dash-muted, #8c8277);
+}
+
+.elementGroupInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: rgba(232, 93, 143, 0.08);
+  border: 1px solid rgba(232, 93, 143, 0.2);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--dash-text, #2c221e);
+}
+
+.elementGroupInfoLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.elementGroupInfoActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.miniBtn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--dash-border, #d9d4cc);
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #2c221e);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.miniBtn:hover {
+  background: var(--dash-accent-soft, #fdf2f4);
+  color: #e85d8f;
+  border-color: #e85d8f;
+}
+
+.layerGroupActionBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: var(--dash-surface-sunken, #f8f6f2);
+  border: 1px solid var(--dash-border, #e5e0d8);
+  border-radius: 6px;
+}
+
+.layerGroupBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--dash-border, #d1cbbf);
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #2c221e);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.layerGroupBtn:hover:not(:disabled) {
+  border-color: #e85d8f;
+  color: #e85d8f;
+  background: rgba(232, 93, 143, 0.08);
+}
+
+.layerGroupBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: #e85d8f;
+  opacity: 0.85;
+}
+
+/* Dark mode overrides */
+.shell[data-theme="dark"] .groupHeaderWrapper {
+  background: #171920;
+  border-color: #262834;
+}
+
+.shell[data-theme="dark"] .groupHeaderIcon {
+  background: rgba(229, 9, 20, 0.15);
+  color: #ff3844;
+}
+
+.shell[data-theme="dark"] .groupRenameInput {
+  background: #1f212a;
+  border-color: #e50914;
+  color: #ffffff;
+}
+
+.shell[data-theme="dark"] .groupAnimationBanner {
+  background: rgba(229, 9, 20, 0.1);
+  border-color: rgba(229, 9, 20, 0.3);
+}
+
+.shell[data-theme="dark"] .groupBadge {
+  color: #ff4d58;
+}
+
+.shell[data-theme="dark"] .elementGroupInfo {
+  background: rgba(229, 9, 20, 0.1);
+  border-color: rgba(229, 9, 20, 0.3);
+  color: #e2e8f0;
+}
+
+.shell[data-theme="dark"] .miniBtn {
+  background: #1e2028;
+  border-color: #2d303e;
+  color: #cbd5e1;
+}
+
+.shell[data-theme="dark"] .miniBtn:hover {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: #e50914;
+  color: #ff3844;
+}
+
+.shell[data-theme="dark"] .layerGroupActionBar {
+  background: #15161c;
+  border-color: #242632;
+}
+
+.shell[data-theme="dark"] .layerGroupBtn {
+  background: #1e2028;
+  border-color: #2d303e;
+  color: #e2e8f0;
+}
+
+.shell[data-theme="dark"] .layerGroupBtn:hover:not(:disabled) {
+  border-color: #e50914;
+  color: #ff3844;
+  background: rgba(229, 9, 20, 0.15);
+}
+
+.shell[data-theme="dark"] .layerGroupBadge {
+  color: #ff3844;
+}
+
+
 
 

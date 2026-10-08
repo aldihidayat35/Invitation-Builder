@@ -42,7 +42,10 @@ export function collectIds(doc: CanonicalDocument): Set<string> {
   const ids = new Set<string>();
   for (const section of doc.sections) {
     ids.add(section.id);
-    for (const element of section.elements) ids.add(element.id);
+    for (const element of section.elements) {
+      ids.add(element.id);
+      if (element.groupId) ids.add(element.groupId);
+    }
   }
   return ids;
 }
@@ -154,6 +157,16 @@ function cloneElements(
 ): { elements: Element[]; ids: string[] } {
   const ids: string[] = [];
 
+  // Group ID remapping: members of the same group receive the same new groupId
+  const groupMap = new Map<string, string>();
+  for (const el of elements) {
+    if (el.groupId && !groupMap.has(el.groupId)) {
+      const newGrpId = generateId(used, "grp");
+      used.add(newGrpId);
+      groupMap.set(el.groupId, newGrpId);
+    }
+  }
+
   let dx = offset;
   let dy = offset;
   if (targetPosition && elements.length > 0) {
@@ -170,6 +183,9 @@ function cloneElements(
     ids.push(id);
     const clone = structuredClone(el);
     clone.id = id;
+    if (clone.groupId && groupMap.has(clone.groupId)) {
+      clone.groupId = groupMap.get(clone.groupId);
+    }
 
     let nextX = round2(clone.frame.x + dx);
     let nextY = round2(clone.frame.y + dy);
@@ -542,7 +558,23 @@ export function deleteElements(doc: CanonicalDocument, ids: readonly string[]): 
     const elements = section.elements.filter((el) => !(doomed.has(el.id) && !el.locked));
     if (elements.length === section.elements.length) return section;
     changedAny = true;
-    return { ...section, elements };
+
+    // Dissolve any groups that now have fewer than 2 elements left
+    const groupCounts = new Map<string, number>();
+    for (const el of elements) {
+      if (el.groupId) {
+        groupCounts.set(el.groupId, (groupCounts.get(el.groupId) ?? 0) + 1);
+      }
+    }
+    const cleaned = elements.map((el) => {
+      if (el.groupId && (groupCounts.get(el.groupId) ?? 0) < 2) {
+        const { groupId: _g, groupName: _gn, ...rest } = el;
+        return rest as Element;
+      }
+      return el;
+    });
+
+    return { ...section, elements: cleaned };
   });
   return changedAny ? withSections(doc, sections) : doc;
 }
@@ -815,3 +847,204 @@ export function uniqueVariableKey(doc: CanonicalDocument, base: string): string 
   if (!taken.has(base)) return base;
   for (let n = 2; ; n++) if (!taken.has(`${base}${n}`)) return `${base}${n}`;
 }
+
+// ----------------------------------------------------------------------- groups
+
+/** Finds all elements belonging to a specific group in the document. */
+export function findGroupElements(doc: CanonicalDocument, groupId: string): Element[] {
+  const results: Element[] = [];
+  for (const section of doc.sections) {
+    for (const el of section.elements) {
+      if (el.groupId === groupId) results.push(el);
+    }
+  }
+  return results;
+}
+
+/**
+ * Groups multiple elements within the same section under a single group ID.
+ * Returns the modified document and the created groupId, or unchanged if invalid.
+ */
+export function groupElements(
+  doc: CanonicalDocument,
+  ids: readonly string[],
+  groupName?: string,
+): { document: CanonicalDocument; groupId: string | null } {
+  if (ids.length < 2) return { document: doc, groupId: null };
+
+  const firstLoc = findElement(doc, ids[0]!);
+  if (!firstLoc) return { document: doc, groupId: null };
+  const sectionId = firstLoc.section.id;
+
+  // Verify all specified elements reside within the SAME section
+  const validIds: string[] = [];
+  for (const id of ids) {
+    const loc = findElement(doc, id);
+    if (loc && loc.section.id === sectionId) {
+      validIds.push(id);
+    }
+  }
+  if (validIds.length < 2) return { document: doc, groupId: null };
+
+  const used = collectIds(doc);
+  for (const sec of doc.sections) {
+    for (const el of sec.elements) {
+      if (el.groupId) used.add(el.groupId);
+    }
+  }
+
+  const groupId = generateId(used, "grp");
+  const name = groupName?.trim() || "Grup";
+  const targetIds = new Set(validIds);
+
+  const nextDoc = mapSection(doc, sectionId, (section) => {
+    // Keep grouped elements contiguous in the layer stack (at the highest layer position)
+    const groupedElements = section.elements
+      .filter((el) => targetIds.has(el.id))
+      .map((el) => ({ ...el, groupId, groupName: name }));
+
+    const result: Element[] = [];
+    let inserted = false;
+    for (let i = 0; i < section.elements.length; i++) {
+      const el = section.elements[i]!;
+      if (targetIds.has(el.id)) {
+        if (!inserted) {
+          result.push(...groupedElements);
+          inserted = true;
+        }
+      } else {
+        result.push(el);
+      }
+    }
+    return { ...section, elements: result };
+  });
+
+  return { document: nextDoc, groupId };
+}
+
+/**
+ * Ungroups elements: removes groupId and groupName from specified elements or groupId.
+ */
+export function ungroupElements(
+  doc: CanonicalDocument,
+  idsOrGroupId: readonly string[] | string,
+): CanonicalDocument {
+  const targetGroupIds = new Set<string>();
+  const targetElementIds = new Set<string>();
+
+  if (typeof idsOrGroupId === "string") {
+    targetGroupIds.add(idsOrGroupId);
+  } else {
+    for (const id of idsOrGroupId) {
+      targetElementIds.add(id);
+      const loc = findElement(doc, id);
+      if (loc?.element.groupId) {
+        targetGroupIds.add(loc.element.groupId);
+      }
+    }
+  }
+
+  if (targetGroupIds.size === 0 && targetElementIds.size === 0) return doc;
+
+  let changedAny = false;
+  const sections = doc.sections.map((section) => {
+    let changed = false;
+    const elements = section.elements.map((el) => {
+      if ((el.groupId && targetGroupIds.has(el.groupId)) || targetElementIds.has(el.id)) {
+        if (el.groupId !== undefined || el.groupName !== undefined) {
+          changed = true;
+          const { groupId: _g, groupName: _gn, ...rest } = el;
+          return rest as Element;
+        }
+      }
+      return el;
+    });
+    if (!changed) return section;
+    changedAny = true;
+    return { ...section, elements };
+  });
+
+  return changedAny ? withSections(doc, sections) : doc;
+}
+
+/** Renames a group across all member elements. */
+export function renameGroup(
+  doc: CanonicalDocument,
+  groupId: string,
+  name: string,
+): CanonicalDocument {
+  const trimmed = name.trim().slice(0, 120) || "Grup";
+  let changedAny = false;
+  const sections = doc.sections.map((section) => {
+    let changed = false;
+    const elements = section.elements.map((el) => {
+      if (el.groupId === groupId && el.groupName !== trimmed) {
+        changed = true;
+        return { ...el, groupName: trimmed };
+      }
+      return el;
+    });
+    if (!changed) return section;
+    changedAny = true;
+    return { ...section, elements };
+  });
+  return changedAny ? withSections(doc, sections) : doc;
+}
+
+/**
+ * Updates animations synchronously across all members of a group.
+ * Satisfies: "ketika di-group kelompok tersebut bisa memiliki contohnya satu animasi yang sama"
+ */
+export function updateGroupAnimation(
+  doc: CanonicalDocument,
+  groupId: string,
+  update:
+    | Element["animations"]
+    | undefined
+    | ((current?: Element["animations"]) => Element["animations"] | undefined),
+): CanonicalDocument {
+  const fn = typeof update === "function" ? update : () => update;
+  let changedAny = false;
+  const sections = doc.sections.map((section) => {
+    let changed = false;
+    const elements = section.elements.map((el) => {
+      if (el.groupId === groupId) {
+        const nextAnim = fn(el.animations);
+        changed = true;
+        return { ...el, animations: nextAnim };
+      }
+      return el;
+    });
+    if (!changed) return section;
+    changedAny = true;
+    return { ...section, elements };
+  });
+  return changedAny ? withSections(doc, sections) : doc;
+}
+
+/** Updates style (e.g. opacity, shadow) across all members of a group. */
+export function updateGroupStyle(
+  doc: CanonicalDocument,
+  groupId: string,
+  patch: Record<string, unknown>,
+): CanonicalDocument {
+  let changedAny = false;
+  const sections = doc.sections.map((section) => {
+    let changed = false;
+    const elements = section.elements.map((el) => {
+      if (el.groupId === groupId) {
+        changed = true;
+        return {
+          ...el,
+          style: { ...el.style, ...patch },
+        } as Element;
+      }
+      return el;
+    });
+    if (!changed) return section;
+    changedAny = true;
+    return { ...section, elements };
+  });
+  return changedAny ? withSections(doc, sections) : doc;
+}
+

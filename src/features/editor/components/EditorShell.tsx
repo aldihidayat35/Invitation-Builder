@@ -161,6 +161,10 @@ function EditorFrame({
           return state.duplicateSelected();
         case "delete":
           return state.deleteSelected();
+        case "group":
+          return state.groupSelected();
+        case "ungroup":
+          return state.ungroupSelected();
         case "nudge":
           return state.nudgeSelected(action.dx, action.dy);
         case "escape":

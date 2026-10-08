@@ -10,11 +10,13 @@ import {
   IconDuplicate,
   IconEyeOff,
   IconForward,
+  IconGroup,
   IconLock,
   IconPlus,
   IconSection,
   IconSendBack,
   IconTrash,
+  IconUngroup,
   IconUnlock,
 } from "./icons";
 import { findElement, type ReorderMode } from "../core/ops";
@@ -79,6 +81,12 @@ export function ContextMenu({
   const element = loc?.element;
   const isLocked = Boolean(element?.locked);
   const hasClipboard = clipboard.length > 0;
+  const selectedIds = store.getState().selectedIds;
+  const canGroup = selectedIds.length >= 2;
+  const hasGroup = Boolean(
+    element?.groupId ||
+    selectedIds.some((id) => findElement(doc, id)?.element.groupId),
+  );
 
   // Viewport bounds clamping
   const menuWidth = 210;
@@ -155,6 +163,40 @@ export function ContextMenu({
             </div>
             <span className={styles.contextMenuItemShortcut}>Ctrl+V</span>
           </button>
+
+          {(canGroup || hasGroup) && <div className={styles.contextMenuDivider} />}
+
+          {canGroup && (
+            <button
+              type="button"
+              className={styles.contextMenuItem}
+              disabled={readOnly}
+              data-testid="ctx-group"
+              onClick={() => handleAction(() => store.getState().groupSelected())}
+            >
+              <div className={styles.contextMenuItemLeft}>
+                <IconGroup size={15} />
+                <span>Grup Elemen</span>
+              </div>
+              <span className={styles.contextMenuItemShortcut}>Ctrl+G</span>
+            </button>
+          )}
+
+          {hasGroup && (
+            <button
+              type="button"
+              className={styles.contextMenuItem}
+              disabled={readOnly}
+              data-testid="ctx-ungroup"
+              onClick={() => handleAction(() => store.getState().ungroupSelected())}
+            >
+              <div className={styles.contextMenuItemLeft}>
+                <IconUngroup size={15} />
+                <span>Pisahkan Grup</span>
+              </div>
+              <span className={styles.contextMenuItemShortcut}>Ctrl+Shift+G</span>
+            </button>
+          )}
 
           <div className={styles.contextMenuDivider} />
 

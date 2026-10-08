@@ -42,6 +42,8 @@ interface ResolvedBase {
   readonly hidden: boolean;
   readonly locked: boolean;
   readonly animations?: Element["animations"];
+  readonly groupId?: string;
+  readonly groupName?: string;
 }
 
 export interface ResolvedTextElement extends ResolvedBase {
@@ -165,6 +167,8 @@ export function resolveDocument(
         ...(element.animations !== undefined && {
           animations: structuredClone(element.animations),
         }),
+        ...(element.groupId !== undefined && { groupId: element.groupId }),
+        ...(element.groupName !== undefined && { groupName: element.groupName }),
       };
       const notVisible = !element.visible;
 

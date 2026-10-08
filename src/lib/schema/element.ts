@@ -28,6 +28,10 @@ const baseElementShape = {
   /** Locked elements still render but cannot be manipulated (PRD §9.2). */
   locked: z.boolean().default(false),
   animations: animationConfigSchema.optional(),
+  /** Optional group identifier for grouped elements. */
+  groupId: idSchema.optional(),
+  /** Optional custom display name for the group. */
+  groupName: z.string().max(120).optional(),
 };
 
 // ----------------------------------------------------------------------- text

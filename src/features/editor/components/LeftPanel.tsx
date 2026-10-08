@@ -15,6 +15,7 @@ import {
   IconEyeOff,
   IconGif,
   IconGripVertical,
+  IconGroup,
   IconImages,
   IconLayers,
   IconLine,
@@ -24,6 +25,7 @@ import {
   IconSparkle,
   IconSquare,
   IconText,
+  IconUngroup,
   IconUnlock,
   WidgetIcon,
 } from "./icons";
@@ -278,103 +280,154 @@ export function LeftPanel() {
             ) : layers.length === 0 ? (
               <p className={styles.emptyHint}>Section ini belum punya elemen.</p>
             ) : (
-              <ul className={styles.layerList} data-testid="layer-list">
-                {layers.map((element) => {
-                  const selected = selectedIds.includes(element.id);
-                  const isDragging = draggingLayerId === element.id;
-                  const isDropTarget = dropTargetLayer?.id === element.id;
-                  const dropPlacement = isDropTarget ? dropTargetLayer.placement : undefined;
-
-                  return (
-                    <li
-                      key={element.id}
-                      className={styles.layerRow}
-                      data-testid={`layer-${element.id}`}
-                      data-selected={selected}
-                      data-hidden={!element.visible}
-                      data-locked={element.locked}
-                      data-dragging={isDragging}
-                      data-drop-target={dropPlacement}
-                      draggable={!readOnly}
-                      onDragStart={(event) => {
-                        if (readOnly) return;
-                        event.dataTransfer.setData("text/plain", element.id);
-                        event.dataTransfer.effectAllowed = "move";
-                        setDraggingLayerId(element.id);
-                      }}
-                      onDragOver={(event) => {
-                        if (readOnly || !draggingLayerId || draggingLayerId === element.id) return;
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = "move";
-                        const rect = event.currentTarget.getBoundingClientRect();
-                        const midY = rect.top + rect.height / 2;
-                        const placement = event.clientY < midY ? "above" : "below";
-                        if (
-                          dropTargetLayer?.id !== element.id ||
-                          dropTargetLayer?.placement !== placement
-                        ) {
-                          setDropTargetLayer({ id: element.id, placement });
-                        }
-                      }}
-                      onDragLeave={(event) => {
-                        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-                        if (dropTargetLayer?.id === element.id) {
-                          setDropTargetLayer(null);
-                        }
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const sourceId =
-                          event.dataTransfer.getData("text/plain") || draggingLayerId;
-                        if (
-                          sourceId &&
-                          dropTargetLayer &&
-                          section &&
-                          sourceId !== dropTargetLayer.id
-                        ) {
-                          store
-                            .getState()
-                            .moveElementLayer(
-                              section.id,
-                              sourceId,
-                              dropTargetLayer.id,
-                              dropTargetLayer.placement,
-                            );
-                        }
-                        setDraggingLayerId(null);
-                        setDropTargetLayer(null);
-                      }}
-                      onDragEnd={() => {
-                        setDraggingLayerId(null);
-                        setDropTargetLayer(null);
-                      }}
-                    >
-                      <span
-                        className={styles.layerGrip}
-                        title="Tarik untuk memindahkan urutan layer"
-                        aria-label="Tarik urutan layer"
-                        data-testid={`layer-grip-${element.id}`}
-                      >
-                        <IconGripVertical size={13} />
-                      </span>
+              <>
+                {(selectedIds.length >= 2 ||
+                  selectedIds.some((id) =>
+                    section.elements.some((el) => el.id === id && Boolean(el.groupId)),
+                  )) && (
+                  <div className={styles.layerGroupActionBar}>
+                    {selectedIds.length >= 2 && (
                       <button
                         type="button"
-                        className={styles.layerName}
-                        aria-pressed={selected}
-                        title={`${elementTypeLabel(element)}: ${elementLabel(element)}`}
-                        onClick={(event) => {
-                          if (event.shiftKey || event.ctrlKey || event.metaKey) {
-                            store.getState().toggleElement(element.id);
-                          } else {
-                            store.getState().selectElements([element.id]);
+                        className={styles.layerGroupBtn}
+                        disabled={readOnly}
+                        onClick={() => store.getState().groupSelected()}
+                        title="Grup elemen yang dipilih (Ctrl+G)"
+                      >
+                        <IconGroup size={13} />
+                        <span>Grup ({selectedIds.length})</span>
+                      </button>
+                    )}
+                    {selectedIds.some((id) =>
+                      section.elements.some((el) => el.id === id && Boolean(el.groupId)),
+                    ) && (
+                      <button
+                        type="button"
+                        className={styles.layerGroupBtn}
+                        disabled={readOnly}
+                        onClick={() => store.getState().ungroupSelected()}
+                        title="Pisahkan grup (Ctrl+Shift+G)"
+                      >
+                        <IconUngroup size={13} />
+                        <span>Pisahkan Grup</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <ul className={styles.layerList} data-testid="layer-list">
+                  {layers.map((element) => {
+                    const selected = selectedIds.includes(element.id);
+                    const isDragging = draggingLayerId === element.id;
+                    const isDropTarget = dropTargetLayer?.id === element.id;
+                    const dropPlacement = isDropTarget ? dropTargetLayer.placement : undefined;
+
+                    return (
+                      <li
+                        key={element.id}
+                        className={styles.layerRow}
+                        data-testid={`layer-${element.id}`}
+                        data-selected={selected}
+                        data-hidden={!element.visible}
+                        data-locked={element.locked}
+                        data-dragging={isDragging}
+                        data-drop-target={dropPlacement}
+                        draggable={!readOnly}
+                        onDragStart={(event) => {
+                          if (readOnly) return;
+                          event.dataTransfer.setData("text/plain", element.id);
+                          event.dataTransfer.effectAllowed = "move";
+                          setDraggingLayerId(element.id);
+                        }}
+                        onDragOver={(event) => {
+                          if (readOnly || !draggingLayerId || draggingLayerId === element.id) return;
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = "move";
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          const midY = rect.top + rect.height / 2;
+                          const placement = event.clientY < midY ? "above" : "below";
+                          if (
+                            dropTargetLayer?.id !== element.id ||
+                            dropTargetLayer?.placement !== placement
+                          ) {
+                            setDropTargetLayer({ id: element.id, placement });
                           }
                         }}
+                        onDragLeave={(event) => {
+                          if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+                          if (dropTargetLayer?.id === element.id) {
+                            setDropTargetLayer(null);
+                          }
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const sourceId =
+                            event.dataTransfer.getData("text/plain") || draggingLayerId;
+                          if (
+                            sourceId &&
+                            dropTargetLayer &&
+                            section &&
+                            sourceId !== dropTargetLayer.id
+                          ) {
+                            store
+                              .getState()
+                              .moveElementLayer(
+                                section.id,
+                                sourceId,
+                                dropTargetLayer.id,
+                                dropTargetLayer.placement,
+                              );
+                          }
+                          setDraggingLayerId(null);
+                          setDropTargetLayer(null);
+                        }}
+                        onDragEnd={() => {
+                          setDraggingLayerId(null);
+                          setDropTargetLayer(null);
+                        }}
                       >
-                        <span className={styles.layerIcon}>
-                          <ElementIcon element={element} size={14} />
+                        <span
+                          className={styles.layerGrip}
+                          title="Tarik untuk memindahkan urutan layer"
+                          aria-label="Tarik urutan layer"
+                          data-testid={`layer-grip-${element.id}`}
+                        >
+                          <IconGripVertical size={13} />
                         </span>
-                        <span className={styles.layerText}>{elementLabel(element)}</span>
-                      </button>
+                        <button
+                          type="button"
+                          className={styles.layerName}
+                          aria-pressed={selected}
+                          title={`${elementTypeLabel(element)}: ${elementLabel(element)}${
+                            element.groupId ? ` (${element.groupName || "Grup"})` : ""
+                          }`}
+                          onClick={(event) => {
+                            if (event.shiftKey || event.ctrlKey || event.metaKey) {
+                              store.getState().toggleElement(element.id);
+                            } else if (event.altKey) {
+                              store.getState().selectElements([element.id]);
+                            } else if (element.groupId) {
+                              const groupMemberIds = (section?.elements ?? [])
+                                .filter((e) => e.groupId === element.groupId)
+                                .map((e) => e.id);
+                              store.getState().selectElements(groupMemberIds);
+                            } else {
+                              store.getState().selectElements([element.id]);
+                            }
+                          }}
+                        >
+                          <span className={styles.layerIcon}>
+                            <ElementIcon element={element} size={14} />
+                          </span>
+                          <span className={styles.layerText}>{elementLabel(element)}</span>
+                          {element.groupId && (
+                            <span
+                              className={styles.layerGroupBadge}
+                              title={`Grup: ${element.groupName || "Grup"}`}
+                            >
+                              <IconGroup size={11} />
+                            </span>
+                          )}
+                        </button>
                       <button
                         type="button"
                         className={styles.layerToggle}
@@ -407,8 +460,9 @@ export function LeftPanel() {
                   );
                 })}
               </ul>
-            )}
-          </PanelSection>
+            </>
+          )}
+        </PanelSection>
         );
     }
   };

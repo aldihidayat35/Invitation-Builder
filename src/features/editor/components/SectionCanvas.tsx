@@ -559,6 +559,38 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         const evt = e.evt;
         const additive = evt.shiftKey || evt.ctrlKey || evt.metaKey;
         const state = store.getState();
+        const doc = state.history.present;
+        const loc = findElement(doc, id);
+        const element = loc?.element;
+
+        if (loc && element?.groupId && !evt.altKey) {
+          const groupMemberIds = loc.section.elements
+            .filter((el) => el.groupId === element.groupId)
+            .map((el) => el.id);
+
+          const groupAlreadySelected =
+            groupMemberIds.length > 1 &&
+            groupMemberIds.every((gid) => state.selectedIds.includes(gid));
+
+          // If the whole group is already selected, clicking an element directly selects it for individual editing
+          if (groupAlreadySelected && !additive) {
+            state.selectElements([id]);
+            return;
+          }
+
+          if (additive && !motion) {
+            const allSelected = groupMemberIds.every((gid) => state.selectedIds.includes(gid));
+            if (allSelected) {
+              state.selectElements(state.selectedIds.filter((sid) => !groupMemberIds.includes(sid)));
+            } else {
+              state.selectElements([...new Set([...state.selectedIds, ...groupMemberIds])]);
+            }
+          } else if (!state.selectedIds.includes(id)) {
+            state.selectElements(groupMemberIds);
+          }
+          return;
+        }
+
         if (additive && !motion) state.toggleElement(id);
         else if (!state.selectedIds.includes(id)) state.selectElements([id]);
       },
@@ -572,6 +604,11 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         const evt = e.evt;
         const additive = evt.shiftKey || evt.ctrlKey || evt.metaKey;
         if (!additive && !dragRef.current.moved && store.getState().selectedIds.length > 1) {
+          const loc = findElement(store.getState().history.present, id);
+          if (loc?.element.groupId) {
+            // If already selecting the group and clicked without dragging, leave group selected
+            return;
+          }
           store.getState().selectElements([id]);
         }
       },
@@ -587,7 +624,15 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         e.evt.preventDefault();
         const state = store.getState();
         if (!state.selectedIds.includes(id)) {
-          state.selectElements([id]);
+          const loc = findElement(state.history.present, id);
+          if (loc && loc.element.groupId) {
+            const groupMemberIds = loc.section.elements
+              .filter((el) => el.groupId === loc.element.groupId)
+              .map((el) => el.id);
+            state.selectElements(groupMemberIds);
+          } else {
+            state.selectElements([id]);
+          }
         }
         const stage = stageRef.current;
         const pointerPos = stage?.getPointerPosition();

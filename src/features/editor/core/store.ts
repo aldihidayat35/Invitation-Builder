@@ -36,20 +36,26 @@ import {
   duplicateElements,
   duplicateSection as duplicateSectionOp,
   findElement,
+  findGroupElements,
   findSection,
+  groupElements,
   insertElementCopies,
   moveElementInLayers,
   nudgeElements,
   renameElement as renameElementOp,
+  renameGroup as renameGroupOp,
   reorderElements,
   setFrames,
   setLocked as setLockedOp,
   setVisible as setVisibleOp,
   shiftSection,
   toggleSectionOpening as toggleSectionOpeningOp,
+  ungroupElements,
   updateElement,
   updateElementFrame,
   updateElementStyle,
+  updateGroupAnimation as updateGroupAnimationOp,
+  updateGroupStyle as updateGroupStyleOp,
   updateSection as updateSectionOp,
   DEFAULT_DUPLICATE_OFFSET,
   type ElementKind,
@@ -181,6 +187,15 @@ export interface EditorActions {
     targetId: string,
     placement: "above" | "below",
   ): void;
+  // groups
+  groupSelected(): string | null;
+  ungroupSelected(): void;
+  renameGroup(groupId: string, name: string): void;
+  setGroupAnimation(
+    groupId: string,
+    fn: (current?: Element["animations"]) => Element["animations"] | undefined,
+  ): void;
+  patchGroupStyle(groupId: string, patch: Record<string, unknown>): void;
   // history
   undo(): void;
   redo(): void;
@@ -654,6 +669,47 @@ export function createEditorStore(init: EditorInit): EditorStore {
         const state = get();
         if (state.readOnly) return;
         edit((doc) => moveElementInLayers(doc, sectionId, sourceId, targetId, placement));
+      },
+
+      // --------------------------------------------------------------- groups
+      groupSelected() {
+        const state = get();
+        if (state.readOnly || state.selectedIds.length < 2) return null;
+        let createdGroupId: string | null = null;
+        edit(
+          (doc) => {
+            const res = groupElements(doc, state.selectedIds);
+            createdGroupId = res.groupId;
+            return res.document;
+          },
+          undefined,
+          (nextDoc) => {
+            if (createdGroupId) {
+              const members = findGroupElements(nextDoc, createdGroupId).map((e) => e.id);
+              if (members.length > 0) return { selectedIds: members };
+            }
+            return {};
+          },
+        );
+        return createdGroupId;
+      },
+      ungroupSelected() {
+        const state = get();
+        if (state.readOnly || state.selectedIds.length === 0) return;
+        edit((doc) => ungroupElements(doc, state.selectedIds));
+      },
+      renameGroup(groupId, name) {
+        edit((doc) => renameGroupOp(doc, groupId, name), {
+          coalesceKey: `rename-group:${groupId}`,
+        });
+      },
+      setGroupAnimation(groupId, fn) {
+        edit((doc) => updateGroupAnimationOp(doc, groupId, fn));
+      },
+      patchGroupStyle(groupId, patch) {
+        edit((doc) => updateGroupStyleOp(doc, groupId, patch), {
+          coalesceKey: `group-style:${groupId}:${Object.keys(patch).join(",")}`,
+        });
       },
 
       // -------------------------------------------------------------- history

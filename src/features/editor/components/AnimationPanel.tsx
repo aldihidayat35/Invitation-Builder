@@ -17,7 +17,7 @@ import {
 } from "@/lib/schema";
 import { useEditor, useEditorStore } from "./EditorProvider";
 import { NumberField, SelectField } from "./fields";
-import { IconPlay, IconPlus, IconReplay, IconReverse, IconTrash } from "./icons";
+import { IconGroup, IconPlay, IconPlus, IconReplay, IconReverse, IconTrash } from "./icons";
 import { AnimationPresetIcon } from "./AnimationIcon";
 import styles from "./editor.module.css";
 
@@ -156,14 +156,35 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     return [];
   }, [activeTab, element.type, isText]);
 
+  const doc = useEditor((s) => s.history.present);
+  const targetGroupId = liveElement.groupId;
+  const groupElements = useMemo(() => {
+    if (!targetGroupId) return [liveElement];
+    return (
+      doc.sections
+        .find((s) => s.id === sectionId)
+        ?.elements.filter((el) => el.groupId === targetGroupId) ?? [liveElement]
+    );
+  }, [doc.sections, sectionId, targetGroupId, liveElement]);
+
   const act = () => store.getState();
+
+  const patchTargets = (fn: (el: Element) => Element) => {
+    if (targetGroupId) {
+      for (const targetEl of groupElements) {
+        act().patchElement(targetEl.id, fn);
+      }
+    } else {
+      act().patchElement(element.id, fn);
+    }
+  };
 
   const handlePresetSelect = (presetId: string) => {
     if (readOnly) return;
 
     if (!presetId) {
       // Clear this track
-      act().patchElement(element.id, (el) => {
+      patchTargets((el) => {
         const nextAnims = { ...el.animations };
         if (activeTab !== "motion") {
           delete nextAnims[activeTab];
@@ -189,7 +210,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
       trigger: currentTrack?.trigger ?? defaultTrigger,
     });
 
-    act().patchElement(element.id, (el) => ({
+    patchTargets((el) => ({
       ...el,
       animations: {
         ...el.animations,
@@ -199,17 +220,20 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
 
     // Dispatch instant replay for immediate visual feedback on the canvas
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("dib:replay-animation", {
-          detail: { elementId: element.id, sectionId, trackType: activeTab },
-        }),
-      );
+      const targets = targetGroupId ? groupElements : [element];
+      for (const targetEl of targets) {
+        window.dispatchEvent(
+          new CustomEvent("dib:replay-animation", {
+            detail: { elementId: targetEl.id, sectionId, trackType: activeTab },
+          }),
+        );
+      }
     }
   };
 
   const patchTrack = (patch: Partial<AnimationTrack>) => {
     if (!currentTrack || readOnly || activeTab === "motion") return;
-    act().patchElement(element.id, (el) => {
+    patchTargets((el) => {
       const trackToPatch = el.animations?.[activeTab];
       if (!trackToPatch) return el;
       return {
@@ -228,7 +252,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
   // ------------------------------------------------------------- Motion handlers
   const patchMotion = (patch: Partial<MotionTrack>) => {
     if (readOnly) return;
-    act().patchElement(element.id, (el) => {
+    patchTargets((el) => {
       const current = el.animations?.motion ?? buildDefaultMotionTrack();
       const updated: MotionTrack = {
         ...current,
@@ -278,7 +302,7 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     if (isEditingThisMotion) {
       store.getState().setEditingMotion(null);
     }
-    act().patchElement(element.id, (el) => {
+    patchTargets((el) => {
       const next = { ...el.animations };
       delete next.motion;
       const hasAny = Object.keys(next).length > 0;
@@ -339,21 +363,27 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
 
   const handleReplayMotion = () => {
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("dib:replay-animation", {
-          detail: { elementId: element.id, sectionId, trackType: "motion" },
-        }),
-      );
+      const targets = targetGroupId ? groupElements : [element];
+      for (const targetEl of targets) {
+        window.dispatchEvent(
+          new CustomEvent("dib:replay-animation", {
+            detail: { elementId: targetEl.id, sectionId, trackType: "motion" },
+          }),
+        );
+      }
     }
   };
 
   const handleReplayElement = () => {
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("dib:replay-animation", {
-          detail: { elementId: element.id, sectionId, trackType: activeTab },
-        }),
-      );
+      const targets = targetGroupId ? groupElements : [element];
+      for (const targetEl of targets) {
+        window.dispatchEvent(
+          new CustomEvent("dib:replay-animation", {
+            detail: { elementId: targetEl.id, sectionId, trackType: activeTab },
+          }),
+        );
+      }
     }
   };
 
@@ -378,6 +408,19 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
 
   return (
     <div className={styles.panelStack} data-testid="animation-inspector">
+      {targetGroupId && (
+        <div className={styles.groupAnimationBanner} data-testid="group-animation-banner">
+          <div className={styles.groupBadge}>
+            <IconGroup size={12} />
+            <span>Animasi Grup</span>
+          </div>
+          <span className={styles.groupAnimationHint}>
+            Animasi ini diterapkan secara bersamaan ke semua elemen di dalam grup (
+            {groupElements.length} elemen).
+          </span>
+        </div>
+      )}
+
       {/* 4 Tabs: Enter, Motion, Lain-lain (Efek), Out */}
       <div className={styles.animTabs} role="tablist" aria-label="Kategori Animasi">
         {TABS.map((tab) => {
