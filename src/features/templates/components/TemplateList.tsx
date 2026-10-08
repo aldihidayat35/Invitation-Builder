@@ -3,6 +3,7 @@ import type { TemplateLifecycle, TemplateSummary } from "../types";
 import type { TemplateAction } from "./action-state";
 import { StatusBadge } from "./StatusBadge";
 import { TemplateActions } from "./TemplateActions";
+import { IconEditorStudio, IconPreviewEye } from "./template-icons";
 import styles from "./templates.module.css";
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
@@ -22,13 +23,22 @@ export function TemplateList({
   templates,
   canWrite,
   canArchive,
+  canDelete = canArchive,
   actions,
+  categoryNames = {},
   emptyMessage,
 }: {
   templates: TemplateSummary[];
   canWrite: boolean;
   canArchive: boolean;
-  actions: { rename: TemplateAction; duplicate: TemplateAction; archive: TemplateAction };
+  canDelete?: boolean;
+  actions: {
+    rename: TemplateAction;
+    duplicate: TemplateAction;
+    archive: TemplateAction;
+    delete?: TemplateAction;
+  };
+  categoryNames?: Record<string, string>;
   emptyMessage: string;
 }) {
   if (templates.length === 0) {
@@ -48,33 +58,103 @@ export function TemplateList({
   return (
     <ul className={styles.list} aria-label="Daftar template">
       {templates.map((template) => (
-        <li key={template.id} className={styles.card} data-testid="template-card">
-          <div className={styles.cardTop}>
-            <StatusBadge lifecycle={template.lifecycle} versionNo={template.publishedVersionNo} />
-          </div>
-          <h3 className={styles.cardName}>
-            {template.status === "archived" ? (
-              <span>{template.name}</span>
+        <li key={template.id} className={styles.catalogCard} data-testid="template-card">
+          {/* Card Media Header */}
+          <div className={styles.catalogCardMedia}>
+            {template.thumbnailUrl ? (
+              <img
+                src={template.thumbnailUrl}
+                alt={`Thumbnail ${template.name}`}
+                className={styles.catalogCardImg}
+                loading="lazy"
+              />
             ) : (
-              <Link href={`/dashboard/templates/${template.id}`} data-testid="open-template">
-                {template.name}
-              </Link>
+              <div className={styles.catalogCardFallback}>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B8A392" strokeWidth="1.6">
+                  <rect x="3" y="3" width="18" height="18" rx="3" />
+                  <path d="M3 9h18M9 21V9" />
+                </svg>
+                <span className={styles.catalogCardFallbackTitle}>{template.name}</span>
+              </div>
             )}
-          </h3>
-          <p className={styles.cardHint}>{LIFECYCLE_HINT[template.lifecycle]}</p>
-          <span className={styles.meta}>
-            Diubah {dateFormat.format(template.updatedAt)} · revisi {template.revision}
-          </span>
+            <div className={styles.catalogCardBadgeBar}>
+              <StatusBadge lifecycle={template.lifecycle} versionNo={template.publishedVersionNo} />
+              {template.category ? (
+                <span className={styles.catalogCategoryChip}>
+                  {categoryNames[template.category] || template.category}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Card Body */}
+          <div className={styles.catalogCardBody}>
+            <h3 className={styles.catalogCardName}>
+              {template.status === "archived" ? (
+                <span>{template.name}</span>
+              ) : (
+                <Link href={`/dashboard/templates/${template.id}`} data-testid="open-template">
+                  {template.name}
+                </Link>
+              )}
+            </h3>
+            {template.description ? (
+              <p className={styles.catalogCardDesc}>{template.description}</p>
+            ) : (
+              <p className={styles.cardHint}>{LIFECYCLE_HINT[template.lifecycle]}</p>
+            )}
+            <div className={styles.catalogCardMeta}>
+              <span>Diubah {dateFormat.format(template.updatedAt)}</span>
+              <span>Revisi #{template.revision}</span>
+            </div>
+          </div>
+
+          {/* Card Actions Footer */}
           {template.status !== "archived" ? (
-            <TemplateActions
-              templateId={template.id}
-              templateName={template.name}
-              canWrite={canWrite}
-              canArchive={canArchive}
-              rename={actions.rename}
-              duplicate={actions.duplicate}
-              archive={actions.archive}
-            />
+            <div className={styles.catalogCardActions}>
+              <div className={styles.catalogBtnRowPrimary}>
+                <Link
+                  href={`/editor/${template.id}/preview`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.livePreviewBtn}
+                  title="Buka pratinjau langsung di tab baru"
+                >
+                  <IconPreviewEye size={15} />
+                  <span>Live Preview</span>
+                </Link>
+                {canWrite ? (
+                  <Link
+                    href={`/editor/${template.id}`}
+                    className={styles.editorLaunchBtn}
+                    title="Buka Studio Editor Desain"
+                  >
+                    <IconEditorStudio size={15} />
+                    <span>Buka Studio</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/dashboard/templates/${template.id}`}
+                    className={styles.editorLaunchBtn}
+                    title="Lihat Detail Template"
+                  >
+                    <span>Detail</span>
+                  </Link>
+                )}
+              </div>
+
+              <TemplateActions
+                templateId={template.id}
+                templateName={template.name}
+                canWrite={canWrite}
+                canArchive={canArchive}
+                canDelete={canDelete}
+                rename={actions.rename}
+                duplicate={actions.duplicate}
+                archive={actions.archive}
+                delete={actions.delete}
+              />
+            </div>
           ) : null}
         </li>
       ))}

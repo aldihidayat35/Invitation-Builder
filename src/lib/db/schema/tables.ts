@@ -420,6 +420,24 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: updatedAt(),
 });
 
+export const templateCategories = pgTable(
+  "template_categories",
+  {
+    id: id(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    icon: text("icon"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("template_categories_slug_uq").on(t.slug),
+    index("template_categories_sort_idx").on(t.sortOrder),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
@@ -440,5 +458,7 @@ export type AssetRow = typeof assets.$inferSelect;
 export type AuditLogRow = typeof auditLogs.$inferSelect;
 export type AppSettingRow = typeof appSettings.$inferSelect;
 export type NewAppSettingRow = typeof appSettings.$inferInsert;
+export type TemplateCategoryRow = typeof templateCategories.$inferSelect;
+export type NewTemplateCategoryRow = typeof templateCategories.$inferInsert;
 
 

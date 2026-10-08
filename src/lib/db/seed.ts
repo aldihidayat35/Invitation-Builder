@@ -5,7 +5,7 @@
 import { eq } from "drizzle-orm";
 import { assertPasswordPolicy, hashPassword } from "../auth/password";
 import { createEmptyDocument } from "../schema/document";
-import { templates, users, workspaceMembers } from "./schema";
+import { templateCategories, templates, users, workspaceMembers } from "./schema";
 import {
   createResellerClient,
   createResellerWithProfile,
@@ -114,6 +114,23 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       draftDocument: createEmptyDocument(),
       createdBy: user.id,
     }));
+
+  const defaultCategories = [
+    { slug: "wedding", name: "Pernikahan (Wedding)", description: "Undangan akad dan resepsi pernikahan", sortOrder: 1 },
+    { slug: "engagement", name: "Tunangan (Engagement)", description: "Undangan lamaran dan pertunangan", sortOrder: 2 },
+    { slug: "birthday", name: "Ulang Tahun (Birthday)", description: "Undangan pesta ulang tahun & sweet seventeen", sortOrder: 3 },
+    { slug: "aqiqah", name: "Tasyakuran & Aqiqah", description: "Undangan aqiqah, kelahiran & syukuran", sortOrder: 4 },
+    { slug: "graduation", name: "Wisuda (Graduation)", description: "Undangan kelulusan dan tasyakuran wisuda", sortOrder: 5 },
+    { slug: "corporate", name: "Formal & Corporate", description: "Undangan seminar, gala dinner, & gathering kantor", sortOrder: 6 },
+    { slug: "other", name: "Lainnya", description: "Kategori umum dan perayaan lainnya", sortOrder: 7 },
+  ];
+
+  for (const cat of defaultCategories) {
+    await db
+      .insert(templateCategories)
+      .values(cat)
+      .onConflictDoNothing();
+  }
 
   const catalogTemplatesSeed = [
     {

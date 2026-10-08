@@ -35,8 +35,19 @@ export interface TemplateExtendedMetadata {
   supportedFeatures?: TemplateSupportedFeature[];
   layoutFormat?: TemplateLayoutFormat;
   recommendedAudioTitle?: string;
+  previewVideoUrl?: string;
   ratingScore?: number;
   ratingCount?: number;
+}
+
+export interface DynamicTemplateCategory {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  sortOrder: number;
+  templateCount?: number;
 }
 
 export interface TemplateCatalogMetadata {
@@ -83,6 +94,7 @@ export interface UpdateTemplateMetadataInput
   supportedFeatures?: TemplateSupportedFeature[];
   galleryUrls?: string[];
   demoInvitationSlug?: string | null;
+  previewVideoUrl?: string | null;
   layoutFormat?: TemplateLayoutFormat;
 }
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listLibrary, permissionsFor } from "@/features/templates/api";
+import { getTemplateCategories, listLibrary, permissionsFor } from "@/features/templates/api";
 import { CreateTemplateForm, ImportTemplateDialog, TemplateList } from "@/features/templates/components";
 import styles from "@/features/templates/components/templates.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
@@ -8,6 +8,7 @@ import { getWorkspaceContext } from "@/lib/auth/server";
 import {
   archiveTemplateAction,
   createTemplateAction,
+  deleteTemplateAction,
   duplicateTemplateAction,
   renameTemplateAction,
 } from "./actions";
@@ -33,10 +34,13 @@ export default async function TemplateLibraryPage({
   }
 
   const workspaceId = active.workspace.id;
-  const [templates, permissions] = await Promise.all([
+  const [templates, permissions, categories] = await Promise.all([
     listLibrary(workspaceId, { archived: archivedView }),
     permissionsFor(workspaceId),
+    getTemplateCategories(),
   ]);
+
+  const categoryNames = Object.fromEntries(categories.map((c) => [c.slug, c.name]));
 
   return (
     <main className={styles.page}>
@@ -45,13 +49,21 @@ export default async function TemplateLibraryPage({
         title="Katalog & Desain Template"
         description="Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan."
         actions={
-          <Link
-            href="/dashboard/invitations"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
-          >
-            <span>Daftar Undangan</span>
-            <span>→</span>
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/dashboard/templates/categories"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white hover:bg-[#FAF8F5] px-4 py-2.5 text-xs font-bold text-[#5A4D44] shadow-xs transition-colors"
+            >
+              <span>Kelola Kategori</span>
+            </Link>
+            <Link
+              href="/dashboard/invitations"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#BD9B2F] px-5 py-2.5 text-xs font-bold text-[#2C221E] shadow-md transition-colors"
+            >
+              <span>Daftar Undangan</span>
+              <span>→</span>
+            </Link>
+          </div>
         }
       />
 
@@ -96,11 +108,14 @@ export default async function TemplateLibraryPage({
         templates={templates}
         canWrite={permissions.write}
         canArchive={permissions.archive}
+        canDelete={permissions.archive}
         actions={{
           rename: renameTemplateAction,
           duplicate: duplicateTemplateAction,
           archive: archiveTemplateAction,
+          delete: deleteTemplateAction,
         }}
+        categoryNames={categoryNames}
         emptyMessage={
           archivedView
             ? "Belum ada template yang diarsipkan."

@@ -57,6 +57,13 @@
       "when": 1791470000000,
       "tag": "0007_template_catalog_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791480000000,
+      "tag": "0008_template_categories",
+      "breakpoints": true
     }
   ]
 }

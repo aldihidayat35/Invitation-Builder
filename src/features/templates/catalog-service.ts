@@ -223,6 +223,7 @@ export async function updateTemplateCatalogMetadata(
     ...(validated.colorPalette ? { colorPalette: validated.colorPalette } : {}),
     ...(validated.supportedFeatures ? { supportedFeatures: validated.supportedFeatures } : {}),
     ...(validated.demoInvitationSlug !== undefined ? { demoInvitationSlug: validated.demoInvitationSlug ?? undefined } : {}),
+    ...(validated.previewVideoUrl !== undefined ? { previewVideoUrl: validated.previewVideoUrl ?? undefined } : {}),
     ...(validated.layoutFormat ? { layoutFormat: validated.layoutFormat } : {}),
   };
 

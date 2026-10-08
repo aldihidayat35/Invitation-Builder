@@ -10,17 +10,23 @@ export interface TemplateActionsProps {
   templateName: string;
   canWrite: boolean;
   canArchive: boolean;
+  canDelete?: boolean;
   rename: TemplateAction;
   duplicate: TemplateAction;
   archive: TemplateAction;
+  delete?: TemplateAction;
 }
 
-/** Row/detail actions: rename (inline), duplicate, archive (with confirmation). */
+/** Row/detail actions: rename (inline), duplicate, archive (with confirmation), delete permanently. */
 export function TemplateActions(props: TemplateActionsProps) {
   const { templateId, templateName, canWrite, canArchive } = props;
+  const canDelete = Boolean(props.canDelete && props.delete);
   const [renaming, setRenaming] = useState(false);
-  const [confirming, setConfirming] = useState(false);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const archiveFormRef = useRef<HTMLFormElement>(null);
+  const deleteFormRef = useRef<HTMLFormElement>(null);
+
   const [renameState, renameAction, renamePending] = useActionState<ActionState, FormData>(
     async (prev, formData) => {
       const result = await props.rename(prev, formData);
@@ -36,15 +42,24 @@ export function TemplateActions(props: TemplateActionsProps) {
   const [archiveState, archiveAction, archivePending] = useActionState<ActionState, FormData>(
     async (prev, formData) => {
       const result = await props.archive(prev, formData);
-      setConfirming(false);
+      setConfirmingArchive(false);
+      return result;
+    },
+    {},
+  );
+  const [deleteState, deleteAction, deletePending] = useActionState<ActionState, FormData>(
+    async (prev, formData) => {
+      if (!props.delete) return prev;
+      const result = await props.delete(prev, formData);
+      setConfirmingDelete(false);
       return result;
     },
     {},
   );
 
-  const error = renameState.error ?? dupState.error ?? archiveState.error;
+  const error = renameState.error ?? dupState.error ?? archiveState.error ?? deleteState.error;
 
-  if (!canWrite && !canArchive) return null;
+  if (!canWrite && !canArchive && !canDelete) return null;
 
   return (
     <div className={styles.actions}>
@@ -111,11 +126,22 @@ export function TemplateActions(props: TemplateActionsProps) {
           {canArchive ? (
             <button
               type="button"
-              className={styles.dangerSmall}
+              className={styles.secondarySmall}
               data-testid="archive-button"
-              onClick={() => setConfirming(true)}
+              onClick={() => setConfirmingArchive(true)}
             >
               Arsipkan
+            </button>
+          ) : null}
+          {canDelete && props.delete ? (
+            <button
+              type="button"
+              className={styles.dangerSmall}
+              data-testid="delete-button"
+              onClick={() => setConfirmingDelete(true)}
+              title="Hapus template secara permanen"
+            >
+              Hapus
             </button>
           ) : null}
         </>
@@ -128,11 +154,11 @@ export function TemplateActions(props: TemplateActionsProps) {
       ) : null}
 
       <ConfirmDialog
-        open={confirming}
+        open={confirmingArchive}
         title="Arsipkan template?"
         confirmLabel="Ya, arsipkan"
         pending={archivePending}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => setConfirmingArchive(false)}
         onConfirm={() => archiveFormRef.current?.requestSubmit()}
       >
         <p>
@@ -143,6 +169,27 @@ export function TemplateActions(props: TemplateActionsProps) {
       <form ref={archiveFormRef} action={archiveAction} hidden>
         <input type="hidden" name="templateId" value={templateId} />
       </form>
+
+      {canDelete ? (
+        <>
+          <ConfirmDialog
+            open={confirmingDelete}
+            title="Hapus template permanen?"
+            confirmLabel="Ya, hapus permanen"
+            pending={deletePending}
+            onCancel={() => setConfirmingDelete(false)}
+            onConfirm={() => deleteFormRef.current?.requestSubmit()}
+          >
+            <p>
+              <strong>{templateName}</strong> beserta seluruh riwayat versinya akan dihapus permanen dari sistem.
+              Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+            </p>
+          </ConfirmDialog>
+          <form ref={deleteFormRef} action={deleteAction} hidden>
+            <input type="hidden" name="templateId" value={templateId} />
+          </form>
+        </>
+      ) : null}
     </div>
   );
 }

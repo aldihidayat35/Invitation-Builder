@@ -76,6 +76,7 @@ export const AUDIT_ACTIONS = [
   "user.delete",
   "settings.update",
   "template.update_metadata",
+  "template.delete",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

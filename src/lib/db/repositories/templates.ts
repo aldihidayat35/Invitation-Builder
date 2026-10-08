@@ -1,5 +1,5 @@
 import { and, desc, eq, ne, sql } from "drizzle-orm";
-import { templates, templateVersions, type TemplateRow, type TemplateVersionRow } from "../schema";
+import { customerOrders, invitations, templates, templateVersions, type TemplateRow, type TemplateVersionRow } from "../schema";
 import type { Database } from "../types";
 
 /**
@@ -210,3 +210,45 @@ export async function listPublicTemplates(db: Database): Promise<TemplateRow[]> 
     .orderBy(desc(templates.createdAt))
     .limit(50);
 }
+
+export async function isTemplateUsedByInvitations(
+  db: Database,
+  templateId: string,
+): Promise<{ inUse: boolean; invitationTitle?: string }> {
+  const [row] = await db
+    .select({ id: invitations.id, title: invitations.title })
+    .from(invitations)
+    .innerJoin(templateVersions, eq(invitations.templateVersionId, templateVersions.id))
+    .where(eq(templateVersions.templateId, templateId))
+    .limit(1);
+
+  if (row) {
+    return { inUse: true, invitationTitle: row.title };
+  }
+  return { inUse: false };
+}
+
+export async function deleteTemplateRow(
+  db: Database,
+  templateId: string,
+): Promise<TemplateRow | undefined> {
+  // Disconnect from any customer orders
+  await db
+    .update(customerOrders)
+    .set({ templateId: null })
+    .where(eq(customerOrders.templateId, templateId));
+
+  // Delete versions
+  await db
+    .delete(templateVersions)
+    .where(eq(templateVersions.templateId, templateId));
+
+  // Delete the template row
+  const [deleted] = await db
+    .delete(templates)
+    .where(eq(templates.id, templateId))
+    .returning();
+
+  return deleted;
+}
+

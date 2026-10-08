@@ -20,10 +20,12 @@ import {
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   archiveTemplateRow,
+  deleteTemplateRow,
   findTemplateById,
   findTemplateVersion,
   insertTemplate,
   insertTemplateVersion,
+  isTemplateUsedByInvitations,
   listTemplateVersions,
   listTemplates as listTemplateRows,
   markTemplatePublished,
@@ -97,6 +99,13 @@ export class TemplateInputError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "TemplateInputError";
+  }
+}
+
+export class TemplateInUseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TemplateInUseError";
   }
 }
 
@@ -330,6 +339,37 @@ export async function archiveTemplate(
       metadata: { name: row.name },
     });
     return toSummary(updated);
+  });
+}
+
+export async function deleteTemplate(
+  db: Database,
+  actor: Actor,
+  templateId: string,
+): Promise<{ success: true; templateId: string; templateName: string }> {
+  const row = await loadAuthorized(db, actor, templateId, "template:archive");
+
+  const usage = await isTemplateUsedByInvitations(db, row.id);
+  if (usage.inUse) {
+    throw new TemplateInUseError(
+      `Template "${row.name}" tidak dapat dihapus permanen karena masih digunakan oleh undangan aktif "${usage.invitationTitle}". Silakan arsipkan template ini sebagai gantinya.`,
+    );
+  }
+
+  return db.transaction(async (tx) => {
+    const deleted = await deleteTemplateRow(tx, row.id);
+    if (!deleted) {
+      throw new TemplateNotFoundError(row.id);
+    }
+    await insertAuditLog(tx, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "template.delete",
+      entityType: "template",
+      entityId: row.id,
+      metadata: { name: row.name },
+    });
+    return { success: true, templateId: row.id, templateName: row.name };
   });
 }
 

@@ -107,6 +107,22 @@ export async function publishTemplateAction(
   }
 }
 
+export async function deleteTemplateAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = idSchema.safeParse(field(formData, "templateId"));
+  if (!id.success) return { error: "Template tidak valid." };
+  try {
+    const { deleteTemplatePermanently } = await import("@/features/templates/api");
+    await deleteTemplatePermanently(id.data);
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath(LIBRARY);
+  return { ok: true, message: "Template berhasil dihapus permanen." };
+}
+
 export async function updateTemplateCatalogAction(
   _prev: ActionState,
   formData: FormData,
@@ -127,6 +143,8 @@ export async function updateTemplateCatalogAction(
     const price = parseInt(field(formData, "price"), 10) || 0;
     const isPublic = formData.get("isPublic") === "on" || formData.get("isPublic") === "true";
     const isFeatured = formData.get("isFeatured") === "on" || formData.get("isFeatured") === "true";
+    const previewVideoUrl = field(formData, "previewVideoUrl").trim() || null;
+    const previewMockupUrl = field(formData, "previewMockupUrl").trim() || previewVideoUrl;
 
     const { updateCatalogMetadata } = await import("@/features/templates/api");
     await updateCatalogMetadata(id.data, {
@@ -139,11 +157,13 @@ export async function updateTemplateCatalogAction(
       isPublic,
       isFeatured,
       thumbnailUrl: field(formData, "thumbnailUrl").trim() || null,
-      previewMockupUrl: field(formData, "previewMockupUrl").trim() || null,
+      previewMockupUrl,
+      previewVideoUrl,
       tags,
       metadata: {
         supportedFeatures: rawFeatures as any,
         demoInvitationSlug: field(formData, "demoInvitationSlug").trim() || undefined,
+        previewVideoUrl: previewVideoUrl || undefined,
       },
     });
 

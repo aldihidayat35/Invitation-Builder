@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import TemplateDetailPage from "@/app/(dashboard)/dashboard/templates/[id]/page";
 import * as api from "@/features/templates/api";
@@ -7,6 +7,21 @@ import { createEmptyDocument } from "@/lib/schema";
 import { addSection, createElement } from "@/features/editor/core/ops";
 
 afterEach(cleanup);
+beforeEach(() => {
+  vi.spyOn(api, "getTemplateCategories").mockResolvedValue([
+    {
+      id: "cat-1",
+      name: "Pernikahan",
+      slug: "pernikahan",
+      description: null,
+      icon: null,
+      sortOrder: 0,
+      templateCount: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ]);
+});
 
 function mockTemplate(over: Partial<TemplateDetail> = {}): TemplateDetail {
   let doc = createEmptyDocument();

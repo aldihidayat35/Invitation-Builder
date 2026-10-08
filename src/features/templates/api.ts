@@ -62,6 +62,21 @@ export async function archive(templateId: string) {
   return service.archiveTemplate(db, actor, templateId);
 }
 
+export async function deleteTemplatePermanently(templateId: string) {
+  const { db, actor } = await context();
+  return service.deleteTemplate(db, actor, templateId);
+}
+
+export async function getTemplateCategories() {
+  try {
+    const db = await getDb();
+    const { listTemplateCategories } = await import("@/lib/db/repositories/template-categories");
+    return await listTemplateCategories(db);
+  } catch {
+    return [];
+  }
+}
+
 export async function publish(templateId: string, expectedRevision: number, note?: string) {
   const { db, actor } = await context();
   return service.publishTemplate(db, actor, { templateId, expectedRevision, note });
@@ -109,7 +124,7 @@ export async function getCatalogDetail(slug: string) {
  */
 export async function updateCatalogMetadata(
   templateId: string,
-  input: Partial<import("./types").TemplateCatalogMetadata>,
+  input: import("./types").UpdateTemplateMetadataInput,
 ) {
   const { db, actor } = await context();
   const { updateTemplateCatalogMetadata } = await import("./catalog-service");
@@ -121,6 +136,7 @@ export {
   PublishBlockedError,
   RevisionConflictError,
   TemplateArchivedError,
+  TemplateInUseError,
   TemplateInputError,
   TemplateNotFoundError,
 } from "./service";
@@ -131,6 +147,7 @@ export function describeTemplateError(error: unknown): string {
   if (
     error instanceof service.TemplateInputError ||
     error instanceof service.TemplateArchivedError ||
+    error instanceof service.TemplateInUseError ||
     error instanceof service.RevisionConflictError ||
     error instanceof service.NothingToPublishError ||
     error instanceof ForbiddenError

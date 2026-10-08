@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TemplateNotFoundError, openTemplate, permissionsFor } from "@/features/templates/api";
+import { TemplateNotFoundError, getTemplateCategories, openTemplate, permissionsFor } from "@/features/templates/api";
 import {
   PublishPanel,
   StatusBadge,
@@ -25,6 +25,7 @@ import styles from "@/features/templates/components/templates.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import {
   archiveTemplateAction,
+  deleteTemplateAction,
   duplicateTemplateAction,
   publishTemplateAction,
   renameTemplateAction,
@@ -52,7 +53,10 @@ export default async function TemplateDetailPage({
     if (error instanceof TemplateNotFoundError) notFound();
     throw error;
   }
-  const permissions = await permissionsFor(template.workspaceId);
+  const [permissions, categories] = await Promise.all([
+    permissionsFor(template.workspaceId),
+    getTemplateCategories(),
+  ]);
   const archived = template.lifecycle === "archived";
 
   const totalElements = template.document.sections.reduce(
@@ -85,9 +89,11 @@ export default async function TemplateDetailPage({
                 templateName={template.name}
                 canWrite={permissions.write}
                 canArchive={permissions.archive}
+                canDelete={permissions.archive}
                 rename={renameTemplateAction}
                 duplicate={duplicateTemplateAction}
                 archive={archiveTemplateAction}
+                delete={deleteTemplateAction}
               />
             ) : null
           }
@@ -373,7 +379,11 @@ export default async function TemplateDetailPage({
       {/* Catalog Metadata & Showcase Settings */}
       {permissions.write && !archived ? (
         <section style={{ marginBottom: "2rem" }}>
-          <TemplateMetadataForm template={template} action={updateTemplateCatalogAction} />
+          <TemplateMetadataForm
+            template={template}
+            action={updateTemplateCatalogAction}
+            categories={categories}
+          />
         </section>
       ) : null}
 

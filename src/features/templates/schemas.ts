@@ -91,6 +91,7 @@ export const templateCatalogMetadataSchema = z.object({
     .default([]),
   galleryUrls: z.array(z.string().trim().url()).max(10).default([]),
   demoInvitationSlug: z.string().trim().nullable().optional(),
+  previewVideoUrl: z.string().trim().nullable().optional(),
   layoutFormat: z
     .enum(["vertical_scroll", "story_slide", "interactive_envelope"])
     .default("vertical_scroll"),
