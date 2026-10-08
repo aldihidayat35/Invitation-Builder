@@ -54,6 +54,7 @@ export const AUDIT_ACTIONS = [
   "template.archive",
   "template.publish",
   "asset.upload",
+  "asset.delete",
   "invitation.create",
   "invitation.rename",
   "invitation.archive",

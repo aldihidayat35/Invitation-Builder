@@ -13,7 +13,7 @@ import * as service from "./service";
 
 async function context(): Promise<{ db: Database; actor: Actor }> {
   const user = await requireUser();
-  return { db: await getDb(), actor: { userId: user.id } };
+  return { db: await getDb(), actor: { userId: user.id, systemRole: user.systemRole } };
 }
 
 export async function beginUpload(
@@ -32,6 +32,27 @@ export async function storeUploadContent(assetId: string, data: Uint8Array) {
 export async function completeUpload(assetId: string) {
   const { db, actor } = await context();
   return service.finalizeUpload(db, getStorage(), actor, assetId);
+}
+
+export async function removeAsset(assetId: string) {
+  const { db, actor } = await context();
+  return service.deleteAsset(db, getStorage(), actor, assetId);
+}
+
+export async function fetchStorageOverview(workspaceId?: string) {
+  const { db, actor } = await context();
+  return service.getStorageOverview(db, actor, workspaceId);
+}
+
+export async function fetchAllStorageAssets(options: {
+  workspaceId?: string;
+  search?: string;
+  type?: "all" | "image" | "video";
+  limit?: number;
+  offset?: number;
+} = {}) {
+  const { db, actor } = await context();
+  return service.listAllStorageAssets(db, actor, options);
 }
 
 export async function searchAssets(workspaceId: string, search?: string) {
@@ -103,7 +124,7 @@ export async function saveAssetFromUrl(
 }
 
 export { AssetNotFoundError, AssetRejectedError } from "./service";
-export type { AssetSummary, UploadInit } from "./service";
+export type { AssetSummary, UploadInit, StorageOverview, StorageAssetItem } from "./service";
 
 /** Maps domain errors to messages that are safe to show; unknown errors are not leaked. */
 export function describeAssetError(error: unknown): string {

@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { AgencyBrandingData, NavGroup } from "../types";
+import type { AgencyBrandingData, NavGroup, StorageUsageSummary } from "../types";
 
 interface DashboardSidebarProps {
   readonly navGroups: readonly NavGroup[];
   readonly agencyBranding: AgencyBrandingData | null;
+  readonly storageUsage?: StorageUsageSummary | null;
   readonly isMobileOpen: boolean;
   readonly onCloseMobile: () => void;
   readonly user?: {
@@ -22,6 +23,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({
   navGroups,
   agencyBranding,
+  storageUsage,
   isMobileOpen,
   onCloseMobile,
   user,
@@ -100,8 +102,56 @@ export function DashboardSidebar({
         </nav>
       </div>
 
-      {/* Bottom Section: Agency Branding or User Card */}
-      <div className="p-3 border-t border-slate-800/80">
+      {/* Bottom Section: Storage Meter + Agency Branding or User Card */}
+      <div className="p-3 border-t border-slate-800/80 space-y-2.5">
+        {/* Storage Meter Widget */}
+        {storageUsage ? (
+          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3 backdrop-blur-xs">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <div className="flex items-center gap-1.5 font-semibold text-slate-300">
+                <svg className="h-3.5 w-3.5 text-[#F59E0B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16" />
+                </svg>
+                <span className="text-[11px] tracking-wide font-medium">Kapasitas Storage</span>
+              </div>
+              <span className={`text-[11px] font-bold ${
+                storageUsage.usagePercent >= 90
+                  ? "text-rose-400"
+                  : storageUsage.usagePercent >= 75
+                  ? "text-amber-400"
+                  : "text-emerald-400"
+              }`}>
+                {storageUsage.usagePercent}%
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  storageUsage.usagePercent >= 90
+                    ? "bg-rose-500"
+                    : storageUsage.usagePercent >= 75
+                    ? "bg-amber-500"
+                    : "bg-gradient-to-r from-amber-500 to-amber-400"
+                }`}
+                style={{ width: `${Math.min(100, Math.max(storageUsage.usagePercent, 2))}%` }}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+              <span>{storageUsage.formattedUsed} / {storageUsage.formattedLimit}</span>
+              <Link
+                href="/dashboard/storage"
+                onClick={onCloseMobile}
+                className="font-medium text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                Kelola →
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         {agencyBranding ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 backdrop-blur-xs">
             <div className="flex items-center gap-2.5">

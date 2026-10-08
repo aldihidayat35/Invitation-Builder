@@ -7,6 +7,7 @@ import { DashboardFooter } from "./DashboardFooter";
 import type {
   AgencyBrandingData,
   NavGroup,
+  StorageUsageSummary,
   UserSummaryData,
   WorkspaceSummaryData,
 } from "../types";
@@ -15,6 +16,7 @@ interface DashboardShellProps {
   readonly user: UserSummaryData;
   readonly activeWorkspace: WorkspaceSummaryData | null;
   readonly agencyBranding: AgencyBrandingData | null;
+  readonly storageUsage?: StorageUsageSummary | null;
   readonly navGroups: readonly NavGroup[];
   readonly logoutAction: () => Promise<void> | void;
   readonly children: React.ReactNode;
@@ -24,6 +26,7 @@ export function DashboardShell({
   user,
   activeWorkspace,
   agencyBranding,
+  storageUsage,
   navGroups,
   logoutAction,
   children,
@@ -36,6 +39,7 @@ export function DashboardShell({
       <DashboardSidebar
         navGroups={navGroups}
         agencyBranding={agencyBranding}
+        storageUsage={storageUsage}
         user={user}
         logoutAction={logoutAction}
         isMobileOpen={isMobileOpen}

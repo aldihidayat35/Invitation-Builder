@@ -1,5 +1,6 @@
 import { logoutAction } from "@/app/(dashboard)/login/actions";
 import { DashboardShell, type NavGroup } from "@/features/dashboard-layout";
+import { fetchStorageOverview } from "@/features/assets/api";
 import { getClientAgencyBranding } from "@/features/reseller/api";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import {
@@ -7,6 +8,7 @@ import {
   IconHome,
   IconInvitation,
   IconReceipt,
+  IconStorage,
   IconTemplate,
   IconUsers,
 } from "./nav-icons";
@@ -17,6 +19,10 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   const agencyBranding = user.resellerId
     ? await getClientAgencyBranding(user.resellerId)
     : null;
+
+  const storageUsage = await fetchStorageOverview(
+    user.systemRole === "owner" ? undefined : active?.workspace.id
+  ).catch(() => null);
 
   const initials = user.name
     .split(/\s+/)
@@ -48,6 +54,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           icon: <IconInvitation />,
           hint: "Undangan klien, tamu & RSVP",
         },
+        {
+          href: "/dashboard/storage",
+          label: "Media & Storage",
+          icon: <IconStorage />,
+          hint: "Galeri aset & kapasitas penyimpanan",
+        },
       ],
     },
   ];
@@ -74,6 +86,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Mitra Seller",
           icon: <IconUsers />,
           hint: "Kelola mitra seller & website toko",
+        },
+        {
+          href: "/dashboard/admin/storage",
+          label: "Manajemen Storage",
+          icon: <IconStorage />,
+          hint: "Kapasitas & kelola seluruh berkas media",
         },
       ],
     });
@@ -151,6 +169,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           : null
       }
       agencyBranding={agencyBranding}
+      storageUsage={storageUsage}
       navGroups={navGroups}
       logoutAction={logoutAction}
     >

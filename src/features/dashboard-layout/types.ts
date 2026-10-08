@@ -33,3 +33,12 @@ export interface WorkspaceSummaryData {
   readonly name: string;
   readonly role: string;
 }
+
+export interface StorageUsageSummary {
+  readonly totalBytes: number;
+  readonly limitBytes: number;
+  readonly usagePercent: number;
+  readonly fileCount: number;
+  readonly formattedUsed: string;
+  readonly formattedLimit: string;
+}

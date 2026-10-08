@@ -68,3 +68,105 @@ export async function listReadyAssets(
     .orderBy(desc(assets.createdAt))
     .limit(Math.min(options.limit ?? 60, 200));
 }
+
+export async function deleteAssetRow(db: Database, id: string): Promise<AssetRow | undefined> {
+  const [row] = await db.delete(assets).where(eq(assets.id, id)).returning();
+  return row;
+}
+
+export async function listAllWorkspaceAssets(
+  db: Database,
+  options: {
+    workspaceId?: string;
+    search?: string;
+    type?: "all" | "image" | "video";
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<AssetRow[]> {
+  const conditions = [eq(assets.status, "ready")];
+  if (options.workspaceId) {
+    conditions.push(eq(assets.workspaceId, options.workspaceId));
+  }
+  const search = options.search?.trim();
+  if (search) {
+    conditions.push(ilike(assets.filename, `%${escapeLike(search)}%`));
+  }
+  if (options.type === "image") {
+    conditions.push(ilike(assets.mimeType, "image/%"));
+  } else if (options.type === "video") {
+    conditions.push(ilike(assets.mimeType, "video/%"));
+  }
+
+  return db
+    .select()
+    .from(assets)
+    .where(and(...conditions))
+    .orderBy(desc(assets.createdAt))
+    .limit(Math.min(options.limit ?? 100, 500))
+    .offset(options.offset ?? 0);
+}
+
+export async function getStorageAggregate(
+  db: Database,
+  workspaceId?: string,
+): Promise<{
+  totalBytes: number;
+  totalCount: number;
+  imageBytes: number;
+  imageCount: number;
+  videoBytes: number;
+  videoCount: number;
+  otherBytes: number;
+  otherCount: number;
+}> {
+  const conditions = [eq(assets.status, "ready")];
+  if (workspaceId) {
+    conditions.push(eq(assets.workspaceId, workspaceId));
+  }
+
+  const rows = await db
+    .select({
+      bytes: assets.bytes,
+      mimeType: assets.mimeType,
+    })
+    .from(assets)
+    .where(and(...conditions));
+
+  let totalBytes = 0;
+  let totalCount = 0;
+  let imageBytes = 0;
+  let imageCount = 0;
+  let videoBytes = 0;
+  let videoCount = 0;
+  let otherBytes = 0;
+  let otherCount = 0;
+
+  for (const r of rows) {
+    const b = r.bytes || 0;
+    totalBytes += b;
+    totalCount += 1;
+    if (r.mimeType.startsWith("image/")) {
+      imageBytes += b;
+      imageCount += 1;
+    } else if (r.mimeType.startsWith("video/")) {
+      videoBytes += b;
+      videoCount += 1;
+    } else {
+      otherBytes += b;
+      otherCount += 1;
+    }
+  }
+
+  return {
+    totalBytes,
+    totalCount,
+    imageBytes,
+    imageCount,
+    videoBytes,
+    videoCount,
+    otherBytes,
+    otherCount,
+  };
+}
+

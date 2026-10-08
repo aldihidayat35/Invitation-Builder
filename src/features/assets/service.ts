@@ -15,12 +15,16 @@ import { randomUUID } from "node:crypto";
 import { findRole, requireCapability, type Actor } from "@/lib/auth/authorization";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
+  deleteAssetRow,
   findAssetById,
+  getStorageAggregate,
   insertAsset,
+  listAllWorkspaceAssets,
   listReadyAssets,
   markAssetFailed,
   markAssetReady,
 } from "@/lib/db/repositories/assets";
+import { formatBytes, getStorageLimitBytes } from "./config";
 import type { AssetRow } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import {
@@ -95,6 +99,7 @@ async function loadAuthorized(
   if (!idSchema.safeParse(assetId).success) throw new AssetNotFoundError();
   const row = await findAssetById(db, assetId);
   if (!row) throw new AssetNotFoundError();
+  if (actor.systemRole === "owner") return row;
   if (!(await findRole(db, actor, row.workspaceId))) throw new AssetNotFoundError();
   await requireCapability(db, actor, row.workspaceId, capability);
   return row;
@@ -120,7 +125,9 @@ export async function initUpload(
 ): Promise<UploadInit> {
   if (!idSchema.safeParse(input.workspaceId).success)
     throw new AssetRejectedError("Workspace tidak valid.");
-  await requireCapability(db, actor, input.workspaceId, "asset:write");
+  if (actor.systemRole !== "owner") {
+    await requireCapability(db, actor, input.workspaceId, "asset:write");
+  }
 
   const parsed = assetUploadInitSchema.safeParse({
     filename: input.filename,
@@ -133,6 +140,14 @@ export async function initUpload(
   const upload = parsed.data;
   if (!isImageMime(upload.mimeType) && !isVideoMime(upload.mimeType)) {
     throw new AssetRejectedError("Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.");
+  }
+
+  const limitBytes = getStorageLimitBytes();
+  const stats = await getStorageAggregate(db);
+  if (stats.totalBytes + upload.bytes > limitBytes) {
+    throw new AssetRejectedError(
+      `Penyimpanan penuh. Kapasitas maksimum ${formatBytes(limitBytes)} telah tercapai.`
+    );
   }
 
   const id = randomUUID();
@@ -292,4 +307,114 @@ export async function getDeliverableAsset(
   const bytes = await storage.read(row.storageKey, maxBytes);
   if (!bytes) return null;
   return { bytes, mimeType: row.mimeType };
+}
+
+export async function deleteAsset(
+  db: Database,
+  storage: StorageDriver,
+  actor: Actor,
+  assetId: string,
+): Promise<{ success: boolean; id: string }> {
+  const row = await loadAuthorized(db, actor, assetId, "asset:write");
+  await storage.remove(row.storageKey).catch(() => undefined);
+  await deleteAssetRow(db, row.id);
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "asset.delete",
+    entityType: "asset",
+    entityId: row.id,
+    metadata: { filename: row.filename, bytes: row.bytes },
+  });
+  return { success: true, id: row.id };
+}
+
+export interface StorageOverview {
+  readonly totalBytes: number;
+  readonly limitBytes: number;
+  readonly usagePercent: number;
+  readonly fileCount: number;
+  readonly imageCount: number;
+  readonly videoCount: number;
+  readonly otherCount: number;
+  readonly formattedUsed: string;
+  readonly formattedLimit: string;
+}
+
+export async function getStorageOverview(
+  db: Database,
+  actor: Actor,
+  workspaceId?: string,
+): Promise<StorageOverview> {
+  const isSuperAdmin = actor.systemRole === "owner";
+  const targetWsId = workspaceId;
+  if (targetWsId && !isSuperAdmin) {
+    await requireCapability(db, actor, targetWsId, "asset:read");
+  }
+
+  const stats = await getStorageAggregate(db, targetWsId);
+  const limitBytes = getStorageLimitBytes();
+  const usagePercent =
+    limitBytes > 0 ? Math.min(100, Math.round((stats.totalBytes / limitBytes) * 100)) : 0;
+
+  return {
+    totalBytes: stats.totalBytes,
+    limitBytes,
+    usagePercent,
+    fileCount: stats.totalCount,
+    imageCount: stats.imageCount,
+    videoCount: stats.videoCount,
+    otherCount: stats.otherCount,
+    formattedUsed: formatBytes(stats.totalBytes),
+    formattedLimit: formatBytes(limitBytes),
+  };
+}
+
+export interface StorageAssetItem extends AssetSummary {
+  readonly workspaceId: string;
+  readonly storageKey: string;
+  readonly url: string;
+  readonly status: string;
+}
+
+export async function listAllStorageAssets(
+  db: Database,
+  actor: Actor,
+  options: {
+    workspaceId?: string;
+    search?: string;
+    type?: "all" | "image" | "video";
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<{ items: StorageAssetItem[]; total: number }> {
+  const isSuperAdmin = actor.systemRole === "owner";
+  const wsId = options.workspaceId;
+  if (wsId && !isSuperAdmin) {
+    await requireCapability(db, actor, wsId, "asset:read");
+  }
+
+  const rows = await listAllWorkspaceAssets(db, {
+    workspaceId: wsId,
+    search: options.search?.slice(0, 100),
+    type: options.type,
+    limit: options.limit ?? 200,
+    offset: options.offset ?? 0,
+  });
+
+  const items: StorageAssetItem[] = rows.map((r) => ({
+    id: r.id,
+    filename: r.filename,
+    mimeType: r.mimeType,
+    bytes: r.bytes,
+    width: r.width,
+    height: r.height,
+    createdAt: r.createdAt,
+    workspaceId: r.workspaceId,
+    storageKey: r.storageKey,
+    url: assetContentUrl(r.id),
+    status: r.status,
+  }));
+
+  return { items, total: items.length };
 }
