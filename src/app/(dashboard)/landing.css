@@ -1,0 +1,391 @@
+/* ===============================================================
+   Landing Page Styles - Undangan.id
+   Exact replica of user's custom design with Playfair Display,
+   DM Sans, rich radial hero background, custom cards, and modals.
+   =============================================================== */
+
+:root {
+  --primary: #925003;
+  --ochre: #b47a39;
+  --ink: #292a2b;
+  --border: #e7e4e0;
+}
+
+.landing-root {
+  margin: 0;
+  background: #f7f7f6;
+  color: #262524;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  scroll-behavior: smooth;
+  min-height: 100vh;
+}
+
+.landing-root *,
+.landing-root *::before,
+.landing-root *::after {
+  box-sizing: border-box;
+}
+
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.hero-bg {
+  background: linear-gradient(90deg, rgba(15,15,15,0.82) 0%, rgba(16,16,16,0.72) 24%, rgba(18,18,18,0.34) 52%, rgba(18,18,18,0.12) 100%),
+              url('/images/landing-hero.jpg') center/cover no-repeat,
+              #272727;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  pointer-events: none;
+  background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)" opacity=".28"/%3E%3C/svg%3E');
+}
+
+.hero-glow {
+  display: none;
+}
+
+.button-primary {
+  background: #925003;
+  color: white;
+  border-radius: 8px;
+  transition: background 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button-primary:hover {
+  background: #a66210;
+  transform: translateY(-1px);
+}
+
+.button-outline {
+  border: 1px solid #5b5d5d;
+  color: white;
+  border-radius: 9px;
+  background: #22222233;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button-outline:hover {
+  background: #ffffff1a;
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: #c28c58;
+  font-weight: 700;
+}
+
+.wedding-preview {
+  box-shadow: 0 16px 32px #0005, 0 3px 7px #0006;
+}
+
+.slab {
+  position: absolute;
+  background: linear-gradient(130deg, #918475, #564f47 45%, #282624 97%);
+  box-shadow: 10px 16px 22px #0008;
+  border: 1px solid #ffffff15;
+  border-radius: 12px 9px 3px 4px;
+  transform: rotate(-10deg);
+}
+
+.slab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: repeating-linear-gradient(75deg, transparent 0 5px, #ddd1bc21 6px 7px);
+  border-radius: inherit;
+}
+
+.hero-flora {
+  position: absolute;
+  opacity: 0.8;
+  filter: drop-shadow(1px 3px 5px #0005);
+}
+
+.hero-card {
+  position: absolute;
+  width: 241px;
+  height: 335px;
+  top: 31px;
+  left: 122px;
+  background: #e9dfd0;
+  transform: rotate(-2deg);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 15px 18px 20px #0008;
+}
+
+.hero-card img,
+.phone-screen img,
+.template-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-phone {
+  position: absolute;
+  width: 178px;
+  height: 327px;
+  top: 56px;
+  left: 363px;
+  padding: 9px;
+  background: #141414;
+  border: 3px solid #77736f;
+  border-radius: 28px;
+  transform: rotate(3deg);
+  box-shadow: 8px 18px 20px #0009, inset 0 0 0 2px #111;
+  overflow: hidden;
+}
+
+.hero-phone::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 76px;
+  height: 17px;
+  border-radius: 12px;
+  background: #161616;
+  z-index: 5;
+}
+
+.phone-screen {
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: #e8d4bc;
+}
+
+.phone-screen::after {
+  content: 'Lihat Undangan';
+  position: absolute;
+  bottom: 26px;
+  left: 23px;
+  right: 23px;
+  text-align: center;
+  padding: 10px 5px;
+  color: #fff;
+  font-size: 9px;
+  background: #925003;
+  border-radius: 16px;
+  box-shadow: 0 3px 5px #0002;
+}
+
+.template-card {
+  background: #fff;
+  border: 1px solid #e8e8e7;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 6px 13px #18181708;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.template-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 28px #18181715;
+}
+
+.template-art {
+  position: relative;
+  aspect-ratio: 4 / 4.08;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #efe8dd;
+}
+
+.template-art img {
+  transition: transform 0.3s;
+}
+
+.template-card:hover .template-art img {
+  transform: scale(1.035);
+}
+
+.heart-btn {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #ffffffeb;
+  color: #606060;
+  box-shadow: 0 2px 6px #0002;
+  cursor: pointer;
+  border: none;
+}
+
+.heart-btn[aria-pressed='true'] {
+  color: #9a4f16;
+}
+
+.arrow-circle {
+  width: 29px;
+  height: 29px;
+  background: #f1eeeb;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.arrow-circle:hover {
+  background: #e2d8cc;
+}
+
+.category-card {
+  background: #f1f1f0;
+  border: 1px solid #f1f1f0;
+  border-radius: 10px;
+  min-height: 113px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: border 0.2s, transform 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.category-card:hover,
+.category-card.active {
+  border-color: #ba9366;
+  background: #f7f2ec;
+  transform: translateY(-2px);
+}
+
+.category-icon {
+  width: 32px;
+  height: 32px;
+  color: #8d623b;
+}
+
+.review-card {
+  background: #fff;
+  border-radius: 11px;
+  box-shadow: 0 3px 10px #22222208;
+  border: 1px solid #ededec;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  color: #714624;
+  border: 2px solid white;
+  background: radial-gradient(circle at 30% 25%, #f8e1cb, #c5ae9c);
+}
+
+.stars {
+  color: #9a5908;
+  letter-spacing: 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.cta-bg {
+  background: linear-gradient(100deg, #663200, #854609 48%, #9c560d 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 75% 40%, #d7963a26, transparent 60%);
+  pointer-events: none;
+}
+
+.decor-sprig {
+  position: absolute;
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  .hero-card {
+    left: 70px;
+  }
+  .hero-phone {
+    left: 281px;
+  }
+  .hero-flora {
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-bg {
+    overflow: hidden;
+  }
+  .hero-card {
+    left: 10%;
+    top: 24px;
+    width: 185px;
+    height: 256px;
+  }
+  .hero-phone {
+    left: 53%;
+    top: 40px;
+    width: 142px;
+    height: 256px;
+    padding: 7px;
+    border-radius: 23px;
+  }
+  .hero-phone::before {
+    width: 58px;
+    height: 12px;
+  }
+  .phone-screen {
+    border-radius: 15px;
+  }
+  .phone-screen::after {
+    font-size: 7px;
+    bottom: 19px;
+    left: 13px;
+    right: 13px;
+    padding: 8px 1px;
+  }
+  .slab {
+    opacity: 0.7;
+  }
+  .hero-flora {
+    display: none;
+  }
+  .category-card {
+    min-height: 96px;
+  }
+}

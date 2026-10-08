@@ -49,7 +49,7 @@ test.describe("public renderer smoke route", () => {
 test.describe("dashboard entry (protected since Fase 2)", () => {
   test("landing page renders at root without login", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Ciptakan Undangan Digital");
+    await expect(page.locator("h1")).toContainText("Temukan Template");
   });
 
   test("dashboard redirects to login, then to the dashboard, which links to the smoke route", async ({
