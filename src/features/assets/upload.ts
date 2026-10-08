@@ -1,14 +1,17 @@
 import { finalizeUploadAction, initUploadAction } from "./actions";
 import type { AssetSummary } from "./api";
+import { optimizeImageBeforeUpload } from "./image-optimizer";
 
 export async function uploadAssetFile(
   workspaceId: string,
   file: File,
 ): Promise<{ ok: true; asset: AssetSummary } | { ok: false; error: string }> {
+  const processedFile = await optimizeImageBeforeUpload(file);
+
   const init = await initUploadAction(workspaceId, {
-    filename: file.name,
-    mimeType: file.type,
-    bytes: file.size,
+    filename: processedFile.name,
+    mimeType: processedFile.type,
+    bytes: processedFile.size,
   });
   if (!init.ok) return init;
 
@@ -17,7 +20,7 @@ export async function uploadAssetFile(
     response = await fetch(init.data.upload.url, {
       method: init.data.upload.method,
       headers: init.data.upload.headers,
-      body: file,
+      body: processedFile,
     });
   } catch {
     return { ok: false, error: "Upload gagal. Periksa koneksi." };
