@@ -235,6 +235,7 @@
   padding: 8px;
   box-sizing: border-box;
   text-align: center;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -477,6 +478,7 @@
   top: 8px;
   left: 8px;
   background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   padding: 3px 8px;
   border-radius: 999px;
@@ -846,6 +848,7 @@
   color: var(--widget-color, #2b2118);
   background: color-mix(in srgb, var(--widget-bg, #fff) 88%, transparent);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
@@ -1470,8 +1473,8 @@
   padding: 16px;
   border-radius: var(--widget-radius, 16px);
   background: color-mix(in srgb, var(--widget-bg, #fff) 70%, transparent);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
@@ -1846,6 +1849,7 @@
   border-radius: 999px;
   color: #fff;
   background: rgb(0 0 0 / 0.42);
+  -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
 }
 
@@ -2160,8 +2164,8 @@
   padding: 8px;
   border-radius: var(--widget-radius, 16px);
   background: color-mix(in srgb, var(--widget-bg, #fff) 65%, transparent);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
 }
@@ -2183,8 +2187,8 @@
   border-radius: 999px;
   color: var(--widget-color, currentColor);
   background: color-mix(in srgb, var(--widget-bg, #fff) 80%, transparent);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
@@ -2208,8 +2212,8 @@
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   border-radius: var(--widget-radius, 16px);
   background: color-mix(in srgb, var(--widget-bg, #fff) 70%, transparent);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   padding: 10px;
 }
@@ -2465,6 +2469,7 @@
   height: 100%;
   display: block;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -2489,6 +2494,7 @@
   position: absolute;
   bottom: 12px;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   padding: 4px 12px;
   border-radius: 999px;
@@ -2641,6 +2647,7 @@
   flex: 1;
   min-width: 0;
   background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--widget-radius, 12px);
@@ -2855,6 +2862,7 @@
 
 .timeline_horizontal-steps .stepCard {
   background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
@@ -2971,6 +2979,7 @@
 /* --- Inline Wish Posting Form --- */
 .wishesForm {
   background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--widget-radius, 12px);
@@ -3088,6 +3097,7 @@
   align-items: flex-start;
   gap: 10px;
   background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--widget-radius, 12px);
@@ -3201,6 +3211,7 @@
 /* --- Variant: Editorial Ticker --- */
 .wishes_editorial-ticker .wishCard {
   background: transparent;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -3693,8 +3704,8 @@
 
 .widget[data-widget="coupleProfile"][data-variant="glass-morphism"] .couplePersonCard {
   background: color-mix(in srgb, var(--widget-bg, #fff) 65%, transparent);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   border-radius: var(--widget-radius, 14px);
   padding: 10px 8px;

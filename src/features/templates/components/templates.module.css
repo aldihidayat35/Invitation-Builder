@@ -1290,6 +1290,7 @@
   inset: 0;
   z-index: 1000;
   background: rgba(18, 16, 14, 0.55);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -1588,6 +1589,7 @@
   padding: 3px 9px;
   border-radius: 9999px;
   background: rgba(44, 34, 30, 0.75);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   color: #FAF6F0;
   font-size: 0.7rem;

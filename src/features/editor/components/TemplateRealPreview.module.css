@@ -147,6 +147,7 @@
   color: var(--dash-text, #111827);
   cursor: pointer;
   transition: all 120ms ease;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -238,6 +239,7 @@
   align-items: center;
   gap: 6px;
   pointer-events: none;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
   z-index: 50;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { AppSettingsData } from "@/features/dashboard-layout";
 import type { CatalogTemplateItem } from "@/features/templates/types";
@@ -288,7 +288,30 @@ function getCategoryIconHref(icon?: string | null): string {
   return "#i-sparkle";
 }
 
-interface LandingViewInternalProps extends LandingViewProps {}
+const FAVORITES_STORAGE_KEY = "undangan-demo-favorites";
+
+function subscribeFavorites(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener("favorites-updated", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("favorites-updated", callback);
+  };
+}
+
+function getFavoritesSnapshot(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(FAVORITES_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function getFavoritesServerSnapshot(): string {
+  return "";
+}
 
 export function LandingView({
   currentUser,
@@ -301,7 +324,19 @@ export function LandingView({
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const [favorites, setFavorites] = useState<Set<number | string>>(new Set());
+  const rawFavorites = useSyncExternalStore(
+    subscribeFavorites,
+    getFavoritesSnapshot,
+    getFavoritesServerSnapshot
+  );
+  const favorites = useMemo(() => {
+    if (!rawFavorites) return new Set<number | string>();
+    try {
+      return new Set<number | string>(JSON.parse(rawFavorites));
+    } catch {
+      return new Set<number | string>();
+    }
+  }, [rawFavorites]);
   const [modalTemplate, setModalTemplate] = useState<TemplateItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -381,17 +416,6 @@ export function LandingView({
         })
       : TEMPLATES;
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("undangan-demo-favorites");
-      if (stored) {
-        setFavorites(new Set(JSON.parse(stored)));
-      }
-    } catch {
-      // Ignored
-    }
-  }, []);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
   };
@@ -413,17 +437,15 @@ export function LandingView({
   }, [modalTemplate]);
 
   const toggleFavorite = (id: number | string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
+    try {
+      const next = new Set(favorites);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      try {
-        localStorage.setItem("undangan-demo-favorites", JSON.stringify([...next]));
-      } catch {
-        // Ignored
-      }
-      return next;
-    });
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...next]));
+      window.dispatchEvent(new Event("favorites-updated"));
+    } catch {
+      // Ignored
+    }
   };
 
   const filteredTemplates = templateList.filter((t) => {

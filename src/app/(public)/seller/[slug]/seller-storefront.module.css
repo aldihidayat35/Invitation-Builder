@@ -99,6 +99,7 @@
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
