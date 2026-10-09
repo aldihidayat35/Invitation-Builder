@@ -1,0 +1,208 @@
+/* Global Backsound Floating Disc Player */
+.playerRoot {
+  position: fixed;
+  z-index: 9990;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  user-select: none;
+  font-family: inherit;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.playerRoot[data-hidden="true"] {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+
+/* Position options */
+.pos_bottom_right {
+  bottom: 24px;
+  right: 24px;
+  flex-direction: row-reverse;
+}
+
+.pos_bottom_left {
+  bottom: 24px;
+  left: 24px;
+  flex-direction: row;
+}
+
+.pos_top_right {
+  top: 24px;
+  right: 24px;
+  flex-direction: row-reverse;
+}
+
+.pos_top_left {
+  top: 24px;
+  left: 24px;
+  flex-direction: row;
+}
+
+/* Disc button */
+.discButton {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: radial-gradient(circle at 40% 40%, #2f2824 0%, #181412 60%, #0d0a08 100%);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 0 1.5px rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  outline: none;
+}
+
+.discButton:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--audio-accent, #d4af37);
+}
+
+.discButton:active {
+  transform: scale(0.95);
+}
+
+/* Concentric vinyl groove rings */
+.discGrooves {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.discGrooves::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discGrooves::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+/* Center vinyl label */
+.discCenter {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--audio-accent, #c9933e);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.discHole {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #181412;
+}
+
+/* Vinyl rotation animation */
+@keyframes spinVinyl {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.discSpinning {
+  animation: spinVinyl 6s linear infinite;
+}
+
+.discPaused {
+  animation: spinVinyl 6s linear infinite;
+  animation-play-state: paused;
+}
+
+/* Glowing wave ripple when playing */
+@keyframes audioPulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.pulseRing {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--audio-accent, #d4af37);
+  animation: audioPulseRing 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+/* Status indicator badge */
+.statusBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(24, 21, 19, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--audio-accent, #d4af37);
+  font-size: 8px;
+}
+
+/* Tooltip / track label pill */
+.trackTooltip {
+  background: rgba(24, 21, 19, 0.88);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

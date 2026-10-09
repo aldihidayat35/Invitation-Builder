@@ -7,6 +7,7 @@ import { findElement, findSection, uniqueVariableKey, type ReorderMode } from ".
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { BaseBackgroundControl } from "./BaseBackgroundControl";
+import { GlobalBacksoundControl } from "./GlobalBacksoundControl";
 import {
   ColorField,
   FieldRow,
@@ -157,6 +158,15 @@ export function Inspector() {
           count={doc.design.background ? 1 : undefined}
         >
           <BaseBackgroundControl readOnly={readOnly} />
+        </PanelSection>
+        <PanelSection
+          id="insp-doc-backsound"
+          title="Musik Latar Global (Backsound)"
+          icon={<IconSparkle size={13} />}
+          count={doc.design.audio?.enabled ? 1 : undefined}
+          defaultOpen={Boolean(doc.design.audio?.enabled)}
+        >
+          <GlobalBacksoundControl readOnly={readOnly} />
         </PanelSection>
       </>
     );

@@ -10,6 +10,7 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type {
   CanonicalDocument,
+  DocumentAudio,
   DocumentBackground,
   Element,
   Frame,
@@ -171,6 +172,8 @@ export interface EditorActions {
   // document base background
   setBaseBackground(background: DocumentBackground | undefined): void;
   patchBaseBackground(patch: Partial<DocumentBackground>): void;
+  // document global backsound
+  patchDocumentAudio(patch: Partial<DocumentAudio>): void;
   // elements
   addElement(kind: ElementKind): void;
   /** Places an uploaded image asset or direct GIF URL into the active section (FR-EDT-008). */
@@ -500,6 +503,29 @@ export function createEditorStore(init: EditorInit): EditorStore {
             };
           },
           { coalesceKey: "doc:background" },
+        );
+      },
+      patchDocumentAudio(patch) {
+        edit(
+          (doc) => {
+            const current = doc.design.audio ?? {
+              enabled: false,
+              position: "bottom-right",
+              loop: true,
+              autoplayOnOpen: true,
+            };
+            return {
+              ...doc,
+              design: {
+                ...doc.design,
+                audio: {
+                  ...current,
+                  ...patch,
+                },
+              },
+            };
+          },
+          { coalesceKey: "doc:audio" },
         );
       },
 

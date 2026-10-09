@@ -21,6 +21,7 @@ import { AnimatedSection } from "./AnimatedSection";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
 import { OpeningCoverCanvas } from "./opening";
+import { GlobalBacksoundPlayer } from "./GlobalBacksoundPlayer";
 import styles from "./DocumentRenderer.module.css";
 
 export interface DocumentRendererProps {
@@ -378,6 +379,13 @@ export function DocumentRenderer({
           />
         ))}
       </div>
+      {document.audio?.enabled && document.audio.src ? (
+        <GlobalBacksoundPlayer
+          audio={document.audio}
+          hasOpening={Boolean(openingSection && showOpeningScreen)}
+          tokens={document.tokens}
+        />
+      ) : null}
     </RendererViewport>
   );
 }

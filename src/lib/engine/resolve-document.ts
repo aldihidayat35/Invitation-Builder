@@ -103,11 +103,21 @@ export interface ResolvedDocumentBackground {
   readonly overlayOpacity: number;
 }
 
+export interface ResolvedDocumentAudio {
+  readonly enabled: boolean;
+  readonly src?: string;
+  readonly title?: string;
+  readonly position: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  readonly loop: boolean;
+  readonly autoplayOnOpen: boolean;
+}
+
 export interface ResolvedDocument {
   readonly schemaVersion: number;
   readonly baseWidth: number;
   readonly tokens: ThemeTokens;
   readonly background?: ResolvedDocumentBackground;
+  readonly audio?: ResolvedDocumentAudio;
   readonly sections: readonly ResolvedSection[];
   readonly issues: readonly ResolveIssue[];
   /** True when no issue blocks publishing/preview correctness. */
@@ -305,11 +315,25 @@ export function resolveDocument(
     };
   }
 
+  const docAudio = document.design.audio;
+  let resolvedAudio: ResolvedDocumentAudio | undefined;
+  if (docAudio && docAudio.enabled && docAudio.src) {
+    resolvedAudio = {
+      enabled: docAudio.enabled,
+      src: docAudio.src,
+      title: docAudio.title,
+      position: docAudio.position ?? "bottom-right",
+      loop: docAudio.loop !== false,
+      autoplayOnOpen: docAudio.autoplayOnOpen !== false,
+    };
+  }
+
   return {
     schemaVersion: document.schemaVersion,
     baseWidth: document.design.baseWidth,
     tokens: structuredClone(document.design.tokens),
     ...(resolvedBackground && { background: resolvedBackground }),
+    ...(resolvedAudio && { audio: resolvedAudio }),
     sections,
     issues,
     ok: !issues.some((i) => BLOCKING_RESOLVE_CODES.has(i.code)),

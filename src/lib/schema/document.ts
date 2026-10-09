@@ -25,6 +25,24 @@ export const documentBackgroundSchema = z.strictObject({
 });
 export type DocumentBackground = z.infer<typeof documentBackgroundSchema>;
 
+export const documentAudioPositionSchema = z.enum([
+  "bottom-right",
+  "bottom-left",
+  "top-right",
+  "top-left",
+]);
+export type DocumentAudioPosition = z.infer<typeof documentAudioPositionSchema>;
+
+export const documentAudioSchema = z.strictObject({
+  enabled: z.boolean().default(false),
+  src: z.string().optional(),
+  title: z.string().optional(),
+  position: documentAudioPositionSchema.default("bottom-right"),
+  loop: z.boolean().default(true),
+  autoplayOnOpen: z.boolean().default(true),
+});
+export type DocumentAudio = z.infer<typeof documentAudioSchema>;
+
 export const canonicalDocumentV1Schema = z
   .strictObject({
     schemaVersion: z.literal(SCHEMA_VERSION_V1),
@@ -34,6 +52,7 @@ export const canonicalDocumentV1Schema = z
         baseWidth: z.literal(CANONICAL_BASE_WIDTH).default(CANONICAL_BASE_WIDTH),
         tokens: themeTokensSchema.prefault({}),
         background: documentBackgroundSchema.optional(),
+        audio: documentAudioSchema.optional(),
       })
       .prefault({}),
     variables: z.array(variableDefinitionSchema).max(MAX_VARIABLES).default([]),

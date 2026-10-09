@@ -16,4 +16,8 @@ export {
   OpeningCoverCanvas,
   type OpeningCoverCanvasProps,
 } from "./components/opening";
+export {
+  GlobalBacksoundPlayer,
+  type GlobalBacksoundPlayerProps,
+} from "./components/GlobalBacksoundPlayer";
 
