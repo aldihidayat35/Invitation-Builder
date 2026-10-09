@@ -5,7 +5,7 @@ import type { CustomerOrder } from "@/lib/db/schema";
 import styles from "../client-portal.module.css";
 
 interface PortalAdminSupportCardProps {
-  order: CustomerOrder;
+  order?: CustomerOrder | null;
   templateTitle?: string | null;
   supportContact: {
     name: string;
@@ -61,7 +61,7 @@ export function PortalAdminSupportCard({
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const coupleNames = order.groomBrideNames || order.customerName;
+  const coupleNames = order?.groomBrideNames || order?.customerName || "Pengantin";
 
   return (
     <div className={styles.supportCardContainer}>

@@ -33,10 +33,12 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   };
 
   const coupleTitle =
-    data.order.groomBrideNames?.trim() ||
-    `Pernikahan ${data.order.customerName}`;
+    data.order?.groomBrideNames?.trim() ||
+    (data.order?.customerName
+      ? `Pernikahan ${data.order.customerName}`
+      : data.invitation?.title || "Undangan Pernikahan");
 
-  const eventDateStr = data.order.eventDate
+  const eventDateStr = data.order?.eventDate
     ? new Date(data.order.eventDate).toLocaleDateString("id-ID", {
         day: "numeric",
         month: "long",
@@ -44,7 +46,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
       })
     : null;
 
-  const orderProductionStatus = data.order.productionStatus;
+  const orderProductionStatus =
+    data.order?.productionStatus ??
+    (data.invitation?.status === "published" ? "published" : "approved");
 
   // Filter guests
   const filteredGuests = data.guests.filter((g) =>

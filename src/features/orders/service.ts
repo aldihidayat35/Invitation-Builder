@@ -776,7 +776,13 @@ export async function submitClientDecisionByToken(
   decision: "approve" | "request_revision",
   note?: string,
 ): Promise<CustomerOrder> {
-  const order = await findCustomerOrderByClientToken(db, token);
+  let order = await findCustomerOrderByClientToken(db, token);
+  if (!order) {
+    const inv = await findInvitationByClientToken(db, token);
+    if (inv) {
+      order = await findCustomerOrderByInvitationId(db, inv.id);
+    }
+  }
   if (!order) {
     throw new ForbiddenError("Akses token tidak valid atau pesanan tidak ditemukan.");
   }
@@ -1056,6 +1062,75 @@ export async function getClientPortalDataByToken(
     return null;
   }
 
+  if (!order && invitation) {
+    const invitationData = (invitation.data || {}) as Record<string, unknown>;
+    const groomName = String(
+      invitationData["couple.groom.nickname"] ||
+      invitationData["couple.groom.fullName"] ||
+      invitationData["groom_nickname"] ||
+      invitationData["groom_name"] ||
+      invitationData["mempelai_pria"] ||
+      "",
+    );
+    const brideName = String(
+      invitationData["couple.bride.nickname"] ||
+      invitationData["couple.bride.fullName"] ||
+      invitationData["bride_nickname"] ||
+      invitationData["bride_name"] ||
+      invitationData["mempelai_wanita"] ||
+      "",
+    );
+    const groomBrideNames =
+      groomName.trim() && brideName.trim()
+        ? `${groomName.trim()} & ${brideName.trim()}`
+        : invitation.title || "Pengantin";
+
+    const dateVal =
+      invitationData["event_date"] ||
+      invitationData["akad_date"] ||
+      invitationData["resepsi_date"] ||
+      invitationData["wedding_date"] ||
+      invitationData["event.ceremony.date"] ||
+      "";
+    let eventDate: Date | null = null;
+    if (dateVal) {
+      const parsed = new Date(String(dateVal));
+      if (!Number.isNaN(parsed.getTime())) {
+        eventDate = parsed;
+      }
+    }
+
+    order = {
+      id: invitation.id,
+      sellerId: null,
+      idempotencyKey: `synth_${invitation.id}`,
+      clientUserId: invitation.createdBy ?? null,
+      invitationId: invitation.id,
+      templateId: null,
+      customerName: invitation.title || "Klien Undangan",
+      customerEmail: null,
+      customerWhatsapp: "",
+      groomBrideNames,
+      eventDate,
+      eventLocation: null,
+      notes: null,
+      status: "completed",
+      orderStatus: "completed",
+      productionStatus: invitation.status === "published" ? "published" : "approved",
+      paymentStatus: "paid",
+      workspaceId: invitation.workspaceId,
+      templateVersionId: invitation.templateVersionId,
+      assignedTo: null,
+      dueAt: null,
+      acceptedAt: invitation.createdAt,
+      completedAt: invitation.status === "published" ? invitation.updatedAt : null,
+      adminNotes: null,
+      clientAccessToken: invitation.clientAccessToken ?? cleanToken,
+      createdAt: invitation.createdAt,
+      updatedAt: invitation.updatedAt,
+    };
+  }
+
   const invitationId = invitation?.id ?? order?.invitationId;
   let guestList: GuestRow[] = [];
   let rsvpList: RsvpRow[] = [];
@@ -1253,14 +1328,17 @@ export async function saveClientPortalInvitationData(
     }
   }
 
-  if (
-    syncGroomBrideNames !== portal.order.groomBrideNames ||
-    syncEventDate !== portal.order.eventDate
-  ) {
-    await updateCustomerOrder(db, portal.order.id, {
-      ...(syncGroomBrideNames ? { groomBrideNames: syncGroomBrideNames } : {}),
-      ...(syncEventDate ? { eventDate: syncEventDate } : {}),
-    });
+  const isRealOrder = portal.order && portal.order.id !== invitation.id;
+  if (isRealOrder) {
+    if (
+      syncGroomBrideNames !== portal.order.groomBrideNames ||
+      syncEventDate !== portal.order.eventDate
+    ) {
+      await updateCustomerOrder(db, portal.order.id, {
+        ...(syncGroomBrideNames ? { groomBrideNames: syncGroomBrideNames } : {}),
+        ...(syncEventDate ? { eventDate: syncEventDate } : {}),
+      });
+    }
   }
 
   await insertAuditLog(db, {
@@ -1272,13 +1350,15 @@ export async function saveClientPortalInvitationData(
     metadata: { token, updatedKeys: Object.keys(stored) },
   });
 
-  await insertOrderWorkflowEvent(db, {
-    orderId: portal.order.id,
-    actorId: null,
-    eventType: "portal_data_update",
-    note: `Klien memperbarui ${Object.keys(stored).length} data/variabel undangan melalui Portal Mandiri.`,
-    metadata: { token, updatedKeys: Object.keys(stored) },
-  });
+  if (isRealOrder) {
+    await insertOrderWorkflowEvent(db, {
+      orderId: portal.order.id,
+      actorId: null,
+      eventType: "portal_data_update",
+      note: `Klien memperbarui ${Object.keys(stored).length} data/variabel undangan melalui Portal Mandiri.`,
+      metadata: { token, updatedKeys: Object.keys(stored) },
+    });
+  }
 
   const errors: Record<string, string> = {};
   for (const issue of issues) {

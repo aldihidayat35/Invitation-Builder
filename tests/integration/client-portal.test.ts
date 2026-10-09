@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { seedDev } from "@/lib/db/seed";
-import { templates } from "@/lib/db/schema";
+import { invitations, templates, templateVersions } from "@/lib/db/schema";
 import { createCustomerOrder } from "@/lib/db/repositories/orders";
 import { findResellerProfileByUserId } from "@/lib/db/repositories/resellers";
 import { getTemplate, publishTemplate } from "@/features/templates/service";
@@ -196,4 +196,37 @@ describe("Client Portal Token Architecture (No Login Required)", () => {
     expect(portalAfterSave?.order.groomBrideNames).toBe("Fajar Maulana & Intan Permata");
     expect(portalAfterSave?.previewUrl).toContain(portalAfterSave?.invitation?.slug);
   });
+
+  it("supports standalone invitations accessed via clientAccessToken without customer_orders record", async () => {
+    const seed = await seedDev(db());
+    const [ver] = await db()
+      .select()
+      .from(templateVersions)
+      .where(eq(templateVersions.templateId, seed.templateId));
+
+    const [invitation] = await db()
+      .insert(invitations)
+      .values({
+        workspaceId: seed.workspaceId,
+        templateVersionId: ver.id,
+        title: "Pernikahan Budi & Ani",
+        slug: "budi-ani-standalone",
+        status: "draft",
+        clientAccessToken: "c_standalone_token_12345678",
+        data: {
+          "couple.groom.nickname": "Budi",
+          "couple.bride.nickname": "Ani",
+          event_date: "2026-11-20",
+        },
+      })
+      .returning();
+
+    const portal = await getClientPortalDataByToken(db(), "c_standalone_token_12345678");
+    expect(portal).not.toBeNull();
+    expect(portal?.order).toBeDefined();
+    expect(portal?.order.groomBrideNames).toBe("Budi & Ani");
+    expect(portal?.order.customerName).toBe("Pernikahan Budi & Ani");
+    expect(portal?.invitation?.id).toBe(invitation.id);
+  });
 });
+

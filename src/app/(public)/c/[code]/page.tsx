@@ -22,8 +22,10 @@ export async function generateMetadata({ params }: ClientPortalPageProps): Promi
   }
 
   const coupleTitle =
-    portal.order.groomBrideNames?.trim() ||
-    `Pernikahan ${portal.order.customerName}`;
+    portal.order?.groomBrideNames?.trim() ||
+    (portal.order?.customerName
+      ? `Pernikahan ${portal.order.customerName}`
+      : portal.invitation?.title || "Undangan Pernikahan");
 
   return {
     title: `Portal Undangan — ${coupleTitle}`,
