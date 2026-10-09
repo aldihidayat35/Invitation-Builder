@@ -4,3 +4,6 @@ export * from "./OrderWorkflowTimeline";
 export * from "./OrderActionModal";
 export * from "./OrderActionCallout";
 export * from "./OrderSidebarActions";
+export * from "./OrderIcons";
+export * from "./OrderTemplateManager";
+export * from "./OrderStudioAccessCard";

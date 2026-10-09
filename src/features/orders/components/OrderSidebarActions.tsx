@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import { OrderActionModal } from "./OrderActionModal";
+import { IconAlertTriangle, IconXCircle } from "./OrderIcons";
 
 interface OrderSidebarActionsProps {
   orderId: string;
@@ -44,7 +45,8 @@ export function OrderSidebarActions({
     <>
       <div className="rounded-2xl border border-rose-200/80 bg-[#FFFBFB] p-4 text-xs">
         <h4 className="font-bold text-rose-900 flex items-center gap-1.5 text-xs">
-          <span>⚠️</span> Zona Tindakan Khusus
+          <IconAlertTriangle size={14} className="text-rose-600" />
+          <span>Zona Tindakan Khusus</span>
         </h4>
         <p className="mt-1 text-[11px] text-stone-500">
           Tindakan di bawah ini akan menghentikan proses pengerjaan pesanan dan membutuhkan konfirmasi.
@@ -66,9 +68,10 @@ export function OrderSidebarActions({
                   requireNote: true,
                 })
               }
-              className="rounded-xl border border-rose-300 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
             >
-              Tolak Pesanan…
+              <IconXCircle size={13} />
+              <span>Tolak Pesanan…</span>
             </button>
           )}
 
@@ -86,9 +89,10 @@ export function OrderSidebarActions({
                 requireNote: true,
               })
             }
-            className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-50 hover:text-rose-600 transition"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-50 hover:text-rose-600 transition"
           >
-            Batalkan Pesanan…
+            <IconXCircle size={13} />
+            <span>Batalkan Pesanan…</span>
           </button>
         </div>
       </div>

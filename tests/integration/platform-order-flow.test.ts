@@ -130,5 +130,39 @@ describe("Platform Direct Order Flow & WhatsApp Integration", () => {
     expect(detail.seller).toBeDefined();
     expect(detail.seller.agencyName).toBe("Platform Langsung (Website)");
   });
+
+  it("allows owner to change master template and start studio project in 1-click", async () => {
+    const { listPublicTemplates } = await import("@/lib/db/repositories/templates");
+    const { changeOrderTemplate, createProjectForOrder } = await import("@/features/orders/service");
+    const { findUserByEmail } = await import("@/lib/db/repositories/users");
+
+    const adminUser = await findUserByEmail(db(), "admin@admin.com");
+    expect(adminUser).toBeDefined();
+    const ownerActor = { userId: adminUser!.id, systemRole: "owner" as const };
+
+    const pubTemplates = await listPublicTemplates(db());
+    expect(pubTemplates.length).toBeGreaterThan(1);
+
+    const orderRes = await createPlatformOrder(
+      {
+        customerName: "Dian & Dimas",
+        customerWhatsapp: "081299887766",
+        groomBrideNames: "Dian & Dimas",
+        templateTitle: pubTemplates[0].name,
+      },
+      db(),
+    );
+
+    // Ubah master template ke template kedua
+    const targetTemplate = pubTemplates[1];
+    const updatedOrder = await changeOrderTemplate(db(), ownerActor, orderRes.orderId, targetTemplate.id);
+    expect(updatedOrder.templateId).toBe(targetTemplate.id);
+
+    // Buat proyek studio (1-klik otomatis mengisi default workspace, assignee, dll)
+    const projectRes = await createProjectForOrder(db(), ownerActor, orderRes.orderId);
+    expect(projectRes.invitationId).toBeDefined();
+    expect(projectRes.order.orderStatus).toBe("accepted");
+    expect(projectRes.order.productionStatus).toBe("in_production");
+  });
 });
 

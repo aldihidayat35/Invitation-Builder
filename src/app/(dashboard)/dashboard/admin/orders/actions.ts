@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   changeOrderStatus,
+  changeOrderTemplate,
   changePaymentStatus,
   changeProductionStatus,
   configureProduction,
@@ -75,3 +76,11 @@ export async function updatePaymentAction(formData: FormData): Promise<void> {
   await changePaymentStatus(orderId, status, textField(formData, "note") || undefined);
   refreshOrder(orderId);
 }
+
+export async function changeOrderTemplateAction(formData: FormData): Promise<void> {
+  const orderId = idSchema.parse(textField(formData, "orderId"));
+  const templateId = idSchema.parse(textField(formData, "templateId"));
+  await changeOrderTemplate(orderId, templateId);
+  refreshOrder(orderId);
+}
+

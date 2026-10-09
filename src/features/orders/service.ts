@@ -27,14 +27,18 @@ import {
   findResellerProfileById,
   findResellerProfileByUserId,
 } from "@/lib/db/repositories/resellers";
-import { findTemplateById, findTemplateVersion } from "@/lib/db/repositories/templates";
+import {
+  findTemplateById,
+  findTemplateVersion,
+  insertTemplateVersion,
+} from "@/lib/db/repositories/templates";
 import { findUserById } from "@/lib/db/repositories/users";
 import {
   ensureWorkspaceMember,
   findWorkspaceById,
   getMemberRole,
 } from "@/lib/db/repositories/workspaces";
-import { guests, rsvps, users } from "@/lib/db/schema";
+import { guests, invitations, rsvps, users } from "@/lib/db/schema";
 import type {
   CustomerOrder,
   GuestRow,
@@ -44,6 +48,8 @@ import type {
 } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
+import { createEmptyDocument, migrateDocument, parseDocumentOrThrow } from "@/lib/schema";
+import { applyDefaults, createVariableRegistry } from "@/lib/engine";
 import { createInvitation } from "@/features/invitations/service";
 
 export class OrderWorkflowError extends Error {
@@ -306,6 +312,90 @@ export async function configureOrderProduction(
   });
 }
 
+export async function changeOrderTemplate(
+  db: Database,
+  actor: Actor,
+  orderId: string,
+  newTemplateId: string,
+): Promise<CustomerOrder> {
+  requirePlatformOwner(actor);
+  const order = await findCustomerOrderById(db, orderId);
+  if (!order) throw new OrderWorkflowError("Pesanan tidak ditemukan.");
+
+  const template = await findTemplateById(db, newTemplateId);
+  if (!template || template.publishedVersionNo === null) {
+    throw new OrderWorkflowError("Master template tidak ditemukan atau belum dipublikasikan.");
+  }
+
+  let version =
+    template.publishedVersionNo !== null
+      ? await findTemplateVersion(db, template.id, template.publishedVersionNo)
+      : undefined;
+
+  if (!version) {
+    version = await insertTemplateVersion(db, {
+      templateId: template.id,
+      versionNo: template.publishedVersionNo ?? 1,
+      schemaVersion: 1,
+      document: template.draftDocument ?? createEmptyDocument(),
+      note: "Versi master template otomatis",
+      createdBy: actor.userId,
+    });
+  }
+
+  return db.transaction(async (tx) => {
+    const updated = await updateCustomerOrder(tx, order.id, {
+      templateId: template.id,
+      templateVersionId: version.id,
+    });
+
+    if (order.invitationId) {
+      const inv = await findInvitationById(tx, order.invitationId);
+      if (inv) {
+        let mergedData = (inv.data ?? {}) as Record<string, unknown>;
+        try {
+          const doc = parseDocumentOrThrow(migrateDocument(version.document));
+          const defaults = applyDefaults(createVariableRegistry(doc.variables), {});
+          mergedData = { ...defaults, ...mergedData };
+        } catch {
+          // Keep existing data if template document parse fails
+        }
+
+        await tx
+          .update(invitations)
+          .set({
+            templateVersionId: version.id,
+            data: mergedData,
+            updatedAt: new Date(),
+          })
+          .where(eq(invitations.id, inv.id));
+      }
+    }
+
+    await insertOrderWorkflowEvent(tx, {
+      orderId: order.id,
+      actorId: actor.userId,
+      eventType: "order.change_template",
+      fromValue: order.templateId,
+      toValue: template.id,
+      note: `Master template desain diubah ke "${template.name}"`,
+    });
+
+    if (order.workspaceId) {
+      await insertAuditLog(tx, {
+        workspaceId: order.workspaceId,
+        actorId: actor.userId,
+        action: "order.change_template",
+        entityType: "customer_order",
+        entityId: order.id,
+        metadata: { templateId: template.id, templateVersionId: version.id },
+      });
+    }
+
+    return updated;
+  });
+}
+
 export async function createProjectForOrder(
   db: Database,
   actor: Actor,
@@ -315,27 +405,78 @@ export async function createProjectForOrder(
   const order = await findCustomerOrderById(db, orderId);
   if (!order) throw new OrderWorkflowError("Pesanan tidak ditemukan.");
   if (order.invitationId) throw new OrderWorkflowError("Pesanan sudah memiliki proyek undangan.");
-  if (
-    order.orderStatus !== "accepted" ||
-    !order.workspaceId ||
-    !order.templateId ||
-    !order.templateVersionId ||
-    !order.assignedTo
-  ) {
-    throw new OrderWorkflowError("Konfigurasi produksi belum lengkap.");
-  }
-  if (order.assignedTo !== actor.userId) {
-    throw new ForbiddenError("Hanya assignee produksi yang dapat membuat proyek order ini.");
+
+  // Selesaikan konfigurasi secara otomatis jika belum diisi manual
+  let workspaceId = order.workspaceId;
+  if (!workspaceId) {
+    const ws = await db.query.workspaces.findFirst({
+      orderBy: (w, { asc }) => [asc(w.name)],
+    });
+    if (!ws) throw new OrderWorkflowError("Tidak ada workspace yang tersedia di sistem.");
+    workspaceId = ws.id;
   }
 
+  const assignedTo = order.assignedTo ?? actor.userId;
+
+  let templateId = order.templateId;
+  let templateVersionId = order.templateVersionId;
+  if (!templateId || !templateVersionId) {
+    const defaultTemplate = templateId
+      ? await findTemplateById(db, templateId)
+      : await db.query.templates.findFirst({
+          where: (t, { eq, and, isNotNull }) =>
+            and(eq(t.isPublic, true), isNotNull(t.publishedVersionNo)),
+        });
+    if (!defaultTemplate || defaultTemplate.publishedVersionNo === null) {
+      throw new OrderWorkflowError("Tidak ada master template terbit yang tersedia.");
+    }
+    let version =
+      defaultTemplate.publishedVersionNo !== null
+        ? await findTemplateVersion(db, defaultTemplate.id, defaultTemplate.publishedVersionNo)
+        : undefined;
+    if (!version) {
+      version = await insertTemplateVersion(db, {
+        templateId: defaultTemplate.id,
+        versionNo: defaultTemplate.publishedVersionNo ?? 1,
+        schemaVersion: 1,
+        document: defaultTemplate.draftDocument ?? createEmptyDocument(),
+        note: "Versi master template otomatis",
+        createdBy: actor.userId,
+      });
+    }
+    templateId = defaultTemplate.id;
+    templateVersionId = version.id;
+  }
+
+  const dueAt = order.dueAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
   return db.transaction(async (tx) => {
+    await ensureWorkspaceMember(tx, {
+      workspaceId: workspaceId!,
+      userId: assignedTo,
+      role: "admin",
+    });
+
+    await updateCustomerOrder(tx, order.id, {
+      orderStatus:
+        order.orderStatus === "new" || order.orderStatus === "qualified"
+          ? "accepted"
+          : order.orderStatus,
+      workspaceId,
+      assignedTo,
+      templateId,
+      templateVersionId,
+      dueAt,
+    });
+
     const invitation = await createInvitation(tx, actor, {
-      workspaceId: order.workspaceId!,
-      templateId: order.templateId!,
-      templateVersionId: order.templateVersionId!,
+      workspaceId: workspaceId!,
+      templateId: templateId!,
+      templateVersionId: templateVersionId!,
       title: order.groomBrideNames?.trim() || `Undangan ${order.customerName}`,
       clientAccessToken: order.clientAccessToken ?? undefined,
     });
+
     const next = await linkCustomerOrderInvitation(tx, order.id, invitation.id);
     if (!next) {
       throw new OrderWorkflowError(

@@ -44,6 +44,11 @@ export async function createOrderProject(orderId: string) {
   return service.createProjectForOrder(await getDb(), actorOf(user), orderId);
 }
 
+export async function changeOrderTemplate(orderId: string, templateId: string) {
+  const user = await requireOwner();
+  return service.changeOrderTemplate(await getDb(), actorOf(user), orderId, templateId);
+}
+
 export async function changeProductionStatus(
   orderId: string,
   nextStatus: ProductionStatus,

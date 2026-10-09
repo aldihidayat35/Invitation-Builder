@@ -1,29 +1,33 @@
 import React from "react";
 import type { CustomerOrderStatus, ProductionStatus } from "@/lib/schema/domain";
+import {
+  IconCheckCircle,
+  IconClock,
+  IconAlertTriangle,
+  IconXCircle,
+  IconLayers,
+  IconSparkles,
+} from "./OrderIcons";
 
 interface OrderWorkflowTimelineProps {
   orderStatus: CustomerOrderStatus;
   productionStatus: ProductionStatus;
-  isConfigured: boolean;
   hasInvitationProject: boolean;
 }
 
 export function OrderWorkflowTimeline({
   orderStatus,
   productionStatus,
-  isConfigured,
   hasInvitationProject,
 }: OrderWorkflowTimelineProps) {
   const isTerminalCancelled = orderStatus === "cancelled" || orderStatus === "rejected";
 
-  // Determine current active step (1 to 5)
+  // Determine current active step (1 to 4)
   let activeStep = 1;
   if (orderStatus === "new" || orderStatus === "qualified") {
     activeStep = 1;
-  } else if (orderStatus === "accepted" && !isConfigured) {
+  } else if (orderStatus === "accepted" && !hasInvitationProject) {
     activeStep = 2;
-  } else if (orderStatus === "accepted" && isConfigured && !hasInvitationProject) {
-    activeStep = 3;
   } else if (
     orderStatus === "accepted" &&
     hasInvitationProject &&
@@ -31,14 +35,14 @@ export function OrderWorkflowTimeline({
       productionStatus === "in_production" ||
       productionStatus === "revision_requested")
   ) {
-    activeStep = 4;
+    activeStep = 3;
   } else if (
     productionStatus === "client_review" ||
     productionStatus === "approved" ||
     productionStatus === "published" ||
     orderStatus === "completed"
   ) {
-    activeStep = 5;
+    activeStep = 4;
   }
 
   const steps = [
@@ -57,7 +61,7 @@ export function OrderWorkflowTimeline({
       title: "Persetujuan Order",
       desc:
         orderStatus === "accepted" || orderStatus === "completed"
-          ? "Pesanan Diterima"
+          ? "Pesanan Disetujui"
           : isTerminalCancelled
             ? orderStatus === "rejected"
               ? "Order Ditolak"
@@ -66,21 +70,16 @@ export function OrderWorkflowTimeline({
     },
     {
       num: 3,
-      title: "Konfigurasi Studio",
-      desc: isConfigured ? "Workspace & Template Terkunci" : "Atur Penanggung Jawab",
-    },
-    {
-      num: 4,
-      title: "Desain & Produksi",
+      title: "Desain di Studio",
       desc:
         productionStatus === "revision_requested"
           ? "Perbaikan Revisi Klien"
           : hasInvitationProject
-            ? "Desain di Editor Studio"
-            : "Generate Dokumen Undangan",
+            ? "Pengerjaan di Editor"
+            : "Siap Mulai Desain",
     },
     {
-      num: 5,
+      num: 4,
       title: "Review & Terbit",
       desc:
         productionStatus === "published" || orderStatus === "completed"
@@ -98,29 +97,30 @@ export function OrderWorkflowTimeline({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
         <div>
           <h2 className="text-sm font-bold text-[#2C221E] flex items-center gap-2">
-            <span>🚀</span> Tahapan Pengerjaan Pesanan (Workflow Pipeline)
+            <IconLayers size={17} className="text-[#84633F]" />
+            <span>Tahapan Pengerjaan Pesanan (Workflow Pipeline)</span>
           </h2>
           <p className="mt-0.5 text-xs text-stone-500">
             Alur langkah dari customer memesan hingga undangan resmi terbit dan dibagikan.
           </p>
         </div>
         {isTerminalCancelled ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
-            ⚠️ Order Berhenti ({orderStatus === "rejected" ? "Ditolak" : "Dibatalkan"})
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
+            <IconAlertTriangle size={13} />
+            <span>Order Berhenti ({orderStatus === "rejected" ? "Ditolak" : "Dibatalkan"})</span>
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-[#8C5D2A] border border-amber-200/70">
             <span className="h-2 w-2 rounded-full bg-[#8C5D2A] animate-pulse" />
-            Langkah {activeStep} dari 5
+            <span>Langkah {activeStep} dari 4</span>
           </span>
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-5">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
         {steps.map((s) => {
           const isDone = !isTerminalCancelled && activeStep > s.num;
           const isCurrent = !isTerminalCancelled && activeStep === s.num;
-          const isPending = !isTerminalCancelled && activeStep < s.num;
 
           return (
             <div
@@ -147,7 +147,13 @@ export function OrderWorkflowTimeline({
                           : "bg-stone-200 text-stone-500"
                   }`}
                 >
-                  {isDone ? "✓" : isTerminalCancelled && activeStep === s.num ? "✕" : s.num}
+                  {isDone ? (
+                    <IconCheckCircle size={14} />
+                  ) : isTerminalCancelled && activeStep === s.num ? (
+                    <IconXCircle size={14} />
+                  ) : (
+                    s.num
+                  )}
                 </span>
 
                 <span className="text-[10px] font-semibold uppercase tracking-wider">

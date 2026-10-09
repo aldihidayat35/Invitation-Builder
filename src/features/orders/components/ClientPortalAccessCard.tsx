@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  IconExternalLink,
+  IconEye,
+  IconLock,
+  IconShare,
+  IconWhatsApp,
+  IconCheckCircle,
+  IconRefresh,
+} from "./OrderIcons";
 
 interface ClientPortalAccessCardProps {
   token?: string | null;
@@ -33,7 +42,8 @@ export function ClientPortalAccessCard({
     return (
       <article className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
         <h3 className="font-bold text-stone-900 flex items-center gap-2">
-          <span>🔗</span> Link Akses Portal Klien
+          <IconLock size={16} className="text-[#84633F]" />
+          <span>Link Akses Portal Klien</span>
         </h3>
         <p className="mt-2 text-sm text-stone-500">
           Token portal klien belum digenerate untuk entitas ini.
@@ -74,7 +84,8 @@ export function ClientPortalAccessCard({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EBE5DF] pb-3">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#84633F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#84633F]">
-            <span>🔑</span> Akses Mandiri Tanpa Login
+            <IconLock size={12} />
+            <span>Akses Mandiri Klien (Tanpa Login)</span>
           </span>
           <h3 className="mt-1 text-base font-bold text-stone-900">
             Link Portal Klien (Calon Pengantin)
@@ -88,7 +99,7 @@ export function ClientPortalAccessCard({
       </div>
 
       <p className="mt-3 text-xs leading-relaxed text-stone-600">
-        Berikan link ini kepada calon pengantin. Klien <strong>tidak perlu login/membuat akun</strong>. Mereka dapat langsung me-review undangan, mengelola tamu undangan, dan memantau RSVP secara privat.
+        Berikan link ini kepada calon pengantin. Klien <strong>tidak perlu login atau membuat akun</strong>. Mereka dapat langsung meninjau undangan, mengelola nama tamu, dan memantau RSVP secara privat.
       </p>
 
       {/* URL Input Box */}
@@ -102,9 +113,16 @@ export function ClientPortalAccessCard({
         <button
           type="button"
           onClick={handleCopy}
-          className="shrink-0 rounded-lg bg-[#84633F] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#6c5031]"
+          className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#84633F] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#6c5031]"
         >
-          {copied ? "✓ Tersalin!" : "Salin Link"}
+          {copied ? (
+            <>
+              <IconCheckCircle size={13} />
+              <span>Tersalin!</span>
+            </>
+          ) : (
+            <span>Salin Link</span>
+          )}
         </button>
       </div>
 
@@ -116,7 +134,9 @@ export function ClientPortalAccessCard({
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white px-3.5 py-2 text-xs font-semibold text-[#664624] shadow-2xs hover:bg-[#FAF8F5] hover:text-[#2C221E] transition"
         >
-          <span>👁️</span> Buka Portal Klien ↗
+          <IconEye size={14} />
+          <span>Buka Portal Klien</span>
+          <IconExternalLink size={12} />
         </a>
 
         <a
@@ -125,7 +145,8 @@ export function ClientPortalAccessCard({
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-700 transition"
         >
-          <span>💬</span> Kirim Link ke WhatsApp
+          <IconWhatsApp size={14} />
+          <span>Kirim Link ke WhatsApp</span>
         </a>
 
         {canRegenerate && regenerateAction && (
@@ -134,9 +155,10 @@ export function ClientPortalAccessCard({
               <button
                 type="button"
                 onClick={() => setShowConfirm(true)}
-                className="text-xs font-semibold text-stone-500 hover:text-rose-600 underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-rose-600 underline"
               >
-                Regenerate Token
+                <IconRefresh size={12} />
+                <span>Regenerate Token</span>
               </button>
             ) : (
               <form action={regenerateAction} className="inline-flex items-center gap-1.5">

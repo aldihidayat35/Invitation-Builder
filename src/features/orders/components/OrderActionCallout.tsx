@@ -4,16 +4,28 @@ import React, { useState } from "react";
 import Link from "next/link";
 import type { CustomerOrderStatus, ProductionStatus } from "@/lib/schema/domain";
 import { OrderActionModal } from "./OrderActionModal";
+import {
+  IconCheckCircle,
+  IconClock,
+  IconAlertTriangle,
+  IconXCircle,
+  IconExternalLink,
+  IconEdit,
+  IconSparkles,
+  IconPalette,
+  IconArrowRight,
+  IconMail,
+  IconEye,
+  IconLayers,
+  IconInfo,
+} from "./OrderIcons";
 
 interface OrderActionCalloutProps {
   orderId: string;
   orderStatus: CustomerOrderStatus;
   productionStatus: ProductionStatus;
-  isConfigured: boolean;
   invitationId?: string | null;
   invitationSlug?: string | null;
-  assigneeName?: string | null;
-  isAssignee: boolean;
   clientAccessToken?: string | null;
   transitionOrderAction: (formData: FormData) => Promise<void>;
   createOrderProjectAction: (formData: FormData) => Promise<void>;
@@ -24,11 +36,8 @@ export function OrderActionCallout({
   orderId,
   orderStatus,
   productionStatus,
-  isConfigured,
   invitationId,
   invitationSlug,
-  assigneeName,
-  isAssignee,
   clientAccessToken,
   transitionOrderAction,
   createOrderProjectAction,
@@ -68,13 +77,14 @@ export function OrderActionCallout({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-[#8C5D2A]">
-                <span>🔔</span> Langkah Tindakan Berikutnya
+                <IconClock size={13} />
+                <span>Langkah Tindakan Berikutnya</span>
               </span>
               <h3 className="text-base font-bold text-[#2C221E]">
                 Verifikasi Pesanan Baru Customer
               </h3>
               <p className="text-xs text-stone-600">
-                Pesanan baru masuk dari formulir website. Periksa data mempelai dan nomor WhatsApp pemesan, lalu tandai terkualifikasi.
+                Pesanan baru masuk dari formulir website. Periksa data mempelai dan nomor WhatsApp pemesan, lalu tandai terkualifikasi atau langsung terima pesanan.
               </p>
             </div>
 
@@ -91,68 +101,10 @@ export function OrderActionCallout({
                     actionType: "order",
                   })
                 }
-                className="rounded-xl bg-[#84633F] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#664624] transition"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#664624] transition"
               >
-                Tandai Terkualifikasi →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <OrderActionModal
-          isOpen={modalConfig.isOpen}
-          onClose={closeModal}
-          title={modalConfig.title}
-          description={modalConfig.description}
-          confirmLabel={modalConfig.confirmLabel}
-          isDestructive={modalConfig.isDestructive}
-          requireNote={modalConfig.requireNote}
-          orderId={orderId}
-          nextStatus={modalConfig.nextStatus}
-          action={
-            modalConfig.actionType === "order"
-              ? transitionOrderAction
-              : transitionProductionAction
-          }
-        />
-      </>
-    );
-  }
-
-  // 2. Order Terkualifikasi (Qualified)
-  if (orderStatus === "qualified") {
-    return (
-      <>
-        <div className="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50/50 p-5 shadow-xs">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
-                <span>📋</span> Langkah Tindakan Berikutnya
-              </span>
-              <h3 className="text-base font-bold text-[#1E293B]">
-                Persetujuan Komersial Pesanan
-              </h3>
-              <p className="text-xs text-stone-600">
-                Pesanan telah terkualifikasi. Setujui pesanan untuk membuka menu konfigurasi workspace & produksi.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  openModal({
-                    title: "Terima Pesanan Customer",
-                    description:
-                      "Pesanan akan resmi diterima dan dialihkan ke tahap konfigurasi produksi desain.",
-                    confirmLabel: "Terima Pesanan Ini",
-                    nextStatus: "accepted",
-                    actionType: "order",
-                  })
-                }
-                className="rounded-xl bg-blue-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-800 transition"
-              >
-                Terima Order Sekarang ✓
+                <span>Tandai Terkualifikasi</span>
+                <IconArrowRight size={13} />
               </button>
             </div>
           </div>
@@ -174,95 +126,123 @@ export function OrderActionCallout({
     );
   }
 
-  // 3. Order Diterima & Belum Dikonfigurasi
-  if (orderStatus === "accepted" && !isConfigured) {
+  // 2. Order Terkualifikasi (Qualified)
+  if (orderStatus === "qualified") {
     return (
-      <div className="rounded-2xl border border-amber-300 bg-amber-50/60 p-5 shadow-xs">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-[#8C5D2A]">
-              <span>⚙️</span> Siap Dikonfigurasi
-            </span>
-            <h3 className="text-base font-bold text-[#2C221E]">
-              Atur Konfigurasi Produksi Studio
-            </h3>
-            <p className="text-xs text-stone-600">
-              Pesanan telah diterima. Silakan isi form <strong>Konfigurasi Produksi</strong> di bawah (pilih workspace, template terkunci, dan desainer penanggung jawab).
-            </p>
-          </div>
+      <>
+        <div className="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50/50 p-5 shadow-xs">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
+                <IconCheckCircle size={13} />
+                <span>Langkah Tindakan Berikutnya</span>
+              </span>
+              <h3 className="text-base font-bold text-[#1E293B]">
+                Persetujuan Komersial Pesanan
+              </h3>
+              <p className="text-xs text-stone-600">
+                Pesanan telah terkualifikasi. Setujui pesanan untuk langsung memulai perakitan desain di Studio Editor.
+              </p>
+            </div>
 
-          <a
-            href="#konfigurasi-produksi"
-            className="inline-flex items-center justify-center rounded-xl bg-[#84633F] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#664624] transition"
-          >
-            Isi Konfigurasi Produksi ↓
-          </a>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  openModal({
+                    title: "Terima Pesanan Customer",
+                    description:
+                      "Pesanan akan resmi disetujui dan dialihkan ke pengerjaan desain di Studio.",
+                    confirmLabel: "Terima Pesanan Ini",
+                    nextStatus: "accepted",
+                    actionType: "order",
+                  })
+                }
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-800 transition"
+              >
+                <IconCheckCircle size={14} />
+                <span>Terima Order Sekarang</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <OrderActionModal
+          isOpen={modalConfig.isOpen}
+          onClose={closeModal}
+          title={modalConfig.title}
+          description={modalConfig.description}
+          confirmLabel={modalConfig.confirmLabel}
+          isDestructive={modalConfig.isDestructive}
+          requireNote={modalConfig.requireNote}
+          orderId={orderId}
+          nextStatus={modalConfig.nextStatus}
+          action={transitionOrderAction}
+        />
+      </>
     );
   }
 
-  // 4. Order Diterima & Dikonfigurasi, tapi belum ada proyek undangan
-  if (orderStatus === "accepted" && isConfigured && !invitationId) {
+  // 3. Order Diterima & Proyek Undangan Belum Diinisialisasi (accepted && !invitationId)
+  if (orderStatus === "accepted" && !invitationId) {
     return (
-      <div className="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-5 shadow-xs">
+      <div className="rounded-2xl border border-[#D9CFC4] bg-[#FAF8F5] p-5 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-              <span>🎉</span> Konfigurasi Siap
+              <IconSparkles size={13} />
+              <span>Pesanan Disetujui</span>
             </span>
-            <h3 className="text-base font-bold text-emerald-950">
-              Buat Dokumen Proyek Undangan
+            <h3 className="text-base font-bold text-[#2C221E]">
+              Mulai Pengerjaan Desain di Studio
             </h3>
-            <p className="text-xs text-emerald-800">
-              Workspace & versi template telah dikunci. Klik tombol di samping untuk meng-generate proyek undangan agar dapat diedit di Studio Editor.
+            <p className="text-xs text-stone-600">
+              Pesanan telah disetujui. Anda dapat mengganti Master Template di bawah atau langsung klik tombol untuk membuka Studio Editor.
             </p>
           </div>
 
-          {isAssignee ? (
-            <form action={createOrderProjectAction}>
-              <input type="hidden" name="orderId" value={orderId} />
-              <button
-                type="submit"
-                className="rounded-xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 transition"
-              >
-                Buat Proyek Undangan Sekarang ➔
-              </button>
-            </form>
-          ) : (
-            <p className="text-xs font-semibold text-amber-800 bg-amber-100/80 px-3 py-2 rounded-xl">
-              ⚠️ Proyek hanya dapat dibuat oleh assignee: {assigneeName}
-            </p>
-          )}
+          <form action={createOrderProjectAction} className="shrink-0">
+            <input type="hidden" name="orderId" value={orderId} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#664624] hover:bg-[#2C221E] px-5 py-2.5 text-xs font-bold text-white shadow-xs transition"
+            >
+              <IconSparkles size={14} />
+              <span>Mulai Desain di Studio (1-Klik)</span>
+              <IconArrowRight size={13} />
+            </button>
+          </form>
         </div>
       </div>
     );
   }
 
-  // 5. Sedang Dikerjakan di Produksi (in_production)
-  if (orderStatus === "accepted" && invitationId && productionStatus === "in_production") {
+  // 4. Sedang Dikerjakan di Produksi (in_production / drafting)
+  if (orderStatus === "accepted" && invitationId && (productionStatus === "in_production" || productionStatus === "drafting")) {
     return (
       <>
         <div className="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-[#FAF8F5] p-5 shadow-xs">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
-                <span>🎨</span> Dalam Pengerjaan Desain
+                <IconEdit size={13} />
+                <span>Dalam Pengerjaan Desain</span>
               </span>
               <h3 className="text-base font-bold text-[#1E293B]">
-                Desain Sedang Dikerjakan Desainer
+                Desain Sedang Dikerjakan di Studio
               </h3>
               <p className="text-xs text-stone-600">
-                Buka proyek di Editor Studio untuk memasukkan data dan foto mempelai. Setelah desain siap, kirimkan ke review klien.
+                Buka proyek di Editor Studio untuk memeriksa dan menyesuaikan data. Setelah desain siap, kirimkan tautan ke review klien.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
               <Link
-                href={`/editor/${invitationId}`}
-                className="rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-sm transition flex items-center gap-1.5"
+                href={`/dashboard/invitations/${invitationId}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-xs transition"
               >
-                <span>✏️ Buka Editor Studio</span>
+                <IconEdit size={13} />
+                <span>Buka Editor Studio</span>
               </Link>
               <button
                 type="button"
@@ -270,15 +250,16 @@ export function OrderActionCallout({
                   openModal({
                     title: "Kirim Undangan ke Review Klien",
                     description:
-                      "Status produksi akan diubah ke 'Review Klien'. Calon pengantin dapat membuka portal mereka untuk menyetujui atau meminta revisi.",
+                      "Status produksi akan diubah ke 'Review Klien'. Calon pengantin dapat membuka portal mereka untuk meninjau dan menyetujui hasil desain.",
                     confirmLabel: "Kirim ke Review Klien",
                     nextStatus: "client_review",
                     actionType: "production",
                   })
                 }
-                className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800 shadow-sm transition"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800 shadow-xs transition"
               >
-                Kirim ke Review Klien ✉️
+                <IconMail size={13} />
+                <span>Kirim ke Review Klien</span>
               </button>
             </div>
           </div>
@@ -300,14 +281,15 @@ export function OrderActionCallout({
     );
   }
 
-  // 6. Menunggu Review Klien (client_review)
+  // 5. Menunggu Review Klien (client_review)
   if (productionStatus === "client_review") {
     return (
       <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-5 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-[#8C5D2A]">
-              <span>⏳</span> Menunggu Calon Pengantin
+              <IconClock size={13} />
+              <span>Menunggu Calon Pengantin</span>
             </span>
             <h3 className="text-base font-bold text-[#2C221E]">
               Undangan Sedang Ditinjau di Portal Klien
@@ -323,17 +305,20 @@ export function OrderActionCallout({
                 href={`/c/${clientAccessToken}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl border border-[#D9CFC4] bg-white px-4 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] transition flex items-center gap-1"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white px-4 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] transition shadow-2xs"
               >
-                <span>Lihat Tampilan Portal Klien ↗</span>
+                <IconEye size={13} />
+                <span>Buka Portal Klien</span>
+                <IconExternalLink size={12} />
               </Link>
             ) : null}
             {invitationId ? (
               <Link
-                href={`/editor/${invitationId}`}
-                className="rounded-xl bg-[#84633F] px-4 py-2 text-xs font-bold text-white hover:bg-[#664624] transition"
+                href={`/dashboard/invitations/${invitationId}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-4 py-2 text-xs font-bold text-white hover:bg-[#664624] transition shadow-2xs"
               >
-                Buka Editor Studio
+                <IconEdit size={13} />
+                <span>Buka Editor Studio</span>
               </Link>
             ) : null}
           </div>
@@ -342,7 +327,7 @@ export function OrderActionCallout({
     );
   }
 
-  // 7. Pengantin Meminta Revisi (revision_requested)
+  // 6. Pengantin Meminta Revisi (revision_requested)
   if (productionStatus === "revision_requested") {
     return (
       <>
@@ -350,7 +335,8 @@ export function OrderActionCallout({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800">
-                <span>🔄</span> Ada Permintaan Revisi
+                <IconAlertTriangle size={13} />
+                <span>Ada Permintaan Revisi</span>
               </span>
               <h3 className="text-base font-bold text-rose-950">
                 Calon Pengantin Mengajukan Catatan Revisi
@@ -363,10 +349,11 @@ export function OrderActionCallout({
             <div className="flex flex-wrap items-center gap-2.5">
               {invitationId ? (
                 <Link
-                  href={`/editor/${invitationId}`}
-                  className="rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-sm transition"
+                  href={`/dashboard/invitations/${invitationId}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-xs transition"
                 >
-                  Buka Editor Studio ✏️
+                  <IconEdit size={13} />
+                  <span>Buka Editor Studio</span>
                 </Link>
               ) : null}
               <button
@@ -381,9 +368,10 @@ export function OrderActionCallout({
                     actionType: "production",
                   })
                 }
-                className="rounded-xl bg-rose-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-rose-800 shadow-sm transition"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-rose-800 shadow-xs transition"
               >
-                Mulai Kerjakan Revisi ➔
+                <span>Mulai Kerjakan Revisi</span>
+                <IconArrowRight size={13} />
               </button>
             </div>
           </div>
@@ -405,29 +393,31 @@ export function OrderActionCallout({
     );
   }
 
-  // 8. Desain Disetujui Klien (approved)
+  // 7. Desain Disetujui Klien (approved)
   if (productionStatus === "approved") {
     return (
       <div className="rounded-2xl border border-emerald-300 bg-linear-to-r from-emerald-50 to-teal-50 p-5 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-              <span>🌟</span> Desain Disetujui Pengantin
+              <IconCheckCircle size={13} />
+              <span>Desain Disetujui Pengantin</span>
             </span>
             <h3 className="text-base font-bold text-emerald-950">
               Siap Menerbitkan Undangan Resmi (Publish)
             </h3>
             <p className="text-xs text-emerald-800">
-              Pengantin telah menyetujui seluruh desain. Buka halaman undangan untuk mem-publish secara resmi agar bisa diakses oleh seluruh tamu.
+              Pengantin telah menyetujui seluruh desain. Buka halaman undangan di Studio untuk mem-publish secara resmi agar bisa diakses oleh seluruh tamu.
             </p>
           </div>
 
           {invitationId ? (
             <Link
               href={`/dashboard/invitations/${invitationId}`}
-              className="rounded-xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition"
             >
-              Buka & Publish Undangan Sekarang 🚀
+              <IconSparkles size={14} />
+              <span>Buka & Terbitkan Undangan</span>
             </Link>
           ) : null}
         </div>
@@ -435,14 +425,15 @@ export function OrderActionCallout({
     );
   }
 
-  // 9. Undangan Sudah Terbit (published / completed)
+  // 8. Undangan Sudah Terbit (published / completed)
   if (productionStatus === "published" || orderStatus === "completed") {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-              <span>✨</span> Undangan Resmi Live
+              <IconCheckCircle size={13} />
+              <span>Undangan Resmi Live</span>
             </span>
             <h3 className="text-base font-bold text-emerald-950">
               Undangan Aktif & Siap Disebarkan
@@ -458,17 +449,20 @@ export function OrderActionCallout({
                 href={`/i/${invitationSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition shadow-2xs"
               >
-                Lihat Undangan Tamu ↗
+                <IconEye size={13} />
+                <span>Lihat Undangan Tamu</span>
+                <IconExternalLink size={12} />
               </Link>
             ) : null}
             {invitationId ? (
               <Link
                 href={`/dashboard/invitations/${invitationId}`}
-                className="rounded-xl border border-[#D9CFC4] bg-white px-4 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white px-4 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] transition shadow-2xs"
               >
-                Buka Manajemen Undangan
+                <IconEdit size={13} />
+                <span>Buka Manajemen Undangan</span>
               </Link>
             ) : null}
           </div>
@@ -477,13 +471,14 @@ export function OrderActionCallout({
     );
   }
 
-  // 10. Status Dibatalkan atau Ditolak (Terminal Cancelled)
+  // 9. Status Dibatalkan atau Ditolak (Terminal Cancelled)
   if (orderStatus === "cancelled" || orderStatus === "rejected") {
     return (
       <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5 shadow-xs">
         <div className="space-y-1">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800">
-            <span>🛑</span> Pesanan Dihentikan
+            <IconXCircle size={13} />
+            <span>Pesanan Dihentikan</span>
           </span>
           <h3 className="text-base font-bold text-rose-950">
             Pesanan Berstatus {orderStatus === "rejected" ? "Ditolak" : "Dibatalkan"}

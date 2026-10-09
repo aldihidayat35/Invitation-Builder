@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { IconAlertTriangle, IconClipboard } from "./OrderIcons";
 
 interface OrderActionModalProps {
   isOpen: boolean;
@@ -71,13 +72,13 @@ export function OrderActionModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3">
-          <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
               isDestructive ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-[#8C5D2A]"
             }`}
           >
-            {isDestructive ? "⚠️" : "📋"}
-          </span>
+            {isDestructive ? <IconAlertTriangle size={20} /> : <IconClipboard size={20} />}
+          </div>
           <div>
             <h3 className="text-base font-bold text-[#2C221E]">{title}</h3>
             <p className="text-xs text-stone-500">Konfirmasi tindakan status order</p>
@@ -124,7 +125,7 @@ export function OrderActionModal({
             <button
               type="submit"
               disabled={submitting}
-              className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50 ${
+              className={`rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-xs transition disabled:opacity-50 ${
                 isDestructive
                   ? "bg-rose-700 hover:bg-rose-800"
                   : "bg-[#84633F] hover:bg-[#664624]"
