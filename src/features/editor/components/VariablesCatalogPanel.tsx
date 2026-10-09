@@ -1,8 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { CanonicalDocument, VariableDefinition, VariableType } from "@/lib/schema";
 import { variableKeySchema } from "@/lib/schema";
+import {
+  GUEST_PREVIEW_CHANGED_EVENT,
+  getGuestPreviewName,
+  setGuestPreviewName,
+} from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import {
   IconCheck,
@@ -338,6 +343,25 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [editDefault, setEditDefault] = useState("");
   const [editRequired, setEditRequired] = useState(false);
 
+  // Guest Name Canvas Preview Simulation State
+  const [guestPreviewInput, setGuestPreviewInput] = useState(() => getGuestPreviewName());
+
+  useEffect(() => {
+    const onGuestPreviewChange = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setGuestPreviewInput(typeof detail === "string" ? detail : getGuestPreviewName());
+    };
+    window.addEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    return () => {
+      window.removeEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    };
+  }, []);
+
+  const handleSetGuestPreview = (val: string) => {
+    setGuestPreviewInput(val);
+    setGuestPreviewName(val);
+  };
+
   const act = () => store.getState();
   const declaredKeys = useMemo(() => new Set(doc.variables.map((v) => v.key)), [doc.variables]);
 
@@ -535,6 +559,87 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
     }
   };
 
+  // Connect guest.name to currently selected text element
+  const handleConnectGuestToSelected = () => {
+    if (!singleSelectedElement || singleSelectedElement.type !== "text") return;
+    act().patchElement(singleSelectedElement.id, (el) => {
+      if (el.type !== "text") return el;
+      return {
+        ...el,
+        content: {
+          ...el.content,
+          segments: [{ bind: "guest.name", fallback: "Bapak/Ibu/Saudara(i)" }],
+        },
+      };
+    });
+    if (onSwitchToProperties) {
+      onSwitchToProperties();
+    }
+  };
+
+  // Insert a new guest text element to canvas if not yet added
+  const handleInsertGuestElement = () => {
+    const targetSectionId =
+      doc.sections.find((s) => s.isOpening)?.id ??
+      store.getState().activeSectionId ??
+      doc.sections[0]?.id;
+    if (!targetSectionId) return;
+
+    store.getState().setActiveSection(targetSectionId);
+    store.getState().addElement("text");
+    const newId = store.getState().selectedIds[0];
+    if (newId) {
+      store.getState().patchElement(newId, (el) => {
+        if (el.type !== "text") return el;
+        return {
+          ...el,
+          name: "Nama Tamu Undangan",
+          frame: {
+            ...el.frame,
+            w: 320,
+            h: 46,
+            x: 20,
+          },
+          style: {
+            ...el.style,
+            fontSize: 16,
+            textAlign: "center",
+            fontWeight: 600,
+          },
+          content: {
+            ...el.content,
+            segments: [
+              {
+                bind: "guest.name",
+                fallback: "Bapak/Ibu/Saudara(i)",
+              },
+            ],
+          },
+        };
+      });
+    }
+  };
+
+  const showGuestCard = useMemo(() => {
+    const isCategoryMatch = activeCategory === "all" || activeCategory === "tamu";
+    if (!isCategoryMatch) return false;
+    if (!search.trim()) return true;
+    const s = search.toLowerCase();
+    return (
+      "guest.name".includes(s) ||
+      "tamu".includes(s) ||
+      "nama".includes(s) ||
+      "penerima".includes(s) ||
+      "undangan".includes(s)
+    );
+  }, [activeCategory, search]);
+
+  const guestUsages = useMemo(
+    () => usagesMap.get("guest.name") ?? { count: 0, elements: [] },
+    [usagesMap],
+  );
+  const isGuestUsed = guestUsages.count > 0;
+
   const totalUsedCount = useMemo(() => {
     let count = 0;
     for (const v of doc.variables) {
@@ -621,15 +726,15 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       {/* Status Overview */}
       <div className="flex items-center justify-between text-[11px] text-stone-500 px-1">
         <span>
-          Menampilkan {filteredVariables.length} dari {doc.variables.length} variabel
+          Menampilkan {filteredVariables.length + (showGuestCard ? 1 : 0)} dari {doc.variables.length + 1} variabel
         </span>
         <span>
-          🟢 {totalUsedCount} terpasang di kanvas
+          🟢 {totalUsedCount + (isGuestUsed ? 1 : 0)} terpasang di kanvas
         </span>
       </div>
 
       {/* Grouped Variables List */}
-      {filteredVariables.length === 0 ? (
+      {filteredVariables.length === 0 && !showGuestCard ? (
         <div className="rounded-2xl border border-dashed border-stone-200 p-8 text-center space-y-2 bg-stone-50/50">
           <span className="text-2xl">📋</span>
           <p className="text-xs font-bold text-stone-700">Tidak ada variabel ditemukan</p>
@@ -651,7 +756,8 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       ) : (
         <div className="space-y-5">
           {Object.entries(groupedVariables).map(([catKey, list]) => {
-            if (list.length === 0) return null;
+            const isGuestCategory = catKey === "tamu";
+            if (list.length === 0 && (!isGuestCategory || !showGuestCard)) return null;
             const catMeta = categories.find((c) => c.id === catKey);
 
             return (
@@ -661,10 +767,140 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                     <span>{catMeta?.icon}</span>
                     <span>{catMeta?.label}</span>
                   </span>
-                  <span className={styles.categoryCount}>{list.length} Variabel</span>
+                  <span className={styles.categoryCount}>
+                    {list.length + (isGuestCategory && showGuestCard ? 1 : 0)} Variabel
+                  </span>
                 </div>
 
                 <div className={styles.variableList}>
+                  {/* Kartu Khusus guest.name jika ini kategori tamu */}
+                  {isGuestCategory && showGuestCard && (
+                    <div className={styles.guestCard} data-testid="guest-name-variable-card">
+                      <div className={styles.cardTop}>
+                        <div className={styles.cardInfo}>
+                          <span className={styles.label}>Nama Penerima Tamu Undangan</span>
+                          <div className={styles.typeBadgeGroup}>
+                            <span className={styles.guestRuntimeBadge}>
+                              ✉️ Runtime Portal (Otomatis dari URL & Portal)
+                            </span>
+                            <span className={styles.keyChip}>guest.name</span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={styles.usageBadge}
+                          data-used={isGuestUsed ? "true" : "false"}
+                          title={
+                            isGuestUsed
+                              ? guestUsages.elements
+                                  .map((el) => `${el.name} (${el.sectionName})`)
+                                  .join(", ")
+                              : "Belum dihubungkan ke teks di kanvas"
+                          }
+                        >
+                          <span>{isGuestUsed ? "●" : "○"}</span>
+                          <span>{isGuestUsed ? `Dipakai (${guestUsages.count})` : "Belum dipakai"}</span>
+                        </span>
+                      </div>
+
+                      {/* Edukasi URL & Portal Klien */}
+                      <div className={styles.guestEducation}>
+                        <div className={styles.guestEduTitle}>
+                          <span>💡</span>
+                          <span>Integrasi Otomatis dengan Portal Klien</span>
+                        </div>
+                        <div className={styles.guestEduDesc}>
+                          Diisi otomatis oleh sistem saat calon pengantin membagikan tautan personal dari Portal Klien (parameter <code>?to=Nama+Tamu</code>). Jika dibuka tanpa tautan khusus, teks akan menampilkan sapaan umum cadangan.
+                        </div>
+                      </div>
+
+                      {/* Fitur Simulasi Pratinjau Kanvas */}
+                      <div className={styles.guestSimSection}>
+                        <div className={styles.guestSimHeader}>
+                          <label htmlFor="guest-sim-input" className={styles.guestSimLabel}>
+                            <span>👁️</span>
+                            <span>Simulasi Nama Tamu untuk Pratinjau Kanvas</span>
+                          </label>
+                          {guestPreviewInput && (
+                            <button
+                              type="button"
+                              className={styles.btnResetSim}
+                              data-testid="reset-guest-sim-btn"
+                              onClick={() => handleSetGuestPreview("")}
+                              title="Kembalikan ke fallback default"
+                            >
+                              Reset ke Default
+                            </button>
+                          )}
+                        </div>
+
+                        <div className={styles.guestSimInputWrap}>
+                          <input
+                            id="guest-sim-input"
+                            type="text"
+                            className={styles.guestSimInput}
+                            data-testid="guest-preview-sim-input"
+                            placeholder="Contoh: Budi Santoso (ketik untuk tes tampilan langsung)"
+                            value={guestPreviewInput}
+                            onChange={(e) => handleSetGuestPreview(e.target.value)}
+                          />
+                        </div>
+
+                        <div className={styles.guestQuickChipsWrap}>
+                          <span className={styles.guestQuickChipsTitle}>Contoh Cepat untuk Tes:</span>
+                          <div className={styles.guestQuickChipsList}>
+                            {[
+                              "Budi Santoso",
+                              "Dr. H. Ahmad Dahlan, S.T.",
+                              "Keluarga Besar Bpk. Hendra",
+                              "Mr. John Doe & Partner",
+                            ].map((name) => (
+                              <button
+                                key={name}
+                                type="button"
+                                className={styles.guestQuickChip}
+                                data-testid={`quick-chip-${name}`}
+                                onClick={() => handleSetGuestPreview(name)}
+                              >
+                                {name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className={styles.guestActions}>
+                        {singleSelectedElement &&
+                        singleSelectedElement.type === "text" &&
+                        !readOnly ? (
+                          <button
+                            type="button"
+                            className={styles.btnConnect}
+                            data-testid="connect-guest-selected-btn"
+                            onClick={handleConnectGuestToSelected}
+                            title="Terapkan variabel guest.name pada teks yang sedang Anda pilih"
+                          >
+                            <IconSparkle size={12} />
+                            <span>⚡ Sambungkan ke Teks Terpilih</span>
+                          </button>
+                        ) : !isGuestUsed && !readOnly ? (
+                          <button
+                            type="button"
+                            className={styles.btnInsertGuest}
+                            data-testid="insert-guest-element-btn"
+                            onClick={handleInsertGuestElement}
+                            title="Sisipkan teks penerima tamu baru ke cover atau section aktif"
+                          >
+                            <IconPlus size={12} />
+                            <span>+ Sisipkan Teks Tamu Baru</span>
+                          </button>
+                        ) : (
+                          <div />
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {list.map((v) => {
                     const usages = usagesMap.get(v.key) ?? { count: 0, elements: [] };
                     const isUsed = usages.count > 0;

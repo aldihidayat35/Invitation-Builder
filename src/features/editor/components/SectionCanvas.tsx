@@ -21,7 +21,13 @@ import {
   type ThemeTokens,
   type VariableDefinition,
 } from "@/lib/schema";
-import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
+import {
+  GUEST_PREVIEW_CHANGED_EVENT,
+  getGuestPreviewName,
+  resolveColor,
+  resolveFontFamily,
+  textPreview,
+} from "../core/display";
 import { findElement } from "../core/ops";
 import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides } from "../core/geometry";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
@@ -51,6 +57,7 @@ interface ElementNodeProps {
   readonly isOutsideSection?: boolean;
   readonly zoom?: number;
   readonly variables?: readonly VariableDefinition[];
+  readonly guestPreviewName?: string;
 }
 
 interface ElementHandlers {
@@ -72,11 +79,13 @@ function Visual({
   tokens,
   fontRev,
   variables,
+  guestPreviewName,
 }: {
   element: Element;
   tokens: ThemeTokens;
   fontRev: number;
   variables?: readonly VariableDefinition[];
+  guestPreviewName?: string;
 }) {
   const { w, h } = element.frame;
   switch (element.type) {
@@ -84,10 +93,10 @@ function Visual({
       const s = element.style;
       return (
         <Text
-          key={`txt-${element.id}-${fontRev}`}
+          key={`txt-${element.id}-${fontRev}-${guestPreviewName ?? ""}`}
           width={w}
           height={h}
-          text={textPreview(element, variables)}
+          text={textPreview(element, variables, guestPreviewName)}
           fontFamily={resolveFontFamily(s.fontFamily, tokens)}
           fontSize={s.fontSize}
           fontStyle={String(s.fontWeight)}
@@ -178,6 +187,7 @@ const ElementNode = memo(function ElementNode({
   isOutsideSection = false,
   zoom = 1,
   variables,
+  guestPreviewName,
 }: ElementNodeProps) {
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
@@ -225,7 +235,13 @@ const ElementNode = memo(function ElementNode({
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
       <Group ref={innerRef} x={w / 2} y={h / 2} offsetX={w / 2} offsetY={h / 2}>
-        <Visual element={element} tokens={tokens} fontRev={fontRev} variables={variables} />
+        <Visual
+          element={element}
+          tokens={tokens}
+          fontRev={fontRev}
+          variables={variables}
+          guestPreviewName={guestPreviewName}
+        />
       </Group>
 
       {/* Off-canvas styling indicator when motion target is placed outside frame */}
@@ -358,6 +374,18 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const baseHeight = section?.baseHeight ?? 0;
 
   const [fontRev, setFontRev] = useState(0);
+  const [guestPreviewName, setGuestPreviewName] = useState(() => getGuestPreviewName());
+
+  useEffect(() => {
+    const onGuestPreviewChange = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setGuestPreviewName(typeof detail === "string" ? detail : getGuestPreviewName());
+    };
+    window.addEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    return () => {
+      window.removeEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    };
+  }, []);
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
     x: number;
@@ -983,6 +1011,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                     isOutsideSection={isOutsideSection}
                     zoom={zoom}
                     variables={variables}
+                    guestPreviewName={guestPreviewName}
                   />
                 );
               })}

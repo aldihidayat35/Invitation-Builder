@@ -151,6 +151,7 @@ describe("text-variables operations", () => {
     const guestEl = guestDoc.sections[0]!.elements[0]!;
     if (guestEl.type !== "text") throw new Error("Expected text element");
     expect(textPreview(guestEl)).toBe("Halo Bapak/Ibu/Saudara(i)");
+    expect(textPreview(guestEl, [], "Dr. H. Ahmad Dahlan, S.T.")).toBe("Halo Dr. H. Ahmad Dahlan, S.T.");
   });
 
   it("integrates with EditorStore actions and undo/redo", () => {

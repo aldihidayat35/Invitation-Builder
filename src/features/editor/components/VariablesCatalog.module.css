@@ -714,3 +714,266 @@
   color: #ff4d4f;
 }
 
+/* Guest Name Specialized Runtime Card */
+.guestCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #fed7aa;
+  background: linear-gradient(180deg, #fffaf5 0%, #ffffff 100%);
+  box-shadow: 0 1px 4px rgba(249, 115, 22, 0.06);
+  transition: all 140ms ease;
+}
+
+.guestCard:hover {
+  border-color: #fdba74;
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.1);
+}
+
+.guestRuntimeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.guestEducation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #fff7ed;
+  border: 1px dashed #fdba74;
+}
+
+.guestEduTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9a3412;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.guestEduDesc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #7c2d12;
+}
+
+.guestSimSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--dash-surface, #ffffff);
+  border: 1px solid var(--dash-border, #e7e5e4);
+}
+
+.guestSimHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.guestSimLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dash-text, #1c1917);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.guestSimInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guestSimInput {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border, #e7e5e4);
+  background: var(--dash-surface-strong, #fafaf9);
+  color: var(--dash-text, #1c1917);
+  outline: none;
+  transition: all 120ms ease;
+}
+
+.guestSimInput:focus {
+  border-color: #f97316;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
+}
+
+.btnResetSim {
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border, #e7e5e4);
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-muted, #78716c);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms ease;
+}
+
+.btnResetSim:hover {
+  background: var(--dash-surface-sunken, #f5f5f4);
+  color: var(--dash-text, #1c1917);
+}
+
+.guestQuickChipsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guestQuickChipsTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dash-muted, #a8a29e);
+}
+
+.guestQuickChipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.guestQuickChip {
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--dash-surface-sunken, #f5f5f4);
+  color: var(--dash-text, #44403c);
+  border: 1px solid var(--dash-border, #e7e5e4);
+  cursor: pointer;
+  transition: all 100ms ease;
+}
+
+.guestQuickChip:hover {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+.guestActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--dash-border, #f0eeee);
+}
+
+.btnInsertGuest {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 120ms ease;
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.2);
+}
+
+.btnInsertGuest:hover {
+  background: #c2410c;
+}
+
+/* Dark mode overrides for guest card */
+:global(.shell[data-theme="dark"]) .guestCard {
+  background: linear-gradient(180deg, #1f1b18 0%, #17181c 100%);
+  border-color: #43281c;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+:global(.shell[data-theme="dark"]) .guestCard:hover {
+  border-color: #7c2d12;
+}
+
+:global(.shell[data-theme="dark"]) .guestRuntimeBadge {
+  background: #3b1e10;
+  color: #fdba74;
+  border-color: #5d2813;
+}
+
+:global(.shell[data-theme="dark"]) .guestEducation {
+  background: #251813;
+  border-color: #5d2813;
+}
+
+:global(.shell[data-theme="dark"]) .guestEduTitle {
+  color: #fdba74;
+}
+
+:global(.shell[data-theme="dark"]) .guestEduDesc {
+  color: #fed7aa;
+}
+
+:global(.shell[data-theme="dark"]) .guestSimSection {
+  background: #1e2029;
+  border-color: #2e3240;
+}
+
+:global(.shell[data-theme="dark"]) .guestSimInput {
+  background: #14151b;
+  border-color: #2e3240;
+  color: #f8fafc;
+}
+
+:global(.shell[data-theme="dark"]) .guestSimInput:focus {
+  border-color: #ea580c;
+  background: #191b22;
+}
+
+:global(.shell[data-theme="dark"]) .btnResetSim {
+  background: #14151b;
+  border-color: #2e3240;
+  color: #94a3b8;
+}
+
+:global(.shell[data-theme="dark"]) .btnResetSim:hover {
+  background: #242634;
+  color: #ffffff;
+}
+
+:global(.shell[data-theme="dark"]) .guestQuickChip {
+  background: #14151b;
+  border-color: #2e3240;
+  color: #cbd5e1;
+}
+
+:global(.shell[data-theme="dark"]) .guestQuickChip:hover {
+  background: #3b1e10;
+  color: #fdba74;
+  border-color: #7c2d12;
+}
+
+:global(.shell[data-theme="dark"]) .guestActions {
+  border-top-color: #2e3240;
+}
+
+

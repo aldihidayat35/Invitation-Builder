@@ -39,10 +39,40 @@ export function resolveFontFamily(
   return `${name}, ${fallback}`;
 }
 
+export const GUEST_PREVIEW_STORAGE_KEY = "dib:editor:guest-preview-name";
+export const GUEST_PREVIEW_CHANGED_EVENT = "dib:guest-preview-changed";
+
+/** Reads transient guest preview simulation name from localStorage (browser-only). */
+export function getGuestPreviewName(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(GUEST_PREVIEW_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Updates transient guest preview simulation name and emits a sync event. */
+export function setGuestPreviewName(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      window.localStorage.removeItem(GUEST_PREVIEW_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(GUEST_PREVIEW_STORAGE_KEY, trimmed);
+    }
+    window.dispatchEvent(new CustomEvent(GUEST_PREVIEW_CHANGED_EVENT, { detail: trimmed }));
+  } catch {
+    // Ignore storage errors in private browsing / SSR
+  }
+}
+
 /** Plain text preview of a text element; bindings appear as dynamic value, fallback, or `{key}`. */
 export function textPreview(
   element: Extract<Element, { type: "text" }>,
   variables?: readonly VariableDefinition[],
+  guestPreviewName?: string,
 ): string {
   return element.content.segments
     .map((s) => {
@@ -58,11 +88,16 @@ export function textPreview(
           return found.default;
         }
       }
+      if (s.bind === "guest.name") {
+        const sim = (guestPreviewName ?? getGuestPreviewName()).trim();
+        if (sim) return sim;
+        if (typeof s.fallback === "string" && s.fallback.length > 0) {
+          return s.fallback;
+        }
+        return "Bapak/Ibu/Saudara(i)";
+      }
       if (typeof s.fallback === "string" && s.fallback.length > 0) {
         return s.fallback;
-      }
-      if (s.bind === "guest.name") {
-        return "Bapak/Ibu/Saudara(i)";
       }
       return `{${s.bind}}`;
     })

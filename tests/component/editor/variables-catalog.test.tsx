@@ -159,4 +159,96 @@ describe("VariablesCatalogPanel & Inspector Variables Tab", () => {
     fireEvent.change(searchInput, { target: { value: "NonExistentWord123" } });
     expect(screen.getByText("Tidak ada variabel ditemukan")).toBeDefined();
   });
+
+  it("renders specialized guest.name card with live preview simulation and quick chips", () => {
+    const store = createEditorStore({ document: createTestDoc(), revision: 1 });
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_test">
+        <Inspector />
+      </EditorProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId("inspector-tab-variables"));
+
+    // Guest card should be rendered
+    const guestCard = screen.getByTestId("guest-name-variable-card");
+    expect(guestCard).toBeDefined();
+    expect(screen.getByText("Nama Penerima Tamu Undangan")).toBeDefined();
+    expect(screen.getByText("guest.name")).toBeDefined();
+    expect(screen.getByText("Integrasi Otomatis dengan Portal Klien")).toBeDefined();
+
+    // Simulation input
+    const simInput = screen.getByTestId("guest-preview-sim-input") as HTMLInputElement;
+    expect(simInput).toBeDefined();
+
+    // Typing simulation name
+    fireEvent.change(simInput, { target: { value: "Bpk. Rahmat & Keluarga" } });
+    expect(simInput.value).toBe("Bpk. Rahmat & Keluarga");
+
+    // Click quick chip
+    const chip = screen.getByTestId("quick-chip-Budi Santoso");
+    fireEvent.click(chip);
+    expect(simInput.value).toBe("Budi Santoso");
+
+    // Reset button
+    const resetBtn = screen.getByTestId("reset-guest-sim-btn");
+    fireEvent.click(resetBtn);
+    expect(simInput.value).toBe("");
+  });
+
+  it("allows inserting a new guest text element when not yet used", () => {
+    const store = createEditorStore({ document: createTestDoc(), revision: 1 });
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_test">
+        <Inspector />
+      </EditorProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId("inspector-tab-variables"));
+
+    // Since guest.name is not used yet, insert button is available
+    const insertBtn = screen.getByTestId("insert-guest-element-btn");
+    expect(insertBtn).toBeDefined();
+    fireEvent.click(insertBtn);
+
+    // Verify a new text element bound to guest.name is created in store
+    const present = store.getState().history.present;
+    const allElements = present.sections.flatMap((s) => s.elements);
+    const guestEl = allElements.find(
+      (el) =>
+        el.type === "text" &&
+        el.content.segments.some((s) => "bind" in s && s.bind === "guest.name"),
+    );
+    expect(guestEl).toBeDefined();
+    expect(guestEl?.name).toBe("Nama Tamu Undangan");
+  });
+
+  it("allows connecting guest.name to currently selected text element", () => {
+    const store = createEditorStore({ document: createTestDoc(), revision: 1 });
+    // Pre-select the existing text element
+    store.getState().selectElements(["el_text_1"]);
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_test">
+        <Inspector />
+      </EditorProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId("inspector-tab-variables"));
+
+    const connectBtn = screen.getByTestId("connect-guest-selected-btn");
+    expect(connectBtn).toBeDefined();
+    fireEvent.click(connectBtn);
+
+    const updatedEl = store
+      .getState()
+      .history.present.sections[0]?.elements.find((e) => e.id === "el_text_1");
+    expect(
+      updatedEl?.type === "text" &&
+        updatedEl.content.segments.some((s) => "bind" in s && s.bind === "guest.name"),
+    ).toBe(true);
+  });
 });
+

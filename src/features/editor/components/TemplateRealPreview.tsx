@@ -11,6 +11,7 @@ import {
   subscribePreviewSync,
   type PreviewStateSnapshot,
 } from "../core/preview-sync";
+import { GUEST_PREVIEW_CHANGED_EVENT, getGuestPreviewName } from "../core/display";
 import {
   IconArrowLeft,
   IconMonitor,
@@ -85,12 +86,25 @@ export function TemplateRealPreview({
     }
   }, [lastUpdated]);
 
+  const [guestPreviewName, setGuestPreviewName] = useState(() => getGuestPreviewName());
+
+  useEffect(() => {
+    const onGuestPreviewChange = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setGuestPreviewName(typeof detail === "string" ? detail : getGuestPreviewName());
+    };
+    window.addEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    return () => {
+      window.removeEventListener(GUEST_PREVIEW_CHANGED_EVENT, onGuestPreviewChange);
+    };
+  }, []);
+
   const resolved = useMemo(() => {
     const registry = createVariableRegistry(document.variables);
     const data = applyDefaults(registry, {});
-    const guest = { name: "Bapak / Ibu / Saudara(i)" };
+    const guest = { name: guestPreviewName || "Bapak / Ibu / Saudara(i)" };
     return resolveDocument(document, data, guest);
-  }, [document]);
+  }, [document, guestPreviewName]);
 
   const hasOpeningSection = document.sections.some((s) => s.isOpening);
 
