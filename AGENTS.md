@@ -8,7 +8,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Aturan Tambahan Agent: Git Push & Refresh Aplikasi
+# Aturan Tambahan Agent: Git Push & Restart Aplikasi
 
-1. **Wajib Git Push**: Setiap kali selesai membuat kode atau mengimplementasikan fitur, agent wajib melakukan `git add`, `git commit` dengan pesan deskriptif, dan `git push` ke remote repository.
-2. **Wajib Refresh & Verifikasi Aplikasi**: Pastikan server aplikasi berjalan (atau di-refresh) dan seluruh rute yang diperbarui merespons dengan HTTP 200 OK tanpa error.
+1. **Wajib Restart Server Aplikasi**: Setiap kali selesai mengubah atau menambahkan kode (fitur baru, perbaikan bug, atau konfigurasi), agent wajib me-restart server aplikasi (hentikan/kill server dev lama dan jalankan ulang `npm run dev`), lalu verifikasi bahwa server berjalan normal dan seluruh rute yang diperbarui merespons dengan **HTTP 200 OK**.
+2. **Wajib Git Push**: Setiap kali selesai membuat kode atau mengimplementasikan fitur, agent wajib melakukan `git add`, `git commit` dengan pesan deskriptif, dan `git push` ke remote repository.
+
