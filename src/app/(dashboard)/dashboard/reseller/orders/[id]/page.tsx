@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getOrder, OrderWorkflowError } from "@/features/orders/api";
-import { ClientPortalAccessCard } from "@/features/orders/components";
+import { ClientPortalAccessCard, OrderClientVariablesCard } from "@/features/orders/components";
 import { requireReseller } from "@/lib/auth/server";
 import { qualifyOrderAction } from "../actions";
 
@@ -41,6 +41,16 @@ export default async function ResellerOrderDetailPage({
         customerWhatsapp={order.customerWhatsapp}
         orderId={order.id}
         canRegenerate={false}
+      />
+
+      {/* Hasil Pengisian Data / Variabel Klien Mandiri */}
+      <OrderClientVariablesCard
+        variables={detail.variables}
+        orderId={order.id}
+        invitationId={order.invitationId}
+        invitationSlug={detail.invitation?.slug}
+        clientAccessToken={order.clientAccessToken}
+        templateTitle={detail.template?.name}
       />
       <section className="grid gap-5 lg:grid-cols-[2fr_1fr]">
         <article className="rounded-2xl border border-stone-200 bg-white p-5">

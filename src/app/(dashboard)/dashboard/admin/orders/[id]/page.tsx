@@ -10,6 +10,7 @@ import {
   OrderSidebarActions,
   OrderTemplateManager,
   OrderStudioAccessCard,
+  OrderClientVariablesCard,
   IconClipboard,
   IconUser,
   IconHeart,
@@ -124,7 +125,7 @@ export default async function AdminOrderDetailPage({
   }
 
   const showStudioCard = showAll || (!isTerminalCancelled && activeStep >= 2);
-  const showClientPortalCard = showAll || (!isTerminalCancelled && activeStep >= 4);
+  const showClientPortalCard = showAll || (!isTerminalCancelled && activeStep >= 2);
 
   const cleanPhone = (order.customerWhatsapp || "").replace(/\D/g, "");
   const formattedPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
@@ -205,6 +206,9 @@ export default async function AdminOrderDetailPage({
         invitationId={detail.invitation?.id}
         invitationSlug={detail.invitation?.slug}
         clientAccessToken={order.clientAccessToken}
+        variables={detail.variables}
+        customerName={order.customerName}
+        customerWhatsapp={order.customerWhatsapp}
         transitionOrderAction={transitionOrderAction}
         createOrderProjectAction={createOrderProjectAction}
         transitionProductionAction={transitionProductionAction}
@@ -377,6 +381,14 @@ export default async function AdminOrderDetailPage({
                     createOrderProjectAction={createOrderProjectAction}
                     transitionProductionAction={transitionProductionAction}
                   />
+                  <OrderClientVariablesCard
+                    variables={detail.variables}
+                    orderId={order.id}
+                    invitationId={order.invitationId}
+                    invitationSlug={detail.invitation?.slug}
+                    clientAccessToken={order.clientAccessToken}
+                    templateTitle={detail.template?.name}
+                  />
                   <ClientPortalAccessCard
                     token={order.clientAccessToken}
                     customerName={order.customerName}
@@ -390,7 +402,7 @@ export default async function AdminOrderDetailPage({
             </>
           ) : activeStep === 2 || activeStep === 3 ? (
             <>
-              {/* Di Tahap 2 & 3: Tampilkan Studio Access Card di urutan teratas, diikuti Template Manager dan Data Pemesan */}
+              {/* Di Tahap 2 & 3: Tampilkan Studio Access Card, Kartu Variabel Klien, Link Portal Klien, Template Manager dan Data Pemesan */}
               <OrderStudioAccessCard
                 orderId={order.id}
                 orderStatus={order.orderStatus}
@@ -399,6 +411,24 @@ export default async function AdminOrderDetailPage({
                 clientAccessToken={order.clientAccessToken}
                 createOrderProjectAction={createOrderProjectAction}
                 transitionProductionAction={transitionProductionAction}
+              />
+
+              <OrderClientVariablesCard
+                variables={detail.variables}
+                orderId={order.id}
+                invitationId={order.invitationId}
+                invitationSlug={detail.invitation?.slug}
+                clientAccessToken={order.clientAccessToken}
+                templateTitle={detail.template?.name}
+              />
+
+              <ClientPortalAccessCard
+                token={order.clientAccessToken}
+                customerName={order.customerName}
+                customerWhatsapp={order.customerWhatsapp}
+                orderId={order.id}
+                canRegenerate={true}
+                regenerateAction={regenerateOrderClientTokenAction}
               />
 
               {!isTerminalCancelled && (
@@ -539,7 +569,7 @@ export default async function AdminOrderDetailPage({
             </>
           ) : activeStep === 4 ? (
             <>
-              {/* Di Tahap 4: Tampilkan Portal Klien di posisi teratas, diikuti Studio Card, Template Manager, dan Data Pemesan */}
+              {/* Di Tahap 4: Tampilkan Portal Klien di posisi teratas, diikuti Variabel Klien, Studio Card, Template Manager, dan Data Pemesan */}
               <ClientPortalAccessCard
                 token={order.clientAccessToken}
                 customerName={order.customerName}
@@ -547,6 +577,15 @@ export default async function AdminOrderDetailPage({
                 orderId={order.id}
                 canRegenerate={true}
                 regenerateAction={regenerateOrderClientTokenAction}
+              />
+
+              <OrderClientVariablesCard
+                variables={detail.variables}
+                orderId={order.id}
+                invitationId={order.invitationId}
+                invitationSlug={detail.invitation?.slug}
+                clientAccessToken={order.clientAccessToken}
+                templateTitle={detail.template?.name}
               />
 
               <OrderStudioAccessCard

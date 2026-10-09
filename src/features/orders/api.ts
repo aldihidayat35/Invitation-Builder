@@ -146,5 +146,7 @@ export {
 export type {
   ClientPortalData,
   ClientCustomizationWhatsAppParams,
+  OrderClientVariablesSummary,
+  OrderDetailModel,
 } from "./service";
 

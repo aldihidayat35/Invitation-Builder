@@ -18,7 +18,9 @@ import {
   IconEye,
   IconLayers,
   IconInfo,
+  IconWhatsApp,
 } from "./OrderIcons";
+import type { OrderClientVariablesSummary } from "../service";
 
 interface OrderActionCalloutProps {
   orderId: string;
@@ -27,6 +29,9 @@ interface OrderActionCalloutProps {
   invitationId?: string | null;
   invitationSlug?: string | null;
   clientAccessToken?: string | null;
+  variables?: OrderClientVariablesSummary | null;
+  customerName?: string;
+  customerWhatsapp?: string | null;
   transitionOrderAction: (formData: FormData) => Promise<void>;
   createOrderProjectAction: (formData: FormData) => Promise<void>;
   transitionProductionAction: (formData: FormData) => Promise<void>;
@@ -39,6 +44,9 @@ export function OrderActionCallout({
   invitationId,
   invitationSlug,
   clientAccessToken,
+  variables,
+  customerName,
+  customerWhatsapp,
   transitionOrderAction,
   createOrderProjectAction,
   transitionProductionAction,
@@ -235,51 +243,128 @@ export function OrderActionCallout({
 
   // 4. Sedang Dikerjakan di Produksi (in_production / awaiting_client)
   if (orderStatus === "accepted" && invitationId && (productionStatus === "in_production" || productionStatus === "awaiting_client")) {
+    const cleanPhone = (customerWhatsapp || "").replace(/\D/g, "");
+    const formattedPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const portalUrl = clientAccessToken ? `${origin}/c/${clientAccessToken}` : "";
+    const formWaMessage = encodeURIComponent(
+      `Halo kak ${customerName || "Klien"},\n\nBerikut tautan portal mandiri untuk melengkapi data & variabel undangan pernikahan Kakak:\n${portalUrl}\n\nSilakan buka tautan di atas untuk melengkapi data mempelai, jadwal acara akad & resepsi, lokasi maps, serta rekening amplop digital. Data yang Kakak simpan akan langsung terhubung ke proses perakitan undangan. Terima kasih! 🙏`
+    );
+    const formWaUrl = formattedPhone && clientAccessToken ? `https://wa.me/${formattedPhone}?text=${formWaMessage}` : null;
+
     return (
       <>
-        <div className="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-[#FAF8F5] p-5 shadow-xs">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
-                <IconEdit size={13} />
-                <span>Dalam Pengerjaan Desain</span>
-              </span>
-              <h3 className="text-base font-bold text-[#1E293B]">
-                Desain Sedang Dikerjakan di Studio
-              </h3>
-              <p className="text-xs text-stone-600">
-                Buka proyek di Editor Studio untuk memeriksa dan menyesuaikan data. Setelah desain siap, kirimkan tautan ke review klien.
-              </p>
-            </div>
+        {variables && variables.hasData ? (
+          <div className="rounded-2xl border border-emerald-300 bg-linear-to-r from-emerald-50 via-[#FAF8F5] to-white p-5 shadow-xs">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                  <IconSparkles size={13} />
+                  <span>Data Klien Siap Dirakit</span>
+                </span>
+                <h3 className="text-base font-bold text-[#1E293B]">
+                  Data Undangan Telah Diisi Klien ({variables.filledCount}/{variables.totalCount} Variabel)
+                </h3>
+                <p className="text-xs text-stone-600">
+                  Calon pengantin telah melengkapi formulir data pernikahan via portal mandiri. Silakan periksa di Editor Studio untuk memastikan tata letak dan media sudah rapi sebelum dikirim ke review klien.
+                </p>
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Link
-                href={`/dashboard/invitations/${invitationId}`}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-xs transition"
-              >
-                <IconEdit size={13} />
-                <span>Buka Editor Studio</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() =>
-                  openModal({
-                    title: "Kirim Undangan ke Review Klien",
-                    description:
-                      "Status produksi akan diubah ke 'Review Klien'. Calon pengantin dapat membuka portal mereka untuk meninjau dan menyetujui hasil desain.",
-                    confirmLabel: "Kirim ke Review Klien",
-                    nextStatus: "client_review",
-                    actionType: "production",
-                  })
-                }
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800 shadow-xs transition"
-              >
-                <IconMail size={13} />
-                <span>Kirim ke Review Klien</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Link
+                  href={`/dashboard/invitations/${invitationId}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-xs transition"
+                >
+                  <IconEdit size={13} />
+                  <span>Buka Editor Studio</span>
+                </Link>
+                {invitationSlug && (
+                  <Link
+                    href={`/i/${invitationSlug}?preview=1`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 px-3.5 py-2.5 text-xs font-semibold text-stone-700 shadow-2xs transition"
+                  >
+                    <IconEye size={13} />
+                    <span>Preview</span>
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    openModal({
+                      title: "Kirim Undangan ke Review Klien",
+                      description:
+                        "Status produksi akan diubah ke 'Review Klien'. Calon pengantin dapat membuka portal mereka untuk meninjau dan menyetujui hasil desain.",
+                      confirmLabel: "Kirim ke Review Klien",
+                      nextStatus: "client_review",
+                      actionType: "production",
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800 shadow-xs transition"
+                >
+                  <IconMail size={13} />
+                  <span>Kirim ke Review Klien</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-amber-300 bg-linear-to-r from-amber-50 via-[#FAF8F5] to-white p-5 shadow-xs">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-[#8C5D2A]">
+                  <IconClock size={13} />
+                  <span>Menunggu Pengisian Data Pengantin</span>
+                </span>
+                <h3 className="text-base font-bold text-[#2C221E]">
+                  Menunggu Pengisian Data Mandiri oleh Klien
+                </h3>
+                <p className="text-xs text-stone-600">
+                  Proyek undangan telah aktif. Calon pengantin belum mengisi formulir data di portal mandiri. Kirimkan tautan formulir via WhatsApp agar klien dapat melengkapinya, atau Anda dapat menginput langsung di Editor Studio.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                {formWaUrl && (
+                  <a
+                    href={formWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs transition"
+                    title="Kirim link formulir data portal mandiri via WhatsApp"
+                  >
+                    <IconWhatsApp size={14} />
+                    <span>Kirim Link Formulir (WA)</span>
+                  </a>
+                )}
+                <Link
+                  href={`/dashboard/invitations/${invitationId}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#2C221E] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#42352E] shadow-xs transition"
+                >
+                  <IconEdit size={13} />
+                  <span>Buka Editor Studio</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openModal({
+                      title: "Kirim Undangan ke Review Klien",
+                      description:
+                        "Status produksi akan diubah ke 'Review Klien'. Calon pengantin dapat membuka portal mereka untuk meninjau dan menyetujui hasil desain.",
+                      confirmLabel: "Kirim ke Review Klien",
+                      nextStatus: "client_review",
+                      actionType: "production",
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 shadow-2xs transition"
+                >
+                  <IconMail size={13} />
+                  <span>Kirim ke Review Klien</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <OrderActionModal
           isOpen={modalConfig.isOpen}

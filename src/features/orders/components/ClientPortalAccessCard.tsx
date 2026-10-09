@@ -79,6 +79,16 @@ export function ClientPortalAccessCard({
     ? `https://wa.me/${formattedPhone}?text=${waMessage}`
     : `https://wa.me/?text=${waMessage}`;
 
+  const waFormDataUrl = formattedPhone
+    ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
+        `Halo kak ${customerName},\n\nBerikut tautan portal mandiri untuk melengkapi data & variabel undangan pernikahan Kakak:\n${fullPortalUrl}\n\nSilakan buka tautan di atas untuk melengkapi:\n• Data kedua mempelai & orang tua\n• Jadwal akad/pemberkatan & resepsi\n• Lokasi & tautan Google Maps\n• Rekening amplop digital / hadiah pernikahan\n\nData yang Kakak simpan akan langsung terhubung ke sistem produksi kami. Terima kasih! 🙏`
+      )}`
+    : `https://wa.me/?text=${encodeURIComponent(
+        `Halo kak ${customerName},\n\nBerikut tautan portal mandiri untuk melengkapi data & variabel undangan pernikahan Kakak:\n${fullPortalUrl}`
+      )}`;
+
+  const waReviewUrl = waUrl;
+
   return (
     <article className="rounded-2xl border border-[#EBE5DF] bg-linear-to-br from-white to-[#FAF8F5] p-5 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EBE5DF] pb-3">
@@ -140,13 +150,25 @@ export function ClientPortalAccessCard({
         </a>
 
         <a
-          href={waUrl}
+          href={waFormDataUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-700 transition"
+          title="Kirim pesan WhatsApp mengajak klien mengisi formulir data"
         >
           <IconWhatsApp size={14} />
-          <span>Kirim Link ke WhatsApp</span>
+          <span>Kirim Link Isi Data (WA)</span>
+        </a>
+
+        <a
+          href={waReviewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 shadow-2xs hover:bg-emerald-100 transition"
+          title="Kirim pesan WhatsApp mengundang review desain & kelola tamu"
+        >
+          <IconWhatsApp size={14} />
+          <span>Kirim Link Review & Tamu (WA)</span>
         </a>
 
         {canRegenerate && regenerateAction && (

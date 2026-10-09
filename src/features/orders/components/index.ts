@@ -7,3 +7,4 @@ export * from "./OrderSidebarActions";
 export * from "./OrderIcons";
 export * from "./OrderTemplateManager";
 export * from "./OrderStudioAccessCard";
+export * from "./OrderClientVariablesCard";

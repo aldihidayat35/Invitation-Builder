@@ -64,6 +64,7 @@ import {
   parseFormSubmission,
   validateInvitationData,
   type DataIssue,
+  type FormField,
   type FormGroup,
 } from "@/lib/engine";
 import { createInvitation } from "@/features/invitations/service";
@@ -110,6 +111,16 @@ function requirePlatformOwner(actor: Actor): void {
   }
 }
 
+export interface OrderClientVariablesSummary {
+  hasData: boolean;
+  filledCount: number;
+  totalCount: number;
+  lastUpdated: Date | null;
+  groups: FormGroup[];
+  values: Record<string, string>;
+  errors: Record<string, string>;
+}
+
 export interface OrderDetailModel {
   order: CustomerOrder;
   seller: { id: string; agencyName: string; slug: string };
@@ -119,6 +130,7 @@ export interface OrderDetailModel {
   template: { id: string; name: string; versionNo: number | null } | null;
   invitation: { id: string; title: string; slug: string; status: string } | null;
   events: OrderWorkflowEvent[];
+  variables: OrderClientVariablesSummary | null;
 }
 
 export async function getOrderDetail(
@@ -139,6 +151,68 @@ export async function getOrderDetail(
     order.invitationId ? findInvitationById(db, order.invitationId) : undefined,
     listOrderWorkflowEvents(db, order.id),
   ]);
+
+  let variablesSummary: OrderClientVariablesSummary | null = null;
+  let docVariables: FormField[] = [];
+  let variableGroups: FormGroup[] = [];
+  const variableValues: Record<string, string> = {};
+  const variableErrors: Record<string, string> = {};
+
+  if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
+      const fields = buildFormFields(doc.variables);
+      variableGroups = groupFormFields(fields);
+      for (const field of fields) {
+        variableValues[field.key] = formatFormValue(field, invitation.data[field.key]);
+      }
+      const issues = validateInvitationData(
+        createVariableRegistry(doc.variables),
+        invitation.data,
+      ).filter((i) => i.code !== "unknown_key");
+      for (const issue of issues) {
+        if (!(issue.key in variableErrors)) {
+          variableErrors[issue.key] = issue.message;
+        }
+      }
+      docVariables = fields;
+    }
+  } else if (order.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl && tmpl.publishedVersionNo !== null) {
+      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
+      if (ver) {
+        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
+        const fields = buildFormFields(doc.variables);
+        variableGroups = groupFormFields(fields);
+        for (const field of fields) {
+          variableValues[field.key] = formatFormValue(field, undefined);
+        }
+        docVariables = fields;
+      }
+    }
+  }
+
+  if (docVariables.length > 0) {
+    const filledCount = docVariables.filter((f) => {
+      const val = variableValues[f.key];
+      return typeof val === "string" && val.trim().length > 0;
+    }).length;
+
+    const portalUpdateEvent = events.find((e) => e.eventType === "portal_data_update");
+    const lastUpdated = portalUpdateEvent?.createdAt ?? (filledCount > 0 && invitation ? invitation.updatedAt : null);
+
+    variablesSummary = {
+      hasData: filledCount > 0,
+      filledCount,
+      totalCount: docVariables.length,
+      lastUpdated,
+      groups: variableGroups,
+      values: variableValues,
+      errors: variableErrors,
+    };
+  }
 
   return {
     order,
@@ -164,6 +238,7 @@ export async function getOrderDetail(
         }
       : null,
     events,
+    variables: variablesSummary,
   };
 }
 
@@ -1110,6 +1185,14 @@ export async function saveClientPortalInvitationData(
     action: "order.portal_data_update",
     entityType: "invitation",
     entityId: invitation.id,
+    metadata: { token, updatedKeys: Object.keys(stored) },
+  });
+
+  await insertOrderWorkflowEvent(db, {
+    orderId: portal.order.id,
+    actorId: null,
+    eventType: "portal_data_update",
+    note: `Klien memperbarui ${Object.keys(stored).length} data/variabel undangan melalui Portal Mandiri.`,
     metadata: { token, updatedKeys: Object.keys(stored) },
   });
 
