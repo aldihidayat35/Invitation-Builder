@@ -243,7 +243,7 @@ export default async function AdminDashboardPage() {
                       <td className="py-3 px-3 text-right">
                         <Link
                           href="/dashboard/admin/orders"
-                          className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 shadow-2xs hover:bg-stone-50"
+                          className="inline-flex items-center rounded-lg border border-[#D9CFC4] bg-white px-2.5 py-1 text-xs font-semibold text-[#664624] shadow-2xs hover:bg-[#FAF8F5] hover:text-[#2C221E] transition"
                         >
                           Proses Pesanan
                         </Link>

@@ -65,11 +65,11 @@
 }
 
 .button-outline {
-  border: 1px solid #5b5d5d;
-  color: white;
+  border: 1px solid #925003;
+  color: #925003;
   border-radius: 9px;
-  background: #22222233;
-  transition: background 0.2s;
+  background: #ffffff;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +78,19 @@
 }
 
 .button-outline:hover {
+  background: #925003;
+  color: #ffffff;
+}
+
+.hero-bg .button-outline {
+  border: 1px solid #5b5d5d;
+  color: white;
+  background: #22222233;
+}
+
+.hero-bg .button-outline:hover {
   background: #ffffff1a;
+  color: white;
 }
 
 .eyebrow {

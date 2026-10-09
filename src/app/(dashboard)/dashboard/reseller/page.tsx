@@ -166,7 +166,7 @@ export default async function ResellerDashboardPage() {
             </a>
             <Link
               href="/dashboard/reseller/storefront"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-2xs hover:bg-stone-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D9CFC4] bg-white px-3 py-1.5 text-xs font-semibold text-[#664624] shadow-2xs hover:bg-[#FAF8F5] hover:text-[#2C221E] transition"
             >
               Pengaturan Toko
             </Link>

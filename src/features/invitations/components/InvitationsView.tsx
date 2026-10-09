@@ -446,7 +446,7 @@ export function InvitationsView({
                       className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold transition ${
                         isCopied
                           ? "bg-emerald-600 text-white"
-                          : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50"
+                          : "bg-white text-[#664624] border border-[#D9CFC4] hover:bg-[#FAF8F5] hover:text-[#2C221E]"
                       }`}
                       title="Salin link publik"
                     >
@@ -475,7 +475,7 @@ export function InvitationsView({
                   <Link
                     href={`/dashboard/invitations/${invitation.id}/preview`}
                     target="_blank"
-                    className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-xs font-medium text-stone-600 shadow-2xs transition hover:bg-stone-50 hover:text-stone-900"
+                    className="inline-flex items-center justify-center rounded-xl border border-[#D9CFC4] bg-white p-2 text-xs font-medium text-[#664624] shadow-2xs transition hover:bg-[#FAF8F5] hover:text-[#2C221E]"
                     title="Buka Pratinjau Undangan"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -606,7 +606,7 @@ export function InvitationsView({
                           <Link
                             href={`/dashboard/invitations/${invitation.id}/preview`}
                             target="_blank"
-                            className="rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
+                            className="rounded-lg border border-[#D9CFC4] bg-white px-2.5 py-1.5 text-xs font-medium text-[#664624] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs"
                           >
                             Preview
                           </Link>
@@ -693,7 +693,7 @@ export function InvitationsView({
                 type="button"
                 onClick={() => setDeletingInvitation(null)}
                 disabled={isDeleting}
-                className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
+                className="rounded-xl border border-[#D9CFC4] bg-white px-4 py-2 text-xs font-semibold text-[#664624] transition hover:bg-[#FAF8F5] hover:text-[#2C221E] disabled:opacity-50"
               >
                 Batal
               </button>

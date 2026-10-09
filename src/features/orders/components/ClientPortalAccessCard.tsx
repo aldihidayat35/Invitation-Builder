@@ -112,7 +112,7 @@ export function ClientPortalAccessCard({
           href={portalRelativeUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 shadow-2xs hover:bg-stone-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#D9CFC4] bg-white px-3.5 py-2 text-xs font-semibold text-[#664624] shadow-2xs hover:bg-[#FAF8F5] hover:text-[#2C221E] transition"
         >
           <span>👁️</span> Buka Portal Klien ↗
         </a>

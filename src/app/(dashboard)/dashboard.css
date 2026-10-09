@@ -180,3 +180,12 @@ svg {
   outline: 2px solid var(--dash-accent);
   outline-offset: 2px;
 }
+
+/* Global Brown Theme: Ensure white buttons default to rich theme brown text */
+button.bg-white:not([class*="text-"]),
+a.bg-white:not([class*="text-"]),
+button[class*="bg-white"]:not([class*="text-"]):not([class*="bg-white/"]),
+a[class*="bg-white"]:not([class*="text-"]):not([class*="bg-white/"]) {
+  color: var(--dash-text, #2C221E);
+}
+

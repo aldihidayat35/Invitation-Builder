@@ -1112,7 +1112,7 @@ export function LandingView({
               </div>
               <div className="mt-3 flex gap-2">
                 <button
-                  className="arrow-circle border border-[#b7a28d] bg-white"
+                  className="arrow-circle border border-[#b7a28d] bg-white text-[#84633F] hover:text-[#2C221E] hover:border-[#84633F]"
                   type="button"
                   id="reviewPrev"
                   aria-label="Testimoni sebelumnya"
@@ -1123,7 +1123,7 @@ export function LandingView({
                   ←
                 </button>
                 <button
-                  className="arrow-circle border border-[#b7a28d] bg-white"
+                  className="arrow-circle border border-[#b7a28d] bg-white text-[#84633F] hover:text-[#2C221E] hover:border-[#84633F]"
                   type="button"
                   id="reviewNext"
                   aria-label="Testimoni berikutnya"
@@ -1208,7 +1208,7 @@ export function LandingView({
               <Link
                 href={currentUser ? "/dashboard/templates" : "/login?next=/dashboard/templates"}
                 id="mainCta"
-                className="flex h-[47px] w-full items-center justify-center gap-3 rounded-lg bg-white text-[12px] font-bold text-[#292929] transition hover:bg-[#f3e8dd]"
+                className="flex h-[47px] w-full items-center justify-center gap-3 rounded-lg bg-white text-[12px] font-bold text-[#664624] transition hover:bg-[#FAF4EC] hover:text-[#2C221E] shadow-sm"
                 onClick={() => showToast("Membuka studio pembuatan undangan...")}
               >
                 <span>Mulai Gratis Sekarang</span>
@@ -1345,7 +1345,7 @@ export function LandingView({
             <button
               id="closeModal"
               type="button"
-              className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-white text-[#333] shadow"
+              className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-white text-[#664624] hover:text-[#2C221E] border border-[#EBDCCB] shadow transition-colors"
               aria-label="Tutup detail"
               onClick={() => setModalTemplate(null)}
             >
@@ -1382,7 +1382,7 @@ export function LandingView({
                     href={modalTemplate.previewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="button-outline flex items-center justify-center gap-1.5 px-4 py-3 text-[12.5px] font-semibold text-[#925003] border-[#925003] hover:bg-[#925003]/10"
+                    className="button-outline flex items-center justify-center gap-1.5 px-4 py-3 text-[12.5px] font-semibold !text-[#925003] border-[#925003] hover:!bg-[#925003] hover:!text-white"
                     title="Buka Live Preview di tab baru"
                   >
                     <span>Live Preview</span>
@@ -1391,7 +1391,7 @@ export function LandingView({
                 ) : null}
                 <Link
                   href={`/templates/${getTemplateSlug(modalTemplate)}`}
-                  className="button-outline flex-1 px-4 py-3 text-[12.5px] font-semibold text-[#925003] border-[#925003] hover:bg-[#925003]/10 flex items-center justify-center gap-1.5"
+                  className="button-outline flex-1 px-4 py-3 text-[12.5px] font-semibold !text-[#925003] border-[#925003] hover:!bg-[#925003] hover:!text-white flex items-center justify-center gap-1.5"
                   onClick={() => setModalTemplate(null)}
                 >
                   <span>Lihat Detail</span>

@@ -130,7 +130,7 @@ export function DeleteUserModal({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
+            className="rounded-xl border border-[#D9CFC4] bg-white px-4 py-2.5 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs transition"
           >
             {isSelf ? "Tutup" : "Batal"}
           </button>

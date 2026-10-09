@@ -71,7 +71,7 @@ export function TemplateDetailView({
             href="/"
             className="group flex items-center gap-2 text-xs font-semibold text-[#8C5D2A] transition hover:text-[#5E3911]"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-full border border-[#DFCBB5] bg-white text-sm transition group-hover:-translate-x-0.5 group-hover:border-[#8C5D2A]">
+            <span className="grid h-7 w-7 place-items-center rounded-full border border-[#DFCBB5] bg-white text-sm text-[#8C5D2A] transition group-hover:-translate-x-0.5 group-hover:border-[#8C5D2A]">
               ←
             </span>
             <span className="hidden sm:inline">Kembali ke Katalog Utama</span>
@@ -290,7 +290,7 @@ export function TemplateDetailView({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-full bg-white text-stone-500 shadow-xs hover:text-stone-900"
+                className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#664624] hover:text-[#2C221E] border border-[#EBDCCB] shadow-xs"
                 aria-label="Tutup form"
               >
                 ✕
@@ -334,7 +334,7 @@ export function TemplateDetailView({
                         setIsModalOpen(false);
                         setOrderSuccess(null);
                       }}
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50 px-5 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                      className="w-full rounded-xl border border-[#D9CFC4] bg-white px-5 py-2.5 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs transition"
                     >
                       Selesai & Tutup
                     </button>

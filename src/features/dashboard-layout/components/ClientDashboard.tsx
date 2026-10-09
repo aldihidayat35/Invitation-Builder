@@ -109,13 +109,13 @@ export function ClientDashboard({
                   </Link>
                   <Link
                     href={`/dashboard/invitations/${invitation.id}/preview`}
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#D9CFC4] bg-white px-3 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs"
                   >
                     Preview
                   </Link>
                   <Link
                     href={`/dashboard/invitations/${invitation.id}/rsvp`}
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#D9CFC4] bg-white px-3 py-2 text-xs font-semibold text-[#664624] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs"
                   >
                     RSVP
                   </Link>
