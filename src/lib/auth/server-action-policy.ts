@@ -19,6 +19,7 @@ const ownerOnly = [
   "toggleResellerStatusAction",
   "transitionOrderAction",
   "configureProductionAction",
+  "changeOrderTemplateAction",
   "createOrderProjectAction",
   "transitionProductionAction",
   "updatePaymentAction",

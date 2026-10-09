@@ -134,10 +134,15 @@ export async function snapshots(invitationId: string) {
 }
 
 /** Unauthenticated: used by the public `/i/[slug]` route only. */
-export async function getPublic(slug: string, guestToken?: string) {
+export async function getPublic(
+  slug: string,
+  guestToken?: string,
+  options?: { allowDraft?: boolean },
+) {
   return service.getPublicInvitation(await getDb(), {
     slug,
     ...(guestToken !== undefined && { guestToken }),
+    allowDraft: options?.allowDraft,
   });
 }
 

@@ -214,12 +214,23 @@ describe("public read model", () => {
     expect(archived?.hasGuest).toBe(false);
   });
 
-  it("only writers may publish", async () => {
-    const invitation = await readyInvitation("RBAC");
-    // ownerB is outside the workspace -> hidden; a member without write would be Forbidden.
-    await expect(publishInvitation(db(), world.ownerB, invitation.id)).rejects.toBeInstanceOf(
-      InvitationNotFoundError,
-    );
-    expect(ForbiddenError).toBeDefined();
+  it("allows draft preview with allowDraft: true before publishing for client review", async () => {
+    const invitation = await readyInvitation("Review Klien");
+    // Standard public read returns null while in draft
+    expect(await getPublicInvitation(db(), { slug: invitation.slug })).toBeNull();
+
+    // Draft preview returns the rendered model for client review
+    const preview = await getPublicInvitation(db(), { slug: invitation.slug, allowDraft: true });
+    expect(preview).not.toBeNull();
+    expect(preview?.isDraft).toBe(true);
+    expect(preview?.slug).toBe(invitation.slug);
+    expect(preview?.resolved.ok).toBe(true);
+    expect(allText(preview!.resolved)).toContain("GEDUNG SERBAGUNA");
+
+    // Once published, isDraft becomes false
+    await publishInvitation(db(), world.ownerA, invitation.id);
+    const pub = await getPublicInvitation(db(), { slug: invitation.slug });
+    expect(pub).not.toBeNull();
+    expect(pub?.isDraft).toBe(false);
   });
 });

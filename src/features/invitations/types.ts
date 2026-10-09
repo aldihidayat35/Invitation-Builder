@@ -66,4 +66,6 @@ export interface PublicInvitationModel {
   readonly guestName?: string;
   /** True only when a valid guest token was supplied for this invitation. */
   readonly hasGuest: boolean;
+  /** True when rendered from an active draft prior to publication. */
+  readonly isDraft?: boolean;
 }

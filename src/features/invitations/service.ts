@@ -757,30 +757,62 @@ export async function listInvitationSnapshots(
  */
 export async function getPublicInvitation(
   db: Database,
-  input: { slug: string; guestToken?: string },
+  input: { slug: string; guestToken?: string; allowDraft?: boolean },
 ): Promise<PublicInvitationModel | null> {
   if (input.slug.length === 0 || input.slug.length > 120) return null;
   const row = await findInvitationBySlug(db, input.slug);
-  if (!row || row.status !== "published" || !row.activePublishedSnapshotId) return null;
-  const snapshot = await findSnapshotById(db, row.activePublishedSnapshotId);
-  if (!snapshot || snapshot.invitationId !== row.id) return null;
+  if (!row || row.status === "archived") return null;
 
-  let guest: GuestData = {};
-  if (input.guestToken) {
-    const found = await findGuestByToken(db, input.guestToken);
-    if (found && found.invitationId === row.id && found.status !== "archived") {
-      guest = { name: found.name };
+  // 1. If published, load from the immutable active snapshot (FR-PUB-001)
+  if (row.status === "published" && row.activePublishedSnapshotId) {
+    const snapshot = await findSnapshotById(db, row.activePublishedSnapshotId);
+    if (snapshot && snapshot.invitationId === row.id) {
+      let guest: GuestData = {};
+      if (input.guestToken) {
+        const found = await findGuestByToken(db, input.guestToken);
+        if (found && found.invitationId === row.id && found.status !== "archived") {
+          guest = { name: found.name };
+        }
+      }
+      const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
+      return {
+        title: row.title,
+        slug: row.slug,
+        revisionNo: snapshot.revisionNo,
+        resolved: resolveDocument(document, snapshot.data, guest),
+        ...(guest.name !== undefined && { guestName: guest.name }),
+        hasGuest: guest.name !== undefined,
+        isDraft: false,
+      };
     }
   }
-  const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
-  return {
-    title: row.title,
-    slug: row.slug,
-    revisionNo: snapshot.revisionNo,
-    resolved: resolveDocument(document, snapshot.data, guest),
-    ...(guest.name !== undefined && { guestName: guest.name }),
-    hasGuest: guest.name !== undefined,
-  };
+
+  // 2. If allowDraft is requested, render the active pinned template draft for client review (P-04, FR-PRV-001)
+  if (input.allowDraft) {
+    try {
+      const { document } = await loadPinnedDocument(db, row);
+      let guest: GuestData = {};
+      if (input.guestToken) {
+        const found = await findGuestByToken(db, input.guestToken);
+        if (found && found.invitationId === row.id && found.status !== "archived") {
+          guest = { name: found.name };
+        }
+      }
+      return {
+        title: row.title,
+        slug: row.slug,
+        revisionNo: 0,
+        resolved: resolveDocument(document, row.data, guest),
+        ...(guest.name !== undefined && { guestName: guest.name }),
+        hasGuest: guest.name !== undefined,
+        isDraft: true,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 /**

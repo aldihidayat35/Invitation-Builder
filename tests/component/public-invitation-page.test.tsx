@@ -29,4 +29,13 @@ describe("PublicInvitationPage (Live Preview Route)", () => {
     expect(screen.getByTestId("public-invitation")).toBeInTheDocument();
     expect(screen.getByTestId("greeting-name")).toHaveTextContent("Budi Santoso");
   });
+
+  it("handles unknown slug by throwing notFound", async () => {
+    await expect(
+      PublicInvitationPage({
+        params: Promise.resolve({ slug: "non-existent-slug-xyz" }),
+        searchParams: Promise.resolve({}),
+      }),
+    ).rejects.toThrow();
+  });
 });
