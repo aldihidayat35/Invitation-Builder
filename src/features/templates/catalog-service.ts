@@ -177,11 +177,16 @@ export async function getCatalogTemplateBySlug(
 ): Promise<CatalogTemplateItem | null> {
   const cleanSlug = slug.trim().toLowerCase();
 
-  // 1. Direct slug match on published templates
+  const publicCondition = and(
+    ne(templates.status, "archived"),
+    or(eq(templates.status, "published"), eq(templates.isPublic, true)),
+  );
+
+  // 1. Direct slug match on published or public templates
   let [row] = await db
     .select()
     .from(templates)
-    .where(and(eq(templates.slug, cleanSlug), eq(templates.status, "published")))
+    .where(and(eq(templates.slug, cleanSlug), publicCondition))
     .limit(1);
 
   // 2. Lookup by UUID directly if cleanSlug is a valid UUID
@@ -190,7 +195,7 @@ export async function getCatalogTemplateBySlug(
     [row] = await db
       .select()
       .from(templates)
-      .where(and(eq(templates.id, cleanSlug), eq(templates.status, "published")))
+      .where(and(eq(templates.id, cleanSlug), publicCondition))
       .limit(1);
   }
 
@@ -201,17 +206,17 @@ export async function getCatalogTemplateBySlug(
       [row] = await db
         .select()
         .from(templates)
-        .where(and(eq(templates.id, rawId), eq(templates.status, "published")))
+        .where(and(eq(templates.id, rawId), publicCondition))
         .limit(1);
     }
   }
 
-  // 4. Fallback search: check published templates where slugified name matches cleanSlug
+  // 4. Fallback search: check published/public templates where slugified name matches cleanSlug
   if (!row) {
     const allPublished = await db
       .select()
       .from(templates)
-      .where(eq(templates.status, "published"));
+      .where(publicCondition);
 
     const matched = allPublished.find((t) => {
       const generated = t.name

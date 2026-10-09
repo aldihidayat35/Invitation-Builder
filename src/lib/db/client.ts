@@ -39,6 +39,12 @@ async function open(url: string): Promise<Database> {
       }
       conn = await connectPglite(dataDir);
       await migratePglite(conn);
+      try {
+        const { seedDev } = await import("./seed");
+        await seedDev(conn.db);
+      } catch (seedErr) {
+        console.warn("[pglite] Auto-seed failed on recovery:", seedErr);
+      }
     }
     return conn.db;
   }

@@ -7,7 +7,6 @@
 import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
 import { resolveDocument } from "@/lib/engine";
 import type { PublicInvitationModel } from "./service";
-import { getDb } from "@/lib/db/client";
 import { findTemplateBySlug } from "@/lib/db/repositories/templates";
 
 function formatGuestName(rawTokenOrName?: string): string | undefined {
@@ -1259,6 +1258,7 @@ export async function getDemoInvitation(
   } else {
     // Try to find if slug matches a published template in DB
     try {
+      const { getDb } = await import("@/lib/db/client");
       const db = await getDb();
       const tpl = await findTemplateBySlug(db, clean);
       if (tpl) {
