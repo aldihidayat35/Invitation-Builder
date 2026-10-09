@@ -7,6 +7,7 @@ import { listLibrary } from "@/features/templates/api";
 import { listAll } from "@/features/invitations/api";
 import {
   IconAnalytics,
+  IconBook,
   IconComponentStudio,
   IconFlask,
   IconHome,
@@ -211,6 +212,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Branding & Domain",
           icon: <IconUsers />,
           hint: "Kustomisasi logo & domain toko",
+        },
+        {
+          href: "/dashboard/reseller/guide",
+          label: "Panduan Seller",
+          icon: <IconBook />,
+          hint: "Cara kerja, aturan & FAQ seller",
         },
       ],
     });

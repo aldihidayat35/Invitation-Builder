@@ -88,7 +88,7 @@ export function ResellerOrdersTable({ orders }: { orders: ResellerOrderItem[] })
                       <strong className="block font-medium text-stone-900">
                         {order.customerName}
                       </strong>
-                      <span className="text-[11px] text-stone-400">{order.customerEmail}</span>
+                      <span className="text-[11px] text-stone-400">{order.customerEmail || "-"}</span>
                     </td>
                     <td className="py-3 px-3">
                       {order.groomBrideNames ? (

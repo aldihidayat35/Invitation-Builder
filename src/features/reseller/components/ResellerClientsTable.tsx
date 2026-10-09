@@ -79,7 +79,7 @@ export function ResellerClientsTable({ clients }: ResellerClientsTableProps) {
                       </td>
                       <td>
                         <div style={{ fontSize: 12 }}>
-                          <div>{c.email}</div>
+                          <div>{c.email || "-"}</div>
                           {c.whatsapp && (
                             <div style={{ color: "var(--dash-muted)", marginTop: 2 }}>
                               📱 {c.whatsapp}

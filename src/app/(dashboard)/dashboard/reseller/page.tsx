@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getResellerOverview, getResellerOrders, getResellerOrderTrends } from "@/features/reseller/api";
 import { KpiStatCard, TrendLineChart, StatusDonutChart } from "@/features/analytics";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
+import { SellerOnboardingGuide } from "@/features/reseller/components";
 import { requireReseller } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -18,14 +19,31 @@ const STATUS_CONFIG: Record<string, { label: string; badgeClass: string }> = {
   cancelled: { label: "Dibatalkan", badgeClass: "bg-rose-100 text-rose-900 border-rose-300" },
 };
 
-export default async function ResellerDashboardPage() {
+interface ResellerDashboardPageProps {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function ResellerDashboardPage({ searchParams }: ResellerDashboardPageProps) {
   await requireReseller();
+  const query = searchParams ? await searchParams : {};
+  const viewParam = typeof query.view === "string" ? query.view : undefined;
 
   const [stats, recentOrders, trends] = await Promise.all([
     getResellerOverview(),
     getResellerOrders(5),
     getResellerOrderTrends(14),
   ]);
+
+  // Show onboarding guide for brand-new sellers who haven't received any orders yet
+  if (stats.totalOrders === 0 && viewParam !== "dashboard") {
+    return (
+      <SellerOnboardingGuide
+        agencyName={stats.agencyName}
+        slug={stats.slug}
+        showDashboardLink={true}
+      />
+    );
+  }
 
   const donutSegments = [
     { label: "Pesanan Baru", value: stats.newOrders, color: "#D4AF37" },
@@ -41,6 +59,12 @@ export default async function ResellerDashboardPage() {
         description="Kelola toko online seller Anda, pantau pemesanan calon pengantin, dan lihat progres pengerjaan website undangan oleh Admin."
         actions={
           <>
+            <Link
+              href="/dashboard/reseller/guide"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"
+            >
+              <span>📖 Panduan Seller</span>
+            </Link>
             <Link
               href="/dashboard/reseller/orders"
               className="inline-flex items-center gap-2 rounded-xl border border-stone-700 bg-[#292524] px-4 py-2.5 text-xs font-semibold text-stone-200 hover:bg-[#342F2C] transition-colors"

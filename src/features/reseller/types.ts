@@ -19,7 +19,7 @@ export interface ResellerOverviewStats {
 export interface ResellerOrderItem {
   id: string;
   customerName: string;
-  customerEmail: string;
+  customerEmail: string | null;
   customerWhatsapp: string;
   groomBrideNames?: string | null;
   eventDate?: Date | null;
@@ -38,7 +38,7 @@ export interface ResellerOrderItem {
 export interface ResellerClientItem {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   whatsapp?: string | null;
   clientAccessToken?: string | null;
   status: string;
