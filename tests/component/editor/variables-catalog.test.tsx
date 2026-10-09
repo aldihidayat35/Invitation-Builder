@@ -250,5 +250,64 @@ describe("VariablesCatalogPanel & Inspector Variables Tab", () => {
         updatedEl.content.segments.some((s) => "bind" in s && s.bind === "guest.name"),
     ).toBe(true);
   });
+
+  it("allows 1-click binding of regular text element to guest.name directly in Inspector text panel", () => {
+    const doc = createTestDoc();
+    const store = createEditorStore({ document: doc, revision: 1 });
+    // Plain unbound text element
+    store.getState().patchElement("el_text_1", (el) => {
+      if (el.type !== "text") return el;
+      return {
+        ...el,
+        content: { segments: [{ text: "Kepada Yth. Bapak/Ibu" }] },
+      };
+    });
+    store.getState().selectElements(["el_text_1"]);
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_test">
+        <Inspector />
+      </EditorProvider>,
+    );
+
+    // Inspector is in Properties tab; expand "Teks & tipografi" section
+    const textSectionHeader = screen.getByText("Teks & tipografi");
+    fireEvent.click(textSectionHeader);
+
+    // Plain text now reveals the 1-click button
+    const quickGuestBtn = screen.getByTestId("bind-guest-quick-btn-0");
+    expect(quickGuestBtn).toBeDefined();
+
+    // Click 1-click button
+    fireEvent.click(quickGuestBtn);
+
+    // Verify it is bound to guest.name with fallback preserved
+    const updatedEl = store
+      .getState()
+      .history.present.sections[0]?.elements.find((e) => e.id === "el_text_1");
+    expect(
+      updatedEl?.type === "text" &&
+        updatedEl.content.segments.some(
+          (s) => "bind" in s && s.bind === "guest.name" && s.fallback === "Kepada Yth. Bapak/Ibu",
+        ),
+    ).toBe(true);
+
+    // Verify guestBoundCard is shown
+    const boundCard = screen.getByTestId("guest-bound-card-0");
+    expect(boundCard).toBeDefined();
+    expect(screen.getByText("Terhubung ke Nama Tamu Undangan")).toBeDefined();
+
+    // Test unbind button returns it to regular text
+    const unbindBtn = screen.getByTestId("unbind-guest-btn-0");
+    fireEvent.click(unbindBtn);
+
+    const revertedEl = store
+      .getState()
+      .history.present.sections[0]?.elements.find((e) => e.id === "el_text_1");
+    expect(
+      revertedEl?.type === "text" &&
+        revertedEl.content.segments.every((s) => "text" in s),
+    ).toBe(true);
+  });
 });
 

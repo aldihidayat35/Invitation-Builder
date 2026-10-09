@@ -6181,7 +6181,108 @@ textarea.input {
 .variableConvertRow {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.guestBindQuickBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #c2410c;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.guestBindQuickBtn:hover:not(:disabled) {
+  background: #ffedd5;
+  border-color: #ea580c;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.15);
+}
+
+.guestBoundBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.guestBoundHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.guestBoundTitle {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9a3412;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.guestBoundChip {
+  font-family: monospace;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+}
+
+.guestBoundActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.guestBoundSimBtn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9a3412;
+  background: #ffedd5;
+  border: 1px solid #fed7aa;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.guestBoundSimBtn:hover {
+  background: #fed7aa;
+}
+
+.guestBoundUnbindBtn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #78716c;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.guestBoundUnbindBtn:hover {
+  background: #f5f5f4;
+  color: #1c1917;
 }
 
 .variableConvertBtn {
@@ -6410,6 +6511,53 @@ textarea.input {
   color: #818cf8;
   background: rgba(99, 102, 241, 0.15);
   border-color: rgba(99, 102, 241, 0.35);
+}
+
+.shell[data-theme="dark"] .guestBindQuickBtn {
+  background: #2b170c;
+  color: #fdba74;
+  border-color: #7c2d12;
+}
+
+.shell[data-theme="dark"] .guestBindQuickBtn:hover:not(:disabled) {
+  background: #3c1e0e;
+  border-color: #ea580c;
+}
+
+.shell[data-theme="dark"] .guestBoundBox {
+  background: #251813;
+  border-color: #5d2813;
+}
+
+.shell[data-theme="dark"] .guestBoundTitle {
+  color: #fdba74;
+}
+
+.shell[data-theme="dark"] .guestBoundChip {
+  background: #3b1e10;
+  color: #fed7aa;
+  border-color: #5d2813;
+}
+
+.shell[data-theme="dark"] .guestBoundSimBtn {
+  background: #3b1e10;
+  color: #fdba74;
+  border-color: #7c2d12;
+}
+
+.shell[data-theme="dark"] .guestBoundSimBtn:hover {
+  background: #4a2412;
+}
+
+.shell[data-theme="dark"] .guestBoundUnbindBtn {
+  background: #1e2029;
+  border-color: #2e3240;
+  color: #94a3b8;
+}
+
+.shell[data-theme="dark"] .guestBoundUnbindBtn:hover {
+  background: #282b37;
+  color: #ffffff;
 }
 
 .shell[data-theme="dark"] .variableConvertBox {

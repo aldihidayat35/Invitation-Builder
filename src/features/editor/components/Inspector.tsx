@@ -1329,9 +1329,17 @@ function TextPanel({
                     </p>
                   </>
                 ) : isGuest ? (
-                  <>
+                  <div className={styles.guestBoundBox} data-testid={`guest-bound-card-${index}`}>
+                    <div className={styles.guestBoundHeader}>
+                      <span className={styles.guestBoundTitle}>
+                        <span>✉️</span>
+                        <span>Terhubung ke Nama Tamu Undangan</span>
+                      </span>
+                      <span className={styles.guestBoundChip}>URL ?to=Nama</span>
+                    </div>
+
                     <FieldRow
-                      label="Teks Cadangan (Fallback jika nama tamu kosong)"
+                      label="Sapaan Cadangan (Fallback jika tanpa tautan khusus)"
                       htmlFor={`var-guest-fallback-${index}`}
                     >
                       <input
@@ -1341,7 +1349,7 @@ function TextPanel({
                         value={
                           typeof segment.fallback === "string"
                             ? segment.fallback
-                            : "Bapak / Ibu / Saudara(i)"
+                            : "Bapak/Ibu/Saudara(i)"
                         }
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1349,10 +1357,43 @@ function TextPanel({
                         }}
                       />
                     </FieldRow>
+
+                    <div className={styles.guestBoundActions}>
+                      {onOpenVariablesTab && (
+                        <button
+                          type="button"
+                          className={styles.guestBoundSimBtn}
+                          data-testid={`open-sim-tab-btn-${index}`}
+                          onClick={onOpenVariablesTab}
+                          title="Buka tab variabel untuk simulasi nama tamu"
+                        >
+                          👁️ Buka Simulasi Nama Tamu
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.guestBoundUnbindBtn}
+                        data-testid={`unbind-guest-btn-${index}`}
+                        disabled={readOnly}
+                        onClick={() =>
+                          act().unbindTextSegment(
+                            id,
+                            index,
+                            typeof segment.fallback === "string" && segment.fallback.trim()
+                              ? segment.fallback
+                              : "Bapak/Ibu/Saudara(i)",
+                          )
+                        }
+                        title="Lepas variabel nama tamu dan kembalikan ke teks biasa"
+                      >
+                        Lepas ke Teks Biasa
+                      </button>
+                    </div>
+
                     <p className={styles.variableHint}>
-                      Secara otomatis diisi nama tamu penerima dari tautan undangan.
+                      Otomatis diisi nama tamu penerima dari tautan personal WhatsApp calon pengantin.
                     </p>
-                  </>
+                  </div>
                 ) : (
                   <FieldRow label="Nilai Cadangan (Fallback)" htmlFor={`var-fb-${index}`}>
                     <input
@@ -1413,6 +1454,20 @@ function TextPanel({
 
             {!readOnly && (
               <div className={styles.variableConvertRow}>
+                <button
+                  type="button"
+                  className={styles.guestBindQuickBtn}
+                  data-testid={`bind-guest-quick-btn-${index}`}
+                  onClick={() => {
+                    const fallbackText = segment.text.trim() || "Bapak/Ibu/Saudara(i)";
+                    act().bindTextSegment(id, index, "guest.name", fallbackText);
+                  }}
+                  title="Sambungkan teks ini langsung ke Nama Tamu Undangan (guest.name)"
+                >
+                  <span>✉️</span>
+                  <span>Pasang Nama Tamu (guest.name)</span>
+                </button>
+
                 <button
                   type="button"
                   className={styles.variableConvertBtn}
