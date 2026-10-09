@@ -34,6 +34,7 @@ import {
   IconReplay,
   IconSection,
   IconSendBack,
+  IconSliders,
   IconSparkle,
   IconTrash,
   IconUngroup,
@@ -47,6 +48,12 @@ import { AnimationPanel } from "./AnimationPanel";
 import { SectionTransitionControl } from "./SectionTransitionControl";
 import { ShadowControl } from "./ShadowControl";
 import { usePanelSectionOrder } from "./usePanelSectionOrder";
+import {
+  VariablesCatalogPanel,
+  generateKeyFromLabel,
+  getVariableCategory,
+} from "./VariablesCatalogPanel";
+import varStyles from "./VariablesCatalog.module.css";
 import styles from "./editor.module.css";
 
 import { FONT_CATEGORIES, INVITATION_FONTS, ensureFontLoaded } from "@/lib/fonts";
@@ -71,6 +78,10 @@ export function Inspector() {
   const selectedIds = useEditor((s) => s.selectedIds);
   const activeSectionId = useEditor((s) => s.activeSectionId);
   const readOnly = useEditor((s) => s.readOnly);
+  const [activeTab, setActiveTab] = useState<"properties" | "variables">("properties");
+
+  const totalVars = doc.variables.length;
+  const isElementSelected = selectedIds.length > 0;
 
   let body;
   if (selectedIds.length === 1) {
@@ -81,6 +92,7 @@ export function Inspector() {
         element={loc.element}
         readOnly={readOnly}
         sectionId={loc.section.id}
+        onOpenVariablesTab={() => setActiveTab("variables")}
       />
     ) : null;
   } else if (selectedIds.length > 1) {
@@ -152,7 +164,47 @@ export function Inspector() {
 
   return (
     <aside className={styles.inspector} aria-label="Inspector" data-testid="inspector">
-      {body}
+      <nav className={varStyles.inspectorTabBar} role="tablist" aria-label="Tab Inspector">
+        <button
+          type="button"
+          role="tab"
+          className={varStyles.inspectorTab}
+          data-active={activeTab === "properties"}
+          data-testid="inspector-tab-properties"
+          onClick={() => setActiveTab("properties")}
+          aria-selected={activeTab === "properties"}
+        >
+          <IconSliders size={13} />
+          <span>Properti</span>
+          {isElementSelected && (
+            <span className={varStyles.tabBadge} title={`${selectedIds.length} elemen dipilih`}>
+              {selectedIds.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          className={varStyles.inspectorTab}
+          data-active={activeTab === "variables"}
+          data-testid="inspector-tab-variables"
+          onClick={() => setActiveTab("variables")}
+          aria-selected={activeTab === "variables"}
+        >
+          <IconVariable size={13} />
+          <span>Variabel Undangan</span>
+          <span className={varStyles.tabBadge} title={`${totalVars} variabel terdaftar`}>
+            {totalVars}
+          </span>
+        </button>
+      </nav>
+
+      {activeTab === "variables" ? (
+        <VariablesCatalogPanel onSwitchToProperties={() => setActiveTab("properties")} />
+      ) : (
+        body
+      )}
     </aside>
   );
 }
@@ -772,10 +824,12 @@ function ElementPanel({
   element,
   readOnly,
   sectionId,
+  onOpenVariablesTab,
 }: {
   element: Element;
   readOnly: boolean;
   sectionId: string;
+  onOpenVariablesTab?: () => void;
 }) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
@@ -805,7 +859,12 @@ function ElementPanel({
           defaultOpen={false}
           dragProps={getDragProps("insp-content")}
         >
-          <TextPanel element={element} readOnly={readOnly} tokens={tokens} />
+          <TextPanel
+            element={element}
+            readOnly={readOnly}
+            tokens={tokens}
+            onOpenVariablesTab={onOpenVariablesTab}
+          />
         </PanelSection>
       );
     }
@@ -1068,10 +1127,12 @@ function TextPanel({
   element,
   readOnly,
   tokens,
+  onOpenVariablesTab,
 }: {
   element: TextElement;
   readOnly: boolean;
   tokens: { colors: Record<string, string>; fonts: Record<string, string> };
+  onOpenVariablesTab?: () => void;
 }) {
   const store = useEditorStore();
   const act = () => store.getState();
@@ -1087,6 +1148,8 @@ function TextPanel({
   const [newDefault, setNewDefault] = useState("");
   const [selectedExistingKey, setSelectedExistingKey] = useState("");
   const [convertError, setConvertError] = useState<string | null>(null);
+  const [isAutoKey, setIsAutoKey] = useState(true);
+  const [showAdvancedKey, setShowAdvancedKey] = useState(false);
 
   // Available text-compatible variables in document + runtime
   const declaredTextVars = doc.variables.filter((v) => isBindingCompatible("text", v.type));
@@ -1103,27 +1166,32 @@ function TextPanel({
     setConvertingIndex(index);
     setConvertMode("create");
     setConvertError(null);
-    const suggestedKey = uniqueVariableKey(doc, "custom.text");
+    setIsAutoKey(true);
+    setShowAdvancedKey(false);
+    const trimmed = initialText.trim();
+    const initialLabel = trimmed.length > 0 && trimmed.length <= 25 ? trimmed : "Teks Dinamis";
+    const suggestedKey = generateKeyFromLabel(initialLabel, declaredKeys);
     setNewKey(suggestedKey);
-    setNewLabel("Teks Dinamis");
+    setNewLabel(initialLabel);
     setNewDefault(initialText);
     setSelectedExistingKey(declaredTextVars[0]?.key ?? "guest.name");
   };
 
   const handleApplyConvert = (index: number) => {
     if (convertMode === "create") {
-      const key = newKey.trim();
+      const label = newLabel.trim() || "Teks Dinamis";
+      const key = (isAutoKey ? generateKeyFromLabel(label, declaredKeys) : newKey).trim();
       if (!variableKeySchema.safeParse(key).success) {
-        setConvertError("Kunci harus berupa dot path yang valid (mis. tamu.nama atau teks.pesan)");
+        setConvertError("Kunci harus berupa huruf, angka, titik, atau garis bawah.");
         return;
       }
       if (declaredKeys.has(key)) {
-        setConvertError("Kunci variabel ini sudah ada, gunakan kunci lain.");
+        setConvertError("Kunci variabel ini sudah ada, gunakan nama label lain.");
         return;
       }
       act().addVariable({
         key,
-        label: newLabel.trim() || "Teks Dinamis",
+        label,
         type: "text",
         default: newDefault,
       });
@@ -1393,57 +1461,241 @@ function TextPanel({
                 {convertError && <p className={styles.errorHint}>{convertError}</p>}
 
                 {convertMode === "create" ? (
-                  <>
-                    <FieldRow label="Label Variabel" htmlFor={`var-label-${index}`}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <FieldRow label="Nama Variabel / Label" htmlFor={`var-label-${index}`}>
                       <input
                         id={`var-label-${index}`}
                         className={styles.input}
                         value={newLabel}
-                        placeholder="Contoh: Nama Tamu, Ucapan"
-                        onChange={(e) => setNewLabel(e.target.value)}
+                        placeholder="Contoh: Nomor Meja Tamu, Dresscode, Waktu Akad"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewLabel(val);
+                          if (isAutoKey) {
+                            setNewKey(generateKeyFromLabel(val || "teks", declaredKeys));
+                          }
+                        }}
                       />
                     </FieldRow>
-                    <FieldRow label="Kunci Variabel (dot path)" htmlFor={`var-key-${index}`}>
-                      <input
-                        id={`var-key-${index}`}
-                        className={styles.input}
-                        value={newKey}
-                        placeholder="mis. custom.text"
-                        onChange={(e) => setNewKey(e.target.value)}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Nilai Dinamis Bawaan" htmlFor={`var-def-${index}`}>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "11px", color: "var(--dash-muted, #78716c)", marginRight: "2px" }}>
+                        Saran cepat:
+                      </span>
+                      {[
+                        { label: "Nama Pria", sample: "Danang", key: "couple.groom.nickname" },
+                        { label: "Nama Wanita", sample: "Sekar", key: "couple.bride.nickname" },
+                        { label: "Tanggal Acara", sample: "Minggu, 20 Oktober 2026", key: "event.ceremony.date" },
+                        { label: "Waktu Akad", sample: "08:00 WIB - Selesai", key: "event.ceremony.time" },
+                        { label: "Lokasi Acara", sample: "Gedung Pernikahan Sasana Kriya", key: "event.ceremony.location" },
+                        { label: "Nomor Meja", sample: "Meja VIP 01", key: "custom.nomorMeja" },
+                        { label: "Dresscode", sample: "Batik / Nuansa Pastel", key: "custom.dresscode" },
+                      ].map((sug) => (
+                        <button
+                          key={sug.label}
+                          type="button"
+                          style={{
+                            fontSize: "11px",
+                            padding: "2px 7px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--dash-border, #e7e5e4)",
+                            background: "var(--dash-surface-soft, #f5f5f4)",
+                            color: "var(--dash-text, #1c1917)",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => {
+                            setNewLabel(sug.label);
+                            setNewDefault((prev) => (prev.trim() ? prev : sug.sample));
+                            const targetKey = declaredKeys.has(sug.key)
+                              ? generateKeyFromLabel(sug.label, declaredKeys)
+                              : sug.key;
+                            setNewKey(targetKey);
+                            setIsAutoKey(false);
+                          }}
+                        >
+                          +{sug.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <FieldRow label="Contoh Teks Dinamis" htmlFor={`var-def-${index}`}>
                       <textarea
                         id={`var-def-${index}`}
                         className={styles.textarea}
                         rows={2}
                         value={newDefault}
+                        placeholder="Isi teks dinamis yang akan tampil di undangan..."
                         onChange={(e) => setNewDefault(e.target.value)}
                       />
                     </FieldRow>
-                  </>
-                ) : (
-                  <FieldRow label="Pilih Variabel" htmlFor={`var-pick-${index}`}>
-                    <select
-                      id={`var-pick-${index}`}
-                      className={styles.input}
-                      value={selectedExistingKey}
-                      onChange={(e) => setSelectedExistingKey(e.target.value)}
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "11px",
+                        color: "var(--dash-muted, #78716c)",
+                        marginTop: "2px",
+                      }}
                     >
-                      <optgroup label="Konteks Tamu (Runtime)">
-                        <option value="guest.name">Nama Tamu Undangan (guest.name)</option>
-                      </optgroup>
-                      {declaredTextVars.length > 0 && (
-                        <optgroup label="Variabel Terdaftar">
-                          {declaredTextVars.map((v) => (
-                            <option key={v.key} value={v.key}>
-                              {v.label} ({v.key})
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
-                  </FieldRow>
+                      <span>
+                        Kunci sistem:{" "}
+                        <code
+                          style={{
+                            fontSize: "10px",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            background: "rgba(0,0,0,0.06)",
+                          }}
+                        >
+                          {newKey}
+                        </code>
+                      </span>
+                      <button
+                        type="button"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#84633f",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          fontSize: "11px",
+                          padding: 0,
+                        }}
+                        onClick={() => setShowAdvancedKey((prev) => !prev)}
+                      >
+                        {showAdvancedKey ? "Sembunyikan Kunci" : "Ubah Kunci Manual"}
+                      </button>
+                    </div>
+
+                    {showAdvancedKey && (
+                      <FieldRow label="Kunci Teknis (Dot Path)" htmlFor={`var-key-${index}`}>
+                        <input
+                          id={`var-key-${index}`}
+                          className={styles.input}
+                          value={newKey}
+                          placeholder="mis. custom.nomor_meja"
+                          onChange={(e) => {
+                            setIsAutoKey(false);
+                            setNewKey(e.target.value);
+                          }}
+                        />
+                      </FieldRow>
+                    )}
+                  </div>
+                ) : (
+                  (() => {
+                    const groomBrideVars = declaredTextVars.filter(
+                      (v) => getVariableCategory(v.key, v.label) === "mempelai",
+                    );
+                    const eventVars = declaredTextVars.filter(
+                      (v) => getVariableCategory(v.key, v.label) === "acara",
+                    );
+                    const giftVars = declaredTextVars.filter(
+                      (v) => getVariableCategory(v.key, v.label) === "hadiah",
+                    );
+                    const customVars = declaredTextVars.filter((v) => {
+                      const cat = getVariableCategory(v.key, v.label);
+                      return cat !== "mempelai" && cat !== "acara" && cat !== "hadiah" && cat !== "tamu";
+                    });
+
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <FieldRow label="Pilih Variabel Terdaftar" htmlFor={`var-pick-${index}`}>
+                          <select
+                            id={`var-pick-${index}`}
+                            className={styles.input}
+                            value={selectedExistingKey}
+                            onChange={(e) => setSelectedExistingKey(e.target.value)}
+                          >
+                            <optgroup label="✉️ Konteks Tamu Undangan (Dari URL)">
+                              <option value="guest.name">Nama Tamu Undangan (guest.name)</option>
+                            </optgroup>
+                            {groomBrideVars.length > 0 && (
+                              <optgroup label="👰 Mempelai Pria & Wanita">
+                                {groomBrideVars.map((v) => {
+                                  const preview =
+                                    "default" in v && typeof v.default === "string" && v.default.trim()
+                                      ? `("${v.default}")`
+                                      : `(${v.key})`;
+                                  return (
+                                    <option key={v.key} value={v.key}>
+                                      {v.label} {preview}
+                                    </option>
+                                  );
+                                })}
+                              </optgroup>
+                            )}
+                            {eventVars.length > 0 && (
+                              <optgroup label="📅 Rangkaian Acara & Lokasi">
+                                {eventVars.map((v) => {
+                                  const preview =
+                                    "default" in v && typeof v.default === "string" && v.default.trim()
+                                      ? `("${v.default}")`
+                                      : `(${v.key})`;
+                                  return (
+                                    <option key={v.key} value={v.key}>
+                                      {v.label} {preview}
+                                    </option>
+                                  );
+                                })}
+                              </optgroup>
+                            )}
+                            {giftVars.length > 0 && (
+                              <optgroup label="🎁 Amplop Digital & Rekening">
+                                {giftVars.map((v) => {
+                                  const preview =
+                                    "default" in v && typeof v.default === "string" && v.default.trim()
+                                      ? `("${v.default}")`
+                                      : `(${v.key})`;
+                                  return (
+                                    <option key={v.key} value={v.key}>
+                                      {v.label} {preview}
+                                    </option>
+                                  );
+                                })}
+                              </optgroup>
+                            )}
+                            {customVars.length > 0 && (
+                              <optgroup label="📝 Variabel Kustom Dokumen">
+                                {customVars.map((v) => {
+                                  const preview =
+                                    "default" in v && typeof v.default === "string" && v.default.trim()
+                                      ? `("${v.default}")`
+                                      : `(${v.key})`;
+                                  return (
+                                    <option key={v.key} value={v.key}>
+                                      {v.label} {preview}
+                                    </option>
+                                  );
+                                })}
+                              </optgroup>
+                            )}
+                          </select>
+                        </FieldRow>
+
+                        {onOpenVariablesTab && (
+                          <button
+                            type="button"
+                            className={styles.ghostButton}
+                            onClick={onOpenVariablesTab}
+                            style={{
+                              fontSize: "11px",
+                              justifyContent: "center",
+                              padding: "4px 8px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <IconVariable size={12} />
+                            <span>Buka Tab Katalog &amp; Tambah dari Preset ↗</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()
                 )}
 
                 <div className={styles.variableConvertActions}>
