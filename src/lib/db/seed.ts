@@ -11,7 +11,22 @@ import {
   createResellerClient,
   createResellerWithProfile,
 } from "./repositories/resellers";
-import { findTemplateByName, insertTemplate } from "./repositories/templates";
+import {
+  findTemplateByName,
+  insertTemplate,
+  insertTemplateVersion,
+} from "./repositories/templates";
+import {
+  findInvitationBySlug,
+  insertInvitation,
+  insertPublishedSnapshot,
+  setActiveSnapshot,
+} from "./repositories/invitations";
+import {
+  createClassicFloralDemoDocument,
+  createModernMinimalDemoDocument,
+  createRoyalElegantDemoDocument,
+} from "@/features/invitations/demo-catalog";
 import {
   findUserByEmail,
   insertUser,
@@ -136,6 +151,8 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     {
       name: "Classic Floral",
       slug: "classic-floral-botanical",
+      demoSlug: "demo-classic-floral",
+      document: createClassicFloralDemoDocument(),
       description: "Desain undangan botanical dengan sentuhan floral lembut dan aksen sage green yang menenangkan.",
       category: "wedding",
       style: "botanical_sage",
@@ -159,6 +176,8 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     {
       name: "Royal Elegant",
       slug: "royal-elegant-jawa",
+      demoSlug: "demo-royal-elegant",
+      document: createRoyalElegantDemoDocument(),
       description: "Kemewahan motif batik Kencana dan aksen emas megah untuk perayaan agung adat Nusantara.",
       category: "wedding",
       style: "traditional_jawa",
@@ -181,6 +200,8 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
     {
       name: "Modern Minimal",
       slug: "modern-minimal-boho",
+      demoSlug: "demo-modern-minimal",
+      document: createModernMinimalDemoDocument(),
       description: "Konsep rustic terracotta kontemporer dengan tipografi editorial modern yang bersih dan berkarakter.",
       category: "wedding",
       style: "rustic_boho",
@@ -246,9 +267,9 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
   ];
 
   for (const tpl of catalogTemplatesSeed) {
-    const existing = await findTemplateByName(db, workspace.id, tpl.name);
+    let existing = await findTemplateByName(db, workspace.id, tpl.name);
     if (!existing) {
-      await insertTemplate(db, {
+      existing = await insertTemplate(db, {
         workspaceId: workspace.id,
         name: tpl.name,
         slug: tpl.slug,
@@ -267,9 +288,40 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
         publishedVersionNo: 1,
         publishedRevision: 1,
         revision: 1,
-        draftDocument: createEmptyDocument(),
+        draftDocument: ("document" in tpl && tpl.document) ? tpl.document : createEmptyDocument(),
         createdBy: user.id,
       });
+    }
+
+    if ("demoSlug" in tpl && tpl.demoSlug && "document" in tpl && tpl.document) {
+      const existingDemo = await findInvitationBySlug(db, tpl.demoSlug);
+      if (!existingDemo) {
+        const version = await insertTemplateVersion(db, {
+          templateId: existing.id,
+          versionNo: 1,
+          schemaVersion: 1,
+          document: tpl.document,
+          note: "Demo invitation snapshot",
+          createdBy: user.id,
+        });
+        const inv = await insertInvitation(db, {
+          workspaceId: workspace.id,
+          templateVersionId: version.id,
+          slug: tpl.demoSlug,
+          title: `${tpl.name} — Demo Undangan`,
+          data: {},
+          createdBy: user.id,
+        });
+        const snapshot = await insertPublishedSnapshot(db, {
+          invitationId: inv.id,
+          revisionNo: 1,
+          schemaVersion: 1,
+          document: tpl.document,
+          data: {},
+          createdBy: user.id,
+        });
+        await setActiveSnapshot(db, inv.id, snapshot.id);
+      }
     }
   }
 

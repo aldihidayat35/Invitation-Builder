@@ -7,6 +7,8 @@ import { PublicImage } from "../PublicImage";
 import styles from "./opening-canvas.module.css";
 import rendererStyles from "../DocumentRenderer.module.css";
 
+import type { ReactNode } from "react";
+
 export interface OpeningCoverCanvasProps {
   readonly openingSection: ResolvedSection;
   readonly nextSectionId?: string;
@@ -14,7 +16,8 @@ export interface OpeningCoverCanvasProps {
   readonly baseWidth: number;
   readonly runtimeMode: RuntimeMode;
   readonly onOpen?: () => void;
-  readonly renderElements: (section: ResolvedSection) => ReactElement[];
+  readonly renderElements?: (section: ResolvedSection) => ReactElement[];
+  readonly children?: ReactNode;
 }
 
 function TapHintIcon() {
@@ -43,6 +46,7 @@ export function OpeningCoverCanvas({
   baseWidth,
   renderElements,
   onOpen,
+  children,
 }: OpeningCoverCanvasProps) {
   const [isOpened, setIsOpened] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -161,7 +165,7 @@ export function OpeningCoverCanvas({
           ) : null}
 
           {/* Designer-crafted elements on Section 0 */}
-          {renderElements(openingSection)}
+          {renderElements ? renderElements(openingSection) : children}
         </div>
       </div>
 

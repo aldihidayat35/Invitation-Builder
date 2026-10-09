@@ -1,3 +1,5 @@
+"use client";
+
 import type { CSSProperties, ReactElement } from "react";
 import { AccessibleAnimatedText } from "@/features/animations/text-splitter";
 import { WidgetRuntime } from "@/features/widgets/runtime";
@@ -352,18 +354,17 @@ export function DocumentRenderer({
           tokens={document.tokens}
           baseWidth={document.baseWidth}
           runtimeMode={runtimeMode}
-          renderElements={(sec) =>
-            sec.elements.map((element, index) => (
-              <ElementView
-                key={element.id}
-                element={element}
-                tokens={document.tokens}
-                runtimeMode={runtimeMode}
-                priority={index === 0}
-              />
-            ))
-          }
-        />
+        >
+          {openingSection.elements.map((element, index) => (
+            <ElementView
+              key={element.id}
+              element={element}
+              tokens={document.tokens}
+              runtimeMode={runtimeMode}
+              priority={index === 0}
+            />
+          ))}
+        </OpeningCoverCanvas>
       ) : null}
       <div className={styles.document} data-renderer-document="" data-testid="renderer-document">
         {contentSections.map((section, index) => (

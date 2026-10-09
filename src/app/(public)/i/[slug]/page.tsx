@@ -1,26 +1,33 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublic } from "@/features/invitations/api";
+import { getDemoInvitation } from "@/features/invitations/demo-catalog";
 import { DocumentRenderer } from "@/features/renderer";
 import { PublicContextProvider } from "@/features/widgets/runtime";
 
 /** Live data: always read the active snapshot at request time (FR-PUB-001). */
 export const dynamic = "force-dynamic";
 
-// PRD §13.1/§19: noindex,nofollow by default; also set per-page so it never depends on layout order.
-export const metadata: Metadata = {
-  title: "Undangan",
-  robots: { index: false, follow: false },
-};
-
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+export async function generateMetadata({
+  params,
+}: PageProps<"/i/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const invitation =
+    (await getPublic(slug).catch(() => null)) || (await getDemoInvitation(slug));
+  return {
+    title: invitation ? `${invitation.title} — Undangan Digital` : "Undangan",
+    robots: { index: false, follow: false },
+  };
+}
+
 /**
- * Public invitation page. No login, no draft: it renders ONLY the active
- * PublishedSnapshot through the same HTML renderer as preview (P-04, P-06).
- * `?to=<token>` selects the guest context; invalid tokens fall back to generic.
+ * Public invitation page. Renders the active PublishedSnapshot through
+ * the DocumentRenderer. If not found in the DB (e.g. template catalog live previews
+ * like /i/demo-royal-elegant), resolves the interactive demo invitation model.
  */
 export default async function PublicInvitationPage({
   params,
@@ -28,8 +35,13 @@ export default async function PublicInvitationPage({
 }: PageProps<"/i/[slug]">) {
   const { slug } = await params;
   const query = await searchParams;
-  const token = first(query.to);
-  const invitation = await getPublic(slug, token && token.length <= 64 ? token : undefined);
+  const token = first(query.to) || first(query.guest);
+  let invitation = await getPublic(slug, token && token.length <= 64 ? token : undefined).catch(
+    () => null,
+  );
+  if (!invitation) {
+    invitation = await getDemoInvitation(slug, token);
+  }
   if (!invitation) notFound();
 
   return (

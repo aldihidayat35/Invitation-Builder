@@ -141,6 +141,8 @@ export async function getPublic(slug: string, guestToken?: string) {
   });
 }
 
+export { getDemoInvitation } from "./demo-catalog";
+
 export {
   GuestNotFoundError,
   InvitationArchivedError,
