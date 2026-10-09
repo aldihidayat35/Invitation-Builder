@@ -173,3 +173,37 @@ export const IconBook = () => (
     <path d="M8 7h8M8 11h6" />
   </Svg>
 );
+
+export const IconGlobe = () => (
+  <Svg size={20}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </Svg>
+);
+
+export const IconPalette = () => (
+  <Svg size={20}>
+    <circle cx="13.5" cy="6.5" r=".75" fill="currentColor" />
+    <circle cx="17.5" cy="10.5" r=".75" fill="currentColor" />
+    <circle cx="8.5" cy="7.5" r=".75" fill="currentColor" />
+    <circle cx="6.5" cy="12.5" r=".75" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z" />
+  </Svg>
+);
+
+export const IconShieldCheck = () => (
+  <Svg size={20}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="m9 12 2 2 4-4" />
+  </Svg>
+);
+
+export const IconServer = () => (
+  <Svg size={20}>
+    <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+    <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+    <line x1="6" x2="6.01" y1="6" y2="6" strokeWidth={2.5} />
+    <line x1="6" x2="6.01" y1="18" y2="18" strokeWidth={2.5} />
+  </Svg>
+);

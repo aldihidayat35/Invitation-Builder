@@ -10,16 +10,20 @@ import {
   IconBook,
   IconComponentStudio,
   IconFlask,
+  IconGlobe,
   IconHome,
   IconInvitation,
+  IconPalette,
   IconReceipt,
+  IconServer,
+  IconSettings,
+  IconShieldCheck,
+  IconStar,
   IconStorage,
   IconStore,
   IconTemplate,
   IconUsers,
   IconUserShield,
-  IconSettings,
-  IconStar,
 } from "./nav-icons";
 import { getPublicSiteSettings } from "@/features/site/api";
 import { switchWorkspaceAction } from "@/features/workspaces/actions";
@@ -59,7 +63,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   if (user.systemRole === "owner") {
     navGroups.push({
-      title: "Studio Produksi",
+      title: "Ringkasan & Analitik",
       items: [
         {
           href: "/dashboard",
@@ -69,11 +73,24 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           hint: "Ringkasan produksi workspace aktif",
         },
         {
-          href: "/dashboard/templates",
-          label: "Katalog Template",
-          icon: <IconTemplate />,
-          ...(templateCount !== null ? { badge: templateCount } : {}),
-          hint: "Desain template siap pakai",
+          href: "/dashboard/admin",
+          label: "Platform Analytics",
+          exact: true,
+          icon: <IconAnalytics />,
+          hint: "Ringkasan metrik & grafik platform",
+        },
+      ],
+    });
+
+    navGroups.push({
+      title: "Pesanan & Produksi",
+      items: [
+        {
+          href: "/dashboard/admin/orders",
+          label: "Pesanan Masuk",
+          icon: <IconReceipt />,
+          badge: "Baru",
+          hint: "Olah data & terbitkan undangan customer",
         },
         {
           href: "/dashboard/invitations",
@@ -83,10 +100,123 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           hint: "Undangan online klien, tamu & RSVP",
         },
         {
+          href: "/dashboard/templates",
+          label: "Katalog Template",
+          icon: <IconTemplate />,
+          ...(templateCount !== null ? { badge: templateCount } : {}),
+          hint: "Desain template siap pakai",
+        },
+        {
           href: "/dashboard/storage",
-          label: "Media & Storage",
+          label: "Media & Aset Desain",
           icon: <IconStorage />,
           hint: "Galeri media & kapasitas penyimpanan",
+        },
+      ],
+    });
+
+    navGroups.push({
+      title: "Mitra & Pengguna",
+      items: [
+        {
+          href: "/dashboard/admin/resellers",
+          label: "Mitra Seller",
+          icon: <IconStore />,
+          hint: "Kelola mitra seller & website toko",
+        },
+        {
+          href: "/dashboard/admin/users",
+          label: "Manajemen Pengguna",
+          icon: <IconUsers />,
+          hint: "Kelola akun pengguna, peran, & kredensial",
+        },
+        {
+          href: "/dashboard/admin/reviews",
+          label: "Ulasan Pelanggan",
+          icon: <IconStar />,
+          hint: "Kelola review & testimoni landing page",
+        },
+      ],
+    });
+
+    navGroups.push({
+      title: "Sistem & Konfigurasi",
+      items: [
+        {
+          href: "/dashboard/admin/settings",
+          label: "Pengaturan Umum",
+          icon: <IconSettings />,
+          hint: "Identitas aplikasi, logo, kontak & alamat",
+        },
+        {
+          href: "/dashboard/admin/storage",
+          label: "Storage Server",
+          icon: <IconServer />,
+          hint: "Kapasitas & kelola seluruh berkas media",
+        },
+        {
+          href: "/dashboard/admin/operations",
+          label: "Operasional & Audit",
+          icon: <IconShieldCheck />,
+          hint: "Keamanan, SLA, privasi, domain & recovery",
+        },
+      ],
+    });
+  }
+
+  if (user.systemRole === "reseller") {
+    navGroups.push({
+      title: "Penjualan & Pesanan",
+      items: [
+        {
+          href: "/dashboard/reseller",
+          label: "Dashboard Toko",
+          exact: true,
+          icon: <IconHome />,
+          hint: "Performa penjualan & analitik toko",
+        },
+        {
+          href: "/dashboard/reseller/orders",
+          label: "Pesanan Customer",
+          icon: <IconReceipt />,
+          hint: "Pantau status pesanan customer",
+        },
+        {
+          href: "/dashboard/reseller/clients",
+          label: "Klien Agensi",
+          icon: <IconUsers />,
+          hint: "Daftar klien & akun klien",
+        },
+      ],
+    });
+
+    navGroups.push({
+      title: "Toko & Branding",
+      items: [
+        {
+          href: "/dashboard/reseller/storefront",
+          label: "Website Toko",
+          icon: <IconGlobe />,
+          hint: "Etalase publik & link katalog Anda",
+        },
+        {
+          href: "/dashboard/reseller/branding",
+          label: "Branding & Domain",
+          icon: <IconPalette />,
+          hint: "Kustomisasi logo, warna & domain toko",
+        },
+      ],
+    });
+
+    navGroups.push({
+      title: "Pusat Bantuan",
+      items: [
+        {
+          href: "/dashboard/reseller/guide",
+          label: "Panduan Seller",
+          icon: <IconBook />,
+          badge: "Panduan",
+          hint: "Cara kerja, aturan & FAQ seller",
         },
       ],
     });
@@ -94,7 +224,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   if (user.systemRole === "client") {
     navGroups.push({
-      title: "Area Mempelai",
+      title: "Undangan Pernikahan",
       items: [
         {
           href: "/dashboard",
@@ -112,112 +242,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         },
         {
           href: "/dashboard/storage",
-          label: "Foto & Media",
+          label: "Foto & Media Galeri",
           icon: <IconStorage />,
           hint: "Kelola foto dan media undangan",
-        },
-      ],
-    });
-  }
-
-  if (user.systemRole === "owner") {
-    navGroups.push({
-      title: "Super Admin",
-      items: [
-        {
-          href: "/dashboard/admin",
-          label: "Platform Analytics",
-          exact: true,
-          icon: <IconAnalytics />,
-          hint: "Ringkasan metrik & grafik platform",
-        },
-        {
-          href: "/dashboard/admin/users",
-          label: "Manajemen Pengguna",
-          icon: <IconUserShield />,
-          hint: "Kelola akun pengguna, peran, & kredensial",
-        },
-        {
-          href: "/dashboard/admin/orders",
-          label: "Pesanan Masuk",
-          icon: <IconReceipt />,
-          badge: "Baru",
-          hint: "Olah data & terbitkan undangan customer",
-        },
-        {
-          href: "/dashboard/admin/resellers",
-          label: "Mitra Seller",
-          icon: <IconStore />,
-          hint: "Kelola mitra seller & website toko",
-        },
-        {
-          href: "/dashboard/admin/storage",
-          label: "Manajemen Storage",
-          icon: <IconStorage />,
-          hint: "Kapasitas & kelola seluruh berkas media",
-        },
-        {
-          href: "/dashboard/admin/reviews",
-          label: "Ulasan Pelanggan",
-          icon: <IconStar />,
-          hint: "Kelola review & testimoni landing page",
-        },
-        {
-          href: "/dashboard/admin/settings",
-          label: "Pengaturan Umum",
-          icon: <IconSettings />,
-          hint: "Identitas aplikasi, logo, kontak & alamat",
-        },
-        {
-          href: "/dashboard/admin/operations",
-          label: "Operasional & Audit",
-          icon: <IconUserShield />,
-          hint: "Keamanan, SLA, privasi, domain & recovery",
-        },
-      ],
-    });
-  }
-
-  if (user.systemRole === "reseller") {
-    navGroups.push({
-      title: "Portal Seller",
-      items: [
-        {
-          href: "/dashboard/reseller",
-          label: "Dashboard Toko",
-          exact: true,
-          icon: <IconHome />,
-          hint: "Performa penjualan & analitik toko",
-        },
-        {
-          href: "/dashboard/reseller/orders",
-          label: "Pesanan Customer",
-          icon: <IconReceipt />,
-          hint: "Pantau status pesanan customer",
-        },
-        {
-          href: "/dashboard/reseller/storefront",
-          label: "Website Toko",
-          icon: <IconTemplate />,
-          hint: "Etalase publik & domain khusus",
-        },
-        {
-          href: "/dashboard/reseller/clients",
-          label: "Klien Agensi",
-          icon: <IconUsers />,
-          hint: "Daftar klien & akun klien",
-        },
-        {
-          href: "/dashboard/reseller/branding",
-          label: "Branding & Domain",
-          icon: <IconUsers />,
-          hint: "Kustomisasi logo & domain toko",
-        },
-        {
-          href: "/dashboard/reseller/guide",
-          label: "Panduan Seller",
-          icon: <IconBook />,
-          hint: "Cara kerja, aturan & FAQ seller",
         },
       ],
     });
@@ -244,12 +271,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   }
 
   navGroups.push({
-    title: "Akun",
+    title: "Akun & Keamanan",
     items: [
       {
         href: "/dashboard/privacy",
         label: "Privasi & Data Saya",
-        icon: <IconUserShield />,
+        icon: <IconShieldCheck />,
         hint: "Ekspor, retensi, dan penghapusan data",
       },
     ],

@@ -64,22 +64,30 @@ export function DashboardSidebar({
 
   const renderBadge = (badge: number | string) => {
     const badgeStr = String(badge);
-    if (badgeStr.toLowerCase().includes("aktif")) {
+    if (badgeStr.toLowerCase().includes("aktif") || badgeStr.toLowerCase() === "panduan") {
       return (
-        <span className="inline-flex items-center rounded-lg bg-[#142A1D] border border-emerald-900/50 px-2 py-0.5 text-xs font-bold text-[#22C55E]">
+        <span className="inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10.5px] font-bold text-emerald-400 tracking-wide">
+          {badge}
+        </span>
+      );
+    }
+    if (badgeStr.toLowerCase().includes("live")) {
+      return (
+        <span className="inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10.5px] font-bold text-emerald-400 tracking-wide">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse" />
           {badge}
         </span>
       );
     }
     if (badgeStr.toLowerCase() === "baru") {
       return (
-        <span className="inline-flex items-center rounded-lg bg-[#342410] border border-amber-900/50 px-2.5 py-0.5 text-[11px] font-bold text-[#F59E0B]">
+        <span className="inline-flex items-center rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10.5px] font-bold text-amber-400 tracking-wide">
           {badge}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center rounded-lg bg-[#282422] px-2 py-0.5 text-xs font-semibold text-[#A8A29E]">
+      <span className="inline-flex items-center rounded-md bg-[#282422] border border-stone-700/60 px-2 py-0.5 text-[11px] font-semibold text-[#A8A29E]">
         {badge}
       </span>
     );
@@ -114,13 +122,19 @@ export function DashboardSidebar({
         </div>
 
         {/* Navigation Groups */}
-        <nav className="space-y-6 px-3.5 py-5">
-          {navGroups.map((group) => (
-            <div key={group.title}>
-              <p className="px-3 text-[11px] font-bold tracking-wider text-[#78716C] uppercase mb-2">
-                {group.title}
-              </p>
-              <ul className="space-y-1.5">
+        <nav className="space-y-4 px-3 py-4">
+          {navGroups.map((group, groupIdx) => (
+            <div
+              key={group.title}
+              className={groupIdx > 0 ? "border-t border-[#262220]/80 pt-3.5 mt-2" : ""}
+            >
+              <div className="flex items-center gap-2 px-3 mb-2">
+                <span className="h-1 w-1 rounded-full bg-[#D4AF37]/60" />
+                <p className="text-[10px] font-bold tracking-wider text-stone-400 uppercase">
+                  {group.title}
+                </p>
+              </div>
+              <ul className="space-y-1">
                 {group.items.map((item) => {
                   const active = isLinkActive(item.href, item.exact);
                   return (
@@ -128,14 +142,14 @@ export function DashboardSidebar({
                       <Link
                         href={item.href}
                         onClick={onCloseMobile}
-                        className={`group flex items-center justify-between rounded-xl px-3.5 py-3 text-[13.5px] font-medium transition-all ${
+                        className={`group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all ${
                           active
-                            ? "bg-[#282422] text-white font-semibold shadow-xs"
-                            : "text-[#A8A29E] hover:bg-[#231F1D] hover:text-white"
+                            ? "bg-[#25201D] text-white font-semibold shadow-xs border border-[#3A332E]/90 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r before:bg-[#D4AF37]"
+                            : "text-[#9E9792] hover:bg-[#221E1C]/80 hover:text-stone-100"
                         }`}
                         title={item.hint}
                       >
-                        <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <span
                             className={`h-5 w-5 shrink-0 transition-colors flex items-center justify-center ${
                               active
