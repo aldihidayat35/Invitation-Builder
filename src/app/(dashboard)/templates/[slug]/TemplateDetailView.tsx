@@ -289,6 +289,7 @@ export function TemplateDetailView({
                         href={template.previewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="Buka Live Preview Undangan"
                         className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-white/95 px-4 py-3 text-xs font-bold text-[#84633F] shadow-lg backdrop-blur-md transition hover:bg-[#84633F] hover:text-white"
                       >
                         <span>Buka Live Demo Undangan</span>

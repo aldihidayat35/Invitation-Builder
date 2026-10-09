@@ -6,7 +6,12 @@ import type {
   TemplateExtendedMetadata,
   UpdateTemplateMetadataInput,
 } from "./types";
-import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
+import type {
+  TemplateCategory,
+  TemplateStyle,
+  TemplateTier,
+  TemplateSupportedFeature,
+} from "@/lib/schema/domain";
 import { templateCatalogMetadataSchema } from "./schemas";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { ForbiddenError } from "@/lib/auth/errors";
@@ -328,7 +333,9 @@ export async function updateTemplateCatalogMetadata(
     ...existingMeta,
     ...(validated.galleryUrls ? { galleryUrls: validated.galleryUrls } : {}),
     ...(validated.colorPalette ? { colorPalette: validated.colorPalette } : {}),
-    ...(validated.supportedFeatures ? { supportedFeatures: validated.supportedFeatures } : {}),
+    ...(validated.supportedFeatures
+      ? { supportedFeatures: validated.supportedFeatures as TemplateSupportedFeature[] }
+      : {}),
     ...(validated.demoInvitationSlug !== undefined
       ? { demoInvitationSlug: validated.demoInvitationSlug ?? undefined }
       : {}),

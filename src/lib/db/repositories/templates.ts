@@ -298,3 +298,59 @@ export async function deleteTemplateRow(
 
   return deleted;
 }
+
+/**
+ * Resolves a template row for public live previews and demo links.
+ * Checks exact slug, un-prefixed "demo-" slug, metadata demoInvitationSlug, UUID, and name.
+ */
+export async function findTemplateForDemo(
+  db: Database,
+  identifier: string,
+): Promise<TemplateRow | undefined> {
+  const clean = identifier.trim().toLowerCase();
+  const unPrefixed = clean.replace(/^demo-/, "");
+
+  // 1. Try exact slug match
+  let row = await findTemplateBySlug(db, clean);
+  if (row) return row;
+
+  // 2. Try un-prefixed slug (e.g. "demo-royal-elegant" -> "royal-elegant")
+  if (unPrefixed !== clean) {
+    row = await findTemplateBySlug(db, unPrefixed);
+    if (row) return row;
+  }
+
+  // 3. Try lookup by UUID or template-<uuid>
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
+  if (isUuid) {
+    row = await findTemplateById(db, clean);
+    if (row && row.status !== "archived") return row;
+  }
+  if (clean.startsWith("template-")) {
+    const rawId = clean.slice(9);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId)) {
+      row = await findTemplateById(db, rawId);
+      if (row && row.status !== "archived") return row;
+    }
+  }
+
+  // 4. Try matching metadata->>'demoInvitationSlug' or slugified name across all non-archived templates
+  const allTemplates = await listAllTemplates(db);
+  const matched = allTemplates.find((t) => {
+    const meta = (t.metadata as Record<string, unknown> | null) || {};
+    if (meta.demoInvitationSlug && typeof meta.demoInvitationSlug === "string") {
+      const demoSlug = meta.demoInvitationSlug.trim().toLowerCase();
+      if (demoSlug === clean || demoSlug === unPrefixed) return true;
+    }
+    const slugifiedName = t.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (slugifiedName === clean || slugifiedName === unPrefixed) return true;
+    return false;
+  });
+
+  return matched;
+}
+

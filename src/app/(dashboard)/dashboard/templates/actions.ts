@@ -111,6 +111,10 @@ export async function publishTemplateAction(
     const version = await publish(id.data, revision.data, field(formData, "note"));
     revalidatePath(LIBRARY);
     revalidatePath(`${LIBRARY}/${id.data}`);
+    revalidatePath("/");
+    revalidatePath("/templates");
+    revalidatePath("/templates/[slug]", "page");
+    revalidatePath("/i/[slug]", "page");
     return { ok: true, message: `Versi v${version.versionNo} dipublish.` };
   } catch (error) {
     return failure(error);

@@ -9,6 +9,8 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+export const dynamic = "force-dynamic";
+
 const PRESET_FALLBACK_TEMPLATES: Record<string, PublicTemplateDetail> = {
   "classic-floral-botanical": {
     id: "preset-classic-floral",

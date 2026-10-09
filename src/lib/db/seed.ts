@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { assertPasswordPolicy, hashPassword } from "../auth/password";
 import { createEmptyDocument } from "../schema/document";
 import type { TemplateExtendedMetadata } from "../schema/domain";
-import { templateCategories, templates, users, workspaceMembers } from "./schema";
+import { templateCategories, templates, users, workspaceMembers, workspaces } from "./schema";
 import {
   createResellerClient,
   createResellerWithProfile,

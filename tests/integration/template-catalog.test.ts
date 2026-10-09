@@ -121,7 +121,7 @@ describe("Template Catalog & Metadata Feature", () => {
       {
         slug: null, // User left slug empty
         isPublic: true,
-        category: "custom_islamic_wedding", // Dynamic category
+        category: "custom_islamic_wedding" as any, // Dynamic category
         thumbnailUrl: "/api/assets/a64cefc5-ac36-4642-9797-9f8a1797ed60/file",
         previewMockupUrl: "/api/assets/fc12a71b-5e36-428b-b8d2-b2c138a3e662/file",
         previewVideoUrl: "/api/assets/video-demo/file",

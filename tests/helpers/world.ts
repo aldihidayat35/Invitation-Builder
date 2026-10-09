@@ -3,7 +3,7 @@ import { insertUser } from "@/lib/db/repositories/users";
 import { createWorkspaceWithOwner } from "@/lib/db/repositories/workspaces";
 import { workspaceMembers } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
-import type { WorkspaceRole } from "@/lib/schema/domain";
+import type { WorkspaceRole, SystemRole } from "@/lib/schema/domain";
 
 /** Cheap scrypt params: tests exercise logic, not hash cost (params are embedded in the hash). */
 export const TEST_SCRYPT = { N: 1024, r: 8, p: 1 } as const;

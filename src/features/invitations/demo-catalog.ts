@@ -4,10 +4,15 @@
  * and `/i/demo-modern-minimal` always resolve to rich, interactive,
  * mobile-responsive public wedding invitations rather than 404s.
  */
-import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
-import { resolveDocument } from "@/lib/engine";
-import type { PublicInvitationModel } from "./service";
-import { findTemplateBySlug } from "@/lib/db/repositories/templates";
+import {
+  canonicalDocumentSchema,
+  type CanonicalDocument,
+  parseDocumentOrThrow,
+  migrateDocument,
+} from "@/lib/schema";
+import { resolveDocument, createVariableRegistry, applyDefaults } from "@/lib/engine";
+import type { PublicInvitationModel } from "./types";
+import { findTemplateForDemo, findTemplateVersion } from "@/lib/db/repositories/templates";
 
 function formatGuestName(rawTokenOrName?: string): string | undefined {
   if (!rawTokenOrName || typeof rawTokenOrName !== "string") return undefined;
@@ -1218,71 +1223,87 @@ export async function getDemoInvitation(
   const guestName = formatGuestName(rawGuestTokenOrName);
   const guestData = guestName ? { name: guestName } : {};
 
-  // Check known presets by keywords
   let doc: CanonicalDocument | null = null;
   let title = "Undangan Pernikahan Digital";
+  let revisionNo = 1;
 
-  if (
-    clean === "demo-royal-elegant" ||
-    clean === "royal-elegant-jawa" ||
-    clean === "royal-elegant" ||
-    clean.includes("royal") ||
-    clean.includes("jawa")
-  ) {
-    doc = createRoyalElegantDemoDocument();
-    title = "Danang & Sekar — Royal Elegant";
-  } else if (
-    clean === "demo-classic-floral" ||
-    clean === "classic-floral-botanical" ||
-    clean === "classic-floral" ||
-    clean.includes("floral") ||
-    clean.includes("botanical") ||
-    clean.includes("garden")
-  ) {
-    doc = createClassicFloralDemoDocument();
-    title = "Raka & Salsabila — Classic Floral";
-  } else if (
-    clean === "demo-modern-minimal" ||
-    clean === "modern-minimal-boho" ||
-    clean === "modern-minimal" ||
-    clean.includes("modern") ||
-    clean.includes("minimal") ||
-    clean.includes("boho")
-  ) {
-    doc = createModernMinimalDemoDocument();
-    title = "Aditya & Clarissa — Modern Minimal";
-  } else if (clean.startsWith("demo-")) {
-    // Any other demo-* slug defaults to luxury Royal Elegant demo
-    doc = createRoyalElegantDemoDocument();
-    title = `Demo Undangan — ${clean.replace(/^demo-/, "").replace(/-/g, " ").toUpperCase()}`;
-  } else {
-    // Try to find if slug matches a published template in DB
-    try {
-      const { getDb } = await import("@/lib/db/client");
-      const db = await getDb();
-      const tpl = await findTemplateBySlug(db, clean);
-      if (tpl) {
-        if (tpl.draftDocument && tpl.draftDocument.sections && tpl.draftDocument.sections.length > 0) {
-          doc = tpl.draftDocument;
-        } else {
-          // Empty draft template falls back to royal elegant or classic floral
-          doc = createRoyalElegantDemoDocument();
+  // 1. Prioritas utama: Cek apakah template ada di database
+  // Jika ada, muat versi yang dipublikasikan (v2, v3, dst) atau draft terakhir.
+  try {
+    const { getDb } = await import("@/lib/db/client");
+    const db = await getDb();
+    const tpl = await findTemplateForDemo(db, clean);
+
+    if (tpl) {
+      title = tpl.name;
+
+      // Prioritas 1.A: Muat TemplateVersion yang telah dipublikasikan (publishedVersionNo)
+      if (tpl.publishedVersionNo !== null && tpl.publishedVersionNo > 0) {
+        const publishedVer = await findTemplateVersion(db, tpl.id, tpl.publishedVersionNo);
+        if (publishedVer && publishedVer.document) {
+          doc = parseDocumentOrThrow(migrateDocument(publishedVer.document));
+          revisionNo = tpl.publishedVersionNo;
         }
-        title = `Demo Template: ${tpl.name}`;
       }
-    } catch {
-      // In tests or offline DB, ignore DB lookup failure
+
+      // Prioritas 1.B: Fallback ke draftDocument jika template belum dipublikasikan
+      if (!doc && tpl.draftDocument && (tpl.draftDocument as CanonicalDocument).sections?.length > 0) {
+        doc = parseDocumentOrThrow(migrateDocument(tpl.draftDocument));
+        revisionNo = 0;
+      }
+    }
+  } catch {
+    // Abaikan error koneksi database (misal saat vitest offline / fallback)
+  }
+
+  // 2. Jika template tidak ditemukan di database, gunakan preset fallback bawaan
+  if (!doc) {
+    if (
+      clean === "demo-royal-elegant" ||
+      clean === "royal-elegant-jawa" ||
+      clean === "royal-elegant" ||
+      clean.includes("royal") ||
+      clean.includes("jawa")
+    ) {
+      doc = createRoyalElegantDemoDocument();
+      title = "Danang & Sekar — Royal Elegant";
+    } else if (
+      clean === "demo-classic-floral" ||
+      clean === "classic-floral-botanical" ||
+      clean === "classic-floral" ||
+      clean.includes("floral") ||
+      clean.includes("botanical") ||
+      clean.includes("garden")
+    ) {
+      doc = createClassicFloralDemoDocument();
+      title = "Raka & Salsabila — Classic Floral";
+    } else if (
+      clean === "demo-modern-minimal" ||
+      clean === "modern-minimal-boho" ||
+      clean === "modern-minimal" ||
+      clean.includes("modern") ||
+      clean.includes("minimal") ||
+      clean.includes("boho")
+    ) {
+      doc = createModernMinimalDemoDocument();
+      title = "Aditya & Clarissa — Modern Minimal";
+    } else if (clean.startsWith("demo-")) {
+      // Any other demo-* slug defaults to luxury Royal Elegant demo
+      doc = createRoyalElegantDemoDocument();
+      title = `Demo Undangan — ${clean.replace(/^demo-/, "").replace(/-/g, " ").toUpperCase()}`;
     }
   }
 
   if (!doc) return null;
 
-  const resolved = resolveDocument(doc, {}, guestData);
+  // Isi default variable values dari template jika tersedia
+  const initialData = doc ? applyDefaults(createVariableRegistry(doc.variables), {}) : {};
+  const resolved = resolveDocument(doc, initialData, guestData);
 
   return {
     title,
     slug: clean,
-    revisionNo: 1,
+    revisionNo,
     resolved,
     ...(guestName && { guestName }),
     hasGuest: Boolean(guestName),
