@@ -11,10 +11,10 @@ export interface AdminResellerItem {
 
 export interface AdminOrderItem {
   id: string;
-  sellerId: string;
+  sellerId?: string | null;
   sellerName: string;
   customerName: string;
-  customerEmail: string;
+  customerEmail?: string | null;
   customerWhatsapp: string;
   groomBrideNames?: string | null;
   templateId?: string | null;

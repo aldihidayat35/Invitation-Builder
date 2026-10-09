@@ -99,6 +99,13 @@
       "when": 1791700000000,
       "tag": "0013_client_portal_access_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791800000000,
+      "tag": "0014_allow_null_seller_for_platform_orders",
+      "breakpoints": true
     }
   ]
 }

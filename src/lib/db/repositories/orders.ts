@@ -23,11 +23,11 @@ export function generateClientAccessToken(): string {
 }
 
 export interface CreateCustomerOrderInput {
-  sellerId: string;
+  sellerId?: string | null;
   idempotencyKey?: string | null;
   templateId?: string | null;
   customerName: string;
-  customerEmail: string;
+  customerEmail?: string | null;
   customerWhatsapp: string;
   groomBrideNames?: string | null;
   eventDate?: Date | null;
@@ -57,12 +57,12 @@ export interface UpdateCustomerOrderInput {
 
 export interface CustomerOrderItemWithDetails {
   order: CustomerOrder;
-  seller: ResellerProfile;
+  seller: ResellerProfile | null;
   templateTitle?: string | null;
   invitationSlug?: string | null;
 }
 
-/** Inserts a new customer order originating from a seller's storefront. */
+/** Inserts a new customer order originating from a seller's storefront or platform landing page. */
 export async function createCustomerOrder(
   db: Database,
   input: CreateCustomerOrderInput,
@@ -70,11 +70,11 @@ export async function createCustomerOrder(
   const [created] = await db
     .insert(customerOrders)
     .values({
-      sellerId: input.sellerId,
+      sellerId: input.sellerId ?? null,
       idempotencyKey: input.idempotencyKey ?? null,
       templateId: input.templateId ?? null,
       customerName: input.customerName.trim(),
-      customerEmail: input.customerEmail.trim().toLowerCase(),
+      customerEmail: input.customerEmail ? input.customerEmail.trim().toLowerCase() : null,
       customerWhatsapp: input.customerWhatsapp.trim(),
       groomBrideNames: input.groomBrideNames?.trim() ?? null,
       eventDate: input.eventDate ?? null,
@@ -228,7 +228,7 @@ export async function listAllOrders(
       invitationSlug: invitations.slug,
     })
     .from(customerOrders)
-    .innerJoin(resellerProfiles, eq(customerOrders.sellerId, resellerProfiles.id))
+    .leftJoin(resellerProfiles, eq(customerOrders.sellerId, resellerProfiles.id))
     .leftJoin(templates, eq(customerOrders.templateId, templates.id))
     .leftJoin(invitations, eq(customerOrders.invitationId, invitations.id));
 

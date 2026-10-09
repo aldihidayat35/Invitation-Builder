@@ -46,6 +46,19 @@ export async function findTemplateById(
   return row;
 }
 
+export async function findTemplateBySlug(
+  db: Database,
+  slug: string,
+): Promise<TemplateRow | undefined> {
+  const cleanSlug = slug.trim().toLowerCase();
+  const [row] = await db
+    .select()
+    .from(templates)
+    .where(and(eq(templates.slug, cleanSlug), ne(templates.status, "archived")))
+    .limit(1);
+  return row;
+}
+
 export async function listTemplates(
   db: Database,
   workspaceId: string,

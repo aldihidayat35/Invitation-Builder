@@ -403,15 +403,13 @@ export const customerOrders = pgTable(
   "customer_orders",
   {
     id: id(),
-    sellerId: uuid("seller_id")
-      .notNull()
-      .references(() => resellerProfiles.id),
+    sellerId: uuid("seller_id").references(() => resellerProfiles.id),
     idempotencyKey: text("idempotency_key"),
     clientUserId: uuid("client_user_id").references(() => users.id),
     invitationId: uuid("invitation_id").references(() => invitations.id),
     templateId: uuid("template_id").references(() => templates.id),
     customerName: text("customer_name").notNull(),
-    customerEmail: text("customer_email").notNull(),
+    customerEmail: text("customer_email"),
     customerWhatsapp: text("customer_whatsapp").notNull(),
     groomBrideNames: text("groom_bride_names"),
     eventDate: timestamp("event_date", { withTimezone: true }),

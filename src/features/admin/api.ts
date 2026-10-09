@@ -118,8 +118,8 @@ export async function getAdminOrders(
   const items = await listAllOrders(db, limit, status);
   return items.map(({ order, seller, templateTitle, invitationSlug }) => ({
     id: order.id,
-    sellerId: seller.id,
-    sellerName: seller.agencyName,
+    sellerId: seller?.id ?? null,
+    sellerName: seller?.agencyName ?? "Platform Langsung",
     customerName: order.customerName,
     customerEmail: order.customerEmail,
     customerWhatsapp: order.customerWhatsapp,

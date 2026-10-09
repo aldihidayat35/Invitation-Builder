@@ -12,7 +12,7 @@ interface AdminOrdersTableProps {
 function getStatusBadge(status: CustomerOrderStatus) {
   switch (status) {
     case "new":
-      return { label: "Pesanan Baru", className: "bg-amber-100 text-amber-900 border-amber-300" };
+      return { label: "Ingin Memesan", className: "bg-amber-100 text-amber-900 border-amber-300" };
     case "qualified":
       return {
         label: "Sedang Ditinjau",
@@ -91,7 +91,7 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
             aria-label="Filter status pesanan"
           >
             <option value="all">Semua Status</option>
-            <option value="new">Pesanan Baru</option>
+            <option value="new">Ingin Memesan</option>
             <option value="qualified">Terkualifikasi</option>
             <option value="accepted">Diterima</option>
             <option value="rejected">Ditolak</option>
@@ -144,12 +144,20 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                 const waDigits = item.customerWhatsapp.replace(/\D/g, "");
                 const waUrl = `https://wa.me/${waDigits.startsWith("0") ? "62" + waDigits.slice(1) : waDigits}`;
 
+                const isPlatformDirect = !item.sellerId || item.sellerName === "Platform Langsung";
+
                 return (
                   <tr key={item.id} className="hover:bg-stone-50/60 transition-colors">
                     <td className="py-3 px-3">
-                      <strong className="block font-medium text-[#2C221E]">
-                        {item.sellerName}
-                      </strong>
+                      {isPlatformDirect ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10.5px] font-bold text-[#8C5D2A] border border-amber-200/70">
+                          <span>🌐</span> Platform Langsung
+                        </span>
+                      ) : (
+                        <strong className="block font-medium text-[#2C221E]">
+                          {item.sellerName}
+                        </strong>
+                      )}
                     </td>
 
                     <td className="py-3 px-3">
@@ -162,7 +170,9 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
                             💍 {item.groomBrideNames}
                           </div>
                         )}
-                        <div className="text-[11px] text-stone-400">{item.customerEmail}</div>
+                        {item.customerEmail ? (
+                          <div className="text-[11px] text-stone-400">{item.customerEmail}</div>
+                        ) : null}
                       </div>
                     </td>
 

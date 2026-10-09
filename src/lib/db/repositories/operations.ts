@@ -164,7 +164,7 @@ export async function getProductionQueue(db: Database, now: Date = new Date()) {
       assigneeName: users.name,
     })
     .from(customerOrders)
-    .innerJoin(resellerProfiles, eq(resellerProfiles.id, customerOrders.sellerId))
+    .leftJoin(resellerProfiles, eq(resellerProfiles.id, customerOrders.sellerId))
     .leftJoin(users, eq(users.id, customerOrders.assignedTo))
     .where(
       and(

@@ -35,6 +35,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 1,
     name: "Classic Floral",
+    slug: "classic-floral-botanical",
     category: "Pernikahan",
     person1: "Aulia",
     person2: "Fikri",
@@ -46,6 +47,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 2,
     name: "Royal Elegant",
+    slug: "royal-elegant-jawa",
     category: "Pernikahan",
     person1: "Raka",
     person2: "Salsabila",
@@ -57,6 +59,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 3,
     name: "Modern Minimal",
+    slug: "modern-minimal",
     category: "Pernikahan",
     person1: "Nadya",
     person2: "Reza",
@@ -68,6 +71,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 4,
     name: "Garden Beauty",
+    slug: "garden-beauty",
     category: "Pernikahan",
     person1: "Putri",
     person2: "Dimas",
@@ -79,6 +83,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 5,
     name: "Serene Promise",
+    slug: "serene-promise",
     category: "Tunangan",
     person1: "Andini",
     person2: "Fahri",
@@ -90,6 +95,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 6,
     name: "Sweet Seventeen",
+    slug: "sweet-seventeen",
     category: "Ulang Tahun",
     person1: "Nadira",
     person2: "",
@@ -101,6 +107,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 7,
     name: "Little Blessing",
+    slug: "little-blessing",
     category: "Aqiqah",
     person1: "Muhammad",
     person2: "Alfatih",
@@ -112,6 +119,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 8,
     name: "Syukur dan Bahagia",
+    slug: "syukur-dan-bahagia",
     category: "Tasyakuran",
     person1: "Keluarga",
     person2: "Bahagia",
@@ -123,6 +131,7 @@ const TEMPLATES: TemplateItem[] = [
   {
     id: 9,
     name: "Golden Celebration",
+    slug: "golden-celebration",
     category: "Event Lainnya",
     person1: "Grand",
     person2: "Opening",
@@ -132,6 +141,12 @@ const TEMPLATES: TemplateItem[] = [
     image: "/images/template-editorial.jpg",
   },
 ];
+
+function getTemplateSlug(t: TemplateItem): string {
+  if (t.slug && t.slug.trim()) return t.slug.trim();
+  const clean = t.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return clean || `template-${t.id}`;
+}
 
 const REVIEWS: ReviewItem[] = [
   {
@@ -966,8 +981,10 @@ export function LandingView({
                     <article key={t.id} className="template-card">
                       <div className="p-1.5 pb-0">
                         <div className="template-art">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={imageOf(t)} alt={`Contoh template ${t.name}`} loading="lazy" />
+                          <Link href={`/templates/${getTemplateSlug(t)}`} className="block h-full w-full">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={imageOf(t)} alt={`Contoh template ${t.name}`} loading="lazy" />
+                          </Link>
                           <button
                             type="button"
                             className="heart-btn"
@@ -986,7 +1003,9 @@ export function LandingView({
                       </div>
                       <div className="flex items-center justify-between gap-1 px-2.5 py-2.5">
                         <div className="min-w-0">
-                          <h3 className="truncate text-[11px] font-bold">{t.name}</h3>
+                          <Link href={`/templates/${getTemplateSlug(t)}`} className="hover:underline">
+                            <h3 className="truncate text-[11px] font-bold">{t.name}</h3>
+                          </Link>
                           <p className="mt-0.5 text-[10px] text-[#97928e]">{t.category}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -1002,16 +1021,15 @@ export function LandingView({
                               <span className="text-[12px] font-bold leading-none">↗</span>
                             </a>
                           ) : null}
-                          <button
-                            type="button"
+                          <Link
+                            href={`/templates/${getTemplateSlug(t)}`}
                             className="arrow-circle shrink-0"
-                            onClick={() => setModalTemplate(t)}
                             aria-label={`Lihat detail ${t.name}`}
                           >
                             <svg className="h-[14px] w-[14px]">
                               <use href="#i-chevron-right" />
                             </svg>
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     </article>
@@ -1372,14 +1390,19 @@ export function LandingView({
                   </a>
                 ) : null}
                 <Link
-                  href={currentUser ? "/dashboard/templates" : `/login?next=/dashboard/templates`}
-                  className="button-primary flex-1 px-5 py-3 text-[13px] flex items-center justify-center gap-2"
+                  href={`/templates/${getTemplateSlug(modalTemplate)}`}
+                  className="button-outline flex-1 px-4 py-3 text-[12.5px] font-semibold text-[#925003] border-[#925003] hover:bg-[#925003]/10 flex items-center justify-center gap-1.5"
                   onClick={() => setModalTemplate(null)}
                 >
-                  <span>Gunakan Template</span>
-                  <svg className="h-4 w-4">
-                    <use href="#i-arrow-right" />
-                  </svg>
+                  <span>Lihat Detail</span>
+                  <span>→</span>
+                </Link>
+                <Link
+                  href={`/templates/${getTemplateSlug(modalTemplate)}?order=1`}
+                  className="button-primary flex-1 px-4 py-3 text-[12.5px] font-bold flex items-center justify-center gap-1.5"
+                  onClick={() => setModalTemplate(null)}
+                >
+                  <span>🛍️ Pesan Sekarang</span>
                 </Link>
               </div>
             </div>

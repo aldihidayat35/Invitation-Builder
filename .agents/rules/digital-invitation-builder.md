@@ -19,3 +19,8 @@
 - Published invitations (`published_snapshots`) and template versions (`template_versions`) are strictly immutable (enforced by PostgreSQL DB triggers).
 - Save draft must never alter the live published version.
 - Content data (`invitations.data`) is decoupled from reusable template designs.
+
+## 5. Alur Wajib Pasca Penulisan Kode (Git Push & Refresh Aplikasi)
+- **Wajib Git Commit & Push**: Setiap kali selesai membuat, memperbaiki, atau mengubah kode dan memastikan semua pengujian lulus 100%, agent **wajib** melakukan commit dengan pesan jelas dan melakukan `git push` ke remote repository.
+- **Wajib Refresh & Verifikasi Aplikasi**: Pastikan server aplikasi dalam kondisi berjalan/ter-refresh tanpa build/runtime error, dan rute/halaman terkait terverifikasi merespons dengan HTTP 200 OK.
+
