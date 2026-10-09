@@ -183,11 +183,30 @@ export function ResellersTable({
                             gap: "0.25rem",
                           }}
                         >
-                          /seller/{item.profile.slug} ↗
+                          <span>/seller/{item.profile.slug}</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
                         </a>
                         {item.profile.customDomain ? (
-                          <div style={{ fontSize: "0.8rem", color: "var(--dash-text-muted)", marginTop: "0.2rem" }}>
-                            🌐 {item.profile.customDomain}
+                          <div
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "var(--dash-text-muted)",
+                              marginTop: "0.2rem",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.35rem",
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="2" y1="12" x2="22" y2="12" />
+                              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                            </svg>
+                            <span>{item.profile.customDomain}</span>
                           </div>
                         ) : null}
                       </div>

@@ -93,7 +93,10 @@ export function TopResellersTrendChart({ topSellers }: TopResellersTrendChartPro
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 rounded-xl border border-stone-100 bg-[#FAF8F5] p-3 text-xs">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-[#D4AF37] font-bold text-base shadow-2xs">
-            👑
+            <svg className="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.202a1 1 0 0 1-.962.733H5.815a1 1 0 0 1-.962-.733L2.019 6.019a.5.5 0 0 1 .798-.519l4.277 3.664a1 1 0 0 0 1.516-.294z" />
+              <path d="M5 21h14" />
+            </svg>
           </div>
           <div className="min-w-0">
             <span className="block text-[11px] font-medium text-stone-400">Seller No. 1 Terlaris</span>
@@ -107,7 +110,11 @@ export function TopResellersTrendChart({ topSellers }: TopResellersTrendChartPro
 
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-200/70 text-[#84633F] font-bold text-base">
-            📦
+            <svg className="h-5 w-5 text-[#84633F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m16.5 9.4-9 5.2M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.29 7 12 12.01 20.71 7" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
           </div>
           <div>
             <span className="block text-[11px] font-medium text-stone-400">Total Akumulasi Pesanan</span>
@@ -119,7 +126,12 @@ export function TopResellersTrendChart({ topSellers }: TopResellersTrendChartPro
 
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-base">
-            🚀
+            <svg className="h-5 w-5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+              <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+              <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+              <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+            </svg>
           </div>
           <div>
             <span className="block text-[11px] font-medium text-stone-400">Mitra Menghasilkan Order</span>
@@ -138,7 +150,11 @@ export function TopResellersTrendChart({ topSellers }: TopResellersTrendChartPro
       ) : totalAllOrders === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-stone-200 p-8 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-2xl text-[#D4AF37]">
-            📊
+            <svg className="h-6 w-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
           </div>
           <h4 className="mt-3 text-sm font-bold text-[#2C221E]">Belum Ada Riwayat Pesanan Masuk</h4>
           <p className="mx-auto mt-1 max-w-md text-xs text-stone-400 leading-relaxed">
@@ -240,10 +256,15 @@ export function TopResellersTrendChart({ topSellers }: TopResellersTrendChartPro
                       href={`/seller/${seller.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600 hover:border-[#84633F] hover:text-[#84633F] transition shadow-2xs"
+                      className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600 hover:border-[#84633F] hover:text-[#84633F] transition shadow-2xs"
                       title="Lihat website etalase seller"
                     >
-                      Lihat Toko ↗
+                      Lihat Toko
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
                     </Link>
                   </div>
                 </div>
