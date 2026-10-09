@@ -10,6 +10,9 @@ import { listMemberships, getMemberRole } from "@/lib/db/repositories/workspaces
 import { getTemplate, publishTemplate } from "@/features/templates/service";
 import { InvitationInputError, saveInvitationData } from "@/features/invitations/service";
 import {
+  adminApproveOrderProduction,
+  adminSendOrderToReview,
+  assertApprovedForPublish,
   configureOrderProduction,
   createProjectForOrder,
   getInvitationReviewState,
@@ -120,5 +123,50 @@ describe("Fase 1 order-to-production workflow", () => {
         "order.client_approve",
       ]),
     );
+  });
+
+  it("supports admin manual approval and enforces publish approval gate", async () => {
+    const seed = await seedDev(db());
+    const owner = { userId: seed.userId, systemRole: "owner" as const };
+    const [clientMembership] = await listMemberships(db(), seed.clientUserId!);
+    if (!clientMembership) throw new Error("Client workspace missing");
+    const [template] = await db()
+      .select({ id: templates.id })
+      .from(templates)
+      .where(eq(templates.isPublic, true))
+      .limit(1);
+    if (!template) throw new Error("Template missing");
+
+    const order = await createCustomerOrder(db(), {
+      customerName: "Tes Admin Approval",
+      customerWhatsapp: "081234567890",
+      templateId: template.id,
+    });
+    await transitionOrder(db(), owner, order.id, "accepted");
+    const project = await createProjectForOrder(db(), owner, order.id);
+
+    // Initial state: in_production -> assertApprovedForPublish must throw
+    await expect(assertApprovedForPublish(db(), owner, project.invitationId)).rejects.toThrow(
+      "Undangan order belum disetujui oleh klien.",
+    );
+
+    // Admin sends to client review
+    const inReview = await adminSendOrderToReview(db(), owner, order.id, "Kirim review ke klien");
+    expect(inReview.productionStatus).toBe("client_review");
+    await expect(assertApprovedForPublish(db(), owner, project.invitationId)).rejects.toThrow(
+      "Undangan order belum disetujui oleh klien.",
+    );
+
+    // Admin manually approves (e.g. client confirmed via WhatsApp)
+    const approved = await adminApproveOrderProduction(
+      db(),
+      owner,
+      order.id,
+      "Klien konfirmasi via WhatsApp",
+    );
+    expect(approved.productionStatus).toBe("approved");
+
+    // Once approved, publish gate allows proceeding
+    await expect(assertApprovedForPublish(db(), owner, project.invitationId)).resolves.toBeDefined();
   });
 });

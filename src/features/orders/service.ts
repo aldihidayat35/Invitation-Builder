@@ -686,6 +686,90 @@ export async function submitClientDecision(
   });
 }
 
+export async function adminApproveOrderProduction(
+  db: Database,
+  actor: Actor,
+  orderId: string,
+  note?: string,
+): Promise<CustomerOrder> {
+  requirePlatformOwner(actor);
+  const order = await findCustomerOrderById(db, orderId);
+  if (!order) throw new OrderWorkflowError("Pesanan tidak ditemukan.");
+  if (order.productionStatus === "approved" || order.productionStatus === "published") {
+    return order;
+  }
+  return db.transaction(async (tx) => {
+    const updated = await transitionCustomerOrderProduction(
+      tx,
+      order.id,
+      order.productionStatus,
+      "approved",
+    );
+    if (!updated) {
+      throw new OrderWorkflowError("Status produksi telah berubah. Muat ulang halaman.");
+    }
+    await insertOrderWorkflowEvent(tx, {
+      orderId: order.id,
+      actorId: actor.userId,
+      eventType: "order.admin_manual_approve",
+      fromValue: order.productionStatus,
+      toValue: "approved",
+      note: note?.trim() || "Disetujui manual oleh Admin",
+    });
+    await insertAuditLog(tx, {
+      workspaceId: order.workspaceId,
+      actorId: actor.userId,
+      action: "order.client_approve",
+      entityType: "customer_order",
+      entityId: order.id,
+      metadata: { note: note?.trim() || "Disetujui manual oleh Admin" },
+    });
+    return updated;
+  });
+}
+
+export async function adminSendOrderToReview(
+  db: Database,
+  actor: Actor,
+  orderId: string,
+  note?: string,
+): Promise<CustomerOrder> {
+  requirePlatformOwner(actor);
+  const order = await findCustomerOrderById(db, orderId);
+  if (!order) throw new OrderWorkflowError("Pesanan tidak ditemukan.");
+  if (order.productionStatus === "client_review") {
+    return order;
+  }
+  return db.transaction(async (tx) => {
+    const updated = await transitionCustomerOrderProduction(
+      tx,
+      order.id,
+      order.productionStatus,
+      "client_review",
+    );
+    if (!updated) {
+      throw new OrderWorkflowError("Status produksi telah berubah. Muat ulang halaman.");
+    }
+    await insertOrderWorkflowEvent(tx, {
+      orderId: order.id,
+      actorId: actor.userId,
+      eventType: "order.send_client_review",
+      fromValue: order.productionStatus,
+      toValue: "client_review",
+      note: note?.trim() || "Dikirimkan ke klien untuk review",
+    });
+    await insertAuditLog(tx, {
+      workspaceId: order.workspaceId,
+      actorId: actor.userId,
+      action: "order.transition",
+      entityType: "customer_order",
+      entityId: order.id,
+      metadata: { note, toValue: "client_review" },
+    });
+    return updated;
+  });
+}
+
 export async function submitClientDecisionByToken(
   db: Database,
   token: string,

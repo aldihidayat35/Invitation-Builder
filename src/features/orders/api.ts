@@ -2,9 +2,8 @@ import "server-only";
 
 import { requireOwner, requireUser } from "@/lib/auth/server";
 import { getDb } from "@/lib/db/client";
+import { findCustomerOrderByInvitationId } from "@/lib/db/repositories/orders";
 import { listPublicTemplates } from "@/lib/db/repositories/templates";
-import { listUsersByRole } from "@/lib/db/repositories/users";
-import { listMemberships } from "@/lib/db/repositories/workspaces";
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 import * as service from "./service";
 
@@ -137,6 +136,38 @@ export async function savePortalInvitationData(
 export async function regenerateOrderClientToken(orderId: string) {
   const user = await requireUser();
   return service.regenerateOrderClientToken(await getDb(), actorOf(user), orderId);
+}
+
+export async function getOrderByInvitationId(invitationId: string) {
+  const user = await requireUser();
+  const db = await getDb();
+  const order = await findCustomerOrderByInvitationId(db, invitationId);
+  if (!order) return null;
+  if (user.systemRole !== "owner" && order.clientUserId !== user.id) {
+    return null;
+  }
+  return {
+    id: order.id,
+    customerName: order.customerName,
+    customerWhatsapp: order.customerWhatsapp,
+    customerEmail: order.customerEmail,
+    productionStatus: order.productionStatus,
+    orderStatus: order.orderStatus,
+    paymentStatus: order.paymentStatus,
+    clientAccessToken: order.clientAccessToken,
+    groomBrideNames: order.groomBrideNames,
+    dueAt: order.dueAt,
+  };
+}
+
+export async function adminApproveOrder(orderId: string, note?: string) {
+  const user = await requireOwner();
+  return service.adminApproveOrderProduction(await getDb(), actorOf(user), orderId, note);
+}
+
+export async function adminSendOrderToReview(orderId: string, note?: string) {
+  const user = await requireOwner();
+  return service.adminSendOrderToReview(await getDb(), actorOf(user), orderId, note);
 }
 
 export {

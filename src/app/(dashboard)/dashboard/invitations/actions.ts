@@ -23,7 +23,11 @@ import type {
   SaveDataState,
 } from "@/features/invitations/components/action-state";
 import { requireOwner } from "@/lib/auth/server";
-import { decideInvitationReview } from "@/features/orders/api";
+import {
+  adminApproveOrder,
+  adminSendOrderToReview,
+  decideInvitationReview,
+} from "@/features/orders/api";
 
 const idSchema = z.uuid();
 const LIST = "/dashboard/invitations";
@@ -226,4 +230,48 @@ export async function regenerateInvitationClientTokenAction(formData: FormData):
   await regenerateClientToken(invitationId);
   revalidatePath(`${LIST}/${invitationId}`);
   revalidatePath(`${LIST}/${invitationId}/preview`);
+}
+
+export async function adminApproveOrderProductionAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireOwner();
+  const orderId = idSchema.safeParse(field(formData, "orderId"));
+  const invitationId = idSchema.safeParse(field(formData, "invitationId"));
+  if (!orderId.success) return { error: "ID Pesanan tidak valid." };
+  const note = field(formData, "note") || "Disetujui manual oleh Admin";
+  try {
+    await adminApproveOrder(orderId.data, note);
+    if (invitationId.success) {
+      revalidatePath(`${LIST}/${invitationId.data}`);
+    }
+    revalidatePath(`/dashboard/orders/${orderId.data}`);
+    revalidatePath(`/dashboard/admin/orders`);
+    return { ok: true, message: "Pesanan berhasil disetujui secara manual." };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function adminSendOrderToReviewAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireOwner();
+  const orderId = idSchema.safeParse(field(formData, "orderId"));
+  const invitationId = idSchema.safeParse(field(formData, "invitationId"));
+  if (!orderId.success) return { error: "ID Pesanan tidak valid." };
+  const note = field(formData, "note") || "Dikirimkan ke klien untuk review";
+  try {
+    await adminSendOrderToReview(orderId.data, note);
+    if (invitationId.success) {
+      revalidatePath(`${LIST}/${invitationId.data}`);
+    }
+    revalidatePath(`/dashboard/orders/${orderId.data}`);
+    revalidatePath(`/dashboard/admin/orders`);
+    return { ok: true, message: "Status pesanan beralih ke Menunggu Review Klien." };
+  } catch (error) {
+    return failure(error);
+  }
 }

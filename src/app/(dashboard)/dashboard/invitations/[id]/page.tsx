@@ -17,9 +17,12 @@ import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
+import { getOrderByInvitationId } from "@/features/orders/api";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
 import {
   addGuestAction,
+  adminApproveOrderProductionAction,
+  adminSendOrderToReviewAction,
   archiveGuestAction,
   importGuestsAction,
   publishInvitationAction,
@@ -45,12 +48,13 @@ export default async function InvitationDataPage({
     throw error;
   }
 
-  const [permissions, guests, report, assets, snapshots] = await Promise.all([
+  const [permissions, guests, report, assets, snapshots, orderContext] = await Promise.all([
     permissionsFor(invitation.workspaceId),
     listGuests(invitation.id),
     readiness(invitation.id),
     searchAssets(invitation.workspaceId).catch(() => []),
     canManagePublication ? listSnapshots(invitation.id) : Promise.resolve([]),
+    canManagePublication ? getOrderByInvitationId(invitation.id) : Promise.resolve(null),
   ]);
 
   const fields = buildFormFields(invitation.document.variables);
@@ -146,6 +150,9 @@ export default async function InvitationDataPage({
               snapshots={snapshots}
               publish={publishInvitationAction}
               rollback={rollbackInvitationAction}
+              orderContext={orderContext}
+              adminApprove={adminApproveOrderProductionAction}
+              adminSendToReview={adminSendOrderToReviewAction}
             />
           ) : (
             <section className={styles.panel} aria-labelledby="publication-owner-title">
