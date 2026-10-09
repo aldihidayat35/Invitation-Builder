@@ -127,14 +127,12 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
     expect(screen.getByTestId("gif-cat-flowers")).toBeInTheDocument();
     expect(screen.getByTestId("gif-cat-celebration")).toBeInTheDocument();
 
-    // Verify presets are displayed
+    // Verify presets and saved system GIFs are displayed
     await waitFor(() => {
       expect(screen.getByText("Detak Jantung Cinta")).toBeInTheDocument();
+      expect(screen.getByText("cinta-abadi.gif")).toBeInTheDocument();
+      expect(screen.getByText("sparkles.gif")).toBeInTheDocument();
     });
-
-    // Verify saved system GIFs are also listed
-    expect(screen.getByText("cinta-abadi.gif")).toBeInTheDocument();
-    expect(screen.getByText("sparkles.gif")).toBeInTheDocument();
   });
 
   it("filters GIFs when clicking category tabs", async () => {

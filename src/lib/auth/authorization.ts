@@ -99,6 +99,9 @@ export async function requireCapability(
   workspaceId: string,
   capability: Capability,
 ): Promise<WorkspaceRole> {
+  if (actor.systemRole === "owner") {
+    return "owner";
+  }
   if (actor.systemRole === "client" && !CLIENT_CAPABILITIES.includes(capability)) {
     throw new ForbiddenError(
       "Akun klien hanya dapat mengelola data acara, tamu, preview, dan persetujuan.",

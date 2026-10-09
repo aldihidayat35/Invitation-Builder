@@ -159,6 +159,7 @@ export async function updateTemplateCatalogAction(
     const previewMockupUrl = field(formData, "previewMockupUrl").trim() || previewVideoUrl;
 
     const { updateCatalogMetadata } = await import("@/features/templates/api");
+    const demoInvitationSlug = field(formData, "demoInvitationSlug").trim() || null;
     await updateCatalogMetadata(id.data, {
       slug: field(formData, "slug").trim() || null,
       description: field(formData, "description").trim() || null,
@@ -172,15 +173,20 @@ export async function updateTemplateCatalogAction(
       previewMockupUrl,
       previewVideoUrl,
       tags,
+      supportedFeatures: rawFeatures as TemplateSupportedFeature[],
+      demoInvitationSlug,
       metadata: {
         supportedFeatures: rawFeatures as TemplateSupportedFeature[],
-        demoInvitationSlug: field(formData, "demoInvitationSlug").trim() || undefined,
+        demoInvitationSlug: demoInvitationSlug || undefined,
         previewVideoUrl: previewVideoUrl || undefined,
       },
     });
 
     revalidatePath(LIBRARY);
     revalidatePath(`${LIBRARY}/${id.data}`);
+    revalidatePath("/");
+    revalidatePath("/templates");
+    revalidatePath("/templates/[slug]", "page");
     return { ok: true, message: "Metadata katalog berhasil disimpan." };
   } catch (error) {
     return failure(error);

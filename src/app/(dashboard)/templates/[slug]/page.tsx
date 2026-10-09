@@ -189,25 +189,65 @@ export default async function TemplateDetailPage({ params, searchParams }: PageP
     notFound();
   }
 
+  const rawCategory = dbTemplate?.category || fallback?.category || "Pernikahan";
+  const displayCategory =
+    rawCategory === "wedding"
+      ? "Pernikahan"
+      : rawCategory === "engagement"
+        ? "Tunangan"
+        : rawCategory === "birthday"
+          ? "Ulang Tahun"
+          : rawCategory === "aqiqah"
+            ? "Aqiqah"
+            : rawCategory === "graduation"
+              ? "Wisuda"
+              : rawCategory === "corporate"
+                ? "Corporate"
+                : rawCategory;
+
+  const resolvedPreviewUrl = dbTemplate?.demoInvitationSlug
+    ? `/i/${dbTemplate.demoInvitationSlug}`
+    : dbTemplate?.slug
+      ? `/i/${dbTemplate.slug}`
+      : fallback?.previewUrl;
+
   const templateDetail: PublicTemplateDetail = {
-    id: dbTemplate?.id || fallback!.id,
-    name: dbTemplate?.name || fallback!.name,
-    slug: dbTemplate?.slug || fallback!.slug,
-    category: dbTemplate?.category || fallback!.category || "Pernikahan",
-    description: dbTemplate?.description || fallback!.description,
-    price: dbTemplate?.price ?? fallback!.price ?? 89000,
-    thumbnailUrl: dbTemplate?.thumbnailUrl || dbTemplate?.previewMockupUrl || fallback?.thumbnailUrl || "/images/template-botanical.jpg",
-    previewUrl: dbTemplate?.previewUrl || fallback?.previewUrl,
-    features: (dbTemplate?.metadata?.supportedFeatures?.length
-      ? dbTemplate.metadata.supportedFeatures.map((f) => {
+    id: dbTemplate?.id || fallback?.id || "template-custom",
+    name: dbTemplate?.name || fallback?.name || "Template Undangan",
+    slug: dbTemplate?.slug || fallback?.slug || cleanSlug,
+    category: displayCategory,
+    description:
+      dbTemplate?.description ||
+      fallback?.description ||
+      "Template undangan digital elegan siap pakai dengan desain responsif dan fitur interaktif.",
+    price: dbTemplate?.price ?? fallback?.price ?? 89000,
+    thumbnailUrl:
+      dbTemplate?.thumbnailUrl ||
+      dbTemplate?.previewMockupUrl ||
+      fallback?.thumbnailUrl ||
+      "/images/template-botanical.jpg",
+    previewUrl: resolvedPreviewUrl,
+    features: (dbTemplate?.supportedFeatures?.length
+      ? dbTemplate.supportedFeatures.map((f) => {
           switch (f) {
-            case "rsvp": return "Buku Tamu & RSVP Digital Real-time";
-            case "google_maps": return "Peta Lokasi Google Maps & Rute Navigasi";
-            case "digital_gift": return "Amplop Digital & Rekening Transfer / QRIS";
-            case "audio_player": return "Musik Latar Romantis Autoplay & Pengatur Volume";
-            case "countdown": return "Hitung Mundur Waktu Acara (Countdown)";
-            case "gallery_slider": return "Galeri Foto Mempelai & Love Story Timeline";
-            default: return `Fitur ${f.replace(/_/g, " ")}`;
+            case "rsvp":
+              return "Buku Tamu & RSVP Digital Real-time";
+            case "google_maps":
+              return "Peta Lokasi Google Maps & Rute Navigasi";
+            case "digital_gift":
+              return "Amplop Digital & Rekening Transfer / QRIS";
+            case "audio_player":
+              return "Musik Latar Romantis Autoplay & Pengatur Volume";
+            case "countdown":
+              return "Hitung Mundur Waktu Acara (Countdown)";
+            case "gallery_slider":
+              return "Galeri Foto Mempelai & Love Story Timeline";
+            case "guest_book":
+              return "Buku Tamu Digital & Ucapan Doa";
+            case "envelope_cover":
+              return "Animasi Sampul Amplop Pembuka Interaktif";
+            default:
+              return `Fitur ${f.replace(/_/g, " ")}`;
           }
         })
       : fallback?.features) || [
@@ -218,11 +258,14 @@ export default async function TemplateDetailPage({ params, searchParams }: PageP
       "Hitung Mundur Waktu Acara (Countdown Timer)",
       "Galeri Foto Mempelai & Love Story Timeline",
     ],
-    palette: dbTemplate?.metadata?.colorPalette?.map((c) => ({ name: c.name, hex: c.hex })) || fallback?.palette || [
-      { name: "Gold Aksen", hex: "#D4AF37" },
-      { name: "Warm Walnut", hex: "#2C221E" },
-      { name: "Ivory", hex: "#FDFBF7" },
-    ],
+    palette:
+      dbTemplate?.colorPalette?.length
+        ? dbTemplate.colorPalette.map((c) => ({ name: c.name, hex: c.hex }))
+        : fallback?.palette || [
+            { name: "Gold Aksen", hex: "#D4AF37" },
+            { name: "Warm Walnut", hex: "#2C221E" },
+            { name: "Ivory", hex: "#FDFBF7" },
+          ],
   };
 
   return (

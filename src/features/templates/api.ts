@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth/server";
 import { ForbiddenError } from "@/lib/auth/errors";
 import { getDb } from "@/lib/db/client";
 import { DocumentValidationError } from "@/lib/schema";
+import { ZodError } from "zod";
 import * as service from "./service";
 import type { Database } from "@/lib/db/types";
 import type { Actor } from "@/lib/auth/authorization";
@@ -185,6 +186,9 @@ export function describeTemplateError(error: unknown): string {
   ) {
     return error.message;
   }
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message || "Format data tidak valid.";
+  }
   if (error instanceof service.TemplateNotFoundError) return "Template tidak ditemukan.";
   if (error instanceof service.PublishBlockedError) {
     return `Publish diblokir oleh validasi: ${error.semanticIssues
@@ -193,5 +197,8 @@ export function describeTemplateError(error: unknown): string {
       .join("; ")}`;
   }
   if (error instanceof DocumentValidationError) return "Dokumen template tidak valid.";
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
   return "Terjadi kesalahan. Silakan coba lagi.";
 }

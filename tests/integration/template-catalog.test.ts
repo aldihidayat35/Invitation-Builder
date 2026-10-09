@@ -110,6 +110,47 @@ describe("Template Catalog & Metadata Feature", () => {
     ).rejects.toThrow(/sudah digunakan/);
   });
 
+  it("supports relative asset paths, dynamic categories, and auto-generates slug when public", async () => {
+    const list = await getPublicCatalogTemplates(db());
+    const target = list.items[0]!;
+
+    const updated = await updateTemplateCatalogMetadata(
+      db(),
+      { userId: ownerUserId, systemRole: "owner" },
+      target.id,
+      {
+        slug: null, // User left slug empty
+        isPublic: true,
+        category: "custom_islamic_wedding", // Dynamic category
+        thumbnailUrl: "/api/assets/a64cefc5-ac36-4642-9797-9f8a1797ed60/file",
+        previewMockupUrl: "/api/assets/fc12a71b-5e36-428b-b8d2-b2c138a3e662/file",
+        previewVideoUrl: "/api/assets/video-demo/file",
+        supportedFeatures: ["rsvp", "guest_book", "envelope_cover"],
+      },
+    );
+
+    expect(updated.slug).toBeTruthy();
+    expect(updated.category).toBe("custom_islamic_wedding");
+    expect(updated.thumbnailUrl).toBe("/api/assets/a64cefc5-ac36-4642-9797-9f8a1797ed60/file");
+    expect(updated.previewMockupUrl).toBe("/api/assets/fc12a71b-5e36-428b-b8d2-b2c138a3e662/file");
+    expect(updated.supportedFeatures).toContain("envelope_cover");
+
+    // Can resolve by UUID
+    const byId = await getCatalogTemplateBySlug(db(), target.id);
+    expect(byId).not.toBeNull();
+    expect(byId?.id).toBe(target.id);
+
+    // Can resolve by template-<uuid>
+    const byPrefixedId = await getCatalogTemplateBySlug(db(), `template-${target.id}`);
+    expect(byPrefixedId).not.toBeNull();
+    expect(byPrefixedId?.id).toBe(target.id);
+
+    // Can resolve by generated slug
+    const bySlug = await getCatalogTemplateBySlug(db(), updated.slug!);
+    expect(bySlug).not.toBeNull();
+    expect(bySlug?.id).toBe(target.id);
+  });
+
   it("rejects catalog metadata changes from non-owner users", async () => {
     const target = (await getPublicCatalogTemplates(db())).items[0]!;
     const client = await makeUser(db(), "catalog-client");

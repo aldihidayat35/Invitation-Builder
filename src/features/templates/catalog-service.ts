@@ -37,10 +37,17 @@ export interface CatalogResult {
 
 export function mapToCatalogItem(row: typeof templates.$inferSelect): CatalogTemplateItem {
   const meta = (row.metadata as TemplateExtendedMetadata) || {};
+  const fallbackSlug =
+    row.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || `template-${row.id.slice(0, 8)}`;
+
   return {
     id: row.id,
     name: row.name,
-    slug: row.slug,
+    slug: row.slug || fallbackSlug,
     description: row.description,
     category: (row.category || "wedding") as TemplateCategory,
     style: (row.style || "modern_minimalist") as TemplateStyle,
@@ -162,18 +169,71 @@ export async function getPublicCatalogTemplates(
 }
 
 /**
- * Retrieves a single template by its public slug for preview and metadata inspection.
+ * Retrieves a single template by its public slug or ID for preview and metadata inspection.
  */
 export async function getCatalogTemplateBySlug(
   db: Database,
   slug: string,
 ): Promise<CatalogTemplateItem | null> {
   const cleanSlug = slug.trim().toLowerCase();
-  const [row] = await db
+
+  // 1. Direct slug match on published templates
+  let [row] = await db
     .select()
     .from(templates)
     .where(and(eq(templates.slug, cleanSlug), eq(templates.status, "published")))
     .limit(1);
+
+  // 2. Lookup by UUID directly if cleanSlug is a valid UUID
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanSlug);
+  if (!row && isUuid) {
+    [row] = await db
+      .select()
+      .from(templates)
+      .where(and(eq(templates.id, cleanSlug), eq(templates.status, "published")))
+      .limit(1);
+  }
+
+  // 3. Lookup by template-<uuid> prefix
+  if (!row && cleanSlug.startsWith("template-")) {
+    const rawId = cleanSlug.slice(9);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId)) {
+      [row] = await db
+        .select()
+        .from(templates)
+        .where(and(eq(templates.id, rawId), eq(templates.status, "published")))
+        .limit(1);
+    }
+  }
+
+  // 4. Fallback search: check published templates where slugified name matches cleanSlug
+  if (!row) {
+    const allPublished = await db
+      .select()
+      .from(templates)
+      .where(eq(templates.status, "published"));
+
+    const matched = allPublished.find((t) => {
+      const generated = t.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return generated === cleanSlug || (cleanSlug.startsWith(generated) && generated.length >= 3);
+    });
+
+    if (matched) {
+      row = matched;
+      // If template did not have a slug, persist cleanSlug so future lookups are immediate
+      if (!matched.slug) {
+        await db
+          .update(templates)
+          .set({ slug: cleanSlug })
+          .where(eq(templates.id, matched.id))
+          .catch(() => {});
+      }
+    }
+  }
 
   if (!row) return null;
 
@@ -207,9 +267,21 @@ export async function updateTemplateCatalogMetadata(
   }
   await requireCapability(db, actor, existing.workspaceId, "template:write");
 
-  const validated = templateCatalogMetadataSchema.partial().parse(input);
+  // Support both top-level fields and nested metadata fields from forms
+  const normalizedInput = {
+    ...input,
+    supportedFeatures: input.supportedFeatures ?? input.metadata?.supportedFeatures,
+    demoInvitationSlug: input.demoInvitationSlug ?? input.metadata?.demoInvitationSlug,
+    previewVideoUrl: input.previewVideoUrl ?? input.metadata?.previewVideoUrl,
+    colorPalette: input.colorPalette ?? input.metadata?.colorPalette,
+    galleryUrls: input.galleryUrls ?? input.metadata?.galleryUrls,
+  };
 
-  // If slug is provided and changed, ensure uniqueness
+  const validated = templateCatalogMetadataSchema.partial().parse(normalizedInput);
+
+  let targetSlug = validated.slug !== undefined ? validated.slug : existing.slug;
+
+  // If user provided a specific slug and changed it, verify uniqueness
   if (validated.slug && validated.slug !== existing.slug) {
     const [conflict] = await db
       .select({ id: templates.id })
@@ -218,6 +290,31 @@ export async function updateTemplateCatalogMetadata(
       .limit(1);
     if (conflict) {
       throw new Error(`Slug "${validated.slug}" sudah digunakan oleh template lain.`);
+    }
+  }
+
+  // If template is public (or becoming public) and currently has no slug, auto-generate a clean unique slug from name
+  const willBePublic = validated.isPublic !== undefined ? validated.isPublic : existing.isPublic;
+  if (willBePublic && (!targetSlug || !targetSlug.trim())) {
+    const baseSlug = existing.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    let candidate = baseSlug.length >= 3 ? baseSlug : `template-${existing.id.slice(0, 8)}`;
+    let suffix = 1;
+    while (true) {
+      const [conflict] = await db
+        .select({ id: templates.id })
+        .from(templates)
+        .where(and(eq(templates.slug, candidate), sql`${templates.id} != ${templateId}`))
+        .limit(1);
+      if (!conflict) {
+        targetSlug = candidate;
+        break;
+      }
+      suffix += 1;
+      candidate = `${baseSlug}-${suffix}`;
     }
   }
 
@@ -240,7 +337,7 @@ export async function updateTemplateCatalogMetadata(
     updatedAt: new Date(),
   };
 
-  if (validated.slug !== undefined) updateValues.slug = validated.slug;
+  if (targetSlug !== undefined) updateValues.slug = targetSlug;
   if (validated.description !== undefined) updateValues.description = validated.description;
   if (validated.category !== undefined) updateValues.category = validated.category;
   if (validated.style !== undefined) updateValues.style = validated.style;

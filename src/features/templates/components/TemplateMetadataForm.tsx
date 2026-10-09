@@ -145,10 +145,12 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
               type="text"
               name="slug"
               defaultValue={template.slug || ""}
-              placeholder="misal: classic-floral-botanical"
+              placeholder="misal: classic-floral-botanical (otomatis diisi jika kosong)"
               className="w-full rounded-xl border border-[#D9CFC4] bg-white px-3.5 py-2.5 text-xs text-[#2C221E] shadow-xs outline-none focus:border-[#D4AF37]"
             />
-            <p className="mt-1 text-[11px] text-[#A39284]">Hanya huruf kecil, angka, dan strip (-).</p>
+            <p className="mt-1 text-[11px] text-[#A39284]">
+              Hanya huruf kecil, angka, dan tanda hubung (-). Jika dikosongkan, slug dibuat otomatis dari nama template.
+            </p>
           </div>
 
           <div>
@@ -165,6 +167,9 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
                   {c.name}
                 </option>
               ))}
+              {template.category && !activeCategories.some((c) => c.slug === template.category) ? (
+                <option value={template.category}>{template.category}</option>
+              ) : null}
             </select>
           </div>
         </div>

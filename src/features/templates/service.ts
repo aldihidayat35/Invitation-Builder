@@ -33,7 +33,8 @@ import {
   renameTemplateRow,
   updateTemplateDraft,
 } from "@/lib/db/repositories/templates";
-import type { TemplateRow } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { templates, type TemplateRow } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
 import {
@@ -232,9 +233,28 @@ export async function createTemplate(
   const name = parseName(input.name);
   const document = parseDocumentOrThrow(input.document ?? createEmptyDocument());
   return db.transaction(async (tx) => {
+    const baseSlug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    let candidate = baseSlug.length >= 3 ? baseSlug : `template-${Date.now().toString(36)}`;
+    let suffix = 1;
+    while (true) {
+      const [conflict] = await tx
+        .select({ id: templates.id })
+        .from(templates)
+        .where(eq(templates.slug, candidate))
+        .limit(1);
+      if (!conflict) break;
+      suffix += 1;
+      candidate = `${baseSlug}-${suffix}`;
+    }
+
     const row = await insertTemplate(tx, {
       workspaceId: input.workspaceId,
       name,
+      slug: candidate,
       draftDocument: document,
       createdBy: actor.userId,
     });
@@ -244,7 +264,7 @@ export async function createTemplate(
       action: "template.create",
       entityType: "template",
       entityId: row.id,
-      metadata: { name },
+      metadata: { name, slug: candidate },
     });
     return toSummary(row);
   });
