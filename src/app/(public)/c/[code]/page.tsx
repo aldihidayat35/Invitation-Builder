@@ -8,6 +8,8 @@ interface ClientPortalPageProps {
   params: Promise<{ code: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: ClientPortalPageProps): Promise<Metadata> {
   const { code } = await params;
   const portal = await getClientPortal(code);

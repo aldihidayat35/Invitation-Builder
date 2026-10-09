@@ -31,11 +31,40 @@ async function open(url: string): Promise<Database> {
         // Ignore unlink error
       }
     }
-    const { connectPglite } = await import("./pglite");
-    const conn = await connectPglite(dataDir);
-    return conn.db;
+    const { connectPglite, migratePglite } = await import("./pglite");
+    try {
+      const conn = await connectPglite(dataDir);
+      await conn.client.waitReady;
+      return conn.db;
+    } catch (err) {
+      if (dataDir && existsSync(dataDir)) {
+        const corruptedDir = `${dataDir}_corrupted_${Date.now()}`;
+        console.warn(`[db/client] PGlite dataDir corrupted (${err}). Auto-recovering to ${corruptedDir}...`);
+        try {
+          renameSync(dataDir, corruptedDir);
+        } catch {
+          // Ignore rename error
+        }
+        mkdirSync(dataDir, { recursive: true });
+        const freshConn = await connectPglite(dataDir);
+        await freshConn.client.waitReady;
+        await migratePglite(freshConn);
+        try {
+          const { seedDev } = await import("./seed");
+          await seedDev(freshConn.db);
+        } catch (seedErr) {
+          console.warn("[db/client] auto-seed after recovery notice:", seedErr);
+        }
+        return freshConn.db;
+      }
+      throw err;
+    }
   }
   return connectPostgres(url).db;
+}
+
+export function resetDbHandle(): void {
+  delete globalForDb.__invitationDb;
 }
 
 export function getDb(): Promise<Database> {

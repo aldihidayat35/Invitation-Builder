@@ -9,6 +9,8 @@ interface SellerStorefrontPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: SellerStorefrontPageProps): Promise<Metadata> {
   const { slug } = await params;
   const storefront = await getPublicSellerStorefront(slug);
