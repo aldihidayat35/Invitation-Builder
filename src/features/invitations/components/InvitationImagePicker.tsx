@@ -58,6 +58,8 @@ export function InvitationImagePicker({
 
   // Keep state synchronized if value changes from outside
   useEffect(() => {
+    // This local state mirrors a controlled form value that can change after reset.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedId(value);
   }, [value]);
 
@@ -72,7 +74,8 @@ export function InvitationImagePicker({
 
   useEffect(() => {
     if (isOpen) {
-      void refreshAssets();
+      const timer = window.setTimeout(() => void refreshAssets(), 0);
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen, refreshAssets]);
 

@@ -1,5 +1,8 @@
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
-import type { ResellerProfile, User } from "@/lib/db/schema";
+import type { AppSettingRow, ResellerProfile, TestimonialRow, User } from "@/lib/db/schema";
+
+export type AppSettings = AppSettingRow;
+export type AdminTestimonial = TestimonialRow;
 
 export interface AdminResellerItem {
   profile: ResellerProfile;

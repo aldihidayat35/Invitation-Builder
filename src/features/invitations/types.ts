@@ -9,6 +9,7 @@ export interface InvitationSummary {
   readonly slug: string;
   readonly status: InvitationStatus;
   readonly templateVersionId: string;
+  readonly clientAccessToken?: string | null;
   readonly updatedAt: Date;
 }
 

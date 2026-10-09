@@ -10,7 +10,6 @@ import {
   MOTION_PRESET_CONFIGS,
   sampleMotionPathPoints,
 } from "@/features/animations";
-import { motionTrackSchema } from "@/lib/schema";
 
 describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
   it("provides comprehensive preset configurations with valid defaults", () => {

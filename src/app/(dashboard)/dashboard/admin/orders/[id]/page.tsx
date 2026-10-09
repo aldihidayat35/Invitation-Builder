@@ -3,12 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getOrder, getProductionSetupOptions, OrderWorkflowError } from "@/features/orders/api";
-import { ProductionSetupForm } from "@/features/orders/components/ProductionSetupForm";
+import {
+  ClientPortalAccessCard,
+  ProductionSetupForm,
+} from "@/features/orders/components";
 import { requireOwner } from "@/lib/auth/server";
 import type { CustomerOrderStatus, ProductionStatus } from "@/lib/schema/domain";
 import {
   configureProductionAction,
   createOrderProjectAction,
+  regenerateOrderClientTokenAction,
   transitionOrderAction,
   transitionProductionAction,
   updatePaymentAction,
@@ -93,7 +97,7 @@ export default async function AdminOrderDetailPage({
   const options = await getProductionSetupOptions();
   const { order } = detail;
   const configured = Boolean(
-    order.clientUserId && order.workspaceId && order.assignedTo && order.templateVersionId,
+    order.workspaceId && order.assignedTo && order.templateVersionId,
   );
 
   return (
@@ -115,6 +119,16 @@ export default async function AdminOrderDetailPage({
             </Link>
           ) : null
         }
+      />
+
+      {/* Link Portal Klien Mandiri */}
+      <ClientPortalAccessCard
+        token={order.clientAccessToken}
+        customerName={order.customerName}
+        customerWhatsapp={order.customerWhatsapp}
+        orderId={order.id}
+        canRegenerate={true}
+        regenerateAction={regenerateOrderClientTokenAction}
       />
 
       <section className="grid gap-4 md:grid-cols-3" aria-label="Status order">
@@ -231,12 +245,11 @@ export default async function AdminOrderDetailPage({
         <section className="rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="font-bold text-stone-900">Konfigurasi produksi</h2>
           <p className="mb-4 mt-1 text-sm text-stone-600">
-            Pilih klien, workspace, dan penanggung jawab. Versi template yang sedang terbit akan
-            dikunci otomatis.
+            Pilih workspace dan penanggung jawab. Versi template yang sedang terbit akan dikunci otomatis.
           </p>
           <ProductionSetupForm
             orderId={order.id}
-            clients={options.clients}
+            workspaces={options.workspaces}
             assignees={options.assignees}
             templates={options.templates}
             currentTemplateId={order.templateId}

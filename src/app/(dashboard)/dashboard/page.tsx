@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, gte, lte, sql, eq } from "drizzle-orm";
 import { listAll } from "@/features/invitations/api";
 import type { InvitationSummary } from "@/features/invitations/types";
 import { listLibrary } from "@/features/templates/api";
 import type { TemplateSummary } from "@/features/templates/types";
 import { getWorkspaceContext } from "@/lib/auth/server";
-import { getDb } from "@/lib/db/client";
-import { invitations, templates as templatesTable, rsvps } from "@/lib/db/schema";
-import { ClientDashboard, DashboardHeroHeader } from "@/features/dashboard-layout";
+import {
+  ClientDashboard,
+  DashboardHeroHeader,
+} from "@/features/dashboard-layout";
+import { getWorkspaceDashboardMetrics } from "@/features/dashboard-layout/api";
 import { IconArrowRight } from "./nav-icons";
 
 export const metadata: Metadata = {
@@ -88,56 +89,23 @@ export default async function DashboardPage() {
     );
   }
 
-  const db = await getDb();
   const currentYear = new Date().getFullYear();
-  const startOfYear = new Date(currentYear, 0, 1);
-  const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
-
-  const [templates, invitationsData, invitationMonthRows, templateMonthRows, rsvpStatsRows] = active
+  const [templates, invitationsData, dashboardMetrics] = active
     ? await Promise.all([
         listLibrary(active.workspace.id),
         listAll(active.workspace.id),
-        db
-          .select({
-            monthNum: sql<number>`extract(month from ${invitations.createdAt})::int`,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(invitations)
-          .where(
-            and(
-              eq(invitations.workspaceId, active.workspace.id),
-              gte(invitations.createdAt, startOfYear),
-              lte(invitations.createdAt, endOfYear),
-            ),
-          )
-          .groupBy(sql`extract(month from ${invitations.createdAt})`),
-        db
-          .select({
-            monthNum: sql<number>`extract(month from ${templatesTable.createdAt})::int`,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(templatesTable)
-          .where(
-            and(
-              eq(templatesTable.workspaceId, active.workspace.id),
-              gte(templatesTable.createdAt, startOfYear),
-              lte(templatesTable.createdAt, endOfYear),
-            ),
-          )
-          .groupBy(sql`extract(month from ${templatesTable.createdAt})`),
-        db
-          .select({
-            totalRsvps: sql<number>`count(*)::int`,
-            attendingCount: sql<number>`coalesce(sum(case when ${rsvps.response} = 'attending' then 1 else 0 end), 0)::int`,
-            totalPartyGuests: sql<number>`coalesce(sum(case when ${rsvps.response} = 'attending' then ${rsvps.partySize} else 0 end), 0)::int`,
-          })
-          .from(rsvps)
-          .innerJoin(invitations, eq(invitations.id, rsvps.invitationId))
-          .where(eq(invitations.workspaceId, active.workspace.id)),
+        getWorkspaceDashboardMetrics(active.workspace.id, currentYear),
       ])
-    : [[], [], [], [], [{ totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 }]];
-
-  const rsvpStats = rsvpStatsRows[0] ?? { totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 };
+    : [
+        [],
+        [],
+        {
+          invitationMonthRows: [],
+          templateMonthRows: [],
+          rsvpStats: { totalRsvps: 0, attendingCount: 0, totalPartyGuests: 0 },
+        },
+      ];
+  const { invitationMonthRows, templateMonthRows, rsvpStats } = dashboardMetrics;
 
   // Template Metrics
   const publishedTemplates = templates.filter((t) => t.publishedVersionNo !== null).length;

@@ -9,6 +9,7 @@ import {
   changeProductionStatus,
   configureProduction,
   createOrderProject,
+  regenerateOrderClientToken,
 } from "@/features/orders/api";
 import { ORDER_STATUSES, PAYMENT_STATUSES, PRODUCTION_STATUSES } from "@/lib/schema/domain";
 
@@ -35,15 +36,22 @@ export async function transitionOrderAction(formData: FormData): Promise<void> {
 
 export async function configureProductionAction(formData: FormData): Promise<void> {
   const orderId = idSchema.parse(textField(formData, "orderId"));
+  const rawClientId = textField(formData, "clientUserId");
   await configureProduction({
     orderId,
-    clientUserId: idSchema.parse(textField(formData, "clientUserId")),
+    clientUserId: rawClientId ? idSchema.parse(rawClientId) : undefined,
     workspaceId: idSchema.parse(textField(formData, "workspaceId")),
     assigneeId: idSchema.parse(textField(formData, "assigneeId")),
     templateId: idSchema.parse(textField(formData, "templateId")),
     dueAt: z.coerce.date().parse(textField(formData, "dueAt")),
     adminNotes: textField(formData, "adminNotes") || undefined,
   });
+  refreshOrder(orderId);
+}
+
+export async function regenerateOrderClientTokenAction(formData: FormData): Promise<void> {
+  const orderId = idSchema.parse(textField(formData, "orderId"));
+  await regenerateOrderClientToken(orderId);
   refreshOrder(orderId);
 }
 

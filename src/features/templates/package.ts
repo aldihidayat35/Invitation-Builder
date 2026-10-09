@@ -53,7 +53,7 @@ export function extractAssetIdsFromDocument(doc: CanonicalDocument): Set<string>
       assetIds.add(obj.assetId.toLowerCase());
     }
 
-    for (const [key, v] of Object.entries(obj)) {
+    for (const v of Object.values(obj)) {
       if (typeof v === "string") {
         const match = v.match(/\/api\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
         if (match?.[1]) {

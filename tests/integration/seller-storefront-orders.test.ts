@@ -11,7 +11,6 @@ import {
 } from "@/lib/db/repositories/resellers";
 import {
   createCustomerOrder,
-  findCustomerOrderById,
   listOrdersBySeller,
   listAllOrders,
   updateCustomerOrder,

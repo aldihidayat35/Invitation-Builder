@@ -7,6 +7,8 @@ import type { Database } from "@/lib/db/types";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   createResellerClient,
+  findResellerProfileByCustomDomain,
+  findResellerProfileBySlug,
   findResellerProfileByUserId,
   updateResellerBranding,
   type UpdateResellerBrandingInput,
@@ -17,6 +19,7 @@ import {
   getOrderTrends,
 } from "@/lib/db/repositories/orders";
 import { listUsersByReseller } from "@/lib/db/repositories/users";
+import { listPublicTemplates } from "@/lib/db/repositories/templates";
 import type { ResellerClientItem, ResellerOrderItem, ResellerOverviewStats } from "./types";
 import {
   newDomainVerificationToken,
@@ -77,23 +80,41 @@ export async function getResellerOrders(limit: number = 100): Promise<ResellerOr
     paymentStatus: o.paymentStatus,
     notes: o.notes,
     adminNotes: o.adminNotes,
+    clientAccessToken: o.clientAccessToken,
     createdAt: o.createdAt,
   }));
 }
 
-/** Lists all end-user clients under this reseller agency. */
+/** Lists all clients / customer orders under this reseller agency. */
 export async function getResellerClientsList(): Promise<ResellerClientItem[]> {
-  const { user } = await requireReseller();
+  const { user, profile } = await requireReseller();
   const db = await getDb();
 
-  const clients = await listUsersByReseller(db, user.id);
-  return clients.map((c) => ({
+  const orders = await listOrdersBySeller(db, profile.id, 100);
+  const orderClients: ResellerClientItem[] = orders.map((o) => ({
+    id: o.id,
+    name: o.customerName + (o.groomBrideNames ? ` (${o.groomBrideNames})` : ""),
+    email: o.customerEmail,
+    whatsapp: o.customerWhatsapp,
+    clientAccessToken: o.clientAccessToken,
+    status: o.productionStatus.replaceAll("_", " "),
+    createdAt: o.createdAt,
+  }));
+
+  const legacyClients = await listUsersByReseller(db, user.id);
+  const legacyClientItems: ResellerClientItem[] = legacyClients.map((c) => ({
     id: c.id,
     name: c.name,
     email: c.email,
+    whatsapp: null,
+    clientAccessToken: null,
     status: c.status,
     createdAt: c.createdAt,
   }));
+
+  return [...orderClients, ...legacyClientItems].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 }
 
 /** Creates a client under this reseller. */
@@ -217,5 +238,22 @@ export async function getClientAgencyBranding(resellerUserId: string, dbOverride
     logoUrl: profile.logoUrl,
     brandColor: profile.brandColor,
     customDomain: profile.customDomain,
+  };
+}
+
+export async function getPublicSellerStorefront(identifier: string) {
+  const db = await getDb();
+  const profile =
+    (await findResellerProfileBySlug(db, identifier)) ??
+    (await findResellerProfileByCustomDomain(db, identifier));
+  if (!profile?.isActive) return null;
+  const templates = await listPublicTemplates(db);
+  return {
+    profile: {
+      id: profile.id,
+      agencyName: profile.agencyName,
+      whatsappContact: profile.whatsappContact,
+    },
+    templates: templates.map(({ id, name, status }) => ({ id, name, status })),
   };
 }

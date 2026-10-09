@@ -77,6 +77,35 @@ export async function getTemplateCategories() {
   }
 }
 
+export async function createTemplateCategory(input: {
+  name: string;
+  slug: string;
+  description?: string | null;
+  sortOrder?: number;
+}) {
+  const { db, actor } = await context();
+  if (actor.systemRole !== "owner") throw new ForbiddenError();
+  const { insertTemplateCategory } = await import("@/lib/db/repositories/template-categories");
+  return insertTemplateCategory(db, input);
+}
+
+export async function editTemplateCategory(
+  id: string,
+  input: { name: string; slug: string; description?: string | null; sortOrder?: number },
+) {
+  const { db, actor } = await context();
+  if (actor.systemRole !== "owner") throw new ForbiddenError();
+  const { updateTemplateCategory } = await import("@/lib/db/repositories/template-categories");
+  return updateTemplateCategory(db, id, input);
+}
+
+export async function removeTemplateCategory(id: string) {
+  const { db, actor } = await context();
+  if (actor.systemRole !== "owner") throw new ForbiddenError();
+  const { deleteTemplateCategory } = await import("@/lib/db/repositories/template-categories");
+  return deleteTemplateCategory(db, id);
+}
+
 export async function publish(templateId: string, expectedRevision: number, note?: string) {
   const { db, actor } = await context();
   return service.publishTemplate(db, actor, { templateId, expectedRevision, note });

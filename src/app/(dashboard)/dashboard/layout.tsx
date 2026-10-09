@@ -20,7 +20,7 @@ import {
   IconSettings,
   IconStar,
 } from "./nav-icons";
-import { getAppSettings } from "@/lib/db/repositories/settings";
+import { getPublicSiteSettings } from "@/features/site/api";
 import { switchWorkspaceAction } from "@/features/workspaces/actions";
 
 /** Authenticated enterprise dashboard shell layout. */
@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           .then((items) => items.filter((item) => item.status === "published").length)
           .catch(() => null)
       : null,
-    getAppSettings().catch(() => null),
+    getPublicSiteSettings().catch(() => null),
   ]);
 
   const initials = user.name

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 import { CheckIcon, CopyIcon, QrIcon } from "./WidgetIcons";
@@ -33,31 +34,6 @@ export function parseGiftAccounts(accounts: unknown): GiftAccount[] {
   return out;
 }
 
-async function copyText(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    // fall through to the legacy path
-  }
-  try {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    return ok;
-  } catch {
-    return false;
-  }
-}
-
 /** Bank/e-wallet list with copy-to-clipboard and visible/announced feedback (FR-WDG-008). */
 export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
   const list = parseGiftAccounts(accounts);
@@ -66,7 +42,7 @@ export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
   const variant = style?.variant ?? "bank-card";
 
   async function copy(index: number, account: GiftAccount) {
-    const ok = await copyText(account.accountNumber);
+    const ok = await copyTextToClipboard(account.accountNumber);
     setFeedback({ index, ok });
     setTimeout(() => setFeedback(null), 2500);
   }

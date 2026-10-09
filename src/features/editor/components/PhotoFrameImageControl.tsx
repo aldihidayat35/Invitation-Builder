@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AssetSummary } from "@/features/assets/api";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { isBindingCompatible, variableKeySchema } from "@/lib/schema";
@@ -42,12 +42,7 @@ export function PhotoFrameImageControl({
     isBound ? "variable" : "static",
   );
 
-  // Keep tab updated if value binding changes externally
-  useEffect(() => {
-    if (isBound) {
-      setActiveTab("variable");
-    }
-  }, [isBound]);
+  const effectiveTab = isBound ? "variable" : activeTab;
 
   const [picking, setPicking] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
@@ -126,8 +121,8 @@ export function PhotoFrameImageControl({
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "static"}
-          className={`${styles.photoModeBtn} ${activeTab === "static" ? styles.photoModeBtnActive : ""}`}
+          aria-selected={effectiveTab === "static"}
+          className={`${styles.photoModeBtn} ${effectiveTab === "static" ? styles.photoModeBtnActive : ""}`}
           onClick={() => {
             setActiveTab("static");
             if (isBound) {
@@ -142,8 +137,8 @@ export function PhotoFrameImageControl({
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "variable"}
-          className={`${styles.photoModeBtn} ${activeTab === "variable" ? styles.photoModeBtnActive : ""}`}
+          aria-selected={effectiveTab === "variable"}
+          className={`${styles.photoModeBtn} ${effectiveTab === "variable" ? styles.photoModeBtnActive : ""}`}
           onClick={() => setActiveTab("variable")}
           data-testid="photo-mode-variable"
         >
@@ -179,7 +174,7 @@ export function PhotoFrameImageControl({
         )}
       </div>
 
-      {activeTab === "static" ? (
+      {effectiveTab === "static" ? (
         <>
           <div className={styles.photoFrameActionsRow}>
             <button

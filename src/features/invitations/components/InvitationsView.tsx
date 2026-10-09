@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
+import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import type { InvitationSummary } from "../types";
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
@@ -62,6 +63,8 @@ export function InvitationsView({
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    // Server revalidation may replace the list while this client view is mounted.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(invitations);
   }, [invitations]);
 
@@ -107,12 +110,9 @@ export function InvitationsView({
   const handleCopyLink = async (inv: InvitationSummary) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const url = `${origin}/i/${inv.slug}`;
-    try {
-      await navigator.clipboard.writeText(url);
+    if (await copyTextToClipboard(url)) {
       setCopiedId(inv.id);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // ignore clipboard error
     }
   };
 
@@ -311,7 +311,9 @@ export function InvitationsView({
           {/* Sort Selector */}
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) =>
+              setSortBy(e.target.value as "updated-desc" | "updated-asc" | "title-asc")
+            }
             className="rounded-xl border border-stone-200 bg-stone-50/60 px-3 py-1.5 text-xs font-medium text-stone-700 transition focus:border-[#84633F] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#D4AF37]/30"
           >
             <option value="updated-desc">Terbaru Diperbarui</option>
@@ -676,7 +678,7 @@ export function InvitationsView({
                 </h3>
                 <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
                   Apakah Anda yakin ingin menghapus undangan{" "}
-                  <strong className="text-[#2C221E]">"{deletingInvitation.title}"</strong>?
+                  <strong className="text-[#2C221E]">&ldquo;{deletingInvitation.title}&rdquo;</strong>?
                 </p>
                 <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-500">
                   {deletingInvitation.status === "archived"

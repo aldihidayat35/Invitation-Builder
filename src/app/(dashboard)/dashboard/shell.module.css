@@ -1,12 +1,14 @@
 .shell {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 100vh;
   min-height: 100dvh;
 }
 
 .sidebar {
   position: sticky;
   top: 0;
+  height: 100vh;
   height: 100dvh;
   padding: 20px 14px;
   border-right: 1px solid var(--dash-border);

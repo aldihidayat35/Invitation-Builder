@@ -20,7 +20,7 @@ export function CreateUserModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [systemRole, setSystemRole] = useState<SystemRole>("client");
+  const [systemRole, setSystemRole] = useState<SystemRole>("reseller");
   const [status, setStatus] = useState<UserStatus>("active");
   const [resellerId, setResellerId] = useState("");
   const [agencyName, setAgencyName] = useState("");
@@ -81,7 +81,7 @@ export function CreateUserModal({
         setName("");
         setEmail("");
         setPassword("");
-        setSystemRole("client");
+        setSystemRole("reseller");
         setStatus("active");
         setResellerId("");
         setAgencyName("");
@@ -222,7 +222,6 @@ export function CreateUserModal({
                 className="w-full rounded-xl border border-stone-200 bg-[#FAF8F5] px-3.5 py-2.5 text-xs font-medium text-stone-800 focus:border-[#84633F] focus:bg-white focus:outline-none"
                 disabled={isSubmitting}
               >
-                <option value="client">👤 Klien / Pengguna Biasa</option>
                 <option value="reseller">🏪 Mitra Reseller (Agency)</option>
                 <option value="owner">👑 Super Admin (Platform Owner)</option>
               </select>
@@ -320,35 +319,9 @@ export function CreateUserModal({
             </div>
           )}
 
-          {/* Conditional Client Reseller Parent Selector */}
-          {systemRole === "client" && availableResellers.length > 0 && (
-            <div>
-              <label
-                className="block text-xs font-semibold text-stone-700 mb-1"
-                htmlFor="client-reseller-parent"
-              >
-                Reseller Pembina (Opsional)
-              </label>
-              <select
-                id="client-reseller-parent"
-                value={resellerId}
-                onChange={(e) => setResellerId(e.target.value)}
-                className="w-full rounded-xl border border-stone-200 bg-[#FAF8F5] px-3.5 py-2.5 text-xs text-stone-800 focus:border-[#84633F] focus:bg-white focus:outline-none"
-                disabled={isSubmitting}
-              >
-                <option value="">-- Klien Mandiri (Tanpa Reseller) --</option>
-                {availableResellers.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} {r.agencyName ? `(${r.agencyName})` : ""}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1 text-[11px] text-stone-500 block">
-                Jika dihubungkan, reseller terkait dapat melihat pesanan dan mengelola undangan
-                klien ini.
-              </span>
-            </div>
-          )}
+          <div className="rounded-xl border border-amber-200/90 bg-amber-50/70 p-3 text-[11px] text-amber-900 leading-relaxed">
+            <strong>ℹ️ Akses Calon Pengantin (Klien):</strong> Klien tidak dibuatkan akun login dashboard. Calon pengantin mengakses portal mandiri secara aman menggunakan link token unik langsung pada menu Pesanan / Undangan.
+          </div>
 
           {/* Password field */}
           <div>

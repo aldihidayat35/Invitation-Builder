@@ -7,7 +7,7 @@ import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
 import { useEditor, useWorkspaceId } from "../EditorProvider";
 import { GIF_CATEGORIES, GIF_PRESETS, type GifCategory, type GifPreset } from "./gif-presets";
-import { IconGif, IconPlus, IconSparkle } from "../icons";
+import { IconPlus, IconSparkle } from "../icons";
 import styles from "./gif.module.css";
 
 export interface GifItemPick {
@@ -56,7 +56,8 @@ export function GifLibrary({ onPick, disabled = false }: GifLibraryProps) {
   }, [workspaceId]);
 
   useEffect(() => {
-    void refreshSavedGifs();
+    const timer = window.setTimeout(() => void refreshSavedGifs(), 0);
+    return () => window.clearTimeout(timer);
   }, [refreshSavedGifs]);
 
   // Handle local .gif upload directly to workspace asset system

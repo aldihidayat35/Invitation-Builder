@@ -5,6 +5,7 @@
 import { eq } from "drizzle-orm";
 import { assertPasswordPolicy, hashPassword } from "../auth/password";
 import { createEmptyDocument } from "../schema/document";
+import type { TemplateExtendedMetadata } from "../schema/domain";
 import { templateCategories, templates, users, workspaceMembers } from "./schema";
 import {
   createResellerClient,
@@ -14,7 +15,6 @@ import { findTemplateByName, insertTemplate } from "./repositories/templates";
 import {
   findUserByEmail,
   insertUser,
-  setInitialPasswordHash,
   updateUserRole,
 } from "./repositories/users";
 import { createWorkspaceWithOwner, findWorkspaceBySlug } from "./repositories/workspaces";
@@ -262,7 +262,7 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
         thumbnailUrl: tpl.thumbnailUrl,
         previewMockupUrl: tpl.previewMockupUrl,
         tags: tpl.tags,
-        metadata: tpl.metadata as any,
+        metadata: tpl.metadata as TemplateExtendedMetadata,
         status: "published",
         publishedVersionNo: 1,
         publishedRevision: 1,

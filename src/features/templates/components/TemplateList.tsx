@@ -62,12 +62,16 @@ export function TemplateList({
           {/* Card Media Header */}
           <div className={styles.catalogCardMedia}>
             {template.thumbnailUrl ? (
-              <img
-                src={template.thumbnailUrl}
-                alt={`Thumbnail ${template.name}`}
-                className={styles.catalogCardImg}
-                loading="lazy"
-              />
+              <>
+                {/* User-managed URLs are served by the authenticated asset endpoint. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={template.thumbnailUrl}
+                  alt={`Thumbnail ${template.name}`}
+                  className={styles.catalogCardImg}
+                  loading="lazy"
+                />
+              </>
             ) : (
               <div className={styles.catalogCardFallback}>
                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#B8A392" strokeWidth="1.6">

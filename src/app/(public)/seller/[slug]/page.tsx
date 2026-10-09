@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import { randomUUID } from "node:crypto";
 import { notFound } from "next/navigation";
-import { getDb } from "@/lib/db/client";
-import {
-  findResellerProfileBySlug,
-  findResellerProfileByCustomDomain,
-} from "@/lib/db/repositories/resellers";
-import { listPublicTemplates } from "@/lib/db/repositories/templates";
+import { getPublicSellerStorefront } from "@/features/reseller/api";
 import { OrderBookingForm } from "./OrderBookingForm";
 import styles from "./seller-storefront.module.css";
 
@@ -16,12 +11,10 @@ interface SellerStorefrontPageProps {
 
 export async function generateMetadata({ params }: SellerStorefrontPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const db = await getDb();
-  const profile =
-    (await findResellerProfileBySlug(db, slug)) ||
-    (await findResellerProfileByCustomDomain(db, slug));
+  const storefront = await getPublicSellerStorefront(slug);
+  const profile = storefront?.profile;
 
-  if (!profile || !profile.isActive) {
+  if (!profile) {
     return { title: "Toko Seller Tidak Ditemukan" };
   }
 
@@ -33,22 +26,14 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
 
 export default async function SellerStorefrontPage({ params }: SellerStorefrontPageProps) {
   const { slug } = await params;
-  const db = await getDb();
+  const storefront = await getPublicSellerStorefront(slug);
+  const profile = storefront?.profile;
 
-  const profile =
-    (await findResellerProfileBySlug(db, slug)) ||
-    (await findResellerProfileByCustomDomain(db, slug));
-
-  if (!profile || !profile.isActive) {
+  if (!profile) {
     notFound();
   }
 
-  const rawTemplates = await listPublicTemplates(db);
-  const templateList = rawTemplates.map((t) => ({
-    id: t.id,
-    name: t.name,
-    status: t.status,
-  }));
+  const templateList = storefront.templates;
 
   const waDigits = profile.whatsappContact.replace(/\D/g, "");
   const waDirectUrl = `https://wa.me/${waDigits.startsWith("0") ? "62" + waDigits.slice(1) : waDigits}?text=${encodeURIComponent(`Halo ${profile.agencyName}, saya ingin konsultasi pembuatan website undangan digital.`)}`;

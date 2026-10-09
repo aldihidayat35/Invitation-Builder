@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useMemo, useState, useTransition } from "react";
-import type { TestimonialRow } from "@/lib/db/schema";
+import type { AdminTestimonial } from "@/features/admin/types";
 
 interface TestimonialsManagerProps {
-  initialTestimonials: TestimonialRow[];
+  initialTestimonials: AdminTestimonial[];
 }
 
 const PRESET_SHADES = [
@@ -17,7 +17,7 @@ const PRESET_SHADES = [
 ];
 
 export function TestimonialsManager({ initialTestimonials }: TestimonialsManagerProps) {
-  const [testimonials, setTestimonials] = useState<TestimonialRow[]>(initialTestimonials);
+  const [testimonials, setTestimonials] = useState<AdminTestimonial[]>(initialTestimonials);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [isPending, startTransition] = useTransition();
@@ -25,7 +25,7 @@ export function TestimonialsManager({ initialTestimonials }: TestimonialsManager
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<TestimonialRow | null>(null);
+  const [editingItem, setEditingItem] = useState<AdminTestimonial | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Form state
@@ -73,7 +73,7 @@ export function TestimonialsManager({ initialTestimonials }: TestimonialsManager
     setIsModalOpen(true);
   };
 
-  const openEditModal = (item: TestimonialRow) => {
+  const openEditModal = (item: AdminTestimonial) => {
     setEditingItem(item);
     setFormData({
       name: item.name,
@@ -131,7 +131,7 @@ export function TestimonialsManager({ initialTestimonials }: TestimonialsManager
     });
   };
 
-  const handleToggleStatus = async (item: TestimonialRow) => {
+  const handleToggleStatus = async (item: AdminTestimonial) => {
     const nextStatus = !item.isActive;
     startTransition(async () => {
       try {

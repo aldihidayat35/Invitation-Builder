@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import type {
   CustomerOrderStatus,
@@ -17,6 +18,10 @@ import {
 } from "../schema";
 import type { Database } from "../types";
 
+export function generateClientAccessToken(): string {
+  return "c_" + randomBytes(12).toString("hex");
+}
+
 export interface CreateCustomerOrderInput {
   sellerId: string;
   idempotencyKey?: string | null;
@@ -28,6 +33,7 @@ export interface CreateCustomerOrderInput {
   eventDate?: Date | null;
   eventLocation?: string | null;
   notes?: string | null;
+  clientAccessToken?: string | null;
 }
 
 export interface UpdateCustomerOrderInput {
@@ -39,6 +45,7 @@ export interface UpdateCustomerOrderInput {
   templateId?: string | null;
   invitationId?: string | null;
   clientUserId?: string | null;
+  clientAccessToken?: string | null;
   workspaceId?: string | null;
   templateVersionId?: string | null;
   assignedTo?: string | null;
@@ -73,6 +80,7 @@ export async function createCustomerOrder(
       eventDate: input.eventDate ?? null,
       eventLocation: input.eventLocation?.trim() ?? null,
       notes: input.notes?.trim() ?? null,
+      clientAccessToken: input.clientAccessToken ?? generateClientAccessToken(),
       status: "new",
     })
     .returning();
@@ -120,6 +128,37 @@ export async function findCustomerOrderByInvitationId(
     .where(eq(customerOrders.invitationId, invitationId))
     .limit(1);
   return order;
+}
+
+export async function findCustomerOrderByClientToken(
+  db: Database,
+  token: string,
+): Promise<CustomerOrder | undefined> {
+  const [order] = await db
+    .select()
+    .from(customerOrders)
+    .where(eq(customerOrders.clientAccessToken, token))
+    .limit(1);
+  return order;
+}
+
+export async function regenerateCustomerOrderClientToken(
+  db: Database,
+  orderId: string,
+): Promise<CustomerOrder | undefined> {
+  const newToken = generateClientAccessToken();
+  const [updated] = await db
+    .update(customerOrders)
+    .set({ clientAccessToken: newToken, updatedAt: new Date() })
+    .where(eq(customerOrders.id, orderId))
+    .returning();
+  if (updated && updated.invitationId) {
+    await db
+      .update(invitations)
+      .set({ clientAccessToken: newToken, updatedAt: new Date() })
+      .where(eq(invitations.id, updated.invitationId));
+  }
+  return updated;
 }
 
 export async function insertOrderWorkflowEvent(
@@ -233,6 +272,7 @@ export async function updateCustomerOrder(
       ...(input.templateId !== undefined && { templateId: input.templateId }),
       ...(input.invitationId !== undefined && { invitationId: input.invitationId }),
       ...(input.clientUserId !== undefined && { clientUserId: input.clientUserId }),
+      ...(input.clientAccessToken !== undefined && { clientAccessToken: input.clientAccessToken }),
       ...(input.workspaceId !== undefined && { workspaceId: input.workspaceId }),
       ...(input.templateVersionId !== undefined && {
         templateVersionId: input.templateVersionId,

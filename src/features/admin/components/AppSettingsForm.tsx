@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import type { AppSettingRow } from "@/lib/db/schema";
+import type { AppSettings } from "@/features/admin/types";
 
 interface AppSettingsFormProps {
-  initialSettings: AppSettingRow;
+  initialSettings: AppSettings;
 }
 
 export function AppSettingsForm({ initialSettings }: AppSettingsFormProps) {

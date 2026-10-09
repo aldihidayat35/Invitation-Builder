@@ -5,14 +5,12 @@ import {
   animationPresetRegistry,
   buildDefaultMotionTrack,
   buildDefaultTrack,
-  MOTION_PRESET_CONFIGS,
 } from "@/features/animations";
 import {
   ANIMATION_EASINGS,
   type AnimationTrack,
   type Element,
   type MotionPathShape,
-  type MotionPreset,
   type MotionTrack,
 } from "@/lib/schema";
 import { useEditor, useEditorStore } from "./EditorProvider";

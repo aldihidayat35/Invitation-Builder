@@ -13,11 +13,13 @@ export async function makeUser(
   db: Database,
   label: string,
   password: string | null = TEST_PASSWORD,
+  systemRole: SystemRole = "owner",
 ) {
   return insertUser(db, {
     email: `${label}@example.test`,
     name: label,
     passwordHash: password === null ? null : await hashPassword(password, TEST_SCRYPT),
+    systemRole,
   });
 }
 

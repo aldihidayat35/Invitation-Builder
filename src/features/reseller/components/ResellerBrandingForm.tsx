@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import type { ActionState } from "../types";
 import styles from "./reseller.module.css";
 
@@ -35,11 +36,14 @@ export function ResellerBrandingForm({
       ? `${window.location.origin}/seller/${initialData.slug}`
       : `/seller/${initialData.slug}`;
 
-  const handleCopyLink = () => {
-    if (typeof navigator !== "undefined") {
-      navigator.clipboard.writeText(storefrontUrl);
+  const handleCopyLink = async () => {
+    if (typeof navigator === "undefined") return;
+    try {
+      if (!(await copyTextToClipboard(storefrontUrl))) return;
       setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
     }
   };
 
@@ -77,7 +81,7 @@ export function ResellerBrandingForm({
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button
               type="button"
-              onClick={handleCopyLink}
+              onClick={() => void handleCopyLink()}
               className={styles.btnSecondary}
               style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem" }}
             >

@@ -20,6 +20,15 @@ import {
   getGlobalOrderStats,
 } from "@/lib/db/repositories/orders";
 import { getAppSettings, updateAppSettings } from "@/lib/db/repositories/settings";
+import {
+  createTestimonial,
+  deleteTestimonial,
+  listAdminTestimonials,
+  toggleTestimonialActive,
+  updateTestimonial,
+  type CreateTestimonialInput,
+  type UpdateTestimonialInput,
+} from "@/lib/db/repositories/testimonials";
 import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import { transitionOrder } from "@/features/orders/service";
@@ -148,9 +157,7 @@ export async function createReseller(input: CreateResellerServiceInput) {
     agencyName: input.agencyName.trim(),
     slug: input.slug.trim().toLowerCase(),
     whatsappContact: input.whatsappContact.trim(),
-    customDomain: input.customDomain?.trim()
-      ? normalizeCustomDomain(input.customDomain)
-      : null,
+    customDomain: input.customDomain?.trim() ? normalizeCustomDomain(input.customDomain) : null,
     performedBy: actor.id,
   });
 
@@ -263,4 +270,29 @@ export async function saveAdminAppSettings(
   });
 
   return updated;
+}
+
+export async function getAdminTestimonials() {
+  await requireOwner();
+  return listAdminTestimonials(await getDb());
+}
+
+export async function addAdminTestimonial(input: CreateTestimonialInput) {
+  await requireOwner();
+  return createTestimonial(await getDb(), input);
+}
+
+export async function editAdminTestimonial(id: string, input: UpdateTestimonialInput) {
+  await requireOwner();
+  return updateTestimonial(await getDb(), id, input);
+}
+
+export async function setAdminTestimonialActive(id: string, isActive: boolean) {
+  await requireOwner();
+  return toggleTestimonialActive(await getDb(), id, isActive);
+}
+
+export async function removeAdminTestimonial(id: string) {
+  await requireOwner();
+  return deleteTestimonial(await getDb(), id);
 }

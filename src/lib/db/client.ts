@@ -29,7 +29,7 @@ async function open(url: string): Promise<Database> {
       await migratePglite(conn);
     } catch (err) {
       console.warn("[pglite] Corrupted data directory or query failure detected; recovering dev instance:", err);
-      if (dataDir && existsSync(dataDir)) {
+      if (dataDir && existsSync(/* turbopackIgnore: true */ dataDir)) {
         try {
           const backupDir = `${dataDir}_corrupted_${Date.now()}`;
           renameSync(dataDir, backupDir);

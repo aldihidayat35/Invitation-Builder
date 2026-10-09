@@ -92,6 +92,13 @@
       "when": 1791600000000,
       "tag": "0012_phase3_operational_readiness",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791700000000,
+      "tag": "0013_client_portal_access_tokens",
+      "breakpoints": true
     }
   ]
 }

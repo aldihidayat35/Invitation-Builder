@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { AgencyBrandingData, AppSettingsData, NavGroup, StorageUsageSummary } from "../types";
@@ -31,6 +31,19 @@ export function DashboardSidebar({
   user,
   logoutAction,
 }: DashboardSidebarProps) {
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseMobile();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isMobileOpen, onCloseMobile]);
   const pathname = usePathname();
 
   const isLinkActive = (href: string, exact?: boolean) => {
@@ -41,12 +54,13 @@ export function DashboardSidebar({
   const brandName = appSettings?.appName || "Invitation Studio";
   const brandTagline = appSettings?.appTagline || "PLATFORM UNDANGAN";
   const brandLogo = appSettings?.appLogo;
-  const brandInitials = brandName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("") || "IS";
+  const brandInitials =
+    brandName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]!.toUpperCase())
+      .join("") || "IS";
 
   const renderBadge = (badge: number | string) => {
     const badgeStr = String(badge);
@@ -124,7 +138,9 @@ export function DashboardSidebar({
                         <div className="flex items-center gap-3.5 min-w-0">
                           <span
                             className={`h-5 w-5 shrink-0 transition-colors flex items-center justify-center ${
-                              active ? "text-[#D4AF37]" : "text-[#78716C] group-hover:text-stone-300"
+                              active
+                                ? "text-[#D4AF37]"
+                                : "text-[#78716C] group-hover:text-stone-300"
                             }`}
                           >
                             {item.icon}
@@ -155,18 +171,30 @@ export function DashboardSidebar({
           <div className="rounded-xl border border-[#2B2725] bg-[#221E1C] p-3 shadow-inner">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <div className="flex items-center gap-1.5 font-semibold text-stone-300">
-                <svg className="h-4 w-4 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16" />
+                <svg
+                  className="h-4 w-4 text-[#D4AF37]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16"
+                  />
                 </svg>
                 <span className="text-[11px] font-medium tracking-wide">Storage Server</span>
               </div>
-              <span className={`text-[11px] font-bold ${
-                storageUsage.usagePercent >= 90
-                  ? "text-rose-400"
-                  : storageUsage.usagePercent >= 75
-                  ? "text-amber-400"
-                  : "text-[#D4AF37]"
-              }`}>
+              <span
+                className={`text-[11px] font-bold ${
+                  storageUsage.usagePercent >= 90
+                    ? "text-rose-400"
+                    : storageUsage.usagePercent >= 75
+                      ? "text-amber-400"
+                      : "text-[#D4AF37]"
+                }`}
+              >
                 {storageUsage.usagePercent}%
               </span>
             </div>
@@ -178,15 +206,17 @@ export function DashboardSidebar({
                   storageUsage.usagePercent >= 90
                     ? "bg-rose-500"
                     : storageUsage.usagePercent >= 75
-                    ? "bg-amber-500"
-                    : "bg-gradient-to-r from-[#D4AF37] to-[#F59E0B]"
+                      ? "bg-amber-500"
+                      : "bg-gradient-to-r from-[#D4AF37] to-[#F59E0B]"
                 }`}
                 style={{ width: `${Math.min(100, Math.max(storageUsage.usagePercent, 2))}%` }}
               />
             </div>
 
             <div className="mt-2 flex items-center justify-between text-[10.5px] text-stone-400">
-              <span>{storageUsage.formattedUsed} / {storageUsage.formattedLimit}</span>
+              <span>
+                {storageUsage.formattedUsed} / {storageUsage.formattedLimit}
+              </span>
               <Link
                 href="/dashboard/storage"
                 onClick={onCloseMobile}
@@ -254,8 +284,18 @@ export function DashboardSidebar({
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 hover:bg-red-950/50 hover:text-red-400 transition-colors"
                     title="Keluar"
                   >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
                     </svg>
                   </button>
                 </form>
@@ -280,7 +320,12 @@ export function DashboardSidebar({
 
       {/* Mobile Backdrop & Drawer */}
       {isMobileOpen ? (
-        <div className="fixed inset-0 z-50 flex lg:hidden" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigasi utama"
+        >
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"

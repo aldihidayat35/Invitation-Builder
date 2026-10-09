@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import {
   customerOrders,
@@ -28,9 +29,16 @@ export async function insertInvitation(
     title: string;
     data: Record<string, unknown>;
     createdBy?: string;
+    clientAccessToken?: string | null;
   },
 ): Promise<InvitationRow> {
-  const [row] = await db.insert(invitations).values(input).returning();
+  const [row] = await db
+    .insert(invitations)
+    .values({
+      ...input,
+      clientAccessToken: input.clientAccessToken ?? ("c_" + randomBytes(12).toString("hex")),
+    })
+    .returning();
   if (!row) throw new Error("insertInvitation returned no row");
   return row;
 }
@@ -44,6 +52,37 @@ export async function findInvitationById(
     .from(invitations)
     .where(eq(invitations.id, invitationId))
     .limit(1);
+  return row;
+}
+
+export async function findInvitationByClientToken(
+  db: Database,
+  token: string,
+): Promise<InvitationRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(invitations)
+    .where(eq(invitations.clientAccessToken, token))
+    .limit(1);
+  return row;
+}
+
+export async function regenerateInvitationClientToken(
+  db: Database,
+  invitationId: string,
+): Promise<InvitationRow | undefined> {
+  const newToken = "c_" + randomBytes(12).toString("hex");
+  const [row] = await db
+    .update(invitations)
+    .set({ clientAccessToken: newToken, updatedAt: new Date() })
+    .where(eq(invitations.id, invitationId))
+    .returning();
+  if (row) {
+    await db
+      .update(customerOrders)
+      .set({ clientAccessToken: newToken, updatedAt: new Date() })
+      .where(eq(customerOrders.invitationId, invitationId));
+  }
   return row;
 }
 

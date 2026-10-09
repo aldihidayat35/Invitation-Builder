@@ -3,10 +3,10 @@ import type { Database } from "@/lib/db/types";
 import { templates } from "@/lib/db/schema";
 import type {
   CatalogTemplateItem,
-  TemplateCatalogMetadata,
   TemplateExtendedMetadata,
   UpdateTemplateMetadataInput,
 } from "./types";
+import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
 import { templateCatalogMetadataSchema } from "./schemas";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import { ForbiddenError } from "@/lib/auth/errors";
@@ -42,11 +42,11 @@ export function mapToCatalogItem(row: typeof templates.$inferSelect): CatalogTem
     name: row.name,
     slug: row.slug,
     description: row.description,
-    category: (row.category || "wedding") as any,
-    style: (row.style || "modern_minimalist") as any,
+    category: (row.category || "wedding") as TemplateCategory,
+    style: (row.style || "modern_minimalist") as TemplateStyle,
     thumbnailUrl: row.thumbnailUrl,
     previewMockupUrl: row.previewMockupUrl,
-    tier: (row.tier || "standard") as any,
+    tier: (row.tier || "standard") as TemplateTier,
     price: row.price ?? 0,
     isFeatured: row.isFeatured ?? false,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],

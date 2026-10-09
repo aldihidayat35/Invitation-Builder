@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { createEditorStore } from "@/features/editor/core/store";
 import { EditorProvider } from "@/features/editor/components/EditorProvider";
-import { LeftPanel, DEFAULT_LEFT_PANEL_ORDER } from "@/features/editor/components/LeftPanel";
+import { LeftPanel } from "@/features/editor/components/LeftPanel";
 import { Inspector } from "@/features/editor/components/Inspector";
 import { canonicalDocumentSchema, type CanonicalDocument } from "@/lib/schema";
 

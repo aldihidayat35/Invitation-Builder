@@ -17,7 +17,6 @@ import {
   createTemplate,
   getTemplate,
   getTemplateVersion,
-  listTemplates,
   publishTemplate,
   saveDraft,
 } from "@/features/templates/service";

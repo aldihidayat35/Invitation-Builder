@@ -11,6 +11,7 @@ import {
   describeInvitationError,
   importGuestsCsv,
   publish,
+  regenerateClientToken,
   remove,
   restore,
   rollback,
@@ -216,6 +217,13 @@ export async function decideInvitationReviewAction(formData: FormData): Promise<
   const decision = z.enum(["approve", "request_revision"]).parse(field(formData, "decision"));
   const note = field(formData, "note").trim() || undefined;
   await decideInvitationReview(invitationId, decision, note);
+  revalidatePath(`${LIST}/${invitationId}`);
+  revalidatePath(`${LIST}/${invitationId}/preview`);
+}
+
+export async function regenerateInvitationClientTokenAction(formData: FormData): Promise<void> {
+  const invitationId = idSchema.parse(field(formData, "invitationId"));
+  await regenerateClientToken(invitationId);
   revalidatePath(`${LIST}/${invitationId}`);
   revalidatePath(`${LIST}/${invitationId}/preview`);
 }

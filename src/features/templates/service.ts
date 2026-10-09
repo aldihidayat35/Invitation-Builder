@@ -35,6 +35,7 @@ import {
 } from "@/lib/db/repositories/templates";
 import type { TemplateRow } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
+import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
 import {
   LATEST_SCHEMA_VERSION,
   canonicalDocumentSchema,
@@ -51,6 +52,7 @@ import { templateNameSchema, uuidSchema } from "./schemas";
 import type {
   PublishedVersion,
   TemplateDetail,
+  TemplateExtendedMetadata,
   TemplateLifecycle,
   TemplateSummary,
   ValidationReport,
@@ -136,16 +138,16 @@ function toSummary(row: TemplateRow): TemplateSummary {
     updatedAt: row.updatedAt,
     slug: row.slug,
     description: row.description,
-    category: (row.category || "wedding") as any,
-    style: (row.style || "modern_minimalist") as any,
+    category: (row.category || "wedding") as TemplateCategory,
+    style: (row.style || "modern_minimalist") as TemplateStyle,
     thumbnailUrl: row.thumbnailUrl,
     previewMockupUrl: row.previewMockupUrl,
-    tier: (row.tier || "standard") as any,
+    tier: (row.tier || "standard") as TemplateTier,
     price: row.price ?? 0,
     isPublic: row.isPublic ?? false,
     isFeatured: row.isFeatured ?? false,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
-    metadata: (row.metadata as any) || {},
+    metadata: (row.metadata as TemplateExtendedMetadata | null) ?? {},
     viewCount: row.viewCount ?? 0,
     useCount: row.useCount ?? 0,
   };

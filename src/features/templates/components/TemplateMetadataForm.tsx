@@ -1,7 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
-import type { TemplateDetail } from "../types";
+import { useActionState, useRef, useState } from "react";
+import type {
+  TemplateDetail,
+  TemplateExtendedMetadata,
+  TemplateSupportedFeature,
+} from "../types";
 import type { ActionState } from "./action-state";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
@@ -22,7 +26,7 @@ const DEFAULT_CATEGORIES = [
   { slug: "other", name: "Lainnya" },
 ];
 
-const FEATURES = [
+const FEATURES: ReadonlyArray<{ id: TemplateSupportedFeature; label: string }> = [
   { id: "rsvp", label: "RSVP Konfirmasi Kehadiran" },
   { id: "google_maps", label: "Navigasi Google Maps Lokasi" },
   { id: "digital_gift", label: "Amplop / Kado Digital" },
@@ -36,7 +40,7 @@ const FEATURES = [
 
 export function TemplateMetadataForm({ template, action, categories = [] }: TemplateMetadataFormProps) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
-  const meta = (template.metadata || {}) as Record<string, any>;
+  const meta = (template.metadata || {}) as TemplateExtendedMetadata;
   const activeFeatures = new Set(meta.supportedFeatures || []);
 
   const activeCategories = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
@@ -234,6 +238,8 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
               {/* Photo Preview Card */}
               {thumbnailUrl ? (
                 <div className="relative rounded-xl overflow-hidden border border-[#D9CFC4] aspect-video bg-[#F7F4EE] group">
+                  {/* Preview can point to a newly uploaded authenticated asset. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={thumbnailUrl}
                     alt="Pratinjau Foto Sampul"

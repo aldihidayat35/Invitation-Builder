@@ -118,6 +118,7 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
           className={styles.galleryGrid}
           aria-label={heading}
           data-gallery-presentation={presentation}
+          data-gallery-count={Math.min(images.length, 3)}
           data-testid="gallery-collection"
         >
           {images.map((img, i) => (

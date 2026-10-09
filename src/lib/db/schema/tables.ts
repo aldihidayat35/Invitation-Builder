@@ -39,7 +39,7 @@ import {
   userStatusEnum,
   workspaceRoleEnum,
 } from "./enums";
-import type { TemplateExtendedMetadata } from "../../../features/templates/types";
+import type { TemplateExtendedMetadata } from "../../schema/domain";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -222,6 +222,7 @@ export const invitations = pgTable(
     slug: text("slug").notNull(),
     title: text("title").notNull(),
     status: invitationStatusEnum("status").notNull().default("draft"),
+    clientAccessToken: text("client_access_token"),
     /** Client data only (variable values). Never contains design. */
     data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
     activePublishedSnapshotId: uuid("active_published_snapshot_id").references(
@@ -233,6 +234,9 @@ export const invitations = pgTable(
   },
   (t) => [
     uniqueIndex("invitations_slug_uq").on(t.slug),
+    uniqueIndex("invitations_client_access_token_uq")
+      .on(t.clientAccessToken)
+      .where(sql`${t.clientAccessToken} is not null`),
     index("invitations_workspace_idx").on(t.workspaceId, t.status),
     check("invitations_slug_format", sql`${t.slug} ~ ${SLUG_SQL}`),
   ],
@@ -427,6 +431,7 @@ export const customerOrders = pgTable(
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     adminNotes: text("admin_notes"),
+    clientAccessToken: text("client_access_token"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -437,6 +442,9 @@ export const customerOrders = pgTable(
     index("customer_orders_production_status_idx").on(t.productionStatus, t.dueAt),
     index("customer_orders_workspace_idx").on(t.workspaceId),
     index("customer_orders_assignee_idx").on(t.assignedTo, t.productionStatus),
+    uniqueIndex("customer_orders_client_access_token_uq")
+      .on(t.clientAccessToken)
+      .where(sql`${t.clientAccessToken} is not null`),
     uniqueIndex("customer_orders_idempotency_uq")
       .on(t.idempotencyKey)
       .where(sql`${t.idempotencyKey} is not null`),

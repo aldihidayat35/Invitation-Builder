@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getOrder, OrderWorkflowError } from "@/features/orders/api";
+import { ClientPortalAccessCard } from "@/features/orders/components";
 import { requireReseller } from "@/lib/auth/server";
 import { qualifyOrderAction } from "../actions";
 
@@ -31,6 +32,15 @@ export default async function ResellerOrderDetailPage({
         eyebrow={`ORDER ${order.id.slice(0, 8).toUpperCase()}`}
         title={order.groomBrideNames || order.customerName}
         description="Periksa kelengkapan permintaan customer sebelum menyerahkannya ke tim produksi."
+      />
+
+      {/* Link Portal Klien Mandiri */}
+      <ClientPortalAccessCard
+        token={order.clientAccessToken}
+        customerName={order.customerName}
+        customerWhatsapp={order.customerWhatsapp}
+        orderId={order.id}
+        canRegenerate={false}
       />
       <section className="grid gap-5 lg:grid-cols-[2fr_1fr]">
         <article className="rounded-2xl border border-stone-200 bg-white p-5">

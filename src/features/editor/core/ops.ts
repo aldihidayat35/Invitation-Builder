@@ -569,6 +569,8 @@ export function deleteElements(doc: CanonicalDocument, ids: readonly string[]): 
     const cleaned = elements.map((el) => {
       if (el.groupId && (groupCounts.get(el.groupId) ?? 0) < 2) {
         const { groupId: _g, groupName: _gn, ...rest } = el;
+        void _g;
+        void _gn;
         return rest as Element;
       }
       return el;
@@ -1041,6 +1043,8 @@ export function ungroupElements(
         if (el.groupId !== undefined || el.groupName !== undefined) {
           changed = true;
           const { groupId: _g, groupName: _gn, ...rest } = el;
+          void _g;
+          void _gn;
           return rest as Element;
         }
       }
@@ -1134,4 +1138,3 @@ export function updateGroupStyle(
   });
   return changedAny ? withSections(doc, sections) : doc;
 }
-

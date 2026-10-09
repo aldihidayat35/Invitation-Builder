@@ -59,6 +59,11 @@ export async function remove(invitationId: string) {
   return service.deleteInvitation(db, actor, invitationId);
 }
 
+export async function regenerateClientToken(invitationId: string) {
+  const { db, actor } = await context();
+  return service.regenerateInvitationClientToken(db, actor, invitationId);
+}
+
 export async function saveData(
   invitationId: string,
   values: Record<string, string | undefined>,

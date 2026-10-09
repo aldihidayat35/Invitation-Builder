@@ -19,10 +19,10 @@ export default async function ResellerClientsPage() {
       <DashboardHeroHeader
         eyebrow="PORTAL RESELLER • KLIEN AGENSI"
         title="Manajemen Klien Agensi"
-        description="Kelola daftar klien end-user yang dinaungi agensi Anda dan buatkan akun mandiri untuk klien mengisi data undangan pernikahan mereka."
+        description="Kelola daftar klien dan bagikan tautan portal mandiri bagi calon pengantin untuk me-review undangan dan mengelola daftar tamu tanpa perlu login akun."
       />
 
-      <ResellerClientsTable clients={clients} createAction={createClientAction} />
+      <ResellerClientsTable clients={clients} />
     </div>
   );
 }

@@ -147,3 +147,33 @@ export const TEMPLATE_LAYOUT_FORMATS = [
   "interactive_envelope",
 ] as const;
 export type TemplateLayoutFormat = (typeof TEMPLATE_LAYOUT_FORMATS)[number];
+
+export interface TemplateColorSwatch {
+  hex: string;
+  name: string;
+  isPrimary?: boolean;
+}
+
+export type TemplateSupportedFeature =
+  | "rsvp"
+  | "google_maps"
+  | "digital_gift"
+  | "audio_player"
+  | "countdown"
+  | "gallery_slider"
+  | "guest_book"
+  | "video_embed"
+  | "story_timeline"
+  | "envelope_cover";
+
+export interface TemplateExtendedMetadata {
+  demoInvitationSlug?: string;
+  galleryUrls?: string[];
+  colorPalette?: TemplateColorSwatch[];
+  supportedFeatures?: TemplateSupportedFeature[];
+  layoutFormat?: TemplateLayoutFormat;
+  recommendedAudioTitle?: string;
+  previewVideoUrl?: string;
+  ratingScore?: number;
+  ratingCount?: number;
+}

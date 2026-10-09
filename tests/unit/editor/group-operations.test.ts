@@ -140,8 +140,8 @@ describe("Editor Group and Ungroup Operations", () => {
     const e1 = sec.elements.find((e) => e.id === el1Id);
     const e2 = sec.elements.find((e) => e.id === el2Id);
 
-    expect((e1 as any)?.style?.opacity).toBe(0.65);
-    expect((e2 as any)?.style?.opacity).toBe(0.65);
+    expect(e1?.style.opacity).toBe(0.65);
+    expect(e2?.style.opacity).toBe(0.65);
   });
 
   it("remaps groupId when duplicating grouped elements so duplicated items form a new group", () => {

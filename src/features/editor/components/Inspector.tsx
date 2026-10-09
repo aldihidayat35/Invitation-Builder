@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import type { Element, VariableDefinition } from "@/lib/schema";
-import { variableKeySchema, isBindingCompatible, RUNTIME_CONTEXT_VARIABLES } from "@/lib/schema";
+import type { Element } from "@/lib/schema";
+import { variableKeySchema, isBindingCompatible } from "@/lib/schema";
 import { findElement, findSection, uniqueVariableKey, type ReorderMode } from "../core/ops";
 import { resolveColor, elementLabel, elementTypeLabel } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
@@ -22,8 +22,6 @@ import {
   IconBringFront,
   IconClipboardCopy,
   IconClipboardPaste,
-  IconCopy,
-  IconDatabase,
   IconDuplicate,
   IconEyeOff,
   IconForward,
@@ -202,15 +200,14 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
   const doc = useEditor(selectDoc);
   const clipboard = useEditor((s) => s.clipboard);
   const section = findSection(doc, sectionId);
-  if (!section) return null;
-  const tokens = doc.design.tokens;
-  const act = () => store.getState();
-
   const { order: sectionOrder, getDragProps } = usePanelSectionOrder(
     "dib:section-inspector-order",
     DEFAULT_SECTION_INSPECTOR_ORDER,
     readOnly,
   );
+  if (!section) return null;
+  const tokens = doc.design.tokens;
+  const act = () => store.getState();
 
   const renderSection = (id: SectionInspectorSectionId) => {
     switch (id) {

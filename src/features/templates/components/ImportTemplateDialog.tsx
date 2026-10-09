@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
+import { useRouter } from "next/navigation";
 import JSZip from "jszip";
 import {
-  IconDownload,
   IconPackage,
   IconUpload,
   IconCheckCircle,
-  IconLayers,
-  IconSmartphone,
 } from "./template-icons";
 import styles from "./templates.module.css";
 
@@ -23,6 +21,7 @@ interface PackageSummary {
 }
 
 export function ImportTemplateDialog({ workspaceId }: { workspaceId: string }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -153,7 +152,8 @@ export function ImportTemplateDialog({ workspaceId }: { workspaceId: string }) {
       }
 
       if (data.ok && data.templateId) {
-        window.location.href = `/dashboard/templates/${data.templateId}`;
+        router.push(`/dashboard/templates/${data.templateId}`);
+        router.refresh();
       } else {
         window.location.reload();
       }

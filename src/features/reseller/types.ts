@@ -31,6 +31,7 @@ export interface ResellerOrderItem {
   paymentStatus: PaymentStatus;
   notes?: string | null;
   adminNotes?: string | null;
+  clientAccessToken?: string | null;
   createdAt: Date;
 }
 
@@ -38,6 +39,8 @@ export interface ResellerClientItem {
   id: string;
   name: string;
   email: string;
+  whatsapp?: string | null;
+  clientAccessToken?: string | null;
   status: string;
   createdAt: Date;
 }

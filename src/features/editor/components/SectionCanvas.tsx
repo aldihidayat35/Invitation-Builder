@@ -23,7 +23,7 @@ import {
 } from "@/lib/schema";
 import { resolveColor, resolveFontFamily, textPreview } from "../core/display";
 import { findElement } from "../core/ops";
-import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides, snapToSection } from "../core/geometry";
+import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides } from "../core/geometry";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
@@ -771,7 +771,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         // `click` fires after dragend; keep `moved` until then, reset on next drag start.
       },
     }),
-    [store, section, hideGuides, showGuides, commitNodes, bleedX, bleedY, zoom],
+    [store, section, hideGuides, showGuides, commitNodes, bleedX, bleedY, zoom, baseHeight],
   );
 
   useEffect(() => {

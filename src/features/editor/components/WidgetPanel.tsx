@@ -28,7 +28,7 @@ import { saveAssetFromUrlAction } from "@/features/assets/actions";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
 import { useEditorStore, useWorkspaceId } from "./EditorProvider";
-import { IconCheck, IconGif, IconSparkle, IconZap } from "./icons";
+import { IconCheck, IconSparkle, IconZap } from "./icons";
 import {
   ColorField,
   FieldRow,

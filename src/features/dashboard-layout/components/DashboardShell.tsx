@@ -66,7 +66,9 @@ export function DashboardShell({
           logoutAction={logoutAction}
         />
 
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 overflow-x-clip p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8">
+          {children}
+        </main>
 
         <DashboardFooter appSettings={appSettings} />
       </div>

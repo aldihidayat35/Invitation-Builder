@@ -161,7 +161,7 @@ describe("Custom Canvas Opening Screen (Section 0)", () => {
       </PublicContextProvider>,
     );
 
-    const cover = screen.getByTestId("opening-cover-canvas");
+    screen.getByTestId("opening-cover-canvas");
     act(() => {
       fireEvent.keyDown(window, { key: "Enter" });
     });

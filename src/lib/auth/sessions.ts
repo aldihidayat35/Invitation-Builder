@@ -131,6 +131,13 @@ export async function login(
     throw new AuthenticationError();
   }
 
+  if (user.systemRole === "client") {
+    throttle.recordFailure(key);
+    throw new AuthenticationError(
+      "Klien tidak menggunakan login dashboard. Silakan akses portal undangan melalui link unik yang diberikan oleh tim produksi.",
+    );
+  }
+
   throttle.reset(key);
   const session = await createSession(db, user.id);
   await insertAuditLog(db, {

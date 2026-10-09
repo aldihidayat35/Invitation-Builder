@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { TemplateCategoryWithCount } from "@/lib/db/repositories/template-categories";
+import type { TemplateCategoryWithCount } from "@/features/templates/types";
 import type { ActionState } from "@/features/templates/components";
 import {
   createCategoryAction,

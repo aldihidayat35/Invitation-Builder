@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import type { AvailableResellerOption, UpdateUserInputForm, UserListItem } from "../types";
 import type { SystemRole, UserStatus } from "@/lib/schema/domain";
 
@@ -21,11 +21,11 @@ export function EditUserModal({
   onSubmit,
   availableResellers,
 }: EditUserModalProps) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [systemRole, setSystemRole] = useState<SystemRole>("client");
-  const [status, setStatus] = useState<UserStatus>("active");
-  const [resellerId, setResellerId] = useState("");
+  const [name, setName] = useState(user?.name ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [systemRole, setSystemRole] = useState<SystemRole>(user?.systemRole ?? "client");
+  const [status, setStatus] = useState<UserStatus>(user?.status ?? "active");
+  const [resellerId, setResellerId] = useState(user?.resellerId ?? "");
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -33,18 +33,6 @@ export function EditUserModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isSelf = user?.id === currentUserId;
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setSystemRole(user.systemRole);
-      setStatus(user.status);
-      setResellerId(user.resellerId || "");
-      setNewPassword("");
-      setErrorMessage(null);
-    }
-  }, [user]);
 
   if (!isOpen || !user) return null;
 
@@ -211,7 +199,9 @@ export function EditUserModal({
                 disabled={isSubmitting || isSelf}
                 className="w-full rounded-xl border border-stone-200 bg-[#FAF8F5] px-3.5 py-2.5 text-xs font-medium text-stone-800 focus:border-[#84633F] focus:bg-white focus:outline-none disabled:opacity-60"
               >
-                <option value="client">👤 Klien / Pengguna Biasa</option>
+                {user.systemRole === "client" && (
+                  <option value="client" disabled>👤 Klien (Legacy - Akses Login Dinonaktifkan)</option>
+                )}
                 <option value="reseller">🏪 Mitra Reseller (Agency)</option>
                 <option value="owner">👑 Super Admin</option>
               </select>
@@ -233,29 +223,6 @@ export function EditUserModal({
               </select>
             </div>
           </div>
-
-          {/* Conditional Reseller Parent Selector */}
-          {systemRole === "client" && availableResellers.length > 0 && (
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1" htmlFor="edit-client-reseller">
-                Reseller Pembina
-              </label>
-              <select
-                id="edit-client-reseller"
-                value={resellerId}
-                onChange={(e) => setResellerId(e.target.value)}
-                className="w-full rounded-xl border border-stone-200 bg-[#FAF8F5] px-3.5 py-2.5 text-xs text-stone-800 focus:border-[#84633F] focus:bg-white focus:outline-none"
-                disabled={isSubmitting}
-              >
-                <option value="">-- Klien Mandiri (Tanpa Reseller) --</option>
-                {availableResellers.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} {r.agencyName ? `(${r.agencyName})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {/* Password Reset Section */}
           <div className="pt-2 border-t border-stone-100">

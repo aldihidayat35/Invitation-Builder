@@ -28,7 +28,7 @@ export interface EditorShellProps {
 }
 
 export function EditorShell(props: EditorShellProps) {
-  const { templateId, save } = props;
+  const { templateId, save, readOnly, currentRevision } = props;
   // Created once per mount; later prop changes (revalidation) must never reset local edits.
   const [store] = useState(() =>
     createEditorStore({
@@ -39,14 +39,14 @@ export function EditorShell(props: EditorShellProps) {
   );
   const autosaver = useMemo(
     () =>
-      props.readOnly
+      readOnly
         ? null
         : createAutosaver({
             store,
             save: (document, revision) => save(templateId, revision, document),
-            resolveConflict: () => props.currentRevision(templateId),
+            resolveConflict: () => currentRevision(templateId),
           }),
-    [store, save, templateId, props.readOnly, props.currentRevision],
+    [store, save, templateId, readOnly, currentRevision],
   );
 
   useEffect(() => () => autosaver?.dispose(), [autosaver]);

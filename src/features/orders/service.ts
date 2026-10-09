@@ -1,16 +1,24 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import type { Actor } from "@/lib/auth/authorization";
 import { ForbiddenError } from "@/lib/auth/errors";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
-import { findInvitationById } from "@/lib/db/repositories/invitations";
+import { generateGuestTokenId } from "@/lib/db/guest-token";
+import {
+  archiveGuestRow,
+  findInvitationByClientToken,
+  findInvitationById,
+  insertGuest,
+} from "@/lib/db/repositories/invitations";
 import {
   findCustomerOrderById,
+  findCustomerOrderByClientToken,
   findCustomerOrderByInvitationId,
   insertOrderWorkflowEvent,
   linkCustomerOrderInvitation,
   listOrderWorkflowEvents,
+  regenerateCustomerOrderClientToken,
   transitionCustomerOrderProduction,
   transitionCustomerOrderStatus,
   updateCustomerOrder,
@@ -26,8 +34,14 @@ import {
   findWorkspaceById,
   getMemberRole,
 } from "@/lib/db/repositories/workspaces";
-import { users } from "@/lib/db/schema";
-import type { CustomerOrder, OrderWorkflowEvent } from "@/lib/db/schema";
+import { guests, rsvps, users } from "@/lib/db/schema";
+import type {
+  CustomerOrder,
+  GuestRow,
+  InvitationRow,
+  OrderWorkflowEvent,
+  RsvpRow,
+} from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 import { createInvitation } from "@/features/invitations/service";
@@ -206,7 +220,7 @@ export async function configureOrderProduction(
   actor: Actor,
   input: {
     orderId: string;
-    clientUserId: string;
+    clientUserId?: string | null;
     workspaceId: string;
     assigneeId: string;
     templateId: string;
@@ -221,16 +235,19 @@ export async function configureOrderProduction(
     throw new OrderWorkflowError("Pesanan harus diterima sebelum produksi dikonfigurasi.");
   }
   const [client, assignee, workspace, clientRole, template] = await Promise.all([
-    findUserById(db, input.clientUserId),
+    input.clientUserId ? findUserById(db, input.clientUserId) : undefined,
     findUserById(db, input.assigneeId),
     findWorkspaceById(db, input.workspaceId),
-    getMemberRole(db, input.workspaceId, input.clientUserId),
+    input.clientUserId ? getMemberRole(db, input.workspaceId, input.clientUserId) : "member",
     findTemplateById(db, input.templateId),
   ]);
-  if (!client || client.systemRole !== "client" || client.status !== "active") {
+  if (input.clientUserId && (!client || client.status !== "active")) {
     throw new OrderWorkflowError("Pilih akun klien aktif yang valid.");
   }
-  if (!workspace || !clientRole) {
+  if (!workspace) {
+    throw new OrderWorkflowError("Workspace tidak ditemukan.");
+  }
+  if (input.clientUserId && !clientRole) {
     throw new OrderWorkflowError("Workspace harus dimiliki atau diikuti oleh klien terpilih.");
   }
   if (!assignee || assignee.systemRole !== "owner" || assignee.status !== "active") {
@@ -252,7 +269,7 @@ export async function configureOrderProduction(
       role: "admin",
     });
     const updated = await updateCustomerOrder(tx, order.id, {
-      clientUserId: client.id,
+      clientUserId: client?.id ?? null,
       workspaceId: workspace.id,
       assignedTo: assignee.id,
       templateId: template.id,
@@ -266,7 +283,7 @@ export async function configureOrderProduction(
       eventType: "order.configure_production",
       toValue: "configured",
       metadata: {
-        clientUserId: client.id,
+        clientUserId: client?.id ?? null,
         workspaceId: workspace.id,
         assigneeId: assignee.id,
         templateVersionId: version.id,
@@ -312,12 +329,16 @@ export async function createProjectForOrder(
       templateId: order.templateId!,
       templateVersionId: order.templateVersionId!,
       title: order.groomBrideNames?.trim() || `Undangan ${order.customerName}`,
+      clientAccessToken: order.clientAccessToken ?? undefined,
     });
     const next = await linkCustomerOrderInvitation(tx, order.id, invitation.id);
     if (!next) {
       throw new OrderWorkflowError(
         "Proyek order telah dibuat oleh proses lain. Muat ulang halaman.",
       );
+    }
+    if (!next.clientAccessToken && invitation.clientAccessToken) {
+      await updateCustomerOrder(tx, order.id, { clientAccessToken: invitation.clientAccessToken });
     }
     await insertOrderWorkflowEvent(tx, {
       orderId: order.id,
@@ -421,6 +442,56 @@ export async function submitClientDecision(
   });
 }
 
+export async function submitClientDecisionByToken(
+  db: Database,
+  token: string,
+  decision: "approve" | "request_revision",
+  note?: string,
+): Promise<CustomerOrder> {
+  const order = await findCustomerOrderByClientToken(db, token);
+  if (!order) {
+    throw new ForbiddenError("Akses token tidak valid atau pesanan tidak ditemukan.");
+  }
+  if (order.productionStatus !== "client_review") {
+    throw new OrderWorkflowError("Undangan belum berada pada tahap review klien.");
+  }
+  if (decision === "request_revision" && !note?.trim()) {
+    throw new OrderWorkflowError("Catatan revisi wajib diisi.");
+  }
+  const nextStatus: ProductionStatus = decision === "approve" ? "approved" : "revision_requested";
+  return db.transaction(async (tx) => {
+    const updated = await transitionCustomerOrderProduction(
+      tx,
+      order.id,
+      order.productionStatus,
+      nextStatus,
+    );
+    if (!updated) {
+      throw new OrderWorkflowError(
+        "Status review telah berubah. Muat ulang halaman dan coba lagi.",
+      );
+    }
+    const action = decision === "approve" ? "order.client_approve" : "order.revision_requested";
+    await insertOrderWorkflowEvent(tx, {
+      orderId: order.id,
+      actorId: null,
+      eventType: action,
+      fromValue: order.productionStatus,
+      toValue: nextStatus,
+      note,
+    });
+    await insertAuditLog(tx, {
+      workspaceId: order.workspaceId,
+      actorId: null,
+      action,
+      entityType: "customer_order",
+      entityId: order.id,
+      metadata: { token, invitationId: order.invitationId },
+    });
+    return updated;
+  });
+}
+
 export async function updatePaymentStatus(
   db: Database,
   actor: Actor,
@@ -486,4 +557,126 @@ export async function listProductionUsers(
     .select({ id: users.id, name: users.name, email: users.email })
     .from(users)
     .where(eq(users.systemRole, "owner"));
+}
+
+export interface ClientPortalData {
+  order: CustomerOrder;
+  invitation: InvitationRow | null;
+  guests: GuestRow[];
+  rsvps: RsvpRow[];
+  templateTitle: string | null;
+  previewUrl: string | null;
+  shareableUrl: string | null;
+}
+
+export async function getClientPortalDataByToken(
+  db: Database,
+  token: string,
+): Promise<ClientPortalData | null> {
+  const cleanToken = token.trim();
+  if (!cleanToken) return null;
+
+  let order = await findCustomerOrderByClientToken(db, cleanToken);
+  let invitation: InvitationRow | undefined;
+
+  if (order && order.invitationId) {
+    invitation = await findInvitationById(db, order.invitationId);
+  } else if (!order) {
+    invitation = await findInvitationByClientToken(db, cleanToken);
+    if (invitation) {
+      order = await findCustomerOrderByInvitationId(db, invitation.id);
+    }
+  }
+
+  if (!order && !invitation) {
+    return null;
+  }
+
+  const invitationId = invitation?.id ?? order?.invitationId;
+  let guestList: GuestRow[] = [];
+  let rsvpList: RsvpRow[] = [];
+
+  if (invitationId) {
+    guestList = await db
+      .select()
+      .from(guests)
+      .where(and(eq(guests.invitationId, invitationId), ne(guests.status, "archived")))
+      .orderBy(desc(guests.createdAt));
+
+    rsvpList = await db
+      .select()
+      .from(rsvps)
+      .where(eq(rsvps.invitationId, invitationId))
+      .orderBy(desc(rsvps.createdAt));
+  }
+
+  let templateTitle: string | null = null;
+  if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    templateTitle = tmpl?.name ?? null;
+  }
+
+  const slug = invitation?.slug;
+  const shareableUrl = slug ? `/i/${slug}` : null;
+  const previewUrl = slug
+    ? `/i/${slug}`
+    : order?.templateId
+      ? `/dashboard/templates/${order.templateId}/preview`
+      : null;
+
+  return {
+    order: order!,
+    invitation: invitation ?? null,
+    guests: guestList,
+    rsvps: rsvpList,
+    templateTitle,
+    previewUrl,
+    shareableUrl,
+  };
+}
+
+export async function addGuestByClientToken(
+  db: Database,
+  token: string,
+  input: { name: string; maxParty?: number },
+): Promise<GuestRow> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal || !portal.invitation) {
+    throw new Error("Undangan belum diterbitkan atau token akses tidak valid.");
+  }
+  const name = input.name.trim();
+  if (!name) throw new Error("Nama tamu tidak boleh kosong.");
+  const maxParty = Math.min(Math.max(input.maxParty ?? 1, 1), 20);
+  const guest = await insertGuest(db, {
+    invitationId: portal.invitation.id,
+    name,
+    tokenId: generateGuestTokenId(),
+    maxParty,
+  });
+  return guest;
+}
+
+export async function archiveGuestByClientToken(
+  db: Database,
+  token: string,
+  guestId: string,
+): Promise<void> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal || !portal.invitation) {
+    throw new Error("Undangan tidak ditemukan atau token akses tidak valid.");
+  }
+  await archiveGuestRow(db, portal.invitation.id, guestId);
+}
+
+export async function regenerateOrderClientToken(
+  db: Database,
+  actor: Actor,
+  orderId: string,
+): Promise<string> {
+  requirePlatformOwner(actor);
+  const updated = await regenerateCustomerOrderClientToken(db, orderId);
+  if (!updated || !updated.clientAccessToken) {
+    throw new OrderWorkflowError("Gagal memperbarui token akses order.");
+  }
+  return updated.clientAccessToken;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useTransition } from "react";
+import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import type {
   AvailableResellerOption,
   CreateUserInputForm,
@@ -77,7 +78,7 @@ export function UserManager({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [statusTogglingId, setStatusTogglingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ text, type });
@@ -85,12 +86,11 @@ export function UserManager({
   };
 
   const copyToClipboard = async (text: string, id: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyTextToClipboard(text)) {
       setCopiedId(id);
       showToast("ID Pengguna berhasil disalin ke clipboard!");
       setTimeout(() => setCopiedId(null), 2000);
-    } catch {
+    } else {
       showToast("Gagal menyalin ID.", "error");
     }
   };
@@ -304,7 +304,11 @@ export function UserManager({
               {/* Sort By */}
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) =>
+                  setSortBy(
+                    e.target.value as "newest" | "oldest" | "name_asc" | "name_desc",
+                  )
+                }
                 className="rounded-xl border border-stone-200 bg-[#FAF8F5] px-3 py-2 text-xs font-medium text-stone-700 shadow-2xs focus:border-[#84633F] focus:bg-white focus:outline-none"
                 aria-label="Urutkan pengguna"
               >
@@ -353,18 +357,20 @@ export function UserManager({
               <span>🏪</span>
               <span>Mitra Seller ({summary.resellers})</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setRoleFilter("client")}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                roleFilter === "client"
-                  ? "bg-blue-800 text-white shadow-xs"
-                  : "bg-blue-50 text-blue-900 border border-blue-200 hover:bg-blue-100"
-              }`}
-            >
-              <span>👤</span>
-              <span>Klien ({summary.clients})</span>
-            </button>
+            {summary.clients > 0 && (
+              <button
+                type="button"
+                onClick={() => setRoleFilter("client")}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  roleFilter === "client"
+                    ? "bg-stone-800 text-white shadow-xs"
+                    : "bg-stone-100 text-stone-700 border border-stone-200 hover:bg-stone-200"
+                }`}
+              >
+                <span>👤</span>
+                <span>Klien Lama ({summary.clients})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -615,6 +621,7 @@ export function UserManager({
 
       {/* Edit User Modal */}
       <EditUserModal
+        key={editTarget?.id ?? "no-user"}
         user={editTarget}
         currentUserId={currentUserId}
         isOpen={Boolean(editTarget)}

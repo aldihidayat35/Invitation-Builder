@@ -48,7 +48,6 @@ export function GifWidget({
   assetId,
   caption,
   fit,
-  loop,
   alignment,
   style,
 }: GifWidgetProps) {

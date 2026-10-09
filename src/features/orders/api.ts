@@ -28,7 +28,7 @@ export async function changeOrderStatus(
 
 export async function configureProduction(input: {
   orderId: string;
-  clientUserId: string;
+  clientUserId?: string | null;
   workspaceId: string;
   assigneeId: string;
   templateId: string;
@@ -79,26 +79,14 @@ export async function getInvitationReview(invitationId: string) {
 export async function getProductionSetupOptions() {
   await requireOwner();
   const db = await getDb();
-  const [clients, assignees, templates] = await Promise.all([
-    listUsersByRole(db, "client"),
+  const [allWorkspaces, assignees, templates] = await Promise.all([
+    db.query.workspaces.findMany({ orderBy: (w, { asc }) => [asc(w.name)] }),
     service.listProductionUsers(db),
     listPublicTemplates(db),
   ]);
-  const clientOptions = await Promise.all(
-    clients
-      .filter((client) => client.status === "active")
-      .map(async (client) => ({
-        id: client.id,
-        name: client.name,
-        email: client.email,
-        workspaces: (await listMemberships(db, client.id)).map((membership) => ({
-          id: membership.workspace.id,
-          name: membership.workspace.name,
-        })),
-      })),
-  );
   return {
-    clients: clientOptions,
+    workspaces: allWorkspaces.map((w) => ({ id: w.id, name: w.name })),
+    clients: [] as Array<{ id: string; name: string; email: string; workspaces: Array<{ id: string; name: string }> }>,
     assignees,
     templates: templates.map((template) => ({
       id: template.id,
@@ -108,4 +96,36 @@ export async function getProductionSetupOptions() {
   };
 }
 
+export async function getClientPortal(token: string) {
+  return service.getClientPortalDataByToken(await getDb(), token);
+}
+
+export async function submitPortalDecision(
+  token: string,
+  decision: "approve" | "request_revision",
+  note?: string,
+) {
+  return service.submitClientDecisionByToken(await getDb(), token, decision, note);
+}
+
+export async function addPortalGuest(
+  token: string,
+  input: { name: string; maxParty?: number },
+) {
+  return service.addGuestByClientToken(await getDb(), token, input);
+}
+
+export async function archivePortalGuest(
+  token: string,
+  guestId: string,
+) {
+  return service.archiveGuestByClientToken(await getDb(), token, guestId);
+}
+
+export async function regenerateOrderClientToken(orderId: string) {
+  const user = await requireUser();
+  return service.regenerateOrderClientToken(await getDb(), actorOf(user), orderId);
+}
+
 export { OrderWorkflowError } from "./service";
+export type { ClientPortalData } from "./service";

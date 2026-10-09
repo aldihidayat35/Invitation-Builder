@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildYouTubeEmbedUrl,
-  parseAspectRatio,
   parseVideoSource,
   type VideoSourceInfo,
 } from "../video-utils";
@@ -52,7 +51,6 @@ function GoldCornerDecor({ className }: { readonly className?: string }) {
 
 export function VideoWidget({
   url,
-  sourceType: _sourceType,
   poster,
   caption,
   autoplayOnScroll,

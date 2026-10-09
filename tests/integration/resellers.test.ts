@@ -4,7 +4,6 @@ import { createMigratedDb } from "../helpers/db";
 import {
   createResellerClient,
   createResellerWithProfile,
-  findResellerProfileById,
   findResellerProfileBySlug,
   findResellerProfileByUserId,
   updateResellerStatus,
@@ -15,7 +14,7 @@ import {
   listOrdersBySeller,
   getSellerOrderStats,
 } from "@/lib/db/repositories/orders";
-import { findUserByEmail, listUsersByReseller } from "@/lib/db/repositories/users";
+import { listUsersByReseller } from "@/lib/db/repositories/users";
 
 let conn: Awaited<ReturnType<typeof createMigratedDb>>;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useRef } from "react";
+import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import type { StorageAssetItem, StorageOverview } from "../api";
 import { deleteAssetAction, getStorageOverviewAction, listAllStorageAssetsAction } from "../actions";
 import { uploadAssetFile } from "../upload";
@@ -38,7 +39,7 @@ export function StorageManager({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
@@ -127,13 +128,12 @@ export function StorageManager({
   };
 
   const copyToClipboard = async (url: string, id: string) => {
-    try {
-      const fullUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-      await navigator.clipboard.writeText(fullUrl);
+    const fullUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+    if (await copyTextToClipboard(fullUrl)) {
       setCopiedId(id);
       showToast("URL media berhasil disalin ke clipboard!");
       setTimeout(() => setCopiedId(null), 2000);
-    } catch {
+    } else {
       showToast("Gagal menyalin link.");
     }
   };

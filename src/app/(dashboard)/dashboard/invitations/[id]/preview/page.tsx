@@ -12,7 +12,11 @@ import styles from "@/features/invitations/components/invitations.module.css";
 import { DocumentRenderer } from "@/features/renderer";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getInvitationReview } from "@/features/orders/api";
-import { decideInvitationReviewAction } from "../../actions";
+import { ClientPortalAccessCard } from "@/features/orders/components";
+import {
+  decideInvitationReviewAction,
+  regenerateInvitationClientTokenAction,
+} from "../../actions";
 
 export const metadata: Metadata = { title: "Preview undangan" };
 
@@ -74,6 +78,18 @@ export default async function InvitationPreviewPage({
           }
         />
       </div>
+
+      {model.invitation.clientAccessToken ? (
+        <div className="mb-6">
+          <ClientPortalAccessCard
+            token={model.invitation.clientAccessToken}
+            customerName={model.invitation.title}
+            invitationId={id}
+            canRegenerate={true}
+            regenerateAction={regenerateInvitationClientTokenAction}
+          />
+        </div>
+      ) : null}
 
       <nav className={styles.previewBar} aria-label="Konteks tamu preview">
         <Link

@@ -12,6 +12,10 @@ import {
   rename,
 } from "@/features/templates/api";
 import type { ActionState } from "@/features/templates/components";
+import type {
+  TemplateSupportedFeature,
+} from "@/features/templates/types";
+import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
 import { requireOwner } from "@/lib/auth/server";
 
 const idSchema = z.uuid();
@@ -158,9 +162,9 @@ export async function updateTemplateCatalogAction(
     await updateCatalogMetadata(id.data, {
       slug: field(formData, "slug").trim() || null,
       description: field(formData, "description").trim() || null,
-      category: (field(formData, "category") || "wedding") as any,
-      style: (field(formData, "style") || "modern_minimalist") as any,
-      tier: (field(formData, "tier") || "standard") as any,
+      category: (field(formData, "category") || "wedding") as TemplateCategory,
+      style: (field(formData, "style") || "modern_minimalist") as TemplateStyle,
+      tier: (field(formData, "tier") || "standard") as TemplateTier,
       price,
       isPublic,
       isFeatured,
@@ -169,7 +173,7 @@ export async function updateTemplateCatalogAction(
       previewVideoUrl,
       tags,
       metadata: {
-        supportedFeatures: rawFeatures as any,
+        supportedFeatures: rawFeatures as TemplateSupportedFeature[],
         demoInvitationSlug: field(formData, "demoInvitationSlug").trim() || undefined,
         previewVideoUrl: previewVideoUrl || undefined,
       },

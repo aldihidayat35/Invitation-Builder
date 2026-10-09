@@ -1,4 +1,4 @@
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { templateCategories, templates, type NewTemplateCategoryRow, type TemplateCategoryRow } from "../schema";
 import type { Database } from "../types";
 

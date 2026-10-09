@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireOwner } from "@/lib/auth/server";
-import { getDb } from "@/lib/db/client";
-import { listAdminTestimonials } from "@/lib/db/repositories/testimonials";
+import { getAdminTestimonials } from "@/features/admin/api";
 import { TestimonialsManager } from "@/features/admin/components";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 
@@ -12,9 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminReviewsPage() {
-  await requireOwner();
-  const db = await getDb();
-  const testimonials = await listAdminTestimonials(db);
+  const testimonials = await getAdminTestimonials();
 
   return (
     <div className="space-y-6">

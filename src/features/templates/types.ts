@@ -4,40 +4,28 @@ import type {
   TemplateStatus,
   TemplateStyle,
   TemplateTier,
+  TemplateColorSwatch,
+  TemplateExtendedMetadata,
+  TemplateSupportedFeature,
+} from "@/lib/schema/domain";
+export type {
+  TemplateColorSwatch,
+  TemplateExtendedMetadata,
+  TemplateSupportedFeature,
 } from "@/lib/schema/domain";
 import type { CanonicalDocument, DocumentIssue, SemanticIssue } from "@/lib/schema";
 
 /** Library state shown to users (indicator Draft / Published). */
 export type TemplateLifecycle = "draft" | "published" | "published-with-changes" | "archived";
 
-export interface TemplateColorSwatch {
-  hex: string;
+export interface TemplateCategoryWithCount {
+  id: string;
+  slug: string;
   name: string;
-  isPrimary?: boolean;
-}
-
-export type TemplateSupportedFeature =
-  | "rsvp"
-  | "google_maps"
-  | "digital_gift"
-  | "audio_player"
-  | "countdown"
-  | "gallery_slider"
-  | "guest_book"
-  | "video_embed"
-  | "story_timeline"
-  | "envelope_cover";
-
-export interface TemplateExtendedMetadata {
-  demoInvitationSlug?: string;
-  galleryUrls?: string[];
-  colorPalette?: TemplateColorSwatch[];
-  supportedFeatures?: TemplateSupportedFeature[];
-  layoutFormat?: TemplateLayoutFormat;
-  recommendedAudioTitle?: string;
-  previewVideoUrl?: string;
-  ratingScore?: number;
-  ratingCount?: number;
+  description: string | null;
+  icon: string | null;
+  sortOrder: number;
+  templateCount: number;
 }
 
 export interface DynamicTemplateCategory {

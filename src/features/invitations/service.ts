@@ -42,6 +42,7 @@ import {
   listInvitations as listInvitationRows,
   listSnapshotSummaries,
   nextRevisionNo,
+  regenerateInvitationClientToken as repoRegenerateInvitationClientToken,
   restoreInvitationRow,
   setActiveSnapshot,
   updateGuestRow,
@@ -176,6 +177,7 @@ function toSummary(row: InvitationRow): InvitationSummary {
     slug: row.slug,
     status: row.status,
     templateVersionId: row.templateVersionId,
+    clientAccessToken: row.clientAccessToken,
     updatedAt: row.updatedAt,
   };
 }
@@ -281,7 +283,13 @@ export async function listInvitations(
 export async function createInvitation(
   db: Database,
   actor: Actor,
-  input: { workspaceId: string; templateId: string; templateVersionId?: string; title: string },
+  input: {
+    workspaceId: string;
+    templateId: string;
+    templateVersionId?: string;
+    title: string;
+    clientAccessToken?: string;
+  },
 ): Promise<InvitationSummary> {
   await requireCapability(db, actor, input.workspaceId, "invitation:project_manage");
   const title = parseTitle(input.title);
@@ -326,6 +334,7 @@ export async function createInvitation(
       title,
       data: { ...initialData },
       createdBy: actor.userId,
+      clientAccessToken: input.clientAccessToken,
     });
     await insertAuditLog(tx, {
       workspaceId: row.workspaceId,
@@ -789,4 +798,17 @@ export async function requireInvitationAccess(
 
 export function assertInvitationWritable(row: InvitationRow): void {
   assertWritable(row);
+}
+
+export async function regenerateInvitationClientToken(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<string> {
+  const row = await loadAuthorized(db, actor, invitationId, "invitation:write");
+  const updated = await repoRegenerateInvitationClientToken(db, row.id);
+  if (!updated || !updated.clientAccessToken) {
+    throw new Error("Gagal memperbarui token portal klien.");
+  }
+  return updated.clientAccessToken;
 }

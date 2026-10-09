@@ -20,7 +20,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: var(--dib-screen-height, 100dvh);
+  height: var(--dib-screen-height, 100vh);
   align-self: start;
   pointer-events: none;
   z-index: 0;

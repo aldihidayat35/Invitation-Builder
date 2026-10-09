@@ -2,13 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getDb } from "@/lib/db/client";
-import { requireOwner } from "@/lib/auth/server";
 import {
-  deleteTemplateCategory,
-  insertTemplateCategory,
-  updateTemplateCategory,
-} from "@/lib/db/repositories/template-categories";
+  createTemplateCategory,
+  editTemplateCategory,
+  removeTemplateCategory,
+} from "@/features/templates/api";
 import type { ActionState } from "@/features/templates/components";
 
 const CATEGORIES_PATH = "/dashboard/templates/categories";
@@ -30,9 +28,6 @@ export async function createCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireOwner();
-  const db = await getDb();
-
   const name = field(formData, "name").trim();
   let slug = field(formData, "slug").trim().toLowerCase();
   const description = field(formData, "description").trim() || null;
@@ -61,7 +56,7 @@ export async function createCategoryAction(
   }
 
   try {
-    await insertTemplateCategory(db, {
+    await createTemplateCategory({
       name,
       slug,
       description,
@@ -80,9 +75,6 @@ export async function updateCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireOwner();
-  const db = await getDb();
-
   const id = field(formData, "id").trim();
   const name = field(formData, "name").trim();
   const slug = field(formData, "slug").trim().toLowerCase();
@@ -104,7 +96,7 @@ export async function updateCategoryAction(
   }
 
   try {
-    await updateTemplateCategory(db, id, {
+    await editTemplateCategory(id, {
       name,
       slug,
       description,
@@ -123,14 +115,11 @@ export async function deleteCategoryAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireOwner();
-  const db = await getDb();
-
   const id = field(formData, "id").trim();
   if (!id) return { error: "ID kategori tidak valid." };
 
   try {
-    const deleted = await deleteTemplateCategory(db, id);
+    const deleted = await removeTemplateCategory(id);
     revalidatePath(CATEGORIES_PATH);
     revalidatePath(TEMPLATES_PATH);
     return { ok: true, message: `Kategori "${deleted.name}" berhasil dihapus.` };

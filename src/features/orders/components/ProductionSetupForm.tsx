@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 interface ClientOption {
   id: string;
@@ -11,6 +11,7 @@ interface ClientOption {
 
 export function ProductionSetupForm({
   orderId,
+  workspaces: customWorkspaces,
   clients,
   assignees,
   templates,
@@ -18,50 +19,34 @@ export function ProductionSetupForm({
   action,
 }: {
   orderId: string;
-  clients: ClientOption[];
+  workspaces?: Array<{ id: string; name: string }>;
+  clients?: ClientOption[];
   assignees: Array<{ id: string; name: string; email: string }>;
   templates: Array<{ id: string; name: string; versionNo: number | null }>;
   currentTemplateId?: string | null;
   action: (formData: FormData) => Promise<void>;
 }) {
-  const firstClient = clients.find((client) => client.workspaces.length > 0);
-  const [clientId, setClientId] = useState(firstClient?.id ?? "");
-  const workspaces = useMemo(
-    () => clients.find((client) => client.id === clientId)?.workspaces ?? [],
-    [clientId, clients],
-  );
+  const availableWorkspaces = useMemo(() => {
+    if (customWorkspaces && customWorkspaces.length > 0) return customWorkspaces;
+    if (clients) {
+      return clients.flatMap((c) => c.workspaces);
+    }
+    return [];
+  }, [customWorkspaces, clients]);
 
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="orderId" value={orderId} />
       <label className="grid gap-1.5 text-xs font-semibold text-stone-700">
-        Akun klien
-        <select
-          name="clientUserId"
-          value={clientId}
-          onChange={(event) => setClientId(event.target.value)}
-          required
-          className="min-h-11 rounded-xl border border-stone-200 bg-white px-3"
-        >
-          <option value="">Pilih klien</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id} disabled={client.workspaces.length === 0}>
-              {client.name} · {client.email}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="grid gap-1.5 text-xs font-semibold text-stone-700">
-        Workspace klien
+        Workspace produksi
         <select
           name="workspaceId"
-          key={clientId}
-          defaultValue={workspaces[0]?.id ?? ""}
+          defaultValue={availableWorkspaces[0]?.id ?? ""}
           required
           className="min-h-11 rounded-xl border border-stone-200 bg-white px-3"
         >
           <option value="">Pilih workspace</option>
-          {workspaces.map((workspace) => (
+          {availableWorkspaces.map((workspace) => (
             <option key={workspace.id} value={workspace.id}>
               {workspace.name}
             </option>

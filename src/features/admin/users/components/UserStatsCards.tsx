@@ -43,15 +43,15 @@ export function UserStatsCards({ summary }: UserStatsCardsProps) {
       bgIcon: "bg-emerald-50 border-emerald-200",
     },
     {
-      label: "Klien & Pengguna",
-      value: summary.clients,
-      sublabel: "Akun pemilik undangan",
+      label: "Portal Pengantin",
+      value: "Mandiri",
+      sublabel: "Akses link token tanpa login",
       icon: (
-        <svg className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <svg className="h-5 w-5 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
         </svg>
       ),
-      bgIcon: "bg-blue-50 border-blue-200",
+      bgIcon: "bg-indigo-50 border-indigo-200",
     },
   ];
 

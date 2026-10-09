@@ -44,7 +44,7 @@ describe("FR-AUTH-001 sessions", () => {
       id: user.id,
       email: user.email,
       name: user.name,
-      systemRole: "client",
+      systemRole: "owner",
       resellerId: null,
     });
 
@@ -52,6 +52,17 @@ describe("FR-AUTH-001 sessions", () => {
     expect(row?.tokenHash).toBe(hashSessionToken(result.token));
     expect(row?.tokenHash).not.toBe(result.token);
     expect(JSON.stringify(row)).not.toContain(result.token);
+  });
+
+  it("rejects login for users with client systemRole", async () => {
+    await makeUser(conn.db, "client-legacy", TEST_PASSWORD, "client");
+    await expect(
+      login(
+        conn.db,
+        { email: "client-legacy@example.test", password: TEST_PASSWORD },
+        freshThrottle(),
+      ),
+    ).rejects.toThrow("Klien tidak menggunakan login dashboard");
   });
 
   it("uses an unguessable, unique token per login", async () => {

@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
-import { requireOwner } from "@/lib/auth/server";
-import { getDb } from "@/lib/db/client";
 import {
-  listAdminTestimonials,
-  createTestimonial,
-  updateTestimonial,
-  deleteTestimonial,
-  toggleTestimonialActive,
-} from "@/lib/db/repositories/testimonials";
+  addAdminTestimonial,
+  editAdminTestimonial,
+  getAdminTestimonials,
+  removeAdminTestimonial,
+  setAdminTestimonialActive,
+} from "@/features/admin/api";
 
 export async function GET() {
   try {
-    await requireOwner();
-    const db = await getDb();
-    const items = await listAdminTestimonials(db);
+    const items = await getAdminTestimonials();
     return NextResponse.json({ ok: true, data: items });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gagal memuat ulasan";
@@ -23,8 +19,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireOwner();
-    const db = await getDb();
     const body = await request.json();
 
     if (!body.name || !body.quote) {
@@ -34,7 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = await createTestimonial(db, {
+    const created = await addAdminTestimonial({
       name: body.name,
       role: body.role,
       quote: body.quote,
@@ -59,18 +53,13 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    await requireOwner();
-    const db = await getDb();
     const body = await request.json();
 
     if (!body.id) {
-      return NextResponse.json(
-        { ok: false, error: "ID ulasan wajib disertakan" },
-        { status: 400 },
-      );
+      return NextResponse.json({ ok: false, error: "ID ulasan wajib disertakan" }, { status: 400 });
     }
 
-    const updated = await updateTestimonial(db, body.id, {
+    const updated = await editAdminTestimonial(body.id, {
       name: body.name,
       role: body.role,
       quote: body.quote,
@@ -95,8 +84,6 @@ export async function PUT(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await requireOwner();
-    const db = await getDb();
     const body = await request.json();
 
     if (!body.id || typeof body.isActive !== "boolean") {
@@ -106,7 +93,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updated = await toggleTestimonialActive(db, body.id, body.isActive);
+    const updated = await setAdminTestimonialActive(body.id, body.isActive);
     return NextResponse.json({
       ok: true,
       data: updated,
@@ -120,19 +107,14 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await requireOwner();
-    const db = await getDb();
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { ok: false, error: "ID ulasan wajib disertakan" },
-        { status: 400 },
-      );
+      return NextResponse.json({ ok: false, error: "ID ulasan wajib disertakan" }, { status: 400 });
     }
 
-    const deleted = await deleteTestimonial(db, id);
+    const deleted = await removeAdminTestimonial(id);
     return NextResponse.json({
       ok: deleted,
       message: "Testimoni berhasil dihapus",

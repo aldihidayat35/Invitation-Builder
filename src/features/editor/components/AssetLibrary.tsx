@@ -53,11 +53,7 @@ export function AssetLibrary({
   const [removeBgAsset, setRemoveBgAsset] = useState<AssetSummary | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    if (filterType !== "all") {
-      setActiveCategory(filterType);
-    }
-  }, [filterType]);
+  const effectiveCategory = filterType === "all" ? activeCategory : filterType;
 
   const refresh = useCallback(
     async (query: string) => {
@@ -97,13 +93,13 @@ export function AssetLibrary({
   }
 
   const displayedAssets = assets.filter((asset) => {
-    if (activeCategory === "image") {
+    if (effectiveCategory === "image") {
       return asset.mimeType.startsWith("image/") && asset.mimeType !== "image/gif";
     }
-    if (activeCategory === "video") {
+    if (effectiveCategory === "video") {
       return asset.mimeType.startsWith("video/");
     }
-    if (activeCategory === "gif") {
+    if (effectiveCategory === "gif") {
       return asset.mimeType === "image/gif";
     }
     return true;
@@ -111,9 +107,9 @@ export function AssetLibrary({
 
   const uploadButtonLabel = busy
     ? "Mengunggah..."
-    : activeCategory === "video"
+    : effectiveCategory === "video"
       ? "Unggah video"
-      : activeCategory === "gif"
+      : effectiveCategory === "gif"
         ? "Unggah GIF"
         : "Unggah media (Foto / Video / GIF)";
 
@@ -144,7 +140,7 @@ export function AssetLibrary({
             { id: "gif", label: "GIF" },
           ] as const
         ).map((tab) => {
-          const isActive = activeCategory === tab.id;
+          const isActive = effectiveCategory === tab.id;
           return (
             <button
               key={tab.id}
@@ -178,9 +174,9 @@ export function AssetLibrary({
         <p className={styles.muted}>
           {search
             ? "Tidak ada hasil."
-            : activeCategory === "video"
+            : effectiveCategory === "video"
               ? "Belum ada video tersimpan."
-              : activeCategory === "gif"
+              : effectiveCategory === "gif"
                 ? "Belum ada GIF tersimpan."
                 : "Belum ada media tersimpan."}
         </p>

@@ -22,6 +22,7 @@ const ownerOnly = [
   "createOrderProjectAction",
   "transitionProductionAction",
   "updatePaymentAction",
+  "regenerateOrderClientTokenAction",
   "resolvePrivacyRequestAction",
   "recordRecoveryDrillAction",
   "activateDomainTlsAction",
@@ -55,6 +56,9 @@ const ownerAndClient = [
 export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActor[]>> = {
   loginAction: ["anonymous"],
   submitCustomerOrderAction: ["anonymous"],
+  submitPortalDecisionAction: ["anonymous"],
+  addPortalGuestAction: ["anonymous"],
+  archivePortalGuestAction: ["anonymous"],
   ...Object.fromEntries(ownerOnly.map((action) => [action, ["owner"] as const])),
   ...Object.fromEntries(
     authenticated.map((action) => [action, ["owner", "reseller", "client"] as const]),
@@ -66,6 +70,7 @@ export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActo
   deleteInvitationAction: ["owner"],
   archiveInvitationAction: ["owner"],
   restoreInvitationAction: ["owner"],
+  regenerateInvitationClientTokenAction: ["owner"],
   decideInvitationReviewAction: ["client"],
   verifyDomainAction: ["reseller"],
   updateBrandingAction: ["reseller"],

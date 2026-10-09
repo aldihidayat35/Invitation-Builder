@@ -305,7 +305,8 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
     expect(resAsset.elementId).toBeTruthy();
     const createdElAsset = resAsset.document.sections[0]!.elements[0]!;
     expect(createdElAsset.type).toBe("image");
-    expect((createdElAsset as any).source).toEqual({
+    if (createdElAsset.type !== "image") throw new Error("Elemen yang dibuat bukan gambar.");
+    expect(createdElAsset.source).toEqual({
       assetId: "33333333-3333-4333-8333-333333333333",
     });
   });
@@ -346,7 +347,8 @@ describe("GIF Feature (Dedicated Animation & Sticker Library)", () => {
     expect(resolved.ok).toBe(true);
     const resolvedEl = resolved.sections[0]!.elements[0]!;
     expect(resolvedEl.type).toBe("image");
-    expect((resolvedEl as any).image).toEqual({
+    if (resolvedEl.type !== "image") throw new Error("Elemen hasil resolve bukan gambar.");
+    expect(resolvedEl.image).toEqual({
       assetId: "33333333-3333-4333-8333-333333333333",
     });
   });
