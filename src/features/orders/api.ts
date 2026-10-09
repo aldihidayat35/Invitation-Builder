@@ -127,10 +127,24 @@ export async function archivePortalGuest(
   return service.archiveGuestByClientToken(await getDb(), token, guestId);
 }
 
+export async function savePortalInvitationData(
+  token: string,
+  values: Record<string, string>,
+) {
+  return service.saveClientPortalInvitationData(await getDb(), token, values);
+}
+
 export async function regenerateOrderClientToken(orderId: string) {
   const user = await requireUser();
   return service.regenerateOrderClientToken(await getDb(), actorOf(user), orderId);
 }
 
-export { OrderWorkflowError } from "./service";
-export type { ClientPortalData } from "./service";
+export {
+  OrderWorkflowError,
+  buildClientCustomizationWhatsAppUrl,
+} from "./service";
+export type {
+  ClientPortalData,
+  ClientCustomizationWhatsAppParams,
+} from "./service";
+

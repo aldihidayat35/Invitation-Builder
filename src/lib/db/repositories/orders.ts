@@ -53,6 +53,9 @@ export interface UpdateCustomerOrderInput {
   acceptedAt?: Date | null;
   completedAt?: Date | null;
   adminNotes?: string | null;
+  groomBrideNames?: string | null;
+  eventDate?: Date | null;
+  eventLocation?: string | null;
 }
 
 export interface CustomerOrderItemWithDetails {
@@ -282,6 +285,9 @@ export async function updateCustomerOrder(
       ...(input.acceptedAt !== undefined && { acceptedAt: input.acceptedAt }),
       ...(input.completedAt !== undefined && { completedAt: input.completedAt }),
       ...(input.adminNotes !== undefined && { adminNotes: input.adminNotes }),
+      ...(input.groomBrideNames !== undefined && { groomBrideNames: input.groomBrideNames }),
+      ...(input.eventDate !== undefined && { eventDate: input.eventDate }),
+      ...(input.eventLocation !== undefined && { eventLocation: input.eventLocation }),
       updatedAt: new Date(),
     })
     .where(eq(customerOrders.id, orderId))

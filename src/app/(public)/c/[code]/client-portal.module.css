@@ -518,3 +518,477 @@
   color: #8c7d6f;
   font-size: 0.85rem;
 }
+
+/* --- Dual Mode Selector --- */
+.modeSelectorGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .modeSelectorGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.modeOptionCard {
+  background: #ffffff;
+  border: 2px solid #ebd9c8;
+  border-radius: 16px;
+  padding: 1.25rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(43, 33, 24, 0.03);
+}
+
+.modeOptionCard:hover {
+  border-color: #c9a88c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(43, 33, 24, 0.08);
+}
+
+.modeOptionCardActive {
+  background: #fffdfa;
+  border-color: #7b5836 !important;
+  box-shadow: 0 8px 25px rgba(123, 88, 54, 0.15) !important;
+}
+
+.modeOptionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modeIconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 1.35rem;
+  background: #f7efe6;
+  border: 1px solid #ebd9c8;
+}
+
+.modeOptionCardActive .modeIconBox {
+  background: #23180d;
+  color: #ffffff;
+  border-color: #23180d;
+}
+
+.modeSelectionBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  background: #f4ece4;
+  color: #7b5836;
+}
+
+.modeOptionCardActive .modeSelectionBadge {
+  background: #059669;
+  color: #ffffff;
+}
+
+.modeOptionTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #23180d;
+}
+
+.modeOptionDesc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #786b5e;
+  line-height: 1.45;
+}
+
+/* --- Variable Form --- */
+.varFormContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.varFormTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #ebd9c8;
+  border-radius: 14px;
+  padding: 0.85rem 1.15rem;
+  box-shadow: 0 4px 12px rgba(43, 33, 24, 0.03);
+}
+
+.varStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.saveStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.badgeSaved {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badgeSaving {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.badgeDirty {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badgeError {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecdd3;
+}
+
+.varStatusDesc {
+  font-size: 0.775rem;
+  color: #786b5e;
+}
+
+.varActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.varGroupsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.varGroupCard {
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid #ebd9c8;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(43, 33, 24, 0.03);
+}
+
+.varGroupLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #23180d;
+}
+
+.varGroupIcon {
+  font-size: 1.15rem;
+}
+
+.varGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .varGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.varField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.varFieldFull {
+  grid-column: 1 / -1;
+}
+
+.varLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a3d31;
+}
+
+.varRequired {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.inputError {
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+}
+
+.varErrorText {
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* --- Switcher Notice Banner --- */
+.switcherNoticeCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #fcfaf7 0%, #f7efe6 100%);
+  border: 1px dashed #c9a88c;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.switcherNoticeContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 240px;
+}
+
+.switcherNoticeIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* --- Support WhatsApp Card --- */
+.supportCardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.supportHeroCard {
+  background: #ffffff;
+  border: 1px solid #ebd9c8;
+  border-radius: 20px;
+  padding: 1.75rem;
+  box-shadow: 0 8px 30px rgba(43, 33, 24, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.supportBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.supportWaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.supportTargetBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  background: #f4ece4;
+  color: #7b5836;
+  border: 1px solid #ebd9c8;
+}
+
+.supportTitle {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #23180d;
+}
+
+.supportDesc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6a5d50;
+  line-height: 1.6;
+}
+
+.supportWaActionRow {
+  margin: 0.5rem 0;
+}
+
+.waButtonLarge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  background: #25d366;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35);
+  box-sizing: border-box;
+}
+
+.waButtonLarge:hover {
+  background: #20bd5a;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.45);
+}
+
+.waIcon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.supportStepsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3e9de;
+}
+
+@media (min-width: 640px) {
+  .supportStepsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.supportStepItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.stepNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: #23180d;
+  color: #faf6f0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.supportStepItem strong {
+  display: block;
+  font-size: 0.85rem;
+  color: #23180d;
+  margin-bottom: 0.2rem;
+}
+
+.supportStepItem p {
+  margin: 0;
+  font-size: 0.775rem;
+  color: #786b5e;
+  line-height: 1.45;
+}
+
+/* --- Copy Box Card --- */
+.copyBoxCard {
+  background: #ffffff;
+  border: 1px solid #ebd9c8;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 16px rgba(43, 33, 24, 0.03);
+}
+
+.copyBoxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.copyBoxTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #23180d;
+}
+
+.copyBoxDesc {
+  margin: 0.2rem 0 0;
+  font-size: 0.775rem;
+  color: #786b5e;
+}
+
+.copyPreSnippet {
+  background: #fcfaf7;
+  border: 1px solid #ebd9c8;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 0.785rem;
+  line-height: 1.6;
+  color: #4a3d31;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: inherit;
+  margin: 0;
+}
+
+.btnCopySuccess {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+

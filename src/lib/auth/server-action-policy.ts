@@ -60,6 +60,7 @@ export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActo
   submitPortalDecisionAction: ["anonymous"],
   addPortalGuestAction: ["anonymous"],
   archivePortalGuestAction: ["anonymous"],
+  savePortalInvitationDataAction: ["anonymous"],
   ...Object.fromEntries(ownerOnly.map((action) => [action, ["owner"] as const])),
   ...Object.fromEntries(
     authenticated.map((action) => [action, ["owner", "reseller", "client"] as const]),

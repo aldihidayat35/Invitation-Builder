@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomBytes } from "node:crypto";
 import { and, desc, eq, ne } from "drizzle-orm";
 import type { Actor } from "@/lib/auth/authorization";
 import { ForbiddenError } from "@/lib/auth/errors";
@@ -9,7 +10,11 @@ import {
   archiveGuestRow,
   findInvitationByClientToken,
   findInvitationById,
+  findInvitationBySlug,
+  findTemplateVersionWithWorkspace,
   insertGuest,
+  insertInvitation,
+  updateInvitationData,
 } from "@/lib/db/repositories/invitations";
 import {
   findCustomerOrderById,
@@ -32,6 +37,7 @@ import {
   findTemplateVersion,
   insertTemplateVersion,
 } from "@/lib/db/repositories/templates";
+import { getAppSettings } from "@/lib/db/repositories/settings";
 import { findUserById } from "@/lib/db/repositories/users";
 import {
   ensureWorkspaceMember,
@@ -49,8 +55,19 @@ import type {
 import type { Database } from "@/lib/db/types";
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 import { createEmptyDocument, migrateDocument, parseDocumentOrThrow } from "@/lib/schema";
-import { applyDefaults, createVariableRegistry } from "@/lib/engine";
+import {
+  applyDefaults,
+  buildFormFields,
+  createVariableRegistry,
+  formatFormValue,
+  groupFormFields,
+  parseFormSubmission,
+  validateInvitationData,
+  type DataIssue,
+  type FormGroup,
+} from "@/lib/engine";
 import { createInvitation } from "@/features/invitations/service";
+import { normalizeWhatsAppNumber } from "./platform-order";
 
 export class OrderWorkflowError extends Error {
   constructor(message: string) {
@@ -711,6 +728,134 @@ export async function listProductionUsers(
     .where(eq(users.systemRole, "owner"));
 }
 
+export interface ClientCustomizationWhatsAppParams {
+  targetPhone: string;
+  agencyOrAppName: string;
+  orderId: string;
+  customerName: string;
+  customerWhatsapp?: string;
+  groomBrideNames?: string;
+  templateTitle?: string;
+  portalUrl?: string;
+}
+
+/**
+ * Builds direct WhatsApp URL with pre-filled message for client customization assistance.
+ */
+export function buildClientCustomizationWhatsAppUrl(
+  params: ClientCustomizationWhatsAppParams,
+): string {
+  const cleanPhone = normalizeWhatsAppNumber(params.targetPhone);
+  const brand = params.agencyOrAppName.trim();
+
+  const lines: string[] = [
+    `*KONSULTASI & KUSTOMISASI UNDANGAN - ${brand.toUpperCase()}*`,
+    `Halo Admin / Tim ${brand}, saya ingin konfirmasi dan dibantu untuk *Pengisian Data Undangan*:`,
+    "",
+    `• Nomor Pesanan: #${params.orderId.slice(0, 8)}`,
+    `• Nama Pemesan: ${params.customerName.trim()}`,
+  ];
+
+  if (params.customerWhatsapp?.trim()) {
+    lines.push(`• No. WhatsApp: ${params.customerWhatsapp.trim()}`);
+  }
+
+  if (params.groomBrideNames?.trim()) {
+    lines.push(`• Nama Mempelai: ${params.groomBrideNames.trim()}`);
+  }
+
+  if (params.templateTitle?.trim()) {
+    lines.push(`• Tema / Desain: ${params.templateTitle.trim()}`);
+  }
+
+  if (params.portalUrl?.trim()) {
+    lines.push(`• Link Portal Undangan: ${params.portalUrl.trim()}`);
+  }
+
+  lines.push("");
+  lines.push("Mohon bantuannya untuk proses input dan penyesuaian data undangan kami melalui WhatsApp. Terima kasih!");
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
+function persistableData(
+  data: Readonly<Record<string, unknown>>,
+  issues: readonly DataIssue[],
+): Record<string, unknown> {
+  const rejected = new Set(issues.filter((i) => i.code !== "missing_required").map((i) => i.key));
+  return Object.fromEntries(Object.entries(data).filter(([key]) => !rejected.has(key)));
+}
+
+function slugifyTitle(title: string): string {
+  const normalized = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return normalized || "undangan";
+}
+
+export async function ensureOrderInvitation(
+  db: Database,
+  order: CustomerOrder,
+): Promise<InvitationRow | null> {
+  if (order.invitationId) {
+    const existing = await findInvitationById(db, order.invitationId);
+    if (existing) return existing;
+  }
+  if (!order.templateId) return null;
+
+  let workspaceId = order.workspaceId;
+  if (!workspaceId) {
+    const ws =
+      (await db.query.workspaces.findFirst({
+        where: (w, { eq }) => eq(w.slug, "dev-workspace"),
+      })) ??
+      (await db.query.workspaces.findFirst({
+        orderBy: (w, { asc }) => [asc(w.name)],
+      }));
+    if (!ws) return null;
+    workspaceId = ws.id;
+  }
+
+  const defaultTemplate = await findTemplateById(db, order.templateId);
+  if (!defaultTemplate || defaultTemplate.publishedVersionNo === null) return null;
+
+  let version = await findTemplateVersion(db, defaultTemplate.id, defaultTemplate.publishedVersionNo);
+  if (!version) {
+    version = await insertTemplateVersion(db, {
+      templateId: defaultTemplate.id,
+      versionNo: defaultTemplate.publishedVersionNo ?? 1,
+      schemaVersion: 1,
+      document: defaultTemplate.draftDocument ?? createEmptyDocument(),
+      note: "Versi master template otomatis",
+      createdBy: defaultTemplate.createdBy ?? "system",
+    });
+  }
+
+  const title = order.groomBrideNames?.trim() || `Undangan ${order.customerName}`;
+  const baseSlug = slugifyTitle(title);
+  let slug = `${baseSlug}-${randomBytes(4).toString("hex")}`;
+  for (let attempt = 0; (await findInvitationBySlug(db, slug)) && attempt < 5; attempt += 1) {
+    slug = `${baseSlug}-${randomBytes(4).toString("hex")}`;
+  }
+
+  const document = parseDocumentOrThrow(migrateDocument(version.document));
+  const initialData = applyDefaults(createVariableRegistry(document.variables), {});
+
+  const newInvitation = await insertInvitation(db, {
+    workspaceId,
+    templateVersionId: version.id,
+    slug,
+    title,
+    data: { ...initialData },
+    createdBy: order.assignedTo ?? order.clientUserId ?? defaultTemplate.createdBy ?? "system",
+    clientAccessToken: order.clientAccessToken ?? undefined,
+  });
+
+  await linkCustomerOrderInvitation(db, order.id, newInvitation.id);
+  return newInvitation;
+}
+
 export interface ClientPortalData {
   order: CustomerOrder;
   invitation: InvitationRow | null;
@@ -719,6 +864,14 @@ export interface ClientPortalData {
   templateTitle: string | null;
   previewUrl: string | null;
   shareableUrl: string | null;
+  variableGroups: FormGroup[];
+  variableValues: Record<string, string>;
+  variableErrors: Record<string, string>;
+  supportContact: {
+    name: string;
+    phone: string;
+    whatsappUrl: string;
+  };
 }
 
 export async function getClientPortalDataByToken(
@@ -763,10 +916,81 @@ export async function getClientPortalDataByToken(
   }
 
   let templateTitle: string | null = null;
-  if (order?.templateId) {
-    const tmpl = await findTemplateById(db, order.templateId);
+  const templateId = order?.templateId;
+  if (templateId) {
+    const tmpl = await findTemplateById(db, templateId);
     templateTitle = tmpl?.name ?? null;
   }
+
+  // Resolving variable groups, current values, and validation errors
+  let variableGroups: FormGroup[] = [];
+  const variableValues: Record<string, string> = {};
+  const variableErrors: Record<string, string> = {};
+
+  if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
+      const fields = buildFormFields(doc.variables);
+      variableGroups = groupFormFields(fields);
+      for (const field of fields) {
+        variableValues[field.key] = formatFormValue(field, invitation.data[field.key]);
+      }
+      const issues = validateInvitationData(
+        createVariableRegistry(doc.variables),
+        invitation.data,
+      ).filter((i) => i.code !== "unknown_key");
+      for (const issue of issues) {
+        if (!(issue.key in variableErrors)) {
+          variableErrors[issue.key] = issue.message;
+        }
+      }
+    }
+  } else if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl && tmpl.publishedVersionNo !== null) {
+      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
+      if (ver) {
+        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
+        const fields = buildFormFields(doc.variables);
+        variableGroups = groupFormFields(fields);
+        for (const field of fields) {
+          variableValues[field.key] = formatFormValue(field, undefined);
+        }
+      }
+    }
+  }
+
+  // Resolve support contact: Reseller first, otherwise platform appSettings
+  let contactName = "Admin Undangan.id";
+  let contactPhone = "6281234567890";
+
+  if (order?.sellerId) {
+    const seller = await findResellerProfileById(db, order.sellerId);
+    if (seller) {
+      contactName = seller.agencyName;
+      contactPhone = seller.whatsappContact;
+    }
+  } else {
+    const settings = await getAppSettings(db);
+    if (settings) {
+      contactName = settings.appName;
+      contactPhone = settings.contactWhatsapp;
+    }
+  }
+
+  const portalUrl = `/c/${cleanToken}`;
+
+  const whatsappUrl = buildClientCustomizationWhatsAppUrl({
+    targetPhone: contactPhone,
+    agencyOrAppName: contactName,
+    orderId: order?.id ?? invitation?.id ?? "",
+    customerName: order?.customerName ?? "Klien",
+    customerWhatsapp: order?.customerWhatsapp ?? undefined,
+    groomBrideNames: order?.groomBrideNames ?? undefined,
+    templateTitle: templateTitle ?? undefined,
+    portalUrl,
+  });
 
   const slug = invitation?.slug;
   const shareableUrl = slug ? `/i/${slug}` : null;
@@ -784,7 +1008,117 @@ export async function getClientPortalDataByToken(
     templateTitle,
     previewUrl,
     shareableUrl,
+    variableGroups,
+    variableValues,
+    variableErrors,
+    supportContact: {
+      name: contactName,
+      phone: contactPhone,
+      whatsappUrl,
+    },
   };
+}
+
+export async function saveClientPortalInvitationData(
+  db: Database,
+  token: string,
+  values: Record<string, string>,
+): Promise<{ ok: boolean; issues: readonly DataIssue[]; errors: Record<string, string> }> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal) {
+    throw new Error("Token akses portal tidak valid.");
+  }
+
+  let invitation = portal.invitation;
+  if (!invitation) {
+    if (portal.order?.templateId) {
+      invitation = await ensureOrderInvitation(db, portal.order);
+    }
+    if (!invitation) {
+      throw new Error("Proyek undangan belum siap atau template belum ditentukan.");
+    }
+  }
+
+  const found = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+  if (!found) {
+    throw new Error("Versi template tidak ditemukan.");
+  }
+
+  const document = parseDocumentOrThrow(migrateDocument(found.version.document));
+  const { data, issues } = parseFormSubmission(document.variables, values, {
+    timeZone: "Asia/Jakarta",
+  });
+  const stored = persistableData(data, issues);
+
+  const updatedData = { ...invitation.data, ...stored };
+  const updatedInv = await updateInvitationData(db, {
+    invitationId: invitation.id,
+    data: updatedData,
+  });
+  if (!updatedInv) throw new Error("Gagal menyimpan data undangan.");
+
+  // Sinkronisasi otomatis ringkasan mempelai & tanggal acara ke customerOrders jika relevan
+  const groomVal =
+    values["groom_nickname"] ||
+    values["groom_name"] ||
+    values["nama_pria"] ||
+    values["mempelai_pria"] ||
+    "";
+  const brideVal =
+    values["bride_nickname"] ||
+    values["bride_name"] ||
+    values["nama_wanita"] ||
+    values["mempelai_wanita"] ||
+    "";
+  const coupleVal = values["couple_names"] || values["nama_mempelai"] || "";
+
+  let syncGroomBrideNames = portal.order.groomBrideNames;
+  if (groomVal && brideVal) {
+    syncGroomBrideNames = `${groomVal.trim()} & ${brideVal.trim()}`;
+  } else if (coupleVal) {
+    syncGroomBrideNames = coupleVal.trim();
+  }
+
+  const dateVal =
+    values["event_date"] ||
+    values["akad_date"] ||
+    values["resepsi_date"] ||
+    values["wedding_date"] ||
+    values["tanggal_acara"] ||
+    "";
+  let syncEventDate = portal.order.eventDate;
+  if (dateVal) {
+    const parsed = new Date(dateVal);
+    if (!Number.isNaN(parsed.getTime())) {
+      syncEventDate = parsed;
+    }
+  }
+
+  if (
+    syncGroomBrideNames !== portal.order.groomBrideNames ||
+    syncEventDate !== portal.order.eventDate
+  ) {
+    await updateCustomerOrder(db, portal.order.id, {
+      ...(syncGroomBrideNames ? { groomBrideNames: syncGroomBrideNames } : {}),
+      ...(syncEventDate ? { eventDate: syncEventDate } : {}),
+    });
+  }
+
+  await insertAuditLog(db, {
+    workspaceId: invitation.workspaceId,
+    actorId: null,
+    action: "order.portal_data_update",
+    entityType: "invitation",
+    entityId: invitation.id,
+    metadata: { token, updatedKeys: Object.keys(stored) },
+  });
+
+  const errors: Record<string, string> = {};
+  for (const issue of issues) {
+    if (!(issue.key in errors)) errors[issue.key] = issue.message;
+  }
+
+  return { ok: true, issues, errors };
 }
 
 export async function addGuestByClientToken(

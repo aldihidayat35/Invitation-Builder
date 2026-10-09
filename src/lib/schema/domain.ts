@@ -93,6 +93,8 @@ export const AUDIT_ACTIONS = [
   "reseller.update",
   "reseller.client_create",
   "order.create",
+  "order.create_direct",
+  "order.portal_data_update",
   "order.update_status",
   "order.assign_invitation",
   "order.transition",

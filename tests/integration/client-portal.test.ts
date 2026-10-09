@@ -13,6 +13,7 @@ import {
   createProjectForOrder,
   getClientPortalDataByToken,
   regenerateOrderClientToken,
+  saveClientPortalInvitationData,
   submitClientDecisionByToken,
   transitionOrder,
   transitionProduction,
@@ -90,6 +91,24 @@ describe("Client Portal Token Architecture (No Login Required)", () => {
     expect(portalWithProject?.invitation?.id).toBe(project.invitationId);
     expect(portalWithProject?.shareableUrl).toContain(portalWithProject?.invitation?.slug);
 
+    // 4b. Variable Groups & Support Contact available
+    expect(portalWithProject?.supportContact).toBeDefined();
+    expect(portalWithProject?.supportContact.name).toBe(seller.agencyName);
+    expect(portalWithProject?.supportContact.whatsappUrl).toContain("https://wa.me/");
+    expect(portalWithProject?.variableGroups).toBeDefined();
+
+    // 4c. Client fills variables via portal token (Self-Service mode)
+    const saveRes = await saveClientPortalInvitationData(db(), initialToken, {
+      groom_name: "Rian Pratama",
+      bride_name: "Maya Saphira",
+      event_date: "2026-11-20",
+    });
+    expect(saveRes.ok).toBe(true);
+
+    const portalAfterSave = await getClientPortalDataByToken(db(), initialToken);
+    expect(portalAfterSave?.invitation?.data).toBeDefined();
+    expect(portalAfterSave?.order.groomBrideNames).toBe("Rian Pratama & Maya Saphira");
+
     // 5. Client adds guests via portal token
     const guest = await addGuestByClientToken(db(), initialToken, {
       name: "Bapak Surya & Keluarga",
@@ -142,5 +161,39 @@ describe("Client Portal Token Architecture (No Login Required)", () => {
     expect(newPortal).not.toBeNull();
     expect(newPortal?.order.id).toBe(order.id);
     expect(newPortal?.invitation?.id).toBe(project.invitationId);
+  });
+
+  it("provides dual-mode variable editing and platform WhatsApp routing for direct orders", async () => {
+    const seed = await seedDev(db());
+
+    // 1. Direct Platform order (sellerId = null)
+    const directOrder = await createCustomerOrder(db(), {
+      templateId: seed.templateId,
+      customerName: "Fajar & Intan",
+      customerEmail: "fajar.intan@example.test",
+      customerWhatsapp: "081377889900",
+      groomBrideNames: "Fajar & Intan",
+    });
+
+    const token = directOrder.clientAccessToken!;
+    const portal = await getClientPortalDataByToken(db(), token);
+    expect(portal).not.toBeNull();
+    // Routed to default platform admin contact
+    expect(portal?.supportContact.whatsappUrl).toContain("https://wa.me/");
+    expect(portal?.supportContact.whatsappUrl).toContain(encodeURIComponent(directOrder.id.slice(0, 8)));
+    expect(portal?.supportContact.whatsappUrl).toContain(encodeURIComponent(token));
+
+    // 2. Client fills variables directly (auto-provisions project for the order)
+    const saveRes = await saveClientPortalInvitationData(db(), token, {
+      groom_name: "Fajar Maulana",
+      bride_name: "Intan Permata",
+      event_date: "2026-12-12",
+    });
+    expect(saveRes.ok).toBe(true);
+
+    const portalAfterSave = await getClientPortalDataByToken(db(), token);
+    expect(portalAfterSave?.invitation).not.toBeNull();
+    expect(portalAfterSave?.order.groomBrideNames).toBe("Fajar Maulana & Intan Permata");
+    expect(portalAfterSave?.previewUrl).toContain(portalAfterSave?.invitation?.slug);
   });
 });

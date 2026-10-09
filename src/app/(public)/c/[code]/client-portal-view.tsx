@@ -7,6 +7,8 @@ import {
   archivePortalGuestAction,
   submitPortalDecisionAction,
 } from "./actions";
+import { PortalVariableForm } from "./components/PortalVariableForm";
+import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
 import styles from "./client-portal.module.css";
 
 interface ClientPortalViewProps {
@@ -15,7 +17,8 @@ interface ClientPortalViewProps {
 }
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
-  const [activeTab, setActiveTab] = useState<"review" | "guests" | "rsvp" | "wishes">("review");
+  const [activeTab, setActiveTab] = useState<"data" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
   const [guestSearch, setGuestSearch] = useState("");
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestPax, setNewGuestPax] = useState("1");
@@ -212,6 +215,14 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         <div className={styles.tabsList}>
           <button
             type="button"
+            onClick={() => setActiveTab("data")}
+            className={`${styles.tabBtn} ${activeTab === "data" ? styles.tabBtnActive : ""}`}
+          >
+            <span>✍️</span>
+            <span>Data Undangan</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("review")}
             className={`${styles.tabBtn} ${activeTab === "review" ? styles.tabBtnActive : ""}`}
           >
@@ -250,9 +261,117 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
 
       {/* Main Body */}
       <main className={styles.mainContent}>
+        {/* --- TAB 0: DATA UNDANGAN (DUAL MODE: MANDIRI vs BANTUAN WA ADMIN) --- */}
+        {activeTab === "data" && (
+          <div>
+            <div className={styles.cardHeader} style={{ marginBottom: "1rem" }}>
+              <div>
+                <h2 className={styles.cardTitle}>Pengaturan & Pengisian Data Undangan</h2>
+                <p className={styles.cardDesc}>
+                  Pilih metode pengisian: isi sendiri secara mandiri atau serahkan seluruh proses
+                  penyesuaian data dan foto ke tim admin kami via WhatsApp.
+                </p>
+              </div>
+            </div>
+
+            {/* Mode Selector */}
+            <div className={styles.modeSelectorGrid}>
+              <button
+                type="button"
+                onClick={() => setDataMode("self_service")}
+                className={`${styles.modeOptionCard} ${
+                  dataMode === "self_service" ? styles.modeOptionCardActive : ""
+                }`}
+              >
+                <div className={styles.modeOptionTop}>
+                  <div className={styles.modeIconBox}>⚡</div>
+                  <span className={styles.modeSelectionBadge}>
+                    {dataMode === "self_service" ? "Aktif Dipilih" : "Pilihan 1"}
+                  </span>
+                </div>
+                <h3 className={styles.modeOptionTitle}>Isi Data Mandiri (Self-Service)</h3>
+                <p className={styles.modeOptionDesc}>
+                  Isi formulir data nama mempelai, jadwal acara, lokasi, dan amplop digital langsung di sini.
+                  Pratinjau undangan otomatis terbarui seketika.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDataMode("admin_assisted")}
+                className={`${styles.modeOptionCard} ${
+                  dataMode === "admin_assisted" ? styles.modeOptionCardActive : ""
+                }`}
+              >
+                <div className={styles.modeOptionTop}>
+                  <div className={styles.modeIconBox}>💬</div>
+                  <span className={styles.modeSelectionBadge}>
+                    {dataMode === "admin_assisted" ? "Aktif Dipilih" : "Pilihan 2"}
+                  </span>
+                </div>
+                <h3 className={styles.modeOptionTitle}>Customize oleh Admin (via WhatsApp)</h3>
+                <p className={styles.modeOptionDesc}>
+                  Lebih santai! Kirimkan data dan foto Anda melalui chat WhatsApp. Tim spesialis kami yang akan
+                  menginput dan menyesuaikan undangan Anda.
+                </p>
+              </button>
+            </div>
+
+            {/* Mode Content */}
+            {dataMode === "self_service" ? (
+              <PortalVariableForm
+                token={token}
+                groups={data.variableGroups}
+                initialValues={data.variableValues}
+                initialErrors={data.variableErrors}
+                previewUrl={data.previewUrl}
+                onSwitchToAdmin={() => setDataMode("admin_assisted")}
+                onSaved={() => {
+                  showToast("Data undangan berhasil disimpan!");
+                }}
+              />
+            ) : (
+              <PortalAdminSupportCard
+                order={data.order}
+                templateTitle={data.templateTitle}
+                supportContact={data.supportContact}
+                token={token}
+                onSwitchToSelfService={() => setDataMode("self_service")}
+              />
+            )}
+          </div>
+        )}
+
         {/* --- TAB 1: REVIEW UNDANGAN --- */}
         {activeTab === "review" && (
           <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#fcfaf7",
+                border: "1px solid #ebd9c8",
+                borderRadius: "12px",
+                padding: "0.75rem 1rem",
+                marginBottom: "1rem",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <div style={{ fontSize: "0.825rem", color: "#6a5d50" }}>
+                💡 Ingin memperbarui nama pengantin, waktu, atau lokasi acara?
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("data")}
+                className={styles.btnSecondary}
+                style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem" }}
+              >
+                ✍️ Ubah Data Undangan
+              </button>
+            </div>
+
             {orderProductionStatus === "client_review" && (
               <div className={styles.reviewNotice}>
                 <strong>Mohon Periksa Undangan Anda:</strong>

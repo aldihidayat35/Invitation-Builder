@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   addPortalGuest,
   archivePortalGuest,
+  savePortalInvitationData,
   submitPortalDecision,
 } from "@/features/orders";
 
@@ -12,6 +13,7 @@ export interface PortalActionResult {
   ok: boolean;
   message?: string;
   error?: string;
+  errors?: Record<string, string>;
 }
 
 const decisionSchema = z.object({
@@ -110,3 +112,30 @@ export async function archivePortalGuestAction(
     return { ok: false, error: err instanceof Error ? err.message : "Gagal menghapus tamu." };
   }
 }
+
+export async function savePortalInvitationDataAction(
+  token: string,
+  values: Record<string, string>,
+): Promise<PortalActionResult> {
+  const cleanToken = token.trim();
+  if (!cleanToken) {
+    return { ok: false, error: "Token akses tidak valid." };
+  }
+
+  try {
+    const res = await savePortalInvitationData(cleanToken, values);
+    revalidatePath(`/c/${cleanToken}`);
+    revalidatePath(`/portal/${cleanToken}`);
+    return {
+      ok: true,
+      message: "Data undangan berhasil disimpan.",
+      errors: res.errors,
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Gagal menyimpan data undangan.",
+    };
+  }
+}
+
