@@ -19,33 +19,20 @@ async function open(url: string): Promise<Database> {
       throw new Error("pglite:// is for development only; use a postgres:// DATABASE_URL.");
     }
     const dataDir = url.slice("pglite://".length) || undefined;
-    if (dataDir) mkdirSync(dirname(dataDir), { recursive: true });
-    const { connectPglite, migratePglite } = await import("./pglite");
-
-    let conn;
-    try {
-      conn = await connectPglite(dataDir);
-      // Automatically apply any pending migrations to keep local dev database in sync
-      await migratePglite(conn);
-    } catch (err) {
-      console.warn("[pglite] Corrupted data directory or query failure detected; recovering dev instance:", err);
-      if (dataDir && existsSync(/* turbopackIgnore: true */ dataDir)) {
-        try {
-          const backupDir = `${dataDir}_corrupted_${Date.now()}`;
-          renameSync(dataDir, backupDir);
-        } catch {
-          // Ignore rename error
-        }
-      }
-      conn = await connectPglite(dataDir);
-      await migratePglite(conn);
+    if (dataDir) {
+      mkdirSync(dirname(dataDir), { recursive: true });
+      const pidFile = `${dataDir}/postmaster.pid`;
       try {
-        const { seedDev } = await import("./seed");
-        await seedDev(conn.db);
-      } catch (seedErr) {
-        console.warn("[pglite] Auto-seed failed on recovery:", seedErr);
+        if (existsSync(pidFile)) {
+          const { unlinkSync } = await import("node:fs");
+          unlinkSync(pidFile);
+        }
+      } catch {
+        // Ignore unlink error
       }
     }
+    const { connectPglite } = await import("./pglite");
+    const conn = await connectPglite(dataDir);
     return conn.db;
   }
   return connectPostgres(url).db;

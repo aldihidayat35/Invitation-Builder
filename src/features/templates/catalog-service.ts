@@ -1,4 +1,4 @@
-import { and, desc, asc, eq, sql, ilike, or } from "drizzle-orm";
+import { and, desc, asc, eq, sql, ilike, or, ne } from "drizzle-orm";
 import type { Database } from "@/lib/db/types";
 import { templates } from "@/lib/db/schema";
 import type {

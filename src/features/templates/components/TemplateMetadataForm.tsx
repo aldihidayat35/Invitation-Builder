@@ -151,6 +151,20 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
             <p className="mt-1 text-[11px] text-[#A39284]">
               Hanya huruf kecil, angka, dan tanda hubung (-). Jika dikosongkan, slug dibuat otomatis dari nama template.
             </p>
+            {template.slug ? (
+              <p className="mt-1 text-[11px] font-medium text-[#7D6B5D]">
+                URL Publik Aktif:{" "}
+                <a
+                  href={`/templates/${template.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-[#A87B24] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>/templates/{template.slug}</span>
+                  <span>↗</span>
+                </a>
+              </p>
+            ) : null}
           </div>
 
           <div>

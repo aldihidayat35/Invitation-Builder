@@ -178,7 +178,10 @@ export default async function TemplateDetailPage({ params, searchParams }: PageP
   const autoOpenOrder = sParams.order === "1" || sParams.order === "true";
 
   const [dbTemplate, settings] = await Promise.all([
-    getCatalogDetail(slug).catch(() => null),
+    getCatalogDetail(slug).catch((err) => {
+      console.error("[catalog-slug] Failed to load template for slug:", slug, err);
+      return null;
+    }),
     getPublicSiteSettings().catch(() => null),
   ]);
 

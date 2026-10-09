@@ -154,6 +154,17 @@ export default async function TemplateDetailPage({
               <span>Pratinjau Layar Penuh</span>
             </Link>
 
+            <Link
+              href={`/templates/${template.slug || template.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.heroPreviewBtn}
+              title="Buka halaman etalase katalog publik template ini"
+            >
+              <IconSparkles size={18} />
+              <span>Lihat di Katalog Publik ↗</span>
+            </Link>
+
             <a
               href={`/api/templates/${template.id}/export`}
               className={styles.heroPreviewBtn}
