@@ -139,7 +139,21 @@ export function LeftPanel() {
                   data-testid={`add-widget-${widget.type}`}
                   disabled={readOnly || noSection}
                   title={`Tambah widget ${widget.label}`}
-                  onClick={() => store.getState().addWidget(widget)}
+                  onClick={() => {
+                    if (widget.type === "rsvp") {
+                      const doc = selectDoc(store.getState());
+                      const hasRsvp = doc.sections.some((s) =>
+                        s.elements.some((el) => el.type === "widget" && el.widgetType === "rsvp"),
+                      );
+                      if (hasRsvp) {
+                        alert(
+                          "Undangan ini sudah memiliki widget RSVP. Cukup gunakan 1 widget RSVP per undangan agar tamu tidak bingung.",
+                        );
+                        return;
+                      }
+                    }
+                    store.getState().addWidget(widget);
+                  }}
                 >
                   <span className={styles.tileIcon}>
                     <WidgetIcon type={widget.type} />

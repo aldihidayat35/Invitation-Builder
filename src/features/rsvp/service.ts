@@ -12,6 +12,7 @@
  * - Unknown/foreign/archived tokens silently behave as "no token".
  */
 import "server-only";
+import { and, eq, ilike, ne } from "drizzle-orm";
 import type { Actor } from "@/lib/auth/authorization";
 import {
   findGenericRsvpByName,
@@ -22,6 +23,7 @@ import {
   updateRsvp,
 } from "@/lib/db/repositories/rsvps";
 import { findGuestByToken, findInvitationBySlug } from "@/lib/db/repositories/invitations";
+import { guests } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import { requireInvitationAccess } from "@/features/invitations/service";
 import { rsvpInputSchema, type RsvpResult, type RsvpSummary } from "./schemas";
@@ -52,11 +54,32 @@ export async function submitRsvp(db: Database, raw: unknown): Promise<RsvpResult
     throw new RsvpUnavailableError();
   }
 
+  const rawName = input.name.trim();
+
+  // 1. Cek token jika ada
   const found = input.guestToken ? await findGuestByToken(db, input.guestToken) : undefined;
-  const guest =
+  let guest =
     found && found.invitationId === invitation.id && found.status !== "archived"
       ? found
       : undefined;
+
+  // 2. Jika tidak ada token atau token tidak cocok, cari di daftar tamu berdasarkan nama
+  if (!guest && rawName) {
+    const [matchedByName] = await db
+      .select()
+      .from(guests)
+      .where(
+        and(
+          eq(guests.invitationId, invitation.id),
+          ne(guests.status, "archived"),
+          ilike(guests.name, rawName),
+        ),
+      )
+      .limit(1);
+    if (matchedByName) {
+      guest = matchedByName;
+    }
+  }
 
   const attending = input.response === "attending";
   const cap = guest?.maxParty ?? 20;
@@ -65,9 +88,10 @@ export async function submitRsvp(db: Database, raw: unknown): Promise<RsvpResult
     throw new RsvpInvalidError(`Jumlah tamu harus antara 1 dan ${cap}.`);
   }
   const message = input.message ? input.message : null;
-  const name = guest ? guest.name : input.name;
 
   return db.transaction(async (tx) => {
+    const name = guest ? guest.name : rawName;
+
     const existing = guest
       ? await findRsvpForGuest(tx, invitation.id, guest.id)
       : await findGenericRsvpByName(tx, invitation.id, name);

@@ -27,7 +27,7 @@ import { AssetLibrary } from "./AssetLibrary";
 import { saveAssetFromUrlAction } from "@/features/assets/actions";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
-import { useEditorStore, useWorkspaceId } from "./EditorProvider";
+import { selectDoc, useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { IconCheck, IconSparkle, IconZap } from "./icons";
 import {
   ColorField,
@@ -340,6 +340,12 @@ export function WidgetPanel({
           />
         ) : element.widgetType === "gif" ? (
           <GifPropsControl
+            element={element}
+            disabled={disabled}
+            setProp={setProp}
+          />
+        ) : element.widgetType === "rsvp" ? (
+          <RsvpPropsControl
             element={element}
             disabled={disabled}
             setProp={setProp}
@@ -1335,6 +1341,148 @@ function GifPropsControl({
           />
           <span>Putar stiker terus menerus (Loop Animation)</span>
         </label>
+      </div>
+    </div>
+  );
+}
+
+function RsvpPropsControl({
+  element,
+  disabled,
+  setProp,
+}: {
+  readonly element: WidgetElement;
+  readonly disabled: boolean;
+  readonly setProp: (name: string, value: unknown) => void;
+}) {
+  const store = useEditorStore();
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const title = typeof props.title === "string" ? props.title : "Konfirmasi Kehadiran";
+  const enablePartySize = props.enablePartySize !== false;
+  const enableMessage = props.enableMessage !== false;
+  const maxParty = typeof props.maxParty === "number" ? props.maxParty : 5;
+  const deadline = typeof props.deadline === "string" ? props.deadline : "";
+
+  const doc = selectDoc(store.getState());
+  const rsvpCount = doc.sections.reduce((acc, s) => {
+    return acc + s.elements.filter((el) => el.type === "widget" && el.widgetType === "rsvp").length;
+  }, 0);
+
+  return (
+    <div className={styles.panelStack} data-testid="rsvp-props-controls">
+      {/* 1. Banner Info Otomatis */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px",
+          padding: "10px 12px",
+          background: "rgba(16, 185, 129, 0.08)",
+          border: "1px solid rgba(16, 185, 129, 0.25)",
+          borderRadius: "8px",
+          color: "#059669",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "12px" }}>
+          <span>⚡</span>
+          <span>Terhubung Otomatis</span>
+        </div>
+        <p style={{ margin: 0, color: "#4b5563", fontSize: "11px", lineHeight: "1.4" }}>
+          Formulir RSVP ini otomatis terintegrasi dengan Portal Klien. Setiap tamu yang mengisi konfirmasi kehadiran akan langsung masuk ke database tanpa perlu pengaturan variabel manual.
+        </p>
+      </div>
+
+      {rsvpCount > 1 && (
+        <div
+          style={{
+            padding: "8px 10px",
+            background: "rgba(245, 158, 11, 0.1)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
+            borderRadius: "6px",
+            color: "#b45309",
+            fontSize: "11px",
+            lineHeight: "1.4",
+          }}
+        >
+          ⚠️ Perhatian: Undangan ini memiliki {rsvpCount} widget RSVP. Cukup gunakan 1 widget RSVP per undangan agar tamu tidak bingung.
+        </div>
+      )}
+
+      {/* 2. Judul Formulir */}
+      <TextField
+        id={`rsvp-title-${element.id}`}
+        label="Judul Formulir"
+        value={title}
+        disabled={disabled}
+        onCommit={(val) => setProp("title", val.trim() || "Konfirmasi Kehadiran")}
+      />
+
+      {/* 3. Tanyakan Jumlah Pax */}
+      <div className={styles.panelStack}>
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: disabled ? "default" : "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={enablePartySize}
+            disabled={disabled}
+            onChange={(e) => setProp("enablePartySize", e.target.checked)}
+          />
+          <span>Tanyakan Jumlah Tamu (Pax)</span>
+        </label>
+      </div>
+
+      {enablePartySize && (
+        <NumberField
+          id={`rsvp-max-party-${element.id}`}
+          label="Maksimal Tamu per Respon (Pax)"
+          value={maxParty}
+          min={1}
+          max={20}
+          step={1}
+          disabled={disabled}
+          onCommit={(val) => setProp("maxParty", Math.max(1, Math.min(20, Math.floor(val))))}
+        />
+      )}
+
+      {/* 4. Izinkan Pesan & Ucapan Doa */}
+      <div className={styles.panelStack}>
+        <label
+          className={styles.fieldLabel}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: disabled ? "default" : "pointer" }}
+        >
+          <input
+            type="checkbox"
+            checked={enableMessage}
+            disabled={disabled}
+            onChange={(e) => setProp("enableMessage", e.target.checked)}
+          />
+          <span>Izinkan Pesan &amp; Ucapan Doa</span>
+        </label>
+      </div>
+
+      {/* 5. Batas Waktu Konfirmasi (Deadline Opsional) */}
+      <div className={styles.panelStack}>
+        <label
+          htmlFor={`rsvp-deadline-${element.id}`}
+          className={styles.fieldLabel}
+          style={{ fontSize: "12px", color: "var(--color-fg-muted)" }}
+        >
+          Batas Waktu Konfirmasi (Opsional)
+        </label>
+        <input
+          id={`rsvp-deadline-${element.id}`}
+          type="datetime-local"
+          value={deadline ? deadline.slice(0, 16) : ""}
+          disabled={disabled}
+          className={styles.input}
+          style={{ width: "100%", padding: "6px 8px", fontSize: "12px" }}
+          onChange={(e) => {
+            const val = e.target.value;
+            setProp("deadline", val ? new Date(val).toISOString() : undefined);
+          }}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import type { ClientPortalData } from "@/features/orders";
 import {
   addPortalGuestAction,
@@ -20,6 +20,8 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const [activeTab, setActiveTab] = useState<"data" | "review" | "guests" | "rsvp" | "wishes">("data");
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
   const [guestSearch, setGuestSearch] = useState("");
+  const [rsvpFilter, setRsvpFilter] = useState<"all" | "attending" | "not_attending">("all");
+  const [rsvpSearch, setRsvpSearch] = useState("");
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestPax, setNewGuestPax] = useState("1");
   const [revisionNote, setRevisionNote] = useState("");
@@ -59,6 +61,32 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const attendingRsvps = data.rsvps.filter((r) => r.response === "attending");
   const notAttendingRsvps = data.rsvps.filter((r) => r.response === "not_attending");
   const totalPaxAttending = attendingRsvps.reduce((acc, r) => acc + (r.partySize || 1), 0);
+
+  const formatRsvpDate = (dateVal?: Date | string | null) => {
+    if (!dateVal) return "";
+    const d = new Date(dateVal);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const filteredRsvps = useMemo(() => {
+    return data.rsvps.filter((r) => {
+      const matchesFilter =
+        rsvpFilter === "all" ? true : r.response === rsvpFilter;
+      const q = rsvpSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        r.name.toLowerCase().includes(q) ||
+        (r.message ? r.message.toLowerCase().includes(q) : false);
+      return matchesFilter && matchesSearch;
+    });
+  }, [data.rsvps, rsvpFilter, rsvpSearch]);
 
   // Wishes metrics
   const wishesList = data.rsvps.filter((r) => r.message && r.message.trim().length > 0);
@@ -626,20 +654,102 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             </div>
 
             <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Daftar Respon Tamu</h2>
+              <div
+                className={styles.cardHeader}
+                style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: "0.75rem", alignItems: "center" }}
+              >
+                <div>
+                  <h2 className={styles.cardTitle}>Daftar Respon Tamu</h2>
+                  <p className={styles.cardDesc}>
+                    {data.rsvps.length} konfirmasi tercatat dari tamu undangan
+                  </p>
+                </div>
+                {/* Filter buttons */}
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => setRsvpFilter("all")}
+                    className={styles.tabBtn}
+                    style={{
+                      padding: "0.35rem 0.65rem",
+                      fontSize: "0.78rem",
+                      borderRadius: "6px",
+                      background: rsvpFilter === "all" ? "#f4ece4" : "#ffffff",
+                      borderColor: rsvpFilter === "all" ? "#7b5836" : "#e5e7eb",
+                      color: rsvpFilter === "all" ? "#7b5836" : "#4b5563",
+                      fontWeight: rsvpFilter === "all" ? 700 : 500,
+                    }}
+                  >
+                    Semua ({data.rsvps.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRsvpFilter("attending")}
+                    className={styles.tabBtn}
+                    style={{
+                      padding: "0.35rem 0.65rem",
+                      fontSize: "0.78rem",
+                      borderRadius: "6px",
+                      background: rsvpFilter === "attending" ? "#ecfdf5" : "#ffffff",
+                      borderColor: rsvpFilter === "attending" ? "#059669" : "#e5e7eb",
+                      color: rsvpFilter === "attending" ? "#065f46" : "#4b5563",
+                      fontWeight: rsvpFilter === "attending" ? 700 : 500,
+                    }}
+                  >
+                    Hadir ({attendingRsvps.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRsvpFilter("not_attending")}
+                    className={styles.tabBtn}
+                    style={{
+                      padding: "0.35rem 0.65rem",
+                      fontSize: "0.78rem",
+                      borderRadius: "6px",
+                      background: rsvpFilter === "not_attending" ? "#fef2f2" : "#ffffff",
+                      borderColor: rsvpFilter === "not_attending" ? "#dc2626" : "#e5e7eb",
+                      color: rsvpFilter === "not_attending" ? "#dc2626" : "#4b5563",
+                      fontWeight: rsvpFilter === "not_attending" ? 700 : 500,
+                    }}
+                  >
+                    Berhalangan ({notAttendingRsvps.length})
+                  </button>
+                </div>
               </div>
 
-              {data.rsvps.length === 0 ? (
+              {/* Search bar */}
+              {data.rsvps.length > 2 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <input
+                    type="search"
+                    placeholder="Cari nama tamu atau pesan RSVP..."
+                    value={rsvpSearch}
+                    onChange={(e) => setRsvpSearch(e.target.value)}
+                    className={styles.input}
+                    style={{ width: "100%", boxSizing: "border-box" }}
+                  />
+                </div>
+              )}
+
+              {filteredRsvps.length === 0 ? (
                 <div className={styles.emptyBox}>
-                  Belum ada tamu yang mengisi konfirmasi kehadiran (RSVP).
+                  {data.rsvps.length === 0
+                    ? "Belum ada tamu yang mengisi konfirmasi kehadiran (RSVP)."
+                    : "Tidak ada data respon yang cocok dengan filter atau pencarian."}
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-                  {data.rsvps.map((r) => (
+                  {filteredRsvps.map((r) => (
                     <div key={r.id} className={styles.wishCard}>
                       <div className={styles.wishHeader}>
-                        <span className={styles.wishAuthor}>{r.name}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <span className={styles.wishAuthor}>{r.name}</span>
+                          {r.createdAt && (
+                            <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                              {formatRsvpDate(r.createdAt)}
+                            </span>
+                          )}
+                        </div>
                         <span
                           className={styles.portalBadge}
                           style={{

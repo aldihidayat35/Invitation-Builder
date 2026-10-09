@@ -210,7 +210,13 @@ export async function findTemplateVersionWithWorkspace(
 
 export async function insertGuest(
   db: Database,
-  input: { invitationId: string; name: string; tokenId: string; maxParty: number },
+  input: {
+    invitationId: string;
+    name: string;
+    tokenId: string;
+    maxParty: number;
+    status?: "active" | "responded" | "archived";
+  },
 ): Promise<GuestRow> {
   const [row] = await db.insert(guests).values(input).returning();
   if (!row) throw new Error("insertGuest returned no row");

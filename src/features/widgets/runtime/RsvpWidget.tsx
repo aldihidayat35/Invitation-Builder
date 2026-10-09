@@ -121,7 +121,7 @@ export function RsvpWidget({
               required
               maxLength={120}
               autoComplete="name"
-              readOnly={Boolean(ctx?.guestName)}
+              placeholder="Masukkan nama lengkap Anda"
             />
           </label>
           <fieldset className={styles.choices}>
