@@ -101,10 +101,26 @@ export function OrderActionCallout({
                     actionType: "order",
                   })
                 }
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#664624] transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 px-4 py-2.5 text-xs font-bold text-[#8C5D2A] transition"
               >
                 <span>Tandai Terkualifikasi</span>
-                <IconArrowRight size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  openModal({
+                    title: "Setujui & Terima Pesanan",
+                    description:
+                      "Pesanan customer disetujui dan siap untuk mulai pengerjaan desain di Studio.",
+                    confirmLabel: "Terima & Setujui Sekarang",
+                    nextStatus: "accepted",
+                    actionType: "order",
+                  })
+                }
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#84633F] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#664624] transition"
+              >
+                <IconCheckCircle size={14} />
+                <span>Terima Pesanan Langsung</span>
               </button>
             </div>
           </div>
@@ -217,8 +233,8 @@ export function OrderActionCallout({
     );
   }
 
-  // 4. Sedang Dikerjakan di Produksi (in_production / drafting)
-  if (orderStatus === "accepted" && invitationId && (productionStatus === "in_production" || productionStatus === "drafting")) {
+  // 4. Sedang Dikerjakan di Produksi (in_production / awaiting_client)
+  if (orderStatus === "accepted" && invitationId && (productionStatus === "in_production" || productionStatus === "awaiting_client")) {
     return (
       <>
         <div className="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-[#FAF8F5] p-5 shadow-xs">

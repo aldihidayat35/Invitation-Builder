@@ -148,13 +148,13 @@ describe("Platform Direct Order Flow & WhatsApp Integration", () => {
         customerName: "Dian & Dimas",
         customerWhatsapp: "081299887766",
         groomBrideNames: "Dian & Dimas",
-        templateTitle: pubTemplates[0].name,
+        templateTitle: pubTemplates[0]!.name,
       },
       db(),
     );
 
     // Ubah master template ke template kedua
-    const targetTemplate = pubTemplates[1];
+    const targetTemplate = pubTemplates[1]!;
     const updatedOrder = await changeOrderTemplate(db(), ownerActor, orderRes.orderId, targetTemplate.id);
     expect(updatedOrder.templateId).toBe(targetTemplate.id);
 

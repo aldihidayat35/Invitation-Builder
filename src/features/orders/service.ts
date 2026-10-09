@@ -60,7 +60,7 @@ export class OrderWorkflowError extends Error {
 }
 
 const ORDER_TRANSITIONS: Readonly<Record<CustomerOrderStatus, readonly CustomerOrderStatus[]>> = {
-  new: ["qualified", "cancelled"],
+  new: ["qualified", "accepted", "cancelled"],
   qualified: ["accepted", "rejected", "cancelled"],
   accepted: ["cancelled"],
   rejected: [],
@@ -194,14 +194,16 @@ export async function transitionOrder(
       toValue: nextStatus,
       note,
     });
-    await insertAuditLog(tx, {
-      workspaceId: current.workspaceId,
-      actorId: actor.userId,
-      action: "order.transition",
-      entityType: "customer_order",
-      entityId: orderId,
-      metadata: { from: current.orderStatus, to: nextStatus },
-    });
+    if (current.workspaceId) {
+      await insertAuditLog(tx, {
+        workspaceId: current.workspaceId,
+        actorId: actor.userId,
+        action: "order.transition",
+        entityType: "customer_order",
+        entityId: orderId,
+        metadata: { from: current.orderStatus, to: nextStatus },
+      });
+    }
     return updated;
   });
 }
@@ -385,7 +387,7 @@ export async function changeOrderTemplate(
       await insertAuditLog(tx, {
         workspaceId: order.workspaceId,
         actorId: actor.userId,
-        action: "order.change_template",
+        action: "order.transition",
         entityType: "customer_order",
         entityId: order.id,
         metadata: { templateId: template.id, templateVersionId: version.id },
