@@ -28,6 +28,7 @@ import {
   isTemplateUsedByInvitations,
   listTemplateVersions,
   listTemplates as listTemplateRows,
+  listAllTemplates,
   markTemplatePublished,
   nextVersionNo,
   renameTemplateRow,
@@ -221,6 +222,10 @@ export async function listTemplates(
   options: { archived?: boolean } = {},
 ): Promise<TemplateSummary[]> {
   await requireCapability(db, actor, workspaceId, "template:read");
+  // Platform owner sees all platform templates across workspaces so library is never empty
+  if (actor.systemRole === "owner") {
+    return (await listAllTemplates(db, options)).map(toSummary);
+  }
   return (await listTemplateRows(db, workspaceId, options)).map(toSummary);
 }
 

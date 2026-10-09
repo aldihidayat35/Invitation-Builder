@@ -74,6 +74,20 @@ export async function listTemplates(
     .orderBy(desc(templates.updatedAt));
 }
 
+export async function listAllTemplates(
+  db: Database,
+  options: { archived?: boolean } = {},
+): Promise<TemplateRow[]> {
+  const statusFilter = options.archived
+    ? eq(templates.status, "archived")
+    : ne(templates.status, "archived");
+  return db
+    .select()
+    .from(templates)
+    .where(statusFilter)
+    .orderBy(desc(templates.updatedAt));
+}
+
 export async function findTemplateByName(
   db: Database,
   workspaceId: string,

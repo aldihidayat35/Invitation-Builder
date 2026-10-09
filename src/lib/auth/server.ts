@@ -103,7 +103,10 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   const memberships = await listMemberships(await getDb(), user.id);
   const selectedId = (await cookies()).get(ACTIVE_WORKSPACE_COOKIE)?.value;
   const active =
-    memberships.find((membership) => membership.workspace.id === selectedId) ?? memberships[0];
+    memberships.find((membership) => membership.workspace.id === selectedId) ??
+    memberships.find((m) => m.workspace.slug === "dev-workspace") ??
+    memberships.find((m) => m.role === "owner") ??
+    memberships[0];
   return { user, memberships, active };
 });
 

@@ -50,7 +50,11 @@ export default async function TemplateLibraryPage({
   return (
     <main className={styles.page}>
       <DashboardHeroHeader
-        eyebrow={`WORKSPACE • ${active.workspace.name.toUpperCase()}`}
+        eyebrow={
+          user.systemRole === "owner"
+            ? "SUPER ADMIN • KATALOG MASTER TEMPLATE"
+            : `WORKSPACE • ${active.workspace.name.toUpperCase()}`
+        }
         title="Katalog & Desain Template"
         description="Template adalah desain undangan yang bisa dipakai berulang kali. Desain di editor, lalu publish — hanya template yang sudah dipublish yang bisa dipakai untuk membuat undangan."
         actions={
