@@ -879,12 +879,19 @@ function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?:
 function GuestGreetingWidgetVisual({
   element,
   tokens,
+  guestPreviewName,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  guestPreviewName?: string;
 }) {
   const { w, h } = element.frame;
-  const parts = greetingParts(element.props as Record<string, unknown>);
+  const rawParts = greetingParts(element.props as Record<string, unknown>);
+  const simName = guestPreviewName?.trim();
+  const parts = {
+    ...rawParts,
+    name: simName || rawParts.name,
+  };
 
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
@@ -1674,10 +1681,12 @@ export function WidgetVisual({
   element,
   tokens,
   variables,
+  guestPreviewName,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
   variables?: readonly VariableDefinition[];
+  guestPreviewName?: string;
 }) {
   const styleResolution = resolveWidgetStyleVariant(element.widgetType, element.style.variant);
   if (styleResolution.kind === "current") {
@@ -1689,6 +1698,7 @@ export function WidgetVisual({
         }}
         tokens={tokens}
         variables={variables}
+        guestPreviewName={guestPreviewName}
       />
     );
   }
@@ -1703,7 +1713,13 @@ export function WidgetVisual({
     case "map":
       return <MapWidgetVisual element={legacyElement} tokens={tokens} />;
     case "guestGreeting":
-      return <GuestGreetingWidgetVisual element={legacyElement} tokens={tokens} />;
+      return (
+        <GuestGreetingWidgetVisual
+          element={legacyElement}
+          tokens={tokens}
+          guestPreviewName={guestPreviewName}
+        />
+      );
     case "rsvp":
       return <RsvpWidgetVisual element={legacyElement} tokens={tokens} />;
     case "gallery":

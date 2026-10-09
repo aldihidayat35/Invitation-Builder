@@ -25,6 +25,7 @@ export interface TemplateRealPreviewProps {
   readonly templateId: string;
   readonly templateName: string;
   readonly initialDocument: CanonicalDocument;
+  readonly initialGuestName?: string;
 }
 
 function formatSyncTime(ts: number | null): string {
@@ -40,6 +41,7 @@ export function TemplateRealPreview({
   templateId,
   templateName,
   initialDocument,
+  initialGuestName,
 }: TemplateRealPreviewProps) {
   const [viewMode, setViewMode] = useState<"mobile" | "full">("mobile");
   const [justUpdated, setJustUpdated] = useState(false);
@@ -86,7 +88,9 @@ export function TemplateRealPreview({
     }
   }, [lastUpdated]);
 
-  const [guestPreviewName, setGuestPreviewName] = useState(() => getGuestPreviewName());
+  const [guestPreviewName, setGuestPreviewName] = useState(
+    () => initialGuestName?.trim() || getGuestPreviewName(),
+  );
 
   useEffect(() => {
     const onGuestPreviewChange = (e: Event) => {
@@ -219,7 +223,7 @@ export function TemplateRealPreview({
           <PublicContextProvider
             value={{
               slug: `template-preview-${templateId}`,
-              guestName: "Tamu Undangan",
+              guestName: guestPreviewName?.trim() || "Tamu Undangan",
             }}
           >
             <DocumentRenderer

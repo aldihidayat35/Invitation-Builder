@@ -11,11 +11,17 @@ export const metadata: Metadata = {
 
 export default async function TemplatePreviewPage({
   params,
+  searchParams,
 }: {
   readonly params: Promise<{ id: string }>;
+  readonly searchParams?: Promise<{ to?: string | string[]; guest?: string | string[] }>;
 }) {
   await requireOwner();
   const { id } = await params;
+  const sp = searchParams ? await searchParams : undefined;
+  const initialGuestName =
+    (Array.isArray(sp?.to) ? sp?.to[0] : sp?.to) ||
+    (Array.isArray(sp?.guest) ? sp?.guest[0] : sp?.guest);
 
   let template;
   try {
@@ -30,6 +36,7 @@ export default async function TemplatePreviewPage({
       templateId={template.id}
       templateName={template.name}
       initialDocument={template.document}
+      initialGuestName={initialGuestName}
     />
   );
 }

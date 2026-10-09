@@ -204,6 +204,9 @@ describe("Client Portal Token Architecture (No Login Required)", () => {
       .from(templateVersions)
       .where(eq(templateVersions.templateId, seed.templateId));
 
+    expect(ver).toBeDefined();
+    if (!ver) throw new Error("Template version not found");
+
     const [invitation] = await db()
       .insert(invitations)
       .values({
@@ -220,6 +223,9 @@ describe("Client Portal Token Architecture (No Login Required)", () => {
         },
       })
       .returning();
+
+    expect(invitation).toBeDefined();
+    if (!invitation) throw new Error("Invitation not created");
 
     const portal = await getClientPortalDataByToken(db(), "c_standalone_token_12345678");
     expect(portal).not.toBeNull();

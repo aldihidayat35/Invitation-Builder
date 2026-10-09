@@ -88,7 +88,7 @@ export function textPreview(
           return found.default;
         }
       }
-      if (s.bind === "guest.name") {
+      if (s.bind === "guest.name" || s.bind === "guest_name" || s.bind === "guestName") {
         const sim = (guestPreviewName ?? getGuestPreviewName()).trim();
         if (sim) return sim;
         if (typeof s.fallback === "string" && s.fallback.length > 0) {

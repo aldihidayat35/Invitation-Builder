@@ -22,6 +22,7 @@ import {
 } from "@/lib/auth/authorization";
 import { ForbiddenError } from "@/lib/auth/errors";
 import { generateGuestTokenId } from "@/lib/db/guest-token";
+import { and, eq, ilike, ne } from "drizzle-orm";
 import { insertAuditLog } from "@/lib/db/repositories/audit";
 import {
   archiveGuestRow,
@@ -55,7 +56,7 @@ import {
   findTemplateVersion,
   findTemplateVersionById,
 } from "@/lib/db/repositories/templates";
-import type { GuestRow, InvitationRow } from "@/lib/db/schema";
+import { guests, type GuestRow, type InvitationRow } from "@/lib/db/schema";
 import type { Database } from "@/lib/db/types";
 import {
   applyDefaults,
@@ -755,9 +756,88 @@ export async function listInvitationSnapshots(
  * token is honored only for guests of THIS invitation; unknown/archived tokens
  * silently fall back to the generic context.
  */
+export function formatGuestName(rawTokenOrName?: string): string | undefined {
+  if (!rawTokenOrName || typeof rawTokenOrName !== "string") return undefined;
+  const decoded = decodeURIComponent(rawTokenOrName).replace(/[-_+]/g, " ").trim();
+  if (!decoded) return undefined;
+  // Convert to Title Case
+  return decoded
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+async function resolveGuestContext(
+  db: Database,
+  invitationId: string,
+  input: { guestToken?: string; guestName?: string },
+): Promise<{ guest: GuestData; guestName?: string; guestToken?: string }> {
+  // 1. If explicit guestToken provided:
+  if (input.guestToken) {
+    const cleanToken = input.guestToken.trim();
+    if (cleanToken) {
+      const foundByToken = await findGuestByToken(db, cleanToken);
+      if (foundByToken) {
+        if (foundByToken.invitationId === invitationId && foundByToken.status !== "archived") {
+          return {
+            guest: { name: foundByToken.name },
+            guestName: foundByToken.name,
+            guestToken: foundByToken.tokenId,
+          };
+        }
+        // Token exists but does not belong to this invitation or is archived
+        return { guest: {} };
+      }
+    }
+  }
+
+  // 2. Resolve by candidate guest name (from input.guestName or if guestToken is not a token pattern)
+  const candidateName =
+    input.guestName?.trim() ||
+    (!input.guestToken?.startsWith("g_") && input.guestToken !== "bogus"
+      ? input.guestToken?.trim()
+      : undefined);
+
+  if (candidateName) {
+    const formattedName = formatGuestName(candidateName);
+    if (formattedName) {
+      const [matchedGuest] = await db
+        .select()
+        .from(guests)
+        .where(
+          and(
+            eq(guests.invitationId, invitationId),
+            ne(guests.status, "archived"),
+            ilike(guests.name, formattedName),
+          ),
+        )
+        .limit(1);
+
+      if (matchedGuest) {
+        return {
+          guest: { name: matchedGuest.name },
+          guestName: matchedGuest.name,
+          guestToken: matchedGuest.tokenId,
+        };
+      }
+
+      // If guestName was provided directly (e.g. from ?to=), return it as personalized guest context
+      if (input.guestName) {
+        return {
+          guest: { name: formattedName },
+          guestName: formattedName,
+          guestToken: undefined,
+        };
+      }
+    }
+  }
+
+  return { guest: {} };
+}
+
 export async function getPublicInvitation(
   db: Database,
-  input: { slug: string; guestToken?: string; allowDraft?: boolean },
+  input: { slug: string; guestToken?: string; guestName?: string; allowDraft?: boolean },
 ): Promise<PublicInvitationModel | null> {
   if (input.slug.length === 0 || input.slug.length > 120) return null;
   const row = await findInvitationBySlug(db, input.slug);
@@ -767,21 +847,20 @@ export async function getPublicInvitation(
   if (row.status === "published" && row.activePublishedSnapshotId) {
     const snapshot = await findSnapshotById(db, row.activePublishedSnapshotId);
     if (snapshot && snapshot.invitationId === row.id) {
-      let guest: GuestData = {};
-      if (input.guestToken) {
-        const found = await findGuestByToken(db, input.guestToken);
-        if (found && found.invitationId === row.id && found.status !== "archived") {
-          guest = { name: found.name };
-        }
-      }
+      const { guest, guestName, guestToken } = await resolveGuestContext(
+        db,
+        row.id,
+        input,
+      );
       const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
       return {
         title: row.title,
         slug: row.slug,
         revisionNo: snapshot.revisionNo,
         resolved: resolveDocument(document, snapshot.data, guest),
-        ...(guest.name !== undefined && { guestName: guest.name }),
-        hasGuest: guest.name !== undefined,
+        ...(guestName !== undefined && { guestName }),
+        ...(guestToken !== undefined && { guestToken }),
+        hasGuest: guestName !== undefined,
         isDraft: false,
       };
     }
@@ -791,20 +870,19 @@ export async function getPublicInvitation(
   if (input.allowDraft) {
     try {
       const { document } = await loadPinnedDocument(db, row);
-      let guest: GuestData = {};
-      if (input.guestToken) {
-        const found = await findGuestByToken(db, input.guestToken);
-        if (found && found.invitationId === row.id && found.status !== "archived") {
-          guest = { name: found.name };
-        }
-      }
+      const { guest, guestName, guestToken } = await resolveGuestContext(
+        db,
+        row.id,
+        input,
+      );
       return {
         title: row.title,
         slug: row.slug,
         revisionNo: 0,
         resolved: resolveDocument(document, row.data, guest),
-        ...(guest.name !== undefined && { guestName: guest.name }),
-        hasGuest: guest.name !== undefined,
+        ...(guestName !== undefined && { guestName }),
+        ...(guestToken !== undefined && { guestToken }),
+        hasGuest: guestName !== undefined,
         isDraft: true,
       };
     } catch {

@@ -233,6 +233,8 @@ describe("binding resolver (FR-VAR-002/003, P-02)", () => {
   it("resolves undeclared runtime guest.name without a definition", () => {
     const bare = createResolver(createVariableRegistry([]));
     expect(bare.resolve({ bind: "guest.name" }, {}, { name: "Siti" }).text).toBe("Siti");
+    expect(bare.resolve({ bind: "guest_name" }, {}, { name: "Siti" }).text).toBe("Siti");
+    expect(bare.resolve({ bind: "guestName" }, {}, { name: "Siti" }).text).toBe("Siti");
     expect(bare.resolve({ bind: "venue.name" }, {}, {}).status).toBe("unknown_variable");
   });
 

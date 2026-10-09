@@ -41,23 +41,24 @@ export default async function PublicInvitationPage({
 }: PageProps<"/i/[slug]">) {
   const { slug } = await params;
   const query = await searchParams;
-  const token = first(query.to) || first(query.guest);
+  const rawTo = first(query.to);
+  const rawGuest = first(query.guest);
+  const guestToken = rawGuest && rawGuest.length <= 160 ? rawGuest : undefined;
+  const guestName = rawTo && rawTo.length <= 160 ? rawTo : undefined;
 
   // 1. Try published snapshot first
-  let invitation = await getPublic(slug, token && token.length <= 64 ? token : undefined).catch(
-    () => null,
-  );
+  let invitation = await getPublic(slug, guestToken, { guestName }).catch(() => null);
 
   // 2. If not published, render draft preview for client review / inspection
   if (!invitation) {
-    invitation = await getPublic(slug, token && token.length <= 64 ? token : undefined, {
-      allowDraft: true,
-    }).catch(() => null);
+    invitation = await getPublic(slug, guestToken, { guestName, allowDraft: true }).catch(
+      () => null,
+    );
   }
 
   // 3. Fallback to interactive demo catalog invitation
   if (!invitation) {
-    invitation = await getDemoInvitation(slug, token);
+    invitation = await getDemoInvitation(slug, guestName || guestToken);
   }
 
   if (!invitation) notFound();
@@ -97,7 +98,7 @@ export default async function PublicInvitationPage({
       <PublicContextProvider
         value={{
           slug: invitation.slug,
-          ...(invitation.hasGuest && token && { guestToken: token }),
+          ...(invitation.guestToken && { guestToken: invitation.guestToken }),
           ...(invitation.guestName !== undefined && { guestName: invitation.guestName }),
         }}
       >

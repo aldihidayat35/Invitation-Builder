@@ -137,11 +137,12 @@ export async function snapshots(invitationId: string) {
 export async function getPublic(
   slug: string,
   guestToken?: string,
-  options?: { allowDraft?: boolean },
+  options?: { allowDraft?: boolean; guestName?: string },
 ) {
   return service.getPublicInvitation(await getDb(), {
     slug,
     ...(guestToken !== undefined && { guestToken }),
+    ...(options?.guestName !== undefined && { guestName: options.guestName }),
     allowDraft: options?.allowDraft,
   });
 }

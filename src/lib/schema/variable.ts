@@ -39,6 +39,8 @@ export const GUEST_CONTEXT_PREFIX = "guest.";
 /** Runtime-provided variables that need no declaration (Lampiran C). */
 export const RUNTIME_CONTEXT_VARIABLES: Readonly<Record<string, VariableType>> = {
   "guest.name": "guest-context",
+  "guest_name": "guest-context",
+  "guestName": "guest-context",
 };
 
 export const MAX_TEXT_LENGTH = 5000;

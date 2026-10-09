@@ -202,6 +202,18 @@ describe("public read model", () => {
     expect(own?.hasGuest).toBe(true);
     expect(own?.guestName).toBe("Wulan");
 
+    // Direct name lookup (matching registered guest by name)
+    const byRegisteredName = await getPublicInvitation(db(), { slug: a.slug, guestName: "wulan" });
+    expect(byRegisteredName?.hasGuest).toBe(true);
+    expect(byRegisteredName?.guestName).toBe("Wulan");
+    expect(byRegisteredName?.guestToken).toBe(guestA.tokenId);
+
+    // Ad-hoc personalized name (not in guest list, from ?to=Pak+Bambang)
+    const adHoc = await getPublicInvitation(db(), { slug: a.slug, guestName: "Pak+Bambang" });
+    expect(adHoc?.hasGuest).toBe(true);
+    expect(adHoc?.guestName).toBe("Pak Bambang");
+    expect(adHoc?.guestToken).toBeUndefined();
+
     const foreign = await getPublicInvitation(db(), { slug: a.slug, guestToken: guestB.tokenId });
     expect(foreign?.hasGuest).toBe(false);
     expect(allText(foreign!.resolved)).not.toContain("Budi");

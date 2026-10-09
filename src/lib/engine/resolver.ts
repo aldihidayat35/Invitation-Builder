@@ -44,7 +44,10 @@ export type ResolverOptions = FormatOptions;
 const GUEST_PREFIX = "guest.";
 
 function readGuest(guest: GuestData, key: string): unknown {
-  const field = key.slice(GUEST_PREFIX.length);
+  if (key === "guest.name" || key === "guest_name" || key === "guestName") {
+    return guest.name;
+  }
+  const field = key.startsWith(GUEST_PREFIX) ? key.slice(GUEST_PREFIX.length) : key;
   return Object.hasOwn(guest, field) ? (guest as Record<string, unknown>)[field] : undefined;
 }
 
@@ -170,7 +173,12 @@ export function createResolver(
 
       let raw: unknown;
       let usedDefault = false;
-      if (type === "guest-context" || key.startsWith(GUEST_PREFIX)) {
+      if (
+        type === "guest-context" ||
+        key.startsWith(GUEST_PREFIX) ||
+        key === "guest_name" ||
+        key === "guestName"
+      ) {
         raw = readGuest(guest, key);
       } else {
         raw = readOwn(data, key);

@@ -64,7 +64,9 @@ export interface PublicInvitationModel {
   readonly resolved: ResolvedDocument;
   /** Display name of the recognized guest (undefined = generic context). */
   readonly guestName?: string;
-  /** True only when a valid guest token was supplied for this invitation. */
+  /** Recognized guest token ID from database when applicable. */
+  readonly guestToken?: string;
+  /** True only when a valid guest token or name was supplied for this invitation. */
   readonly hasGuest: boolean;
   /** True when rendered from an active draft prior to publication. */
   readonly isDraft?: boolean;

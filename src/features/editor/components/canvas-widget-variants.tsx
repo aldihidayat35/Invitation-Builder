@@ -575,11 +575,24 @@ function MapVisual({ element, tokens }: { element: WidgetElement; tokens?: Theme
   );
 }
 
-function GreetingVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function GreetingVisual({
+  element,
+  tokens,
+  guestPreviewName,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  guestPreviewName?: string;
+}) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
   const variant = element.style.variant!;
-  const parts = greetingParts(element.props as Record<string, unknown>);
+  const rawParts = greetingParts(element.props as Record<string, unknown>);
+  const simName = guestPreviewName?.trim();
+  const parts = {
+    ...rawParts,
+    name: simName || rawParts.name,
+  };
   const radius = element.style.radius ?? 0;
   const centerText = (
     <>
@@ -4305,10 +4318,12 @@ export function CurrentWidgetVisual({
   element,
   tokens,
   variables,
+  guestPreviewName,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
   variables?: readonly VariableDefinition[];
+  guestPreviewName?: string;
 }) {
   switch (element.widgetType) {
     case "countdown":
@@ -4316,7 +4331,7 @@ export function CurrentWidgetVisual({
     case "map":
       return <MapVisual element={element} tokens={tokens} />;
     case "guestGreeting":
-      return <GreetingVisual element={element} tokens={tokens} />;
+      return <GreetingVisual element={element} tokens={tokens} guestPreviewName={guestPreviewName} />;
     case "rsvp":
       return <RsvpVisual element={element} tokens={tokens} />;
     case "gift":
