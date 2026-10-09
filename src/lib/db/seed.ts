@@ -104,13 +104,20 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       .where(eq(users.id, user.id));
   }
 
-  const workspace =
-    (await findWorkspaceBySlug(db, DEV_WORKSPACE_SLUG)) ??
-    (await createWorkspaceWithOwner(db, {
-      name: "Dev Workspace",
+  let workspace = await findWorkspaceBySlug(db, DEV_WORKSPACE_SLUG);
+  if (!workspace) {
+    workspace = await createWorkspaceWithOwner(db, {
+      name: "Ruang Kerja Bisnis",
       slug: DEV_WORKSPACE_SLUG,
       ownerUserId: user.id,
-    }));
+    });
+  } else if (workspace.name === "Dev Workspace") {
+    await db
+      .update(workspaces)
+      .set({ name: "Ruang Kerja Bisnis", updatedAt: new Date() })
+      .where(eq(workspaces.id, workspace.id));
+    workspace = { ...workspace, name: "Ruang Kerja Bisnis" };
+  }
 
   await db
     .insert(workspaceMembers)

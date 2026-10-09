@@ -411,9 +411,13 @@ export async function createProjectForOrder(
   // Selesaikan konfigurasi secara otomatis jika belum diisi manual
   let workspaceId = order.workspaceId;
   if (!workspaceId) {
-    const ws = await db.query.workspaces.findFirst({
-      orderBy: (w, { asc }) => [asc(w.name)],
-    });
+    const ws =
+      (await db.query.workspaces.findFirst({
+        where: (w, { eq }) => eq(w.slug, "dev-workspace"),
+      })) ??
+      (await db.query.workspaces.findFirst({
+        orderBy: (w, { asc }) => [asc(w.name)],
+      }));
     if (!ws) throw new OrderWorkflowError("Tidak ada workspace yang tersedia di sistem.");
     workspaceId = ws.id;
   }

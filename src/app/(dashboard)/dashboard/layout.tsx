@@ -261,16 +261,34 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         active
           ? {
               id: active.workspace.id,
-              name: active.workspace.name,
+              name:
+                active.workspace.name === "Dev Workspace"
+                  ? "Ruang Kerja Bisnis"
+                  : active.workspace.name,
               role: active.role,
             }
           : null
       }
-      workspaces={memberships.map((membership) => ({
-        id: membership.workspace.id,
-        name: membership.workspace.name,
-        role: membership.role,
-      }))}
+      workspaces={
+        user.systemRole === "owner"
+          ? active
+            ? [
+                {
+                  id: active.workspace.id,
+                  name:
+                    active.workspace.name === "Dev Workspace"
+                      ? "Ruang Kerja Bisnis"
+                      : active.workspace.name,
+                  role: active.role,
+                },
+              ]
+            : []
+          : memberships.map((membership) => ({
+              id: membership.workspace.id,
+              name: membership.workspace.name,
+              role: membership.role,
+            }))
+      }
       agencyBranding={agencyBranding}
       appSettings={appSettings}
       storageUsage={storageUsage}
