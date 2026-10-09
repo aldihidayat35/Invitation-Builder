@@ -201,7 +201,6 @@ export const wishesWidget: WidgetDefinition = {
   defaultProps: {
     title: "Ucapan & Doa Restu",
     subtitle: "Doa restu Anda adalah kebahagiaan bagi kami",
-    allowPost: true,
     maxDisplay: 6,
     items: [
       {
@@ -227,7 +226,6 @@ export const wishesWidget: WidgetDefinition = {
   props: {
     title: defineProp("text", "Judul", z.string().max(80).default("Ucapan & Doa Restu")),
     subtitle: defineProp("text", "Subjudul", z.string().max(120).optional()),
-    allowPost: defineProp("boolean", "Izinkan tamu kirim ucapan langsung", z.boolean().default(true)),
     maxDisplay: defineProp("number", "Jumlah pesan ditampilkan", z.number().min(1).max(50).default(6)),
     items: defineProp(
       "collection",

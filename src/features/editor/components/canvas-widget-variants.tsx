@@ -777,37 +777,53 @@ function GreetingVisual({
 function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
-  const variant = element.style.variant!;
+  const variant = resolveWidgetStyleVariant("rsvp", element.style.variant).variant.id;
   const props = element.props as Record<string, unknown>;
   const title =
-    typeof props.title === "string" && props.title.trim() ? props.title : "Konfirmasi Kehadiran";
-  const radius = element.style.radius ?? 10;
+    typeof props.title === "string" && props.title.trim() ? props.title.trim() : "Konfirmasi Kehadiran";
+  const withParty = props.enablePartySize !== false;
+  const withMessage = props.enableMessage !== false;
+
+  const radius =
+    element.style.radius ??
+    (variant === "editorial-form" ? 0 : variant === "ticket-form" ? 8 : variant === "heritage-frame" ? 10 : 16);
+
   const split = variant === "split-panel";
-  const padX = split ? Math.round(w * 0.4) + 12 : 16;
-  const fieldW = w - padX - 16;
-  const field = (y: number, label: string, width = fieldW) => (
-    <Group>
-      <Text x={padX} y={y} width={width} text={label} fontSize={10} fill={color} opacity={0.72} />
-      <Rect
-        x={padX}
-        y={y + 14}
-        width={width}
-        height={32}
-        cornerRadius={variant === "editorial-form" ? 0 : 7}
-        stroke={color}
-        strokeWidth={variant === "editorial-form" ? 0 : 1}
-        fill={variant === "soft-card" ? surface : "transparent"}
-        opacity={variant === "soft-card" ? 0.78 : 1}
-      />
-      {variant === "editorial-form" ? (
-        <Line points={[padX, y + 46, padX + width, y + 46]} stroke={color} />
-      ) : null}
-    </Group>
+  const splitW = split ? Math.round(w * 0.36) : 0;
+  const padX = split ? splitW + 12 : 16;
+  const fieldW = w - padX - (split ? 12 : 16);
+
+  // Button layout
+  const btnH = 34;
+  const btnY = Math.max(h - btnH - 12, 100);
+
+  // Header / Form layout
+  let currentY = split ? 14 : variant === "heritage-frame" ? 70 : variant === "ticket-form" ? 74 : 60;
+  const availableH = btnY - currentY - 8;
+
+  // Items count: Nama (1), Kehadiran (1), Pax (withParty ? 1 : 0), Pesan (withMessage ? 1 : 0)
+  const showParty = withParty && availableH >= (withMessage ? 160 : 110);
+  const showMsg = withMessage && availableH >= (showParty ? 180 : 130);
+
+  const activeFieldsCount = 2 + (showParty ? 1 : 0) + (showMsg ? 1 : 0);
+  const itemGap = Math.max(
+    4,
+    Math.min(10, Math.floor((availableH - activeFieldsCount * 38) / Math.max(1, activeFieldsCount - 1))),
   );
+
+  const isEditorial = variant === "editorial-form";
+  const isSoftCard = variant === "soft-card";
+  const isTicket = variant === "ticket-form";
+  const isHeritage = variant === "heritage-frame";
+
   return (
     <Group listening={false}>
       <Background element={element} tokens={tokens} />
-      {variant === "soft-card" ? (
+
+      {/* Variant-specific outer frame */}
+      {isEditorial && <Rect x={0} y={0} width={5} height={h} fill={color} />}
+
+      {isSoftCard && (
         <Rect
           width={w}
           height={h}
@@ -815,16 +831,16 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
           fill={color}
           opacity={0.06}
           shadowColor="#000"
-          shadowBlur={14}
-          shadowOpacity={0.1}
+          shadowBlur={16}
+          shadowOpacity={0.08}
         />
-      ) : null}
-      {variant === "ticket-form" ? (
-        <Rect width={w} height={h} cornerRadius={radius} stroke={color} />
-      ) : null}
-      {variant === "heritage-frame" ? (
+      )}
+
+      {isTicket && <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={1} />}
+
+      {isHeritage && (
         <>
-          <Rect width={w} height={h} cornerRadius={radius} stroke={color} />
+          <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={2} />
           <Rect
             x={4}
             y={4}
@@ -832,98 +848,273 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
             height={h - 8}
             cornerRadius={Math.max(0, radius - 2)}
             stroke={color}
-            strokeWidth={1.5}
+            strokeWidth={1}
+            opacity={0.75}
           />
         </>
-      ) : null}
+      )}
+
+      {split && (
+        <>
+          <Rect width={w} height={h} cornerRadius={radius} stroke={color} strokeWidth={1} opacity={0.25} />
+          <Rect
+            width={splitW}
+            height={h}
+            cornerRadius={[radius, 0, 0, radius]}
+            fill={color}
+          />
+        </>
+      )}
+
+      {/* Header */}
       {split ? (
-        <Rect
-          width={Math.round(w * 0.4)}
-          height={h}
-          cornerRadius={[radius, 0, 0, radius]}
-          fill={color}
-        />
-      ) : null}
-      <Text
-        x={split ? 12 : 16}
-        y={split ? h / 2 - 28 : 14}
-        width={split ? w * 0.4 - 24 : w - 32}
-        text="RSVP"
-        fontSize={9}
-        letterSpacing={2}
-        fill={split ? surface : color}
-        opacity={0.72}
-        align={split ? "center" : "left"}
-      />
-      <Text
-        x={split ? 12 : 16}
-        y={split ? h / 2 - 5 : 32}
-        width={split ? w * 0.4 - 24 : w - 32}
-        text={title}
-        fontSize={split ? 17 : 20}
-        fontStyle="bold"
-        fill={split ? surface : color}
-        align={split ? "center" : "left"}
-      />
-      {variant === "ticket-form" ? (
-        <Line points={[16, 67, w - 16, 67]} stroke={color} dash={[5, 4]} opacity={0.55} />
-      ) : null}
-      {field(split ? 20 : 76, "Nama tamu")}
-      <Text
-        x={padX}
-        y={split ? 77 : 139}
-        text="Kehadiran"
-        fontSize={10}
-        fill={color}
-        opacity={0.72}
-      />
-      <Rect x={padX} y={split ? 94 : 156} width={82} height={28} cornerRadius={14} fill={color} />
-      <Text
-        x={padX}
-        y={(split ? 94 : 156) + 8}
-        width={82}
-        text="Hadir"
-        fontSize={11}
-        fontStyle="bold"
-        fill={surface}
-        align="center"
-      />
+        <Group>
+          <Text
+            x={8}
+            y={Math.max(12, h / 2 - 28)}
+            width={splitW - 16}
+            text="RSVP"
+            fontSize={9}
+            letterSpacing={2}
+            fontStyle="bold"
+            fill={surface}
+            opacity={0.8}
+            align="center"
+          />
+          <Text
+            x={8}
+            y={Math.max(28, h / 2 - 10)}
+            width={splitW - 16}
+            text={title}
+            fontSize={13}
+            fontStyle="bold"
+            fill={surface}
+            align="center"
+            wrap="wrap"
+          />
+        </Group>
+      ) : (
+        <Group>
+          <Text
+            x={16}
+            y={12}
+            width={w - 32}
+            text="RSVP"
+            fontSize={9}
+            letterSpacing={2}
+            fontStyle="bold"
+            fill={color}
+            opacity={0.68}
+            align={isHeritage ? "center" : "left"}
+          />
+          <Text
+            x={16}
+            y={26}
+            width={w - 32}
+            text={title}
+            fontSize={15}
+            fontStyle="bold"
+            fill={color}
+            align={isHeritage ? "center" : "left"}
+            ellipsis
+          />
+          {isHeritage && (
+            <Line points={[w / 2 - 35, 52, w / 2 + 35, 52]} stroke={color} strokeWidth={1} opacity={0.8} />
+          )}
+          {isTicket && (
+            <Line points={[16, 56, w - 16, 56]} stroke={color} dash={[5, 4]} opacity={0.5} strokeWidth={1} />
+          )}
+        </Group>
+      )}
+
+      {/* Field 1: Nama */}
+      {(() => {
+        const y = currentY;
+        currentY += 40 + itemGap;
+        return (
+          <Group key="f-name">
+            <Text x={padX} y={y} width={fieldW} text="Nama" fontSize={10} fill={color} opacity={0.72} />
+            {isEditorial ? (
+              <Line points={[padX, y + 36, padX + fieldW, y + 36]} stroke={color} strokeWidth={1} />
+            ) : (
+              <Rect
+                x={padX}
+                y={y + 14}
+                width={fieldW}
+                height={26}
+                cornerRadius={isSoftCard ? 7 : 6}
+                stroke={color}
+                strokeWidth={isSoftCard ? 0.6 : 1}
+                fill={isSoftCard ? surface : "transparent"}
+                opacity={isSoftCard ? 0.9 : 1}
+              />
+            )}
+            <Text
+              x={padX + 8}
+              y={y + 21}
+              width={fieldW - 16}
+              text="Masukkan nama lengkap Anda"
+              fontSize={10}
+              fill={color}
+              opacity={0.38}
+              ellipsis
+            />
+          </Group>
+        );
+      })()}
+
+      {/* Field 2: Kehadiran */}
+      {(() => {
+        const y = currentY;
+        currentY += 40 + itemGap;
+        const choiceW = Math.min(84, Math.floor((fieldW - 8) / 2));
+        return (
+          <Group key="f-presence">
+            <Text x={padX} y={y} width={fieldW} text="Kehadiran" fontSize={10} fill={color} opacity={0.72} />
+            {/* Hadir (Active) */}
+            <Rect
+              x={padX}
+              y={y + 14}
+              width={choiceW}
+              height={26}
+              cornerRadius={13}
+              fill={color}
+            />
+            <Text
+              x={padX}
+              y={y + 21}
+              width={choiceW}
+              text="Hadir"
+              fontSize={10}
+              fontStyle="bold"
+              fill={surface}
+              align="center"
+            />
+            {/* Tidak hadir (Inactive) */}
+            <Rect
+              x={padX + choiceW + 8}
+              y={y + 14}
+              width={Math.max(choiceW, Math.min(94, fieldW - choiceW - 8))}
+              height={26}
+              cornerRadius={13}
+              stroke={color}
+              strokeWidth={1}
+              fill="transparent"
+            />
+            <Text
+              x={padX + choiceW + 8}
+              y={y + 21}
+              width={Math.max(choiceW, Math.min(94, fieldW - choiceW - 8))}
+              text="Tidak hadir"
+              fontSize={10}
+              fill={color}
+              opacity={0.75}
+              align="center"
+            />
+          </Group>
+        );
+      })()}
+
+      {/* Field 3: Jumlah tamu (Pax) jika aktif */}
+      {showParty &&
+        (() => {
+          const y = currentY;
+          currentY += 40 + itemGap;
+          const paxInputW = Math.min(96, fieldW);
+          return (
+            <Group key="f-party">
+              <Text x={padX} y={y} width={fieldW} text="Jumlah tamu" fontSize={10} fill={color} opacity={0.72} />
+              {isEditorial ? (
+                <Line points={[padX, y + 36, padX + paxInputW, y + 36]} stroke={color} strokeWidth={1} />
+              ) : (
+                <Rect
+                  x={padX}
+                  y={y + 14}
+                  width={paxInputW}
+                  height={26}
+                  cornerRadius={isSoftCard ? 7 : 6}
+                  stroke={color}
+                  strokeWidth={isSoftCard ? 0.6 : 1}
+                  fill={isSoftCard ? surface : "transparent"}
+                  opacity={isSoftCard ? 0.9 : 1}
+                />
+              )}
+              <Text
+                x={padX + 8}
+                y={y + 21}
+                text="1"
+                fontSize={10}
+                fontStyle="bold"
+                fill={color}
+                opacity={0.88}
+              />
+              <Text
+                x={padX + 22}
+                y={y + 21}
+                text="(tamu)"
+                fontSize={9}
+                fill={color}
+                opacity={0.5}
+              />
+            </Group>
+          );
+        })()}
+
+      {/* Field 4: Pesan (opsional) jika aktif */}
+      {showMsg &&
+        (() => {
+          const y = currentY;
+          return (
+            <Group key="f-msg">
+              <Text x={padX} y={y} width={fieldW} text="Pesan (opsional)" fontSize={10} fill={color} opacity={0.72} />
+              {isEditorial ? (
+                <Line points={[padX, y + 36, padX + fieldW, y + 36]} stroke={color} strokeWidth={1} />
+              ) : (
+                <Rect
+                  x={padX}
+                  y={y + 14}
+                  width={fieldW}
+                  height={28}
+                  cornerRadius={isSoftCard ? 7 : 6}
+                  stroke={color}
+                  strokeWidth={isSoftCard ? 0.6 : 1}
+                  fill={isSoftCard ? surface : "transparent"}
+                  opacity={isSoftCard ? 0.9 : 1}
+                />
+              )}
+              <Text
+                x={padX + 8}
+                y={y + 21}
+                width={fieldW - 16}
+                text="Tulis pesan atau ucapan…"
+                fontSize={10}
+                fill={color}
+                opacity={0.35}
+                ellipsis
+              />
+            </Group>
+          );
+        })()}
+
+      {/* Submit Button: "Kirim" */}
       <Rect
-        x={padX + 90}
-        y={split ? 94 : 156}
-        width={Math.max(72, fieldW - 90)}
-        height={28}
-        cornerRadius={14}
-        stroke={color}
-      />
-      <Text
-        x={padX + 90}
-        y={(split ? 94 : 156) + 8}
-        width={Math.max(72, fieldW - 90)}
-        text="Tidak hadir"
-        fontSize={10}
-        fill={color}
-        align="center"
-      />
-      {h > 290 ? field(207, "Pesan (opsional)") : null}
-      <Rect
         x={padX}
-        y={h - 50}
+        y={btnY}
         width={fieldW}
-        height={36}
-        cornerRadius={variant === "editorial-form" ? 0 : 18}
-        fill={variant === "ticket-form" || variant === "heritage-frame" ? color : "transparent"}
+        height={btnH}
+        cornerRadius={isEditorial ? 0 : isTicket ? 8 : 999}
+        fill={isTicket || isSoftCard ? color : "transparent"}
         stroke={color}
-        strokeWidth={1.3}
+        strokeWidth={1.4}
       />
       <Text
         x={padX}
-        y={h - 39}
+        y={btnY + 10}
         width={fieldW}
-        text="Kirim Konfirmasi"
+        text="Kirim"
         fontSize={12}
         fontStyle="bold"
-        fill={variant === "ticket-form" || variant === "heritage-frame" ? surface : color}
+        fill={isTicket || isSoftCard ? surface : color}
         align="center"
       />
     </Group>

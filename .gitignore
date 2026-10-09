@@ -48,5 +48,6 @@ next-env.d.ts
 
 # local data
 /.data/
+/.pglite/
 !.env.example
 *.mp4

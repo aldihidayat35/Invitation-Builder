@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 
@@ -98,39 +97,15 @@ export function WishesWidget({
   title,
   subtitle,
   items,
-  allowPost = true,
   maxDisplay,
   style,
 }: WishesWidgetProps) {
-  const initialList = parseWishItems(items);
-  const [wishesList, setWishesList] = useState<WishItem[]>(initialList);
-  const [formName, setFormName] = useState("");
-  const [formPresence, setFormPresence] = useState<"hadir" | "berhalangan">("hadir");
-  const [formMsg, setFormMsg] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
+  const wishesList = parseWishItems(items);
   const heading = s(title) || "Ucapan & Doa Restu";
   const sub = s(subtitle) || "Doa restu Anda adalah kebahagiaan bagi kami";
   const variant = style?.variant ?? "chat-bubbles";
   const limit = typeof maxDisplay === "number" && maxDisplay > 0 ? maxDisplay : 10;
   const displayedWishes = wishesList.slice(0, limit);
-
-  const handleSendWish = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formName.trim() || !formMsg.trim()) return;
-
-    const newWish: WishItem = {
-      name: formName.trim(),
-      presence: formPresence,
-      message: formMsg.trim(),
-      date: "Baru saja",
-    };
-
-    setWishesList([newWish, ...wishesList]);
-    setFormMsg("");
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3500);
-  };
 
   return (
     <WidgetFrame type="wishes" style={style} className={`${styles.wishesWidget} ${styles[`wishes_${variant}`] ?? ""}`}>
@@ -139,56 +114,6 @@ export function WishesWidget({
         <h3 className={styles.wishesHeading}>{heading}</h3>
         {sub && <p className={styles.wishesSubheading}>{sub}</p>}
       </div>
-
-      {/* Form Kirim Pesan (jika diaktifkan) */}
-      {allowPost !== false && (
-        <form onSubmit={handleSendWish} className={styles.wishesForm}>
-          <div className={styles.wishesInputGroup}>
-            <input
-              type="text"
-              className={styles.wishesInput}
-              placeholder="Nama Anda"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              required
-            />
-            <div className={styles.wishesPresenceSelector}>
-              <button
-                type="button"
-                className={`${styles.presencePill} ${formPresence === "hadir" ? styles.presenceActive : ""}`}
-                onClick={() => setFormPresence("hadir")}
-              >
-                ✓ Hadir
-              </button>
-              <button
-                type="button"
-                className={`${styles.presencePill} ${formPresence === "berhalangan" ? styles.presenceActive : ""}`}
-                onClick={() => setFormPresence("berhalangan")}
-              >
-                ✕ Maaf, Berhalangan
-              </button>
-            </div>
-          </div>
-          <textarea
-            className={styles.wishesTextarea}
-            rows={2}
-            placeholder="Tuliskan ucapan dan doa restu untuk kedua mempelai..."
-            value={formMsg}
-            onChange={(e) => setFormMsg(e.target.value)}
-            required
-          />
-          <div className={styles.wishesFormFooter}>
-            {submitted && <span className={styles.wishesSuccessText}>✓ Terima kasih atas doa restunya!</span>}
-            <button
-              type="submit"
-              className={styles.wishesSubmitBtn}
-              disabled={!formName.trim() || !formMsg.trim()}
-            >
-              Kirim Ucapan
-            </button>
-          </div>
-        </form>
-      )}
 
       {/* Daftar Pesan Bergulir */}
       <div className={styles.wishesFeed} data-variant={variant}>

@@ -66,10 +66,8 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
       const items = Array.isArray(props.items) ? props.items : [];
       const hasTitle = typeof props.title === "string" && props.title.trim().length > 0;
       const headerH = hasTitle ? 44 : 0;
-      const allowPost = props.allowPost !== false;
-      const formH = allowPost ? 180 : 0;
-      const count = Math.max(1, items.length);
-      return Math.round(headerH + formH + (count * 75) + 32);
+      const count = Math.max(1, Math.min(items.length, 6));
+      return Math.round(headerH + (count * 75) + 32);
     }
 
     case "gift": {
@@ -81,7 +79,12 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
     }
 
     case "rsvp": {
-      return variant === "split-panel" ? 320 : 360;
+      const withParty = props.enablePartySize !== false;
+      const withMessage = props.enableMessage !== false;
+      let base = variant === "split-panel" ? 280 : 300;
+      if (withParty) base += 44;
+      if (withMessage) base += 52;
+      return base;
     }
 
     case "gallery": {

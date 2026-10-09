@@ -48,14 +48,13 @@ describe("estimateWidgetContentHeight", () => {
     expect(est).toBeGreaterThan(200);
   });
 
-  it("estimates height for wishes widget with allowPost form", () => {
+  it("estimates height for wishes widget with items feed", () => {
     const widget = createMockWidget("wishes", "default", {
       title: "Ucapan & Doa",
-      allowPost: true,
       items: [{ name: "Budi", message: "Selamat!" }],
     });
     const est = estimateWidgetContentHeight(widget);
-    expect(est).toBeGreaterThan(250);
+    expect(est).toBeGreaterThan(120);
   });
 
   it("estimates height for gift widget with bank accounts", () => {
