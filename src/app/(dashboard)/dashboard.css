@@ -93,59 +93,62 @@
     Helvetica, Arial, sans-serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  overflow-x: clip;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--dash-bg);
-  color: var(--dash-text);
-  font-family: var(--dash-font);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--dash-bg);
+    color: var(--dash-text);
+    font-family: var(--dash-font);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
 
-a {
-  color: inherit;
-}
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 
-button,
-[role="button"],
-a,
-select {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
+  button,
+  [role="button"],
+  a,
+  select {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-img,
-video,
-canvas,
-svg {
-  max-width: 100%;
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 767px) {
@@ -187,5 +190,19 @@ a.bg-white:not([class*="text-"]),
 button[class*="bg-white"]:not([class*="text-"]):not([class*="bg-white/"]),
 a[class*="bg-white"]:not([class*="text-"]):not([class*="bg-white/"]) {
   color: var(--dash-text, #2C221E);
+}
+
+/* Ensure dark buttons default to crisp white text if unspecified */
+button[class*="bg-[#2C221E]"]:not([class*="text-"]),
+a[class*="bg-[#2C221E]"]:not([class*="text-"]),
+button[class*="bg-[#84633F]"]:not([class*="text-"]),
+a[class*="bg-[#84633F]"]:not([class*="text-"]),
+button[class*="bg-[#664624]"]:not([class*="text-"]),
+a[class*="bg-[#664624]"]:not([class*="text-"]),
+button[class*="bg-stone-800"]:not([class*="text-"]),
+a[class*="bg-stone-800"]:not([class*="text-"]),
+button[class*="bg-stone-900"]:not([class*="text-"]),
+a[class*="bg-stone-900"]:not([class*="text-"]) {
+  color: #FFFFFF;
 }
 
