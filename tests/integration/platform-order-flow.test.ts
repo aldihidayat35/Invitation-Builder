@@ -6,6 +6,7 @@ import {
   buildPlatformOrderWhatsAppUrl,
   normalizeWhatsAppNumber,
 } from "@/features/orders/platform-order";
+import { getOrderDetail } from "@/features/orders/service";
 import { updateAppSettings, getAppSettings } from "@/lib/db/repositories/settings";
 import { listAllOrders } from "@/lib/db/repositories/orders";
 import { seedDev } from "@/lib/db/seed";
@@ -106,4 +107,28 @@ describe("Platform Direct Order Flow & WhatsApp Integration", () => {
       encodeURIComponent("*PESANAN BARU WEBSITE UNDANGAN - PERNIKAHAN IMPIAN*"),
     );
   });
+
+  it("allows owner to view order details for platform direct orders with null sellerId", async () => {
+    const result = await createPlatformOrder(
+      {
+        customerName: "Siti Rahma",
+        customerWhatsapp: "081233445566",
+        groomBrideNames: "Siti & Rudi",
+        templateTitle: "Royal Elegant",
+        notes: "Paket lengkap",
+      },
+      db(),
+    );
+
+    const ownerActor = { userId: "mock-owner-id", systemRole: "owner" as const };
+    const detail = await getOrderDetail(db(), ownerActor, result.orderId);
+
+    expect(detail).toBeDefined();
+    expect(detail.order.id).toBe(result.orderId);
+    expect(detail.order.customerName).toBe("Siti Rahma");
+    expect(detail.order.sellerId).toBeNull();
+    expect(detail.seller).toBeDefined();
+    expect(detail.seller.agencyName).toBe("Platform Langsung (Website)");
+  });
 });
+

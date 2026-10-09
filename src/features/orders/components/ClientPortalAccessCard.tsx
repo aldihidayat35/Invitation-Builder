@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ClientPortalAccessCardProps {
   token?: string | null;
@@ -23,6 +23,11 @@ export function ClientPortalAccessCard({
 }: ClientPortalAccessCardProps) {
   const [copied, setCopied] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   if (!token) {
     return (
@@ -38,10 +43,7 @@ export function ClientPortalAccessCard({
   }
 
   const portalRelativeUrl = `/c/${token}`;
-  const fullPortalUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${portalRelativeUrl}`
-      : portalRelativeUrl;
+  const fullPortalUrl = origin ? `${origin}${portalRelativeUrl}` : portalRelativeUrl;
 
   const handleCopy = async () => {
     try {

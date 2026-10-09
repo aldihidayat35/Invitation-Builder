@@ -154,7 +154,7 @@ export default async function AdminOrderDetailPage({
             <dt className="text-stone-500">Customer</dt>
             <dd>{order.customerName}</dd>
             <dt className="text-stone-500">Email</dt>
-            <dd>{order.customerEmail}</dd>
+            <dd>{order.customerEmail || "—"}</dd>
             <dt className="text-stone-500">WhatsApp</dt>
             <dd>{order.customerWhatsapp}</dd>
             <dt className="text-stone-500">Seller</dt>

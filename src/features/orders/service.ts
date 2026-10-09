@@ -108,7 +108,7 @@ export async function getOrderDetail(
   await assertOrderAccess(db, actor, order);
 
   const [seller, client, workspace, assignee, template, invitation, events] = await Promise.all([
-    findResellerProfileById(db, order.sellerId),
+    order.sellerId ? findResellerProfileById(db, order.sellerId) : undefined,
     order.clientUserId ? findUserById(db, order.clientUserId) : undefined,
     order.workspaceId ? findWorkspaceById(db, order.workspaceId) : undefined,
     order.assignedTo ? findUserById(db, order.assignedTo) : undefined,
@@ -116,11 +116,16 @@ export async function getOrderDetail(
     order.invitationId ? findInvitationById(db, order.invitationId) : undefined,
     listOrderWorkflowEvents(db, order.id),
   ]);
-  if (!seller) throw new OrderWorkflowError("Seller pesanan tidak ditemukan.");
 
   return {
     order,
-    seller: { id: seller.id, agencyName: seller.agencyName, slug: seller.slug },
+    seller: seller
+      ? { id: seller.id, agencyName: seller.agencyName, slug: seller.slug }
+      : {
+          id: order.sellerId ?? "direct",
+          agencyName: order.sellerId ? "Mitra Seller" : "Platform Langsung (Website)",
+          slug: order.sellerId ? "reseller" : "direct",
+        },
     client: client ? { id: client.id, name: client.name, email: client.email } : null,
     workspace: workspace ? { id: workspace.id, name: workspace.name, slug: workspace.slug } : null,
     assignee: assignee ? { id: assignee.id, name: assignee.name, email: assignee.email } : null,

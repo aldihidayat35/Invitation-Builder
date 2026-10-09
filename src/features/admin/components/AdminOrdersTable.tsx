@@ -43,12 +43,12 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
       const q = search.toLowerCase().trim();
       const matchSearch =
         !q ||
-        item.customerName.toLowerCase().includes(q) ||
-        item.customerEmail.toLowerCase().includes(q) ||
-        item.customerWhatsapp.toLowerCase().includes(q) ||
-        item.sellerName.toLowerCase().includes(q) ||
-        (item.groomBrideNames && item.groomBrideNames.toLowerCase().includes(q)) ||
-        (item.templateTitle && item.templateTitle.toLowerCase().includes(q));
+        (Boolean(item.customerName) && item.customerName.toLowerCase().includes(q)) ||
+        (Boolean(item.customerEmail) && item.customerEmail!.toLowerCase().includes(q)) ||
+        (Boolean(item.customerWhatsapp) && item.customerWhatsapp.toLowerCase().includes(q)) ||
+        (Boolean(item.sellerName) && item.sellerName.toLowerCase().includes(q)) ||
+        (Boolean(item.groomBrideNames) && item.groomBrideNames!.toLowerCase().includes(q)) ||
+        (Boolean(item.templateTitle) && item.templateTitle!.toLowerCase().includes(q));
 
       const matchStatus = statusFilter === "all" || item.status === statusFilter;
 
