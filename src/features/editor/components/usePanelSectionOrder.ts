@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ReorderDragProps {
   readonly draggable: boolean;
@@ -22,8 +22,9 @@ export function usePanelSectionOrder<T extends string>(
   defaultOrder: readonly T[],
   disabled = false,
 ) {
-  const [order, setOrder] = useState<readonly T[]>(() => {
-    if (typeof window === "undefined") return defaultOrder;
+  const [order, setOrder] = useState<readonly T[]>(defaultOrder);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
@@ -34,15 +35,14 @@ export function usePanelSectionOrder<T extends string>(
           // Append any missing items from defaultOrder that might not have been in stored JSON
           const missing = defaultOrder.filter((id) => !valid.includes(id));
           if (valid.length > 0) {
-            return [...valid, ...missing];
+            setOrder([...valid, ...missing]);
           }
         }
       }
     } catch {
       // Ignore JSON parse or storage reading error
     }
-    return defaultOrder;
-  });
+  }, [storageKey, defaultOrder]);
 
   const [draggingId, setDraggingId] = useState<T | null>(null);
   const draggingIdRef = useRef<T | null>(null);
