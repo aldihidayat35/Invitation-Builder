@@ -156,8 +156,12 @@ function EditorFrame({
           return state.redo();
         case "copy":
           return state.copySelected();
+        case "copy-style":
+          return state.copyStyleSelected();
         case "paste":
           return state.paste();
+        case "paste-style":
+          return state.pasteStyleSelected();
         case "duplicate":
           return state.duplicateSelected();
         case "delete":

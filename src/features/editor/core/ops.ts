@@ -22,6 +22,9 @@ import {
   type Element,
   type Frame,
   type Section,
+  type ElementShadow,
+  type ImageFade,
+  isBindingSegment,
 } from "@/lib/schema";
 import { MIN_ELEMENT_SIZE, normalizeRotation, round2 } from "./geometry";
 
@@ -1138,3 +1141,402 @@ export function updateGroupStyle(
   });
   return changedAny ? withSections(doc, sections) : doc;
 }
+
+// ------------------------------------------------------------- style copy & paste
+
+export interface CopiedStyleData {
+  readonly sourceType: Element["type"];
+  readonly sourceShapeType?: "rectangle" | "circle" | "line";
+  readonly animations?: Element["animations"];
+  readonly style: Record<string, unknown>;
+  readonly primaryBindingKey?: string;
+  readonly primaryBindingFallback?: string | number | boolean;
+}
+
+/** Extracts reusable visual styles, animations, and data bindings from an element. */
+export function extractCopiedStyle(el: Element): CopiedStyleData {
+  let primaryBindingKey: string | undefined;
+  let primaryBindingFallback: string | number | boolean | undefined;
+
+  if (el.type === "text") {
+    const bindSeg = el.content.segments.find(isBindingSegment);
+    if (bindSeg) {
+      primaryBindingKey = bindSeg.bind;
+      primaryBindingFallback = bindSeg.fallback;
+    }
+  } else if (el.type === "image") {
+    if ("bind" in el.source && typeof el.source.bind === "string") {
+      primaryBindingKey = el.source.bind;
+      primaryBindingFallback = el.source.fallback;
+    }
+  } else if (el.type === "widget") {
+    for (const val of Object.values(el.props)) {
+      if (
+        typeof val === "object" &&
+        val !== null &&
+        "bind" in val &&
+        typeof (val as { bind: unknown }).bind === "string"
+      ) {
+        primaryBindingKey = (val as { bind: string }).bind;
+        primaryBindingFallback = (val as { fallback?: string | number | boolean }).fallback;
+        break;
+      }
+    }
+  }
+
+  return {
+    sourceType: el.type,
+    sourceShapeType: el.type === "shape" ? el.shapeType : undefined,
+    animations: el.animations ? structuredClone(el.animations) : undefined,
+    style: structuredClone(el.style as Record<string, unknown>),
+    primaryBindingKey,
+    primaryBindingFallback,
+  };
+}
+
+/** Applies copied styles, animations, and bindings to a target element intelligently. */
+export function applyCopiedStyle(target: Element, copied: CopiedStyleData): Element {
+  const next = structuredClone(target);
+
+  if (copied.animations !== undefined) {
+    next.animations = structuredClone(copied.animations);
+  }
+
+  if (next.type === "text") {
+    if (copied.sourceType === "text") {
+      next.style = {
+        ...next.style,
+        ...(copied.style.fontFamily !== undefined
+          ? { fontFamily: copied.style.fontFamily as string }
+          : {}),
+        ...(typeof copied.style.fontSize === "number" ? { fontSize: copied.style.fontSize } : {}),
+        ...(typeof copied.style.fontWeight === "number"
+          ? { fontWeight: copied.style.fontWeight }
+          : {}),
+        ...(typeof copied.style.lineHeight === "number"
+          ? { lineHeight: copied.style.lineHeight }
+          : {}),
+        ...(typeof copied.style.letterSpacing === "number"
+          ? { letterSpacing: copied.style.letterSpacing }
+          : {}),
+        ...(typeof copied.style.textAlign === "string"
+          ? { textAlign: copied.style.textAlign as "left" | "center" | "right" | "justify" }
+          : {}),
+        ...(typeof copied.style.color === "string" ? { color: copied.style.color } : {}),
+        ...(typeof copied.style.opacity === "number" ? { opacity: copied.style.opacity } : {}),
+        shadow: copied.style.shadow
+          ? structuredClone(copied.style.shadow as ElementShadow)
+          : undefined,
+      };
+      if (copied.primaryBindingKey && next.content.segments.length > 0) {
+        const existingFallback =
+          "text" in next.content.segments[0]! ? next.content.segments[0]!.text : undefined;
+        next.content = {
+          segments: [
+            {
+              bind: copied.primaryBindingKey,
+              fallback: copied.primaryBindingFallback ?? existingFallback,
+            },
+            ...next.content.segments.slice(1),
+          ],
+        };
+      }
+    } else {
+      const patch: Record<string, unknown> = {};
+      if (typeof copied.style.opacity === "number") patch.opacity = copied.style.opacity;
+      if (copied.style.shadow) patch.shadow = structuredClone(copied.style.shadow);
+      if (typeof copied.style.fill === "string") patch.color = copied.style.fill;
+      else if (typeof copied.style.color === "string") patch.color = copied.style.color;
+      next.style = { ...next.style, ...patch };
+      if (copied.primaryBindingKey && next.content.segments.length > 0) {
+        const existingFallback =
+          "text" in next.content.segments[0]! ? next.content.segments[0]!.text : undefined;
+        next.content = {
+          segments: [
+            {
+              bind: copied.primaryBindingKey,
+              fallback: copied.primaryBindingFallback ?? existingFallback,
+            },
+            ...next.content.segments.slice(1),
+          ],
+        };
+      }
+    }
+  } else if (next.type === "shape") {
+    if (copied.sourceType === "shape") {
+      const nextStroke = copied.style.stroke ? structuredClone(copied.style.stroke) : undefined;
+      const safeStroke =
+        next.shapeType === "line" && (!nextStroke || (nextStroke as { width: number }).width <= 0)
+          ? {
+              color: typeof copied.style.fill === "string" ? copied.style.fill : "#000000",
+              width: 2,
+            }
+          : nextStroke;
+
+      next.style = {
+        ...next.style,
+        ...(copied.style.fill !== undefined ? { fill: copied.style.fill as string } : {}),
+        stroke: safeStroke as { color: string; width: number } | undefined,
+        ...(typeof copied.style.opacity === "number" ? { opacity: copied.style.opacity } : {}),
+        shadow: copied.style.shadow
+          ? structuredClone(copied.style.shadow as ElementShadow)
+          : undefined,
+      };
+      if (next.shapeType === "rectangle" && typeof copied.style.radius === "number") {
+        next.style.radius = copied.style.radius;
+      }
+    } else {
+      const patch: Record<string, unknown> = {};
+      if (typeof copied.style.opacity === "number") patch.opacity = copied.style.opacity;
+      if (copied.style.shadow) patch.shadow = structuredClone(copied.style.shadow);
+      if (typeof copied.style.color === "string") patch.fill = copied.style.color;
+      else if (typeof copied.style.background === "string") patch.fill = copied.style.background;
+      if (next.shapeType === "rectangle" && typeof copied.style.radius === "number") {
+        patch.radius = copied.style.radius;
+      }
+      next.style = { ...next.style, ...patch };
+    }
+  } else if (next.type === "image") {
+    if (copied.sourceType === "image") {
+      next.style = {
+        ...next.style,
+        ...(typeof copied.style.radius === "number" ? { radius: copied.style.radius } : {}),
+        ...(typeof copied.style.opacity === "number" ? { opacity: copied.style.opacity } : {}),
+        ...(typeof copied.style.fit === "string"
+          ? { fit: copied.style.fit as "cover" | "contain" }
+          : {}),
+        ...(copied.style.focal
+          ? { focal: structuredClone(copied.style.focal as { x: number; y: number }) }
+          : {}),
+        shadow: copied.style.shadow
+          ? structuredClone(copied.style.shadow as ElementShadow)
+          : undefined,
+        fade: copied.style.fade ? structuredClone(copied.style.fade as ImageFade) : undefined,
+        flipH: Boolean(copied.style.flipH),
+        flipV: Boolean(copied.style.flipV),
+      };
+      if (copied.primaryBindingKey) {
+        next.source = {
+          bind: copied.primaryBindingKey,
+          ...(copied.primaryBindingFallback ? { fallback: copied.primaryBindingFallback } : {}),
+        };
+      }
+    } else {
+      const patch: Record<string, unknown> = {};
+      if (typeof copied.style.opacity === "number") patch.opacity = copied.style.opacity;
+      if (copied.style.shadow) patch.shadow = structuredClone(copied.style.shadow);
+      if (typeof copied.style.radius === "number") patch.radius = copied.style.radius;
+      next.style = { ...next.style, ...patch };
+      if (copied.primaryBindingKey) {
+        next.source = {
+          bind: copied.primaryBindingKey,
+          ...(copied.primaryBindingFallback ? { fallback: copied.primaryBindingFallback } : {}),
+        };
+      }
+    }
+  } else if (next.type === "widget") {
+    if (copied.sourceType === "widget") {
+      next.style = {
+        ...next.style,
+        ...(typeof copied.style.color === "string" ? { color: copied.style.color } : {}),
+        ...(typeof copied.style.background === "string"
+          ? { background: copied.style.background }
+          : {}),
+        ...(typeof copied.style.radius === "number" ? { radius: copied.style.radius } : {}),
+        ...(typeof copied.style.opacity === "number" ? { opacity: copied.style.opacity } : {}),
+        ...(typeof copied.style.variant === "string" ? { variant: copied.style.variant } : {}),
+        shadow: copied.style.shadow
+          ? structuredClone(copied.style.shadow as ElementShadow)
+          : undefined,
+      };
+    } else {
+      const patch: Record<string, unknown> = {};
+      if (typeof copied.style.opacity === "number") patch.opacity = copied.style.opacity;
+      if (copied.style.shadow) patch.shadow = structuredClone(copied.style.shadow);
+      if (typeof copied.style.radius === "number") patch.radius = copied.style.radius;
+      if (typeof copied.style.color === "string") patch.color = copied.style.color;
+      else if (typeof copied.style.fill === "string") patch.color = copied.style.fill;
+      next.style = { ...next.style, ...patch };
+    }
+  }
+
+  const parsed = elementSchema.safeParse(next);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  return target;
+}
+
+// ------------------------------------------------------------- group mirror
+
+/**
+ * Mirrors (flips) elements in a group horizontally or vertically.
+ * Supports both in-place flipping around group bounds and duplication as a symmetrical counterpart.
+ */
+export function mirrorGroupElements(
+  doc: CanonicalDocument,
+  groupId: string,
+  direction: "horizontal" | "vertical",
+  options?: {
+    readonly duplicate?: boolean;
+    readonly axisCenter?: number;
+  },
+): { document: CanonicalDocument; newGroupId?: string; ids: string[] } {
+  const members = findGroupElements(doc, groupId);
+  if (members.length === 0) return { document: doc, ids: [] };
+
+  const firstLoc = findElement(doc, members[0]!.id);
+  if (!firstLoc) return { document: doc, ids: [] };
+  const sectionId = firstLoc.section.id;
+
+  const minX = Math.min(...members.map((e) => e.frame.x));
+  const maxX = Math.max(...members.map((e) => e.frame.x + e.frame.w));
+  const minY = Math.min(...members.map((e) => e.frame.y));
+  const maxY = Math.max(...members.map((e) => e.frame.y + e.frame.h));
+  const groupCenterX = (minX + maxX) / 2;
+  const groupCenterY = (minY + maxY) / 2;
+
+  let axis: number;
+  if (direction === "horizontal") {
+    if (options?.axisCenter !== undefined) {
+      axis = options.axisCenter;
+    } else if (options?.duplicate) {
+      if (maxX <= 210 || minX >= 180) {
+        axis = CANONICAL_BASE_WIDTH / 2; // 195
+      } else {
+        axis = groupCenterX;
+      }
+    } else {
+      axis = groupCenterX;
+    }
+  } else {
+    axis = options?.axisCenter ?? groupCenterY;
+  }
+
+  const transformElement = <T extends Element>(el: T): T => {
+    const clone = structuredClone(el);
+    let nextX = clone.frame.x;
+    let nextY = clone.frame.y;
+    let nextRotation = clone.frame.rotation;
+
+    if (direction === "horizontal") {
+      nextX = round2(2 * axis - (clone.frame.x + clone.frame.w));
+      nextRotation = normalizeRotation(-clone.frame.rotation);
+
+      if (clone.type === "image") {
+        clone.style = {
+          ...clone.style,
+          flipH: !clone.style.flipH,
+          ...(clone.style.fade
+            ? {
+                fade: {
+                  ...clone.style.fade,
+                  left: clone.style.fade.right ?? 0,
+                  right: clone.style.fade.left ?? 0,
+                },
+              }
+            : {}),
+        };
+      } else if (clone.type === "text") {
+        const currentAlign = clone.style.textAlign;
+        const nextAlign =
+          currentAlign === "left" ? "right" : currentAlign === "right" ? "left" : currentAlign;
+        clone.style = {
+          ...clone.style,
+          textAlign: nextAlign,
+        };
+      }
+    } else {
+      nextY = round2(2 * axis - (clone.frame.y + clone.frame.h));
+      nextRotation = normalizeRotation(-clone.frame.rotation);
+
+      if (clone.type === "image") {
+        clone.style = {
+          ...clone.style,
+          flipV: !clone.style.flipV,
+          ...(clone.style.fade
+            ? {
+                fade: {
+                  ...clone.style.fade,
+                  top: clone.style.fade.bottom ?? 0,
+                  bottom: clone.style.fade.top ?? 0,
+                },
+              }
+            : {}),
+        };
+      }
+    }
+
+    clone.frame = {
+      ...clone.frame,
+      x: nextX,
+      y: nextY,
+      rotation: nextRotation,
+    };
+
+    return clone;
+  };
+
+  if (options?.duplicate) {
+    const used = collectIds(doc);
+    for (const sec of doc.sections) {
+      for (const el of sec.elements) {
+        if (el.groupId) used.add(el.groupId);
+      }
+    }
+
+    const newGroupId = generateId(used, "grp");
+    used.add(newGroupId);
+
+    const originalGroupName = members[0]?.groupName || "Grup";
+    const newGroupName = `${originalGroupName} (Cermin)`;
+
+    const duplicatedElements: Element[] = [];
+    const createdIds: string[] = [];
+
+    for (const el of members) {
+      const prefix = idPrefix(el);
+      const newId = generateId(used, prefix);
+      used.add(newId);
+      createdIds.push(newId);
+
+      const transformed = transformElement(el);
+      transformed.id = newId;
+      transformed.groupId = newGroupId;
+      transformed.groupName = newGroupName;
+      transformed.locked = false;
+
+      duplicatedElements.push(transformed);
+    }
+
+    const nextDoc = mapSection(doc, sectionId, (section) => {
+      const lastIndex = section.elements.reduce(
+        (max, el, idx) => (el.groupId === groupId ? Math.max(max, idx) : max),
+        -1,
+      );
+      const newElements = [...section.elements];
+      if (lastIndex >= 0) {
+        newElements.splice(lastIndex + 1, 0, ...duplicatedElements);
+      } else {
+        newElements.push(...duplicatedElements);
+      }
+      return { ...section, elements: newElements };
+    });
+
+    return { document: nextDoc, newGroupId, ids: createdIds };
+  }
+
+  // In-place mirror
+  const nextDoc = mapSection(doc, sectionId, (section) => {
+    const elements = section.elements.map((el) => {
+      if (el.groupId === groupId) {
+        return transformElement(el);
+      }
+      return el;
+    });
+    return { ...section, elements };
+  });
+
+  return { document: nextDoc, ids: members.map((e) => e.id) };
+}
+

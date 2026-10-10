@@ -13,6 +13,8 @@ export type ShortcutAction =
   | { readonly type: "delete" }
   | { readonly type: "group" }
   | { readonly type: "ungroup" }
+  | { readonly type: "copy-style" }
+  | { readonly type: "paste-style" }
   | { readonly type: "nudge"; readonly dx: number; readonly dy: number }
   | { readonly type: "escape" };
 
@@ -38,6 +40,11 @@ export function resolveShortcut(event: KeyEventLike): ShortcutAction | null {
     if (key === "v") return { type: "paste" };
     if (key === "d") return { type: "duplicate" };
     if (key === "g") return event.shiftKey ? { type: "ungroup" } : { type: "group" };
+    return null;
+  }
+  if (mod && event.altKey) {
+    if (key === "c") return { type: "copy-style" };
+    if (key === "v") return { type: "paste-style" };
     return null;
   }
   if (event.altKey) return null;

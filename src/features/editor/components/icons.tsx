@@ -646,4 +646,20 @@ export const IconSnapGuides = (p: IconProps) => (
   </Svg>
 );
 
+export const IconPaintbrush = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9" />
+    <path d="M15 13 9 7l4-4a3 3 0 0 1 4.24 0l1.76 1.76a3 3 0 0 1 0 4.24L15 13Z" />
+  </Svg>
+);
+
+export const IconDuplicateMirror = (p: IconProps) => (
+  <Svg {...p}>
+    <line x1="12" y1="2" x2="12" y2="22" strokeDasharray="2 2" />
+    <path d="M8 6 3 12l5 6V6Z" />
+    <path d="M16 6l5 6-5 6V6Z" />
+  </Svg>
+);
+
+
 

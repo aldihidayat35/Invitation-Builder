@@ -62,6 +62,10 @@ import {
   updateGroupStyle as updateGroupStyleOp,
   updateSection as updateSectionOp,
   updateVariable as updateVariableOp,
+  applyCopiedStyle,
+  extractCopiedStyle,
+  mirrorGroupElements,
+  type CopiedStyleData,
   DEFAULT_DUPLICATE_OFFSET,
   type ElementKind,
   type ReorderMode,
@@ -133,6 +137,7 @@ export interface EditorState {
   readonly activeSectionId: string | null;
   readonly zoom: number;
   readonly clipboard: readonly Element[];
+  readonly copiedStyle: CopiedStyleData | null;
   readonly pasteCount: number;
   readonly readOnly: boolean;
   /** Space is held: drag pans the artboard instead of manipulating elements. */
@@ -197,10 +202,12 @@ export interface EditorActions {
   deleteSelected(): void;
   duplicateSelected(): void;
   copySelected(): void;
+  copyStyleSelected(): void;
   paste(options?: {
     readonly position?: { readonly x: number; readonly y: number };
     readonly sectionId?: string;
   }): void;
+  pasteStyleSelected(): void;
   nudgeSelected(dx: number, dy: number): void;
   /** Commit the final frames of a finished pointer gesture (one history entry). */
   commitFrames(frames: Readonly<Record<string, Frame>>): void;
@@ -226,6 +233,10 @@ export interface EditorActions {
     fn: (current?: Element["animations"]) => Element["animations"] | undefined,
   ): void;
   patchGroupStyle(groupId: string, patch: Record<string, unknown>): void;
+  mirrorSelectedGroup(
+    direction: "horizontal" | "vertical",
+    options?: { readonly duplicate?: boolean; readonly axisCenter?: number },
+  ): void;
   // history
   undo(): void;
   redo(): void;
@@ -315,6 +326,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       activeSectionId: init.document.sections[0]?.id ?? null,
       zoom: DEFAULT_ZOOM,
       clipboard: [],
+      copiedStyle: null,
       pasteCount: 0,
       readOnly: init.readOnly ?? false,
       panMode: false,
@@ -637,6 +649,22 @@ export function createEditorStore(init: EditorInit): EditorStore {
           }
         }
       },
+      copyStyleSelected() {
+        const state = get();
+        const doc = state.history.present;
+        if (state.selectedIds.length === 0) return;
+        const firstLoc = findElement(doc, state.selectedIds[0]!);
+        if (!firstLoc) return;
+        const extracted = extractCopiedStyle(firstLoc.element);
+        set({ copiedStyle: extracted });
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("undangan_copied_style", JSON.stringify(extracted));
+          } catch {
+            // Ignore storage errors
+          }
+        }
+      },
       paste(options) {
         const state = get();
         let clipboard = state.clipboard;
@@ -688,6 +716,31 @@ export function createEditorStore(init: EditorInit): EditorStore {
             }
           });
         }
+      },
+      pasteStyleSelected() {
+        const state = get();
+        if (state.readOnly || state.selectedIds.length === 0) return;
+        let copied = state.copiedStyle;
+        if (!copied && typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("undangan_copied_style");
+            if (raw) copied = JSON.parse(raw);
+          } catch {
+            // Ignore storage errors
+          }
+        }
+        if (!copied) return;
+
+        edit(
+          (doc) => {
+            let current = doc;
+            for (const id of state.selectedIds) {
+              current = updateElement(current, id, (el) => applyCopiedStyle(el, copied!));
+            }
+            return current;
+          },
+          { coalesceKey: `paste-style:${state.selectedIds.join(",")}` },
+        );
       },
       nudgeSelected(dx, dy) {
         const ids = get().selectedIds;
@@ -780,6 +833,32 @@ export function createEditorStore(init: EditorInit): EditorStore {
         edit((doc) => updateGroupStyleOp(doc, groupId, patch), {
           coalesceKey: `group-style:${groupId}:${Object.keys(patch).join(",")}`,
         });
+      },
+      mirrorSelectedGroup(direction, options) {
+        const state = get();
+        if (state.readOnly || state.selectedIds.length === 0) return;
+        const doc = state.history.present;
+
+        let targetGroupId: string | null = null;
+        for (const id of state.selectedIds) {
+          const loc = findElement(doc, id);
+          if (loc?.element.groupId) {
+            targetGroupId = loc.element.groupId;
+            break;
+          }
+        }
+        if (!targetGroupId) return;
+
+        let createdIds: string[] = [];
+        edit(
+          (d) => {
+            const res = mirrorGroupElements(d, targetGroupId!, direction, options);
+            createdIds = res.ids;
+            return res.document;
+          },
+          undefined,
+          () => (createdIds.length > 0 ? { selectedIds: createdIds } : {}),
+        );
       },
 
       // -------------------------------------------------------------- history

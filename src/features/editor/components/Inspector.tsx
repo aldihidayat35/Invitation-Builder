@@ -41,6 +41,10 @@ import {
   IconUngroup,
   IconUnlock,
   IconVariable,
+  IconPaintbrush,
+  IconFlipH,
+  IconFlipV,
+  IconDuplicateMirror,
 } from "./icons";
 import { ImagePanel } from "./ImagePanel";
 import { PanelSection } from "./PanelSection";
@@ -489,6 +493,7 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const clipboard = useEditor((s) => s.clipboard);
+  const copiedStyle = useEditor((s) => s.copiedStyle);
   const elements = ids
     .map((id) => findElement(doc, id)?.element)
     .filter((e): e is Element => e !== undefined);
@@ -571,6 +576,28 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
         >
           <IconClipboardPaste size={15} />
           <span>Tempel</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly}
+          data-testid="action-copy-style"
+          title="Salin style objek (Ctrl+Alt+C)"
+          onClick={() => act().copyStyleSelected()}
+        >
+          <IconPaintbrush size={15} />
+          <span>Salin Style</span>
+        </button>
+        <button
+          type="button"
+          className={styles.actionTile}
+          disabled={readOnly || !copiedStyle}
+          data-testid="action-paste-style"
+          title={copiedStyle ? "Tempel style objek (Ctrl+Alt+V)" : "Belum ada style yang disalin"}
+          onClick={() => act().pasteStyleSelected()}
+        >
+          <IconPaintbrush size={15} />
+          <span>Tempel Style</span>
         </button>
         <button
           type="button"
@@ -707,6 +734,77 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
         </div>
 
         <ElementActions ids={ids} readOnly={readOnly} />
+
+        <PanelSection
+          id="insp-group-mirror-section"
+          title="Cermin & Simetri Grup"
+          icon={<IconFlipH size={14} />}
+          defaultOpen={true}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <p className={styles.muted} style={{ fontSize: "0.75rem", margin: 0 }}>
+              Cerminkan elemen dalam grup untuk tata letak simetris (misal: ornamen sudut kiri &amp; kanan).
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                disabled={readOnly}
+                data-testid="group-mirror-h-btn"
+                title="Cermin horizontal grup (Flip Horizontal)"
+                onClick={() => store.getState().mirrorSelectedGroup("horizontal")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  padding: "6px 8px",
+                }}
+              >
+                <IconFlipH size={14} />
+                <span>Cermin Horisontal</span>
+              </button>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                disabled={readOnly}
+                data-testid="group-mirror-v-btn"
+                title="Cermin vertikal grup (Flip Vertikal)"
+                onClick={() => store.getState().mirrorSelectedGroup("vertical")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  padding: "6px 8px",
+                }}
+              >
+                <IconFlipV size={14} />
+                <span>Cermin Vertikal</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              className={styles.ghostButton}
+              disabled={readOnly}
+              data-testid="group-duplicate-mirror-btn"
+              title="Duplikat grup dan cerminkan otomatis ke sisi seberang"
+              onClick={() =>
+                store.getState().mirrorSelectedGroup("horizontal", { duplicate: true })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "8px",
+              }}
+            >
+              <IconDuplicateMirror size={15} />
+              <span>Duplikat &amp; Cermin Horisontal</span>
+            </button>
+          </div>
+        </PanelSection>
 
         <PanelSection
           id="insp-group-anim-section"

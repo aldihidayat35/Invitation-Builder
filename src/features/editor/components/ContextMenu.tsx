@@ -18,6 +18,10 @@ import {
   IconTrash,
   IconUngroup,
   IconUnlock,
+  IconPaintbrush,
+  IconFlipH,
+  IconFlipV,
+  IconDuplicateMirror,
 } from "./icons";
 import { findElement, type ReorderMode } from "../core/ops";
 import styles from "./editor.module.css";
@@ -46,6 +50,7 @@ export function ContextMenu({
   const store = useEditorStore();
   const doc = useEditor((s) => s.history.present);
   const clipboard = useEditor((s) => s.clipboard);
+  const copiedStyle = useEditor((s) => s.copiedStyle);
   const readOnly = useEditor((s) => s.readOnly);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,6 +86,7 @@ export function ContextMenu({
   const element = loc?.element;
   const isLocked = Boolean(element?.locked);
   const hasClipboard = clipboard.length > 0;
+  const hasCopiedStyle = Boolean(copiedStyle);
   const selectedIds = store.getState().selectedIds;
   const canGroup = selectedIds.length >= 2;
   const hasGroup = Boolean(
@@ -89,8 +95,8 @@ export function ContextMenu({
   );
 
   // Viewport bounds clamping
-  const menuWidth = 210;
-  const menuHeight = element ? 330 : 160;
+  const menuWidth = 220;
+  const menuHeight = element ? (hasGroup ? 490 : 420) : 180;
   const left = typeof window !== "undefined" ? Math.min(x, window.innerWidth - menuWidth - 8) : x;
   const top = typeof window !== "undefined" ? Math.min(y, window.innerHeight - menuHeight - 8) : y;
 
@@ -164,6 +170,36 @@ export function ContextMenu({
             <span className={styles.contextMenuItemShortcut}>Ctrl+V</span>
           </button>
 
+          <div className={styles.contextMenuDivider} />
+
+          <button
+            type="button"
+            className={styles.contextMenuItem}
+            disabled={readOnly}
+            data-testid="ctx-copy-style"
+            onClick={() => handleAction(() => store.getState().copyStyleSelected())}
+          >
+            <div className={styles.contextMenuItemLeft}>
+              <IconPaintbrush size={15} />
+              <span>Salin Style</span>
+            </div>
+            <span className={styles.contextMenuItemShortcut}>Ctrl+Alt+C</span>
+          </button>
+
+          <button
+            type="button"
+            className={styles.contextMenuItem}
+            disabled={readOnly || !hasCopiedStyle}
+            data-testid="ctx-paste-style"
+            onClick={() => handleAction(() => store.getState().pasteStyleSelected())}
+          >
+            <div className={styles.contextMenuItemLeft}>
+              <IconPaintbrush size={15} />
+              <span>Tempel Style</span>
+            </div>
+            <span className={styles.contextMenuItemShortcut}>Ctrl+Alt+V</span>
+          </button>
+
           {(canGroup || hasGroup) && <div className={styles.contextMenuDivider} />}
 
           {canGroup && (
@@ -183,19 +219,64 @@ export function ContextMenu({
           )}
 
           {hasGroup && (
-            <button
-              type="button"
-              className={styles.contextMenuItem}
-              disabled={readOnly}
-              data-testid="ctx-ungroup"
-              onClick={() => handleAction(() => store.getState().ungroupSelected())}
-            >
-              <div className={styles.contextMenuItemLeft}>
-                <IconUngroup size={15} />
-                <span>Pisahkan Grup</span>
-              </div>
-              <span className={styles.contextMenuItemShortcut}>Ctrl+Shift+G</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className={styles.contextMenuItem}
+                disabled={readOnly}
+                data-testid="ctx-ungroup"
+                onClick={() => handleAction(() => store.getState().ungroupSelected())}
+              >
+                <div className={styles.contextMenuItemLeft}>
+                  <IconUngroup size={15} />
+                  <span>Pisahkan Grup</span>
+                </div>
+                <span className={styles.contextMenuItemShortcut}>Ctrl+Shift+G</span>
+              </button>
+
+              <button
+                type="button"
+                className={styles.contextMenuItem}
+                disabled={readOnly}
+                data-testid="ctx-group-mirror-h"
+                onClick={() => handleAction(() => store.getState().mirrorSelectedGroup("horizontal"))}
+              >
+                <div className={styles.contextMenuItemLeft}>
+                  <IconFlipH size={15} />
+                  <span>Cermin Horizontal (Grup)</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={styles.contextMenuItem}
+                disabled={readOnly}
+                data-testid="ctx-group-mirror-v"
+                onClick={() => handleAction(() => store.getState().mirrorSelectedGroup("vertical"))}
+              >
+                <div className={styles.contextMenuItemLeft}>
+                  <IconFlipV size={15} />
+                  <span>Cermin Vertikal (Grup)</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={styles.contextMenuItem}
+                disabled={readOnly}
+                data-testid="ctx-group-duplicate-mirror-h"
+                onClick={() =>
+                  handleAction(() =>
+                    store.getState().mirrorSelectedGroup("horizontal", { duplicate: true }),
+                  )
+                }
+              >
+                <div className={styles.contextMenuItemLeft}>
+                  <IconDuplicateMirror size={15} />
+                  <span>Duplikat & Cermin</span>
+                </div>
+              </button>
+            </>
           )}
 
           <div className={styles.contextMenuDivider} />
