@@ -106,6 +106,13 @@
       "when": 1791800000000,
       "tag": "0014_allow_null_seller_for_platform_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791900000000,
+      "tag": "0015_reseller_storefront_customization",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,10 @@ const brandingSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Format warna heksadesimal tidak valid")
     .optional(),
   customDomain: z.string().trim().optional(),
+  heroImageUrl: z.string().trim().optional(),
+  heroTitle: z.string().trim().optional(),
+  heroSubtitle: z.string().trim().optional(),
+  heroBadge: z.string().trim().optional(),
 });
 
 function field(formData: FormData, key: string): string {
@@ -55,6 +59,10 @@ export async function updateBrandingAction(
     logoUrl: field(formData, "logoUrl"),
     brandColor: field(formData, "brandColor") || "#84633f",
     customDomain: field(formData, "customDomain"),
+    heroImageUrl: field(formData, "heroImageUrl"),
+    heroTitle: field(formData, "heroTitle"),
+    heroSubtitle: field(formData, "heroSubtitle"),
+    heroBadge: field(formData, "heroBadge"),
   });
 
   if (!parseResult.success) {
@@ -62,17 +70,24 @@ export async function updateBrandingAction(
   }
 
   try {
-    await updateAgencyBranding({
+    const updated = await updateAgencyBranding({
       agencyName: parseResult.data.agencyName,
       whatsappContact: parseResult.data.whatsappContact,
       logoUrl: parseResult.data.logoUrl || null,
       brandColor: parseResult.data.brandColor,
       customDomain: parseResult.data.customDomain || null,
+      heroImageUrl: parseResult.data.heroImageUrl || null,
+      heroTitle: parseResult.data.heroTitle || null,
+      heroSubtitle: parseResult.data.heroSubtitle || null,
+      heroBadge: parseResult.data.heroBadge || null,
     });
 
     revalidatePath("/dashboard/reseller");
     revalidatePath("/dashboard/reseller/storefront");
     revalidatePath("/dashboard/reseller/branding");
+    if (updated?.slug) {
+      revalidatePath(`/seller/${updated.slug}`);
+    }
     return { ok: true, message: "Pengaturan website toko & identitas seller berhasil disimpan." };
   } catch (err) {
     return {

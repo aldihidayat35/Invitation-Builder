@@ -246,6 +246,10 @@ export interface UpdateResellerBrandingInput {
   domainLastCheckedAt?: Date | null;
   tlsStatus?: "unconfigured" | "pending" | "active" | "failed";
   tlsActivatedAt?: Date | null;
+  heroImageUrl?: string | null;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  heroBadge?: string | null;
 }
 
 export async function updateResellerBranding(
@@ -271,6 +275,10 @@ export async function updateResellerBranding(
       }),
       ...(input.tlsStatus !== undefined && { tlsStatus: input.tlsStatus }),
       ...(input.tlsActivatedAt !== undefined && { tlsActivatedAt: input.tlsActivatedAt }),
+      ...(input.heroImageUrl !== undefined && { heroImageUrl: input.heroImageUrl }),
+      ...(input.heroTitle !== undefined && { heroTitle: input.heroTitle }),
+      ...(input.heroSubtitle !== undefined && { heroSubtitle: input.heroSubtitle }),
+      ...(input.heroBadge !== undefined && { heroBadge: input.heroBadge }),
       updatedAt: new Date(),
     })
     .where(eq(resellerProfiles.id, resellerProfileId))

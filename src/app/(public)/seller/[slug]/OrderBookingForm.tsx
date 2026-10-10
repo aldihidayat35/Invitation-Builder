@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { submitCustomerOrderAction, type OrderBookingState } from "./actions";
 import styles from "./seller-storefront.module.css";
 
@@ -22,6 +22,13 @@ export function OrderBookingForm({
   onSelectTemplate,
 }: OrderBookingFormProps) {
   const [templateId, setTemplateId] = useState(selectedTemplateId);
+
+  useEffect(() => {
+    if (selectedTemplateId) {
+      setTemplateId(selectedTemplateId);
+    }
+  }, [selectedTemplateId]);
+
   const [state, formAction, isPending] = useActionState<OrderBookingState, FormData>(
     submitCustomerOrderAction,
     {},

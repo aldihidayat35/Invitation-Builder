@@ -13,6 +13,10 @@ interface ResellerBrandingProfileProps {
     logoUrl?: string | null;
     brandColor?: string;
     customDomain?: string | null;
+    heroImageUrl?: string | null;
+    heroTitle?: string | null;
+    heroSubtitle?: string | null;
+    heroBadge?: string | null;
     domainStatus: string;
     domainVerificationToken?: string | null;
     domainLastCheckedAt?: Date | null;
@@ -30,6 +34,7 @@ export function ResellerBrandingForm({
   const [state, formAction, isPending] = useActionState(action, {});
   const [verifyState, verifyFormAction, isVerifying] = useActionState(verifyAction, {});
   const [copied, setCopied] = useState(false);
+  const [heroImagePreview, setHeroImagePreview] = useState(initialData.heroImageUrl || "");
 
   const storefrontUrl =
     typeof window !== "undefined"
@@ -207,8 +212,98 @@ export function ResellerBrandingForm({
               style={{ width: 44, height: 44, padding: 0, border: "none", cursor: "pointer" }}
             />
             <span style={{ fontSize: 13, color: "var(--dash-muted)" }}>
-              Digunakan pada header website toko dan formulir pemesanan customer Anda.
+              Digunakan pada aksen warna tombol dan elemen landing page toko Anda.
             </span>
+          </div>
+        </div>
+
+        {/* Section Pengaturan Hero Section Dinamis */}
+        <div
+          style={{
+            marginTop: "10px",
+            padding: "16px",
+            borderRadius: "10px",
+            border: "1px solid var(--dash-border)",
+            background: "var(--dash-surface-sunken)",
+            display: "grid",
+            gap: "14px",
+          }}
+        >
+          <div style={{ borderBottom: "1px solid var(--dash-border)", paddingBottom: "10px" }}>
+            <strong style={{ fontSize: "14px", color: "var(--dash-text)", display: "block" }}>
+              🖼️ Pengaturan Hero Section & Landing Page
+            </strong>
+            <span style={{ fontSize: "12px", color: "var(--dash-muted)" }}>
+              Kustomisasi tampilan bagian atas landing page etalase toko online Anda agar tampil profesional.
+            </span>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Foto / Banner Hero Section (URL Gambar)</label>
+            <input
+              type="url"
+              name="heroImageUrl"
+              defaultValue={initialData.heroImageUrl || ""}
+              placeholder="https://.../banner-wedding.jpg"
+              className={styles.inputControl}
+              onChange={(e) => setHeroImagePreview(e.target.value)}
+            />
+            <span style={{ fontSize: "11px", color: "var(--dash-muted)" }}>
+              Kosongkan jika ingin menggunakan gambar ilustrasi default yang elegan.
+            </span>
+            {heroImagePreview ? (
+              <div
+                style={{
+                  marginTop: "8px",
+                  maxHeight: "140px",
+                  overflow: "hidden",
+                  borderRadius: "8px",
+                  border: "1px solid var(--dash-border)",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={heroImagePreview}
+                  alt="Preview Hero"
+                  style={{ width: "100%", height: "140px", objectFit: "cover" }}
+                  onError={() => setHeroImagePreview("")}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Badge / Tagline Hero</label>
+            <input
+              type="text"
+              name="heroBadge"
+              defaultValue={initialData.heroBadge || ""}
+              placeholder="misal: ★ Mitra Resmi Invitation Studio atau Pilihan Terbaik Pengantin"
+              className={styles.inputControl}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Headline / Judul Utama Hero</label>
+            <input
+              type="text"
+              name="heroTitle"
+              defaultValue={initialData.heroTitle || ""}
+              placeholder="misal: Wujudkan Momen Pernikahan Istimewa dengan Undangan Digital Eksklusif"
+              className={styles.inputControl}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Subheadline / Deskripsi Hero</label>
+            <textarea
+              name="heroSubtitle"
+              defaultValue={initialData.heroSubtitle || ""}
+              placeholder="misal: Desain mewah, animasi lembut, RSVP real-time, dan kemudahan berbagi ke seluruh tamu undangan Anda."
+              rows={3}
+              className={styles.inputControl}
+              style={{ resize: "vertical" }}
+            />
           </div>
         </div>
 
