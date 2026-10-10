@@ -226,6 +226,7 @@ describe("Editor Copy Style and Paste Style (Format Painter)", () => {
       ...shapeEl,
       id: "el_rect_target",
       style: {
+        ...shapeEl.style,
         fill: "#ffffff",
       },
     };
