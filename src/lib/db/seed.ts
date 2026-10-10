@@ -26,7 +26,7 @@ import {
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
   createRoyalElegantDemoDocument,
-} from "@/features/invitations/demo-catalog";
+} from "@/features/invitations/demo-presets";
 import {
   findUserByEmail,
   insertUser,

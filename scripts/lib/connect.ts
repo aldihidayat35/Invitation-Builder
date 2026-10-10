@@ -39,7 +39,14 @@ export function connectFromEnv(): ScriptDb {
       close: () => client.close(),
     };
   }
-  const pool = new Pool({ connectionString: url });
+  const isSslRequired =
+    process.env.DATABASE_SSL === "true" ||
+    url.includes("sslmode=require") ||
+    url.includes("ssl=true");
+  const pool = new Pool({
+    connectionString: url,
+    ...(isSslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
   const db = drizzleNode(pool, { schema });
   return {
     db,

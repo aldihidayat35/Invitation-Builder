@@ -8,8 +8,15 @@ export interface DbConnection {
   close(): Promise<void>;
 }
 
-/** Production connection (node-postgres). Pass `DATABASE_URL`. */
 export function connectPostgres(connectionString: string): DbConnection {
-  const pool = new Pool({ connectionString, max: 10 });
+  const isSslRequired =
+    process.env.DATABASE_SSL === "true" ||
+    connectionString.includes("sslmode=require") ||
+    connectionString.includes("ssl=true");
+  const pool = new Pool({
+    connectionString,
+    max: Number(process.env.DATABASE_POOL_MAX || 10),
+    ...(isSslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
   return { db: drizzle(pool, { schema }), close: () => pool.end() };
 }

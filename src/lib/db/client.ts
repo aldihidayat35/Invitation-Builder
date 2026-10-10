@@ -37,7 +37,7 @@ async function open(url: string): Promise<Database> {
       await conn.client.waitReady;
       return conn.db;
     } catch (err) {
-      if (dataDir && existsSync(dataDir)) {
+      if (dataDir && existsSync(/*turbopackIgnore: true*/ dataDir)) {
         const corruptedDir = `${dataDir}_corrupted_${Date.now()}`;
         console.warn(`[db/client] PGlite dataDir corrupted (${err}). Auto-recovering to ${corruptedDir}...`);
         try {
