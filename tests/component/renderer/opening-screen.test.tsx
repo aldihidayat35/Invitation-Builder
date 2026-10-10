@@ -101,7 +101,7 @@ describe("Custom Canvas Opening Screen (Section 0)", () => {
 
     expect(screen.getByTestId("opening-cover-canvas")).toBeInTheDocument();
     expect(screen.getByText("The Wedding of Romeo & Juliet")).toBeInTheDocument();
-    expect(screen.getByText("Klik di mana saja untuk membuka undangan")).toBeInTheDocument();
+    expect(screen.queryByText("Klik di mana saja untuk membuka undangan")).toBeNull();
   });
 
   it("clicking the screen triggers exit animation, audio gesture dispatch, and Section 1 entrance animation", async () => {

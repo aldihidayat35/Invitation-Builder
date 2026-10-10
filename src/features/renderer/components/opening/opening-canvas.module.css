@@ -58,46 +58,4 @@
   overflow: hidden;
 }
 
-/* Floating click hint banner at bottom */
-.openHintBanner {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.75);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-  animation: pulseHint 2.4s ease-in-out infinite;
-}
 
-.openHintIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-}
-
-@keyframes pulseHint {
-  0%, 100% {
-    transform: translateX(-50%) translateY(0);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translateX(-50%) translateY(-5px);
-    opacity: 1;
-    box-shadow: 0 12px 30px rgba(232, 93, 143, 0.5);
-  }
-}
