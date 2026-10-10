@@ -250,7 +250,7 @@ export default async function InvitationsPage({
       <section aria-label="Daftar Undangan">
         <InvitationsView
           invitations={allInvitations}
-          initialStatus={isProductionOwner && archivedView ? "archived" : "all"}
+          initialStatus={isProductionOwner && archivedView ? "archived" : "published"}
           emptyMessage={
             isProductionOwner
               ? "Belum ada undangan yang dibuat. Silakan pilih template master dan buat undangan baru di atas."

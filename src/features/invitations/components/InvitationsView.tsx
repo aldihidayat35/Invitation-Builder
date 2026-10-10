@@ -44,14 +44,16 @@ interface InvitationsViewProps {
 export function InvitationsView({
   invitations,
   emptyMessage = "Belum ada undangan dibuat. Mulai buat undangan pertama Anda.",
-  initialStatus = "all",
+  initialStatus = "published",
   canWrite = true,
   deleteAction,
   restoreAction,
 }: InvitationsViewProps) {
   const [items, setItems] = useState<readonly InvitationSummary[]>(invitations);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft" | "archived">(initialStatus);
+  const [statusFilter, setStatusFilter] = useState<"published" | "draft" | "archived">(
+    initialStatus === "all" ? "published" : initialStatus,
+  );
   const [sortBy, setSortBy] = useState<"updated-desc" | "updated-asc" | "title-asc">("updated-desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -77,7 +79,6 @@ export function InvitationsView({
   // Counts for tabs
   const counts = useMemo(() => {
     return {
-      all: items.length,
       published: items.filter((i) => i.status === "published").length,
       draft: items.filter((i) => i.status === "draft").length,
       archived: items.filter((i) => i.status === "archived").length,
@@ -88,7 +89,7 @@ export function InvitationsView({
   const filtered = useMemo(() => {
     return items
       .filter((inv) => {
-        if (statusFilter !== "all" && inv.status !== statusFilter) return false;
+        if (inv.status !== statusFilter) return false;
         if (!search.trim()) return true;
         const q = search.toLowerCase();
         return (
@@ -189,27 +190,6 @@ export function InvitationsView({
       <div className="flex flex-col gap-4 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
         {/* Left: Filter Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setStatusFilter("all")}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-              statusFilter === "all"
-                ? "bg-[#84633F] text-white shadow-xs"
-                : "bg-stone-100 text-stone-600 hover:bg-stone-200/70"
-            }`}
-          >
-            <span>Semua</span>
-            <span
-              className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                statusFilter === "all"
-                  ? "bg-white/20 text-white"
-                  : "bg-stone-200/80 text-stone-700"
-              }`}
-            >
-              {counts.all}
-            </span>
-          </button>
-
           <button
             type="button"
             onClick={() => setStatusFilter("published")}
@@ -389,7 +369,7 @@ export function InvitationsView({
               type="button"
               onClick={() => {
                 setSearch("");
-                setStatusFilter("all");
+                setStatusFilter("published");
               }}
               className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-[#84633F] shadow-xs hover:bg-stone-50"
             >
