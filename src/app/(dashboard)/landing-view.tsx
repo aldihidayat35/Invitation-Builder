@@ -354,7 +354,6 @@ export function LandingView({
   }, [rawFavorites]);
   const [modalTemplate, setModalTemplate] = useState<TemplateItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const categoryList: DynamicCategoryItem[] =
     categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
@@ -712,24 +711,8 @@ export function LandingView({
             ) : null}
             <span>{appSettings?.appName || "Undangan.id"}</span>
           </Link>
-          <div className="hidden items-center gap-9 text-[13px] font-medium text-[#e6e3df] md:flex">
-            <a href="#beranda" className="border-b-2 border-[#b87831] pb-2 text-white">
-              Beranda
-            </a>
-            <a href="#template" className="transition hover:text-[#d7a672]">
-              Template
-            </a>
-            <a href="#harga" className="transition hover:text-[#d7a672]">
-              Harga
-            </a>
-            <a href="#cara-kerja" className="transition hover:text-[#d7a672]">
-              Cara Kerja
-            </a>
-            <a href="#testimoni" className="transition hover:text-[#d7a672]">
-              Blog
-            </a>
-          </div>
-          <div className="hidden items-center gap-4 md:flex">
+          {/* Menu navigasi (Beranda, Template, Harga, Cara Kerja, Blog) disembunyikan sementara */}
+          <div className="flex items-center gap-2.5 sm:gap-4">
             <button
               id="navSearch"
               aria-label="Cari template"
@@ -738,101 +721,32 @@ export function LandingView({
                 const el = document.getElementById("searchInput");
                 el?.focus();
               }}
-              className="grid h-10 w-10 place-items-center rounded-full border border-[#555653] hover:bg-white/10"
+              className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full border border-[#555653] hover:bg-white/10"
             >
-              <svg className="h-[19px] w-[19px]">
+              <svg className="h-[18px] w-[18px] sm:h-[19px] sm:w-[19px]">
                 <use href="#i-search" />
               </svg>
             </button>
 
             {currentUser ? (
-              <Link href="/dashboard" className="button-primary px-6 py-3 text-[12px]">
+              <Link href="/dashboard" className="button-primary px-4 sm:px-6 py-2 sm:py-3 text-[12px]">
                 Buka Dashboard
               </Link>
             ) : (
               <>
-                <Link href="/login" className="button-outline px-6 py-3 text-[12px]">
+                <Link href="/login" className="button-outline px-3.5 sm:px-6 py-2 sm:py-3 text-[12px]">
                   Masuk
                 </Link>
                 <Link
                   href="/login?next=/dashboard"
-                  className="button-primary px-6 py-3 text-[12px]"
+                  className="button-primary px-3.5 sm:px-6 py-2 sm:py-3 text-[12px]"
                 >
                   Daftar Gratis
                 </Link>
               </>
             )}
           </div>
-
-          <button
-            id="mobileMenuBtn"
-            type="button"
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-[#5b5956] md:hidden"
-            aria-label="Buka menu"
-            aria-expanded={mobileNavOpen}
-          >
-            <svg className="h-6 w-6">
-              <use href="#i-menu" />
-            </svg>
-          </button>
         </nav>
-
-        {mobileNavOpen && (
-          <div
-            id="mobileNav"
-            className="relative z-40 mx-5 mb-3 space-y-1 rounded-xl border border-white/10 bg-[#333333] p-4 text-sm md:hidden"
-          >
-            <div className="flex items-center gap-2 px-3 py-1 mb-2 border-b border-white/10 pb-2">
-              {appSettings?.appLogo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={appSettings.appLogo}
-                  alt={appSettings.appName}
-                  className="h-6 w-auto object-contain rounded"
-                />
-              ) : null}
-              <span className="font-display text-base font-bold text-white">
-                {appSettings?.appName || "Undangan.id"}
-              </span>
-            </div>
-            <a
-              className="block rounded-lg px-3 py-2 hover:bg-white/10"
-              href="#beranda"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              Beranda
-            </a>
-            <a
-              className="block rounded-lg px-3 py-2 hover:bg-white/10"
-              href="#template"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              Template
-            </a>
-            <a
-              className="block rounded-lg px-3 py-2 hover:bg-white/10"
-              href="#harga"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              Harga
-            </a>
-            <a
-              className="block rounded-lg px-3 py-2 hover:bg-white/10"
-              href="#cara-kerja"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              Cara Kerja
-            </a>
-            <Link
-              href={currentUser ? "/dashboard" : "/login?next=/dashboard"}
-              className="button-primary mt-2 block w-full px-4 py-3 text-center"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              {currentUser ? "Buka Dashboard" : "Daftar Gratis"}
-            </Link>
-          </div>
-        )}
 
         <div className="relative z-10 mx-auto max-w-[1240px] px-5 pb-8 pt-4 md:pb-10 lg:px-0">
           <div className="relative z-20 max-w-[690px] pb-6 pt-3 md:pb-[42px] md:pt-8 lg:pt-10">
