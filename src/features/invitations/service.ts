@@ -176,7 +176,14 @@ export interface PreviewModel {
 
 /* ------------------------------------------------------------------ helpers */
 
-function toSummary(row: InvitationRow): InvitationSummary {
+function toSummary(
+  row: InvitationRow & {
+    templateName?: string | null;
+    thumbnailUrl?: string | null;
+    previewMockupUrl?: string | null;
+    category?: string | null;
+  },
+): InvitationSummary {
   const isClosed = isInvitationExpiredOrClosed(row);
   return {
     id: row.id,
@@ -191,6 +198,10 @@ function toSummary(row: InvitationRow): InvitationSummary {
     isManuallyClosed: row.isManuallyClosed,
     isClosed,
     updatedAt: row.updatedAt,
+    templateName: row.templateName ?? null,
+    thumbnailUrl: row.thumbnailUrl ?? null,
+    previewMockupUrl: row.previewMockupUrl ?? null,
+    category: row.category ?? null,
   };
 }
 
@@ -369,7 +380,13 @@ export async function getInvitation(
   const pinned = await loadPinnedDocument(db, row);
   const template = await findTemplateById(db, pinned.templateId);
   return {
-    ...toSummary(row),
+    ...toSummary({
+      ...row,
+      templateName: template?.name,
+      thumbnailUrl: template?.thumbnailUrl,
+      previewMockupUrl: template?.previewMockupUrl,
+      category: template?.category,
+    }),
     data: row.data,
     template: {
       templateId: pinned.templateId,

@@ -32,8 +32,10 @@ export default async function InvitationsPage({
           className="rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center shadow-xs"
           data-testid="no-workspace"
         >
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-2xl">
-            🏢
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-600">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
           </div>
           <h2 className="mt-4 text-base font-bold text-[#2C221E]">Workspace Belum Terhubung</h2>
           <p className="mx-auto mt-1 max-w-md text-xs text-stone-500">

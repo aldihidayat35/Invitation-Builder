@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import { copyTextToClipboard } from "@/lib/browser/clipboard";
 import type { InvitationSummary } from "../types";
+import { getRemainingDays, formatIndonesianDate } from "../expiry";
 
 const dateFormat = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
@@ -50,6 +51,69 @@ function getStatusBadge(inv: InvitationSummary) {
     }
   }
   return STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.draft;
+}
+
+function getExpiryInfo(inv: InvitationSummary) {
+  if (inv.status === "draft") {
+    return {
+      label: "Belum Dipublish",
+      badgeText: null,
+      badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80",
+      dotClass: "bg-amber-400",
+      description: "Masa aktif dihitung saat publish",
+      tone: "draft" as const,
+    };
+  }
+  if (inv.isManuallyClosed) {
+    return {
+      label: "Ditutup Manual",
+      badgeText: "Ditutup",
+      badgeClass: "bg-rose-50 text-rose-800 border-rose-200/80",
+      dotClass: "bg-rose-500",
+      description: "Akses publik dinonaktifkan",
+      tone: "closed" as const,
+    };
+  }
+  if (!inv.expiresAt) {
+    return {
+      label: "Masa Aktif: Selamanya",
+      badgeText: "Selamanya",
+      badgeClass: "bg-stone-100 text-stone-700 border-stone-200",
+      dotClass: "bg-stone-400",
+      description: "Tanpa batas kedaluwarsa",
+      tone: "unlimited" as const,
+    };
+  }
+  const remaining = getRemainingDays(inv.expiresAt);
+  const formatted = formatIndonesianDate(inv.expiresAt);
+  if (remaining === 0 || (remaining !== null && remaining <= 0)) {
+    return {
+      label: `Kedaluwarsa (${formatted})`,
+      badgeText: "Kedaluwarsa",
+      badgeClass: "bg-rose-50 text-rose-800 border-rose-200/80",
+      dotClass: "bg-rose-500",
+      description: "Masa aktif telah berakhir",
+      tone: "expired" as const,
+    };
+  }
+  if (remaining !== null && remaining <= 7) {
+    return {
+      label: `Aktif s/d ${formatted}`,
+      badgeText: `Sisa ${remaining} hari!`,
+      badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80",
+      dotClass: "bg-amber-500",
+      description: `Segera berakhir dalam ${remaining} hari`,
+      tone: "expiring-soon" as const,
+    };
+  }
+  return {
+    label: `Aktif s/d ${formatted}`,
+    badgeText: remaining ? `Sisa ${remaining} hari` : null,
+    badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
+    dotClass: "bg-emerald-500",
+    description: remaining ? `Masa aktif tersisa ${remaining} hari` : undefined,
+    tone: "active" as const,
+  };
 }
 
 interface InvitationsViewProps {
@@ -193,7 +257,15 @@ export function InvitationsView({
           }`}
         >
           <div className="flex items-center gap-2">
-            <span>{feedback.type === "success" ? "✓" : "⚠️"}</span>
+            {feedback.type === "success" ? (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-200 text-[10px] font-bold text-emerald-800">
+                ✓
+              </span>
+            ) : (
+              <svg className="h-4 w-4 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
             <span>{feedback.text}</span>
           </div>
           <button
@@ -373,8 +445,15 @@ export function InvitationsView({
           data-testid="empty-state"
           className="rounded-2xl border border-dashed border-stone-300 bg-white/60 p-10 text-center shadow-xs"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-2xl shadow-inner">
-            💌
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-800 shadow-inner">
+            <svg className="h-7 w-7 text-[#84633F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
           </div>
           <h3 className="mt-4 text-base font-bold text-[#2C221E]">
             {search ? "Tidak ada undangan yang cocok" : "Belum Ada Undangan"}
@@ -399,133 +478,204 @@ export function InvitationsView({
         </div>
       ) : viewMode === "grid" ? (
         /* GRID VIEW */
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Daftar undangan">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-label="Daftar undangan">
           {filtered.map((invitation) => {
             const statusCfg = getStatusBadge(invitation);
+            const expiryInfo = getExpiryInfo(invitation);
             const isCopied = copiedId === invitation.id;
+            const coverImage =
+              invitation.thumbnailUrl || invitation.previewMockupUrl || "/images/template-botanical.jpg";
 
             return (
               <li
                 key={invitation.id}
                 data-testid="invitation-card"
-                className="group relative flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#D4AF37]/60 hover:shadow-md"
+                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-[#D4AF37]/60 hover:shadow-lg"
               >
-                <div>
-                  {/* Card Header: Icon & Status */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#F2EAE0] to-[#E5D7C5] text-lg text-[#84633F] shadow-inner">
-                      💍
-                    </div>
+                {/* 16:9 Cover Banner with template mockup */}
+                <div className="relative aspect-16/9 w-full overflow-hidden bg-stone-100">
+                  <img
+                    src={coverImage}
+                    alt={invitation.title}
+                    className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "/images/template-botanical.jpg";
+                    }}
+                  />
+                  {/* Subtle darkening gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent pointer-events-none" />
+
+                  {/* Floating Status Badge on top-right */}
+                  <div className="absolute top-3 right-3 flex items-center shadow-xs">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusCfg.badgeClass}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-md shadow-2xs ${statusCfg.badgeClass}`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dotClass}`} />
                       {statusCfg.label}
                     </span>
                   </div>
 
-                  {/* Title & Link */}
-                  <h3 className="mt-4 text-base font-bold text-[#2C221E] transition-colors group-hover:text-[#84633F]">
-                    <Link
-                      href={`/dashboard/invitations/${invitation.id}`}
-                      data-testid="open-invitation"
-                      className="focus:outline-hidden"
-                    >
-                      {invitation.title}
-                    </Link>
-                  </h3>
-
-                  {/* Public Slug URL with Copy Shortcut */}
-                  <div className="mt-2 flex items-center justify-between rounded-lg border border-stone-100 bg-[#FAF8F5] px-2.5 py-1.5 text-[11px]">
-                    <span className="font-mono text-stone-600 truncate mr-2" title={`/i/${invitation.slug}`}>
-                      /i/{invitation.slug}
+                  {/* Floating Template Name Tag on bottom-left */}
+                  <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white pointer-events-none">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-black/45 px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase text-white/95 backdrop-blur-xs">
+                      <svg className="h-3 w-3 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="truncate max-w-[200px]">
+                        {invitation.templateName || "Template Katalog"}
+                      </span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => void handleCopyLink(invitation)}
-                      className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold transition ${
-                        isCopied
-                          ? "bg-emerald-600 text-white"
-                          : "bg-white text-[#664624] border border-[#D9CFC4] hover:bg-[#FAF8F5] hover:text-[#2C221E]"
-                      }`}
-                      title="Salin link publik"
-                    >
-                      {isCopied ? "✓ Tersalin" : "Salin Link"}
-                    </button>
                   </div>
-
-                  {/* Meta Updated */}
-                  <p className="mt-3 text-[11px] text-stone-400">
-                    Diperbarui {dateFormat.format(new Date(invitation.updatedAt))}
-                  </p>
                 </div>
 
-                {/* Bottom Actions */}
-                <div className="mt-5 flex items-center gap-2 border-t border-stone-100 pt-3.5">
-                  <Link
-                    href={`/dashboard/invitations/${invitation.id}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#84633F] px-3 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#715332]"
-                  >
-                    <span>Isi Data &amp; Tamu</span>
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                {/* Card Body */}
+                <div className="flex flex-1 flex-col justify-between p-5">
+                  <div>
+                    {/* Title & Link */}
+                    <h3 className="text-base font-bold text-[#2C221E] transition-colors group-hover:text-[#84633F] line-clamp-1">
+                      <Link
+                        href={`/dashboard/invitations/${invitation.id}`}
+                        data-testid="open-invitation"
+                        className="focus:outline-hidden"
+                        title={invitation.title}
+                      >
+                        {invitation.title}
+                      </Link>
+                    </h3>
 
-                  <Link
-                    href={`/dashboard/invitations/${invitation.id}/preview`}
-                    target="_blank"
-                    className="inline-flex items-center justify-center rounded-xl border border-[#D9CFC4] bg-white p-2 text-xs font-medium text-[#664624] shadow-2xs transition hover:bg-[#FAF8F5] hover:text-[#2C221E]"
-                    title="Buka Pratinjau Undangan"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  </Link>
+                    {/* Expiry Date Bar */}
+                    <div className="mt-3 flex items-center justify-between rounded-xl border border-stone-200/70 bg-[#FAF8F5] px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-stone-200/60 text-[#84633F]">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block font-medium text-stone-800 text-[11px] truncate">
+                            {expiryInfo.label}
+                          </span>
+                          {expiryInfo.description && (
+                            <span className="block text-[10px] text-stone-500 truncate">
+                              {expiryInfo.description}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {expiryInfo.badgeText && (
+                        <span
+                          className={`shrink-0 ml-2 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${expiryInfo.badgeClass}`}
+                        >
+                          {expiryInfo.badgeText}
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Restore button if archived */}
-                  {canWrite && invitation.status === "archived" && restoreAction && (
-                    <button
-                      type="button"
-                      onClick={() => void handleRestore(invitation)}
-                      disabled={restoringId === invitation.id}
-                      className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
-                      title="Pulihkan Undangan"
+                    {/* Public Slug URL with Copy Shortcut */}
+                    <div className="mt-2.5 flex items-center justify-between rounded-xl border border-stone-200/60 bg-[#F6F3EE]/70 px-2.5 py-1.5 text-[11px]">
+                      <div className="flex items-center gap-1.5 min-w-0 mr-2">
+                        <svg className="h-3.5 w-3.5 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span className="font-mono text-stone-600 truncate text-[11px]" title={`/i/${invitation.slug}`}>
+                          /i/{invitation.slug}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopyLink(invitation)}
+                        className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold transition ${
+                          isCopied
+                            ? "bg-emerald-600 text-white"
+                            : "bg-white text-[#664624] border border-[#D9CFC4] hover:bg-[#FAF8F5] hover:text-[#2C221E] shadow-2xs"
+                        }`}
+                        title="Salin link publik"
+                      >
+                        {isCopied ? "✓ Tersalin" : "Salin Link"}
+                      </button>
+                    </div>
+
+                    {/* Meta Updated */}
+                    <p className="mt-2.5 text-[11px] text-stone-500 flex items-center gap-1.5">
+                      <svg className="h-3 w-3 text-stone-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Diperbarui {dateFormat.format(new Date(invitation.updatedAt))}</span>
+                    </p>
+                  </div>
+
+                  {/* Bottom Actions */}
+                  <div className="mt-4 flex items-center gap-2 border-t border-stone-100 pt-3.5">
+                    <Link
+                      href={`/dashboard/invitations/${invitation.id}`}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#84633F] px-3 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-[#715332]"
                     >
-                      {restoringId === invitation.id ? "…" : "Pulihkan"}
-                    </button>
-                  )}
+                      <span>Isi Data &amp; Tamu</span>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
 
-                  {/* Delete / Archive button */}
-                  {canWrite && deleteAction && (
-                    <button
-                      type="button"
-                      onClick={() => setDeletingInvitation(invitation)}
-                      className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-xs font-medium text-stone-400 shadow-2xs transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
-                      title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
-                      aria-label="Hapus Undangan"
+                    <Link
+                      href={`/dashboard/invitations/${invitation.id}/preview`}
+                      target="_blank"
+                      className="inline-flex items-center justify-center rounded-xl border border-[#D9CFC4] bg-white p-2 text-xs font-medium text-[#664624] shadow-2xs transition hover:bg-[#FAF8F5] hover:text-[#2C221E]"
+                      title="Buka Pratinjau Undangan"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                         />
                       </svg>
-                    </button>
-                  )}
+                    </Link>
+
+                    {/* Restore button if archived */}
+                    {canWrite && invitation.status === "archived" && restoreAction && (
+                      <button
+                        type="button"
+                        onClick={() => void handleRestore(invitation)}
+                        disabled={restoringId === invitation.id}
+                        className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                        title="Pulihkan Undangan"
+                      >
+                        {restoringId === invitation.id ? "…" : "Pulihkan"}
+                      </button>
+                    )}
+
+                    {/* Delete / Archive button */}
+                    {canWrite && deleteAction && (
+                      <button
+                        type="button"
+                        onClick={() => setDeletingInvitation(invitation)}
+                        className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-xs font-medium text-stone-400 shadow-2xs transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                        title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
+                        aria-label="Hapus Undangan"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </li>
             );
@@ -545,6 +695,9 @@ export function InvitationsView({
                     Status
                   </th>
                   <th scope="col" className="px-4 py-3.5">
+                    Masa Aktif / Expired
+                  </th>
+                  <th scope="col" className="px-4 py-3.5">
                     Terakhir Diperbarui
                   </th>
                   <th scope="col" className="px-5 py-3.5 text-right">
@@ -555,7 +708,10 @@ export function InvitationsView({
               <tbody className="divide-y divide-stone-100">
                 {filtered.map((invitation) => {
                   const statusCfg = getStatusBadge(invitation);
+                  const expiryInfo = getExpiryInfo(invitation);
                   const isCopied = copiedId === invitation.id;
+                  const coverImage =
+                    invitation.thumbnailUrl || invitation.previewMockupUrl || "/images/template-botanical.jpg";
 
                   return (
                     <tr
@@ -564,24 +720,36 @@ export function InvitationsView({
                       className="transition-colors hover:bg-stone-50/70"
                     >
                       <td className="px-5 py-4">
-                        <Link
-                          href={`/dashboard/invitations/${invitation.id}`}
-                          data-testid="open-invitation"
-                          className="font-bold text-[#2C221E] hover:text-[#84633F]"
-                        >
-                          {invitation.title}
-                        </Link>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="font-mono text-[11px] text-stone-500">
-                            /i/{invitation.slug}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => void handleCopyLink(invitation)}
-                            className="text-[10px] font-semibold text-[#84633F] hover:underline"
-                          >
-                            {isCopied ? "✓ Tersalin" : "Salin"}
-                          </button>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={coverImage}
+                            alt={invitation.title}
+                            className="h-12 w-16 shrink-0 rounded-lg object-cover object-top border border-stone-200 shadow-2xs"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/images/template-botanical.jpg";
+                            }}
+                          />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/dashboard/invitations/${invitation.id}`}
+                              data-testid="open-invitation"
+                              className="font-bold text-[#2C221E] hover:text-[#84633F] truncate block"
+                            >
+                              {invitation.title}
+                            </Link>
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="font-mono text-[11px] text-stone-500 truncate max-w-[150px]">
+                                /i/{invitation.slug}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void handleCopyLink(invitation)}
+                                className="text-[10px] font-semibold text-[#84633F] hover:underline shrink-0"
+                              >
+                                {isCopied ? "✓ Tersalin" : "Salin"}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
@@ -591,6 +759,25 @@ export function InvitationsView({
                           <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dotClass}`} />
                           {statusCfg.label}
                         </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-medium text-stone-800">
+                            {expiryInfo.label}
+                          </span>
+                          {expiryInfo.badgeText && (
+                            <span
+                              className={`rounded-md border px-1.5 py-0.2 text-[9px] font-bold ${expiryInfo.badgeClass}`}
+                            >
+                              {expiryInfo.badgeText}
+                            </span>
+                          )}
+                        </div>
+                        {expiryInfo.description && (
+                          <div className="text-[10px] text-stone-500 mt-0.5">
+                            {expiryInfo.description}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-stone-500 whitespace-nowrap">
                         {dateFormat.format(new Date(invitation.updatedAt))}
@@ -680,10 +867,15 @@ export function InvitationsView({
                   Apakah Anda yakin ingin menghapus undangan{" "}
                   <strong className="text-[#2C221E]">&ldquo;{deletingInvitation.title}&rdquo;</strong>?
                 </p>
-                <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-500">
-                  {deletingInvitation.status === "archived"
-                    ? "⚠️ Undangan ini akan dihapus secara permanen dari basis data jika belum pernah dipublish."
-                    : "💡 Undangan yang dihapus akan dinonaktifkan dan dipindahkan ke tab 'Diarsipkan'. Anda masih dapat memulihkannya nanti jika diperlukan."}
+                <div className="mt-3 flex items-start gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-600">
+                  <svg className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    {deletingInvitation.status === "archived"
+                      ? "Undangan ini akan dihapus secara permanen dari basis data jika belum pernah dipublish."
+                      : "Undangan yang dihapus akan dinonaktifkan dan dipindahkan ke tab 'Diarsipkan'. Anda masih dapat memulihkannya nanti jika diperlukan."}
+                  </div>
                 </div>
               </div>
             </div>

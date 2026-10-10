@@ -94,19 +94,42 @@ export async function findInvitationBySlug(
   return row;
 }
 
+export type InvitationWithTemplateRow = InvitationRow & {
+  templateName?: string | null;
+  thumbnailUrl?: string | null;
+  previewMockupUrl?: string | null;
+  category?: string | null;
+};
+
 export async function listInvitations(
   db: Database,
   workspaceId: string,
   options: { archived?: boolean } = {},
-): Promise<InvitationRow[]> {
+): Promise<InvitationWithTemplateRow[]> {
   const statusFilter = options.archived
     ? eq(invitations.status, "archived")
     : ne(invitations.status, "archived");
-  return db
-    .select()
+  const rows = await db
+    .select({
+      invitation: invitations,
+      templateName: templates.name,
+      thumbnailUrl: templates.thumbnailUrl,
+      previewMockupUrl: templates.previewMockupUrl,
+      category: templates.category,
+    })
     .from(invitations)
+    .leftJoin(templateVersions, eq(invitations.templateVersionId, templateVersions.id))
+    .leftJoin(templates, eq(templateVersions.templateId, templates.id))
     .where(and(eq(invitations.workspaceId, workspaceId), statusFilter))
     .orderBy(desc(invitations.updatedAt));
+
+  return rows.map((r) => ({
+    ...r.invitation,
+    templateName: r.templateName ?? null,
+    thumbnailUrl: r.thumbnailUrl ?? null,
+    previewMockupUrl: r.previewMockupUrl ?? null,
+    category: r.category ?? null,
+  }));
 }
 
 /** Autosave of client data only; the template/version columns are never touched. */

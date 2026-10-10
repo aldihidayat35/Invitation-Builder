@@ -74,6 +74,8 @@ export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActo
   archiveInvitationAction: ["owner"],
   restoreInvitationAction: ["owner"],
   regenerateInvitationClientTokenAction: ["owner"],
+  extendInvitationExpiryAction: ["owner"],
+  toggleInvitationClosureAction: ["owner"],
   adminApproveOrderProductionAction: ["owner"],
   adminSendOrderToReviewAction: ["owner"],
   decideInvitationReviewAction: ["client"],

@@ -15,6 +15,10 @@ export interface InvitationSummary {
   readonly isManuallyClosed?: boolean;
   readonly isClosed?: boolean;
   readonly updatedAt: Date;
+  readonly templateName?: string | null;
+  readonly thumbnailUrl?: string | null;
+  readonly previewMockupUrl?: string | null;
+  readonly category?: string | null;
 }
 
 export interface InvitationDetail extends InvitationSummary {
