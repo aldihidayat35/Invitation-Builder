@@ -8,11 +8,24 @@ import { createPreviewBroadcaster } from "../core/preview-sync";
 import { createEditorStore } from "../core/store";
 import { isEditableTarget, isPanKey, resolveShortcut } from "../core/shortcuts";
 import { Artboard } from "./Artboard";
-import { EditorProvider, useAutosaver, useEditor, useEditorStore } from "./EditorProvider";
+import {
+  EditorProvider,
+  useAutosaver,
+  useEditor,
+  useEditorStore,
+  useWorkspaceId,
+} from "./EditorProvider";
 import { Inspector } from "./Inspector";
 import { LeftPanel } from "./LeftPanel";
 import { PanelResizer } from "./PanelResizer";
 import { TopBar } from "./TopBar";
+import { EditorToast } from "./EditorToast";
+import {
+  extractImageFilesFromDataTransfer,
+  importImageFile,
+  importImageUrl,
+  isImageUrlString,
+} from "../utils/external-image-handler";
 import { getAllCuratedGoogleFontsUrl, preloadEditorFonts } from "@/lib/fonts";
 import styles from "./editor.module.css";
 
@@ -111,6 +124,7 @@ function EditorFrame({
   currentRevision: (templateId: string) => Promise<number | null>;
 }) {
   const store = useEditorStore();
+  const workspaceId = useWorkspaceId();
   const autosaver = useAutosaver();
   const theme = useEditor((s) => s.theme);
   const widths = useSyncExternalStore(
@@ -136,7 +150,7 @@ function EditorFrame({
     };
   }, [theme]);
 
-  // Keyboard shortcuts (PRD Lampiran A).
+  // Keyboard shortcuts (PRD Lampiran A) & Paste clipboard handler.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target)) return;
@@ -148,6 +162,12 @@ function EditorFrame({
       }
       const action = resolveShortcut(event);
       if (!action) return;
+
+      if (action.type === "paste") {
+        // Biarkan event native "paste" browser tertembak agar clipboardData (berkas/gambar eksternal atau URL gambar) dapat dibaca.
+        return;
+      }
+
       event.preventDefault();
       switch (action.type) {
         case "undo":
@@ -158,8 +178,6 @@ function EditorFrame({
           return state.copySelected();
         case "copy-style":
           return state.copyStyleSelected();
-        case "paste":
-          return state.paste();
         case "paste-style":
           return state.pasteStyleSelected();
         case "duplicate":
@@ -180,15 +198,52 @@ function EditorFrame({
       if (isPanKey(event)) store.getState().setPanMode(false);
     };
     const onBlur = () => store.getState().setPanMode(false);
+
+    const onPaste = async (event: ClipboardEvent) => {
+      if (isEditableTarget(event.target)) return;
+      const state = store.getState();
+      const cd = event.clipboardData;
+
+      if (!cd) {
+        event.preventDefault();
+        state.paste();
+        return;
+      }
+
+      // 1. Cek apakah ada file gambar dari clipboard (file lokal Explorer, screenshot, copy image browser)
+      const imageFiles = extractImageFilesFromDataTransfer(cd);
+      if (imageFiles.length > 0) {
+        event.preventDefault();
+        for (const file of imageFiles) {
+          await importImageFile(workspaceId, file, store);
+        }
+        return;
+      }
+
+      // 2. Cek apakah ada teks berupa URL gambar atau data URI gambar
+      const text = cd.getData("text/plain")?.trim();
+      if (text && isImageUrlString(text)) {
+        event.preventDefault();
+        await importImageUrl(workspaceId, text, store);
+        return;
+      }
+
+      // 3. Fallback: jika bukan gambar eksternal, lakukan paste elemen internal
+      event.preventDefault();
+      state.paste();
+    };
+
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onBlur);
+    window.addEventListener("paste", onPaste);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
+      window.removeEventListener("paste", onPaste);
     };
-  }, [store]);
+  }, [store, workspaceId]);
 
   // Do not lose edits: warn when dirty, flush when the tab is hidden or the editor unmounts.
   useEffect(() => {
@@ -233,6 +288,7 @@ function EditorFrame({
           <Inspector />
         </div>
       </div>
+      <EditorToast />
     </div>
   );
 }

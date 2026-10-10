@@ -182,13 +182,19 @@ export interface EditorActions {
   // elements
   addElement(kind: ElementKind): void;
   /** Places an uploaded image asset or direct GIF URL into the active section (FR-EDT-008). */
-  addImage(asset: {
-    assetId?: string;
-    url?: string;
-    width: number;
-    height: number;
-    name?: string;
-  }): void;
+  addImage(
+    asset: {
+      assetId?: string;
+      url?: string;
+      width: number;
+      height: number;
+      name?: string;
+    },
+    options?: {
+      readonly position?: { readonly x: number; readonly y: number };
+      readonly sectionId?: string;
+    },
+  ): void;
   /** Inserts a registered widget with its default frame/props (FR-WDG-001). */
   addWidget(
     widget: Parameters<typeof createWidgetElement>[2],
@@ -556,18 +562,24 @@ export function createEditorStore(init: EditorInit): EditorStore {
           () => (created ? { selectedIds: [created] } : {}),
         );
       },
-      addImage(asset) {
+      addImage(asset, options) {
         let created: string | null = null;
         edit(
           (doc, s) => {
-            const sectionId = s.activeSectionId ?? doc.sections[0]?.id;
+            const sectionId = options?.sectionId ?? s.activeSectionId ?? doc.sections[0]?.id;
             if (!sectionId) return doc;
-            const result = createImageElement(doc, sectionId, asset);
+            const result = createImageElement(doc, sectionId, asset, options?.position);
             created = result.elementId;
             return result.document;
           },
           undefined,
-          () => (created ? { selectedIds: [created] } : {}),
+          () =>
+            created
+              ? {
+                  selectedIds: [created],
+                  ...(options?.sectionId ? { activeSectionId: options.sectionId } : {}),
+                }
+              : {},
         );
       },
       addWidget(widget, initialProps) {

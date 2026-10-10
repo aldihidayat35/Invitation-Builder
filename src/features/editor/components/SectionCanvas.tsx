@@ -33,7 +33,7 @@ import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides } from "..
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
-import { useEditor, useEditorStore } from "./EditorProvider";
+import { useEditor, useEditorStore, useWorkspaceId } from "./EditorProvider";
 import {
   replayKonvaMotion,
   replayKonvaNode,
@@ -42,6 +42,14 @@ import {
 } from "@/features/animations";
 import { ensureFontLoaded, onFontLoaded } from "@/lib/fonts";
 import { ContextMenu } from "./ContextMenu";
+import {
+  extractImageFilesFromDataTransfer,
+  hasImageFiles,
+  importImageFile,
+  importImageUrl,
+  isImageUrlString,
+} from "../utils/external-image-handler";
+import styles from "./editor.module.css";
 
 const ACCENT = "#e85d8f";
 const MIN_BOX = 8;
@@ -350,6 +358,7 @@ export interface SectionCanvasProps {
 
 export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const store = useEditorStore();
+  const workspaceId = useWorkspaceId();
   const theme = useEditor((s) => s.theme);
   const section: Section | undefined = useEditor((s) =>
     s.history.present.sections.find((x) => x.id === sectionId),
@@ -405,6 +414,67 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     canvasX: 0,
     canvasY: 0,
   });
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounterRef = useRef(0);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (hasImageFiles(e.dataTransfer)) {
+      dragCounterRef.current += 1;
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (hasImageFiles(e.dataTransfer)) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+    if (dragCounterRef.current === 0) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+
+    if (!section) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dropX = (e.clientX - rect.left) / zoom - (isEditingThisMotion ? bleedX : 0);
+    const dropY = (e.clientY - rect.top) / zoom - (isEditingThisMotion ? bleedY : 0);
+    const canvasX = round2(Math.max(0, Math.min(CANONICAL_BASE_WIDTH - 50, dropX)));
+    const canvasY = round2(Math.max(0, Math.min(section.baseHeight - 50, dropY)));
+
+    // 1. Cek file gambar
+    const imageFiles = extractImageFilesFromDataTransfer(e.dataTransfer);
+    if (imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        await importImageFile(workspaceId, file, store, {
+          position: { x: canvasX, y: canvasY },
+          sectionId,
+        });
+      }
+      return;
+    }
+
+    // 2. Cek teks URL gambar (misal user mendrag gambar langsung dari web browser)
+    const text = e.dataTransfer.getData("text/plain")?.trim();
+    if (text && isImageUrlString(text)) {
+      await importImageUrl(workspaceId, text, store, {
+        position: { x: canvasX, y: canvasY },
+        sectionId,
+      });
+    }
+  };
 
   // Re-draw when web fonts finish loading so text metrics and font glyphs update immediately.
   useEffect(() => {
@@ -874,6 +944,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   return (
     <>
       <div
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
           position: isEditingThisMotion ? "absolute" : "relative",
           left: isEditingThisMotion ? -bleedX * zoom : 0,
@@ -883,6 +957,13 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           pointerEvents: "auto",
         }}
       >
+        {isDragOver && (
+          <div className={styles.canvasDropOverlay}>
+            <span className={styles.canvasDropBadge}>
+              <span>📥</span> Lepaskan berkas gambar untuk meletakkan di sini
+            </span>
+          </div>
+        )}
         <Stage
           ref={stageRef}
           width={(CANONICAL_BASE_WIDTH + (isEditingThisMotion ? bleedX * 2 : 0)) * zoom}

@@ -4,13 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { CANONICAL_BASE_WIDTH } from "@/lib/schema";
 import { getSectionTransitionMeta, getSectionTransitionStyles } from "@/features/animations/section-transitions";
 import { sectionLabel } from "../core/display";
-import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
+import { selectDoc, useEditor, useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { SectionCanvasLazy } from "./SectionCanvasLazy";
 import { IconZap } from "./icons";
+import {
+  extractImageFilesFromDataTransfer,
+  hasImageFiles,
+  importImageFile,
+} from "../utils/external-image-handler";
 import styles from "./editor.module.css";
 
 export function Artboard() {
   const store = useEditorStore();
+  const workspaceId = useWorkspaceId();
   const doc = useEditor(selectDoc);
   const zoom = useEditor((s) => s.zoom);
   const panMode = useEditor((s) => s.panMode);
@@ -171,6 +177,25 @@ export function Artboard() {
     }
   };
 
+  const handleArtboardDragOver = (e: React.DragEvent) => {
+    if (hasImageFiles(e.dataTransfer)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleArtboardDrop = async (e: React.DragEvent) => {
+    if (!hasImageFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    const files = extractImageFilesFromDataTransfer(e.dataTransfer);
+    const targetSectionId = store.getState().activeSectionId ?? doc.sections[0]?.id;
+    if (files.length > 0 && targetSectionId) {
+      for (const file of files) {
+        await importImageFile(workspaceId, file, store, { sectionId: targetSectionId });
+      }
+    }
+  };
+
   return (
     <div
       ref={scrollRef}
@@ -178,6 +203,8 @@ export function Artboard() {
       data-pan={panMode}
       data-testid="artboard"
       data-zoom={zoom}
+      onDragOver={handleArtboardDragOver}
+      onDrop={handleArtboardDrop}
     >
       {editingMotion && motionElement && (
         <div className={styles.motionFloatingBar} data-testid="motion-floating-bar">

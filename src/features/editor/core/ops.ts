@@ -779,6 +779,7 @@ export function createImageElement(
     height: number;
     name?: string;
   },
+  targetPosition?: { readonly x: number; readonly y: number },
 ): { document: CanonicalDocument; elementId: string | null } {
   return insertNewElement(doc, sectionId, "el_img", (id, section) => {
     const rawW = asset.width > 0 ? asset.width : IMAGE_INSERT_MAX_WIDTH;
@@ -787,11 +788,12 @@ export function createImageElement(
     const w = Math.min(IMAGE_INSERT_MAX_WIDTH, rawW);
     const h = Math.max(1, Math.round(w * ratio));
     const source = asset.assetId ? { assetId: asset.assetId } : { url: asset.url ?? "" };
+    const pos = targetPosition ?? placement(section, w, h);
     return {
       id,
       type: "image",
       name: (asset.name ?? "Gambar").slice(0, 120),
-      frame: { ...placement(section, w, h), w, h, rotation: 0 },
+      frame: { ...pos, w, h, rotation: 0 },
       source,
     };
   });
