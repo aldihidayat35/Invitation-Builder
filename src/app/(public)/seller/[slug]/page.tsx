@@ -29,6 +29,17 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
   return {
     title,
     description,
+    icons: {
+      icon: profile.logoUrl
+        ? `/api/app-favicon?seller=${encodeURIComponent(slug)}`
+        : "/api/app-favicon",
+      shortcut: profile.logoUrl
+        ? `/api/app-favicon?seller=${encodeURIComponent(slug)}`
+        : "/api/app-favicon",
+      apple: profile.logoUrl
+        ? `/api/app-favicon?seller=${encodeURIComponent(slug)}`
+        : "/api/app-favicon",
+    },
     openGraph: {
       title,
       description,

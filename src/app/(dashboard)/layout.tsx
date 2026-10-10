@@ -10,6 +10,14 @@ export const metadata: Metadata = {
     "Studio undangan digital: template reusable, data binding, widget, dan output HTML mobile-first.",
   // Dashboard is an authenticated workspace tool; never index it.
   robots: { index: false, follow: false },
+  icons: {
+    icon: [
+      { url: "/api/app-favicon", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/api/app-favicon",
+    apple: "/api/app-favicon",
+  },
 };
 
 /**
@@ -21,6 +29,8 @@ export default function DashboardRootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id">
       <head>
+        <link rel="icon" href="/api/app-favicon" sizes="any" />
+        <link rel="apple-touch-icon" href="/api/app-favicon" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* This route group has its own root layout, so the font applies to every dashboard page. */}
