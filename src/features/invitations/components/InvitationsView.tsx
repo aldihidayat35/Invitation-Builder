@@ -32,6 +32,26 @@ const STATUS_CONFIG: Record<
   },
 };
 
+function getStatusBadge(inv: InvitationSummary) {
+  if (inv.status === "published") {
+    if (inv.isManuallyClosed) {
+      return {
+        label: "Ditutup",
+        badgeClass: "bg-rose-50 text-rose-900 border-rose-200/90",
+        dotClass: "bg-rose-500",
+      };
+    }
+    if (inv.isClosed) {
+      return {
+        label: "Kedaluwarsa",
+        badgeClass: "bg-amber-50 text-amber-900 border-amber-200/90",
+        dotClass: "bg-amber-500",
+      };
+    }
+  }
+  return STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.draft;
+}
+
 interface InvitationsViewProps {
   readonly invitations: readonly InvitationSummary[];
   readonly emptyMessage?: string;
@@ -381,7 +401,7 @@ export function InvitationsView({
         /* GRID VIEW */
         <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Daftar undangan">
           {filtered.map((invitation) => {
-            const statusCfg = STATUS_CONFIG[invitation.status] ?? STATUS_CONFIG.draft;
+            const statusCfg = getStatusBadge(invitation);
             const isCopied = copiedId === invitation.id;
 
             return (
@@ -534,7 +554,7 @@ export function InvitationsView({
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {filtered.map((invitation) => {
-                  const statusCfg = STATUS_CONFIG[invitation.status] ?? STATUS_CONFIG.draft;
+                  const statusCfg = getStatusBadge(invitation);
                   const isCopied = copiedId === invitation.id;
 
                   return (

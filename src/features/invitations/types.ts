@@ -10,6 +10,10 @@ export interface InvitationSummary {
   readonly status: InvitationStatus;
   readonly templateVersionId: string;
   readonly clientAccessToken?: string | null;
+  readonly publishedAt?: Date | null;
+  readonly expiresAt?: Date | null;
+  readonly isManuallyClosed?: boolean;
+  readonly isClosed?: boolean;
   readonly updatedAt: Date;
 }
 
@@ -70,4 +74,10 @@ export interface PublicInvitationModel {
   readonly hasGuest: boolean;
   /** True when rendered from an active draft prior to publication. */
   readonly isDraft?: boolean;
+  /** True when the invitation has reached its expiry date or was manually closed. */
+  readonly isClosed?: boolean;
+  readonly closedReason?: "expired" | "manual";
+  readonly publishedAt?: Date | null;
+  readonly expiresAt?: Date | null;
+  readonly groomBrideNames?: string;
 }

@@ -4,6 +4,7 @@ import { getPublic } from "@/features/invitations/api";
 import { getDemoInvitation } from "@/features/invitations/demo-catalog";
 import { DocumentRenderer } from "@/features/renderer";
 import { PublicContextProvider } from "@/features/widgets/runtime";
+import { ExpiredInvitationView } from "./ExpiredInvitationView";
 
 /** Live data: always read the active snapshot at request time (FR-PUB-001). */
 export const dynamic = "force-dynamic";
@@ -22,7 +23,9 @@ export async function generateMetadata({
     (await getDemoInvitation(slug));
   return {
     title: invitation
-      ? `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`
+      ? invitation.isClosed
+        ? `${invitation.groomBrideNames || invitation.title} — Undangan Telah Selesai`
+        : `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`
       : "Undangan",
     robots: { index: false, follow: false },
   };
@@ -62,6 +65,19 @@ export default async function PublicInvitationPage({
   }
 
   if (!invitation) notFound();
+
+  // If invitation is closed or expired, render the closed notice view
+  if (invitation.isClosed) {
+    return (
+      <ExpiredInvitationView
+        title={invitation.title}
+        groomBrideNames={invitation.groomBrideNames}
+        closedReason={invitation.closedReason}
+        publishedAt={invitation.publishedAt}
+        expiresAt={invitation.expiresAt}
+      />
+    );
+  }
 
   return (
     <main data-testid="public-invitation" lang="id">

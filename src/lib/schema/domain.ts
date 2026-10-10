@@ -113,6 +113,9 @@ export const AUDIT_ACTIONS = [
   "settings.update",
   "template.update_metadata",
   "template.delete",
+  "invitation.extend_expiry",
+  "invitation.close",
+  "invitation.reopen",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

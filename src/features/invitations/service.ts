@@ -48,8 +48,14 @@ import {
   setActiveSnapshot,
   updateGuestRow,
   updateInvitationData,
+  updateInvitationExpiry,
   updateInvitationTitle,
 } from "@/lib/db/repositories/invitations";
+import {
+  calculateExpiryDate,
+  isInvitationExpiredOrClosed,
+  type ExpiryDuration,
+} from "./expiry";
 import { findCustomerOrderByInvitationId } from "@/lib/db/repositories/orders";
 import {
   findTemplateById,
@@ -171,6 +177,7 @@ export interface PreviewModel {
 /* ------------------------------------------------------------------ helpers */
 
 function toSummary(row: InvitationRow): InvitationSummary {
+  const isClosed = isInvitationExpiredOrClosed(row);
   return {
     id: row.id,
     workspaceId: row.workspaceId,
@@ -179,6 +186,10 @@ function toSummary(row: InvitationRow): InvitationSummary {
     status: row.status,
     templateVersionId: row.templateVersionId,
     clientAccessToken: row.clientAccessToken,
+    publishedAt: row.publishedAt,
+    expiresAt: row.expiresAt,
+    isManuallyClosed: row.isManuallyClosed,
+    isClosed,
     updatedAt: row.updatedAt,
   };
 }
@@ -663,6 +674,10 @@ export async function publishInvitation(
   db: Database,
   actor: Actor,
   invitationId: string,
+  options?: {
+    duration?: ExpiryDuration | string;
+    expiresAt?: Date | null;
+  },
 ): Promise<SnapshotSummary> {
   const row = await loadAuthorized(db, actor, invitationId, "invitation:publish");
   assertWritable(row);
@@ -672,6 +687,16 @@ export async function publishInvitation(
     row.data,
   ).filter((issue) => issue.code !== "unknown_key");
   if (issues.length > 0) throw new PublishBlockedError(issues.map((issue) => issue.key));
+
+  let calculatedExpiresAt: Date | null | undefined = undefined;
+  if (options && "expiresAt" in options) {
+    calculatedExpiresAt = options.expiresAt;
+  } else if (options?.duration) {
+    calculatedExpiresAt = calculateExpiryDate(new Date(), options.duration);
+  } else if (!row.expiresAt) {
+    // Default 6 bulan jika belum pernah diset
+    calculatedExpiresAt = calculateExpiryDate(new Date(), "6_months");
+  }
 
   return db.transaction(async (tx) => {
     const revisionNo = await nextRevisionNo(tx, row.id);
@@ -683,7 +708,10 @@ export async function publishInvitation(
       data: { ...row.data },
       createdBy: actor.userId,
     });
-    const updated = await setActiveSnapshot(tx, row.id, snapshot.id);
+    const updated = await setActiveSnapshot(tx, row.id, snapshot.id, {
+      expiresAt: calculatedExpiresAt,
+      publishedAt: row.publishedAt ?? new Date(),
+    });
     if (!updated) throw new InvitationArchivedError();
     await insertAuditLog(tx, {
       workspaceId: row.workspaceId,
@@ -691,7 +719,7 @@ export async function publishInvitation(
       action: "invitation.publish",
       entityType: "invitation",
       entityId: row.id,
-      metadata: { revisionNo },
+      metadata: { revisionNo, expiresAt: calculatedExpiresAt?.toISOString() ?? null },
     });
     return {
       revisionNo,
@@ -700,6 +728,70 @@ export async function publishInvitation(
       active: true,
     };
   });
+}
+
+/** Extends the expiration date of an invitation. */
+export async function extendInvitationExpiry(
+  db: Database,
+  actor: Actor,
+  input: {
+    invitationId: string;
+    duration?: ExpiryDuration | string;
+    customExpiresAt?: Date | null;
+  },
+): Promise<InvitationSummary> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:project_manage");
+  assertWritable(row);
+  let newExpiresAt: Date | null | undefined = undefined;
+  if (input.customExpiresAt !== undefined) {
+    newExpiresAt = input.customExpiresAt;
+  } else if (input.duration) {
+    const baseDate =
+      row.expiresAt && new Date(row.expiresAt) > new Date()
+        ? new Date(row.expiresAt)
+        : new Date();
+    newExpiresAt = calculateExpiryDate(baseDate, input.duration);
+  }
+  const updated = await updateInvitationExpiry(db, row.id, {
+    ...(newExpiresAt !== undefined && { expiresAt: newExpiresAt }),
+    isManuallyClosed: false,
+  });
+  if (!updated) throw new InvitationArchivedError();
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "invitation.extend_expiry",
+    entityType: "invitation",
+    entityId: row.id,
+    metadata: { expiresAt: newExpiresAt?.toISOString() ?? null },
+  });
+  return toSummary(updated);
+}
+
+/** Manually closes or reopens an invitation. */
+export async function toggleInvitationClosure(
+  db: Database,
+  actor: Actor,
+  input: {
+    invitationId: string;
+    isClosed: boolean;
+  },
+): Promise<InvitationSummary> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:project_manage");
+  assertWritable(row);
+  const updated = await updateInvitationExpiry(db, row.id, {
+    isManuallyClosed: input.isClosed,
+  });
+  if (!updated) throw new InvitationArchivedError();
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: input.isClosed ? "invitation.close" : "invitation.reopen",
+    entityType: "invitation",
+    entityId: row.id,
+    metadata: { isManuallyClosed: input.isClosed },
+  });
+  return toSummary(updated);
 }
 
 /** Re-points the live URL to an older snapshot without altering any snapshot (FR-PUB-003). */
@@ -835,6 +927,15 @@ async function resolveGuestContext(
   return { guest: {} };
 }
 
+const EMPTY_RESOLVED_DOCUMENT: ResolvedDocument = {
+  schemaVersion: 1,
+  baseWidth: 390,
+  tokens: { colors: {}, fonts: {}, spacing: {} },
+  sections: [],
+  issues: [],
+  ok: true,
+};
+
 export async function getPublicInvitation(
   db: Database,
   input: { slug: string; guestToken?: string; guestName?: string; allowDraft?: boolean },
@@ -842,6 +943,29 @@ export async function getPublicInvitation(
   if (input.slug.length === 0 || input.slug.length > 120) return null;
   const row = await findInvitationBySlug(db, input.slug);
   if (!row || row.status === "archived") return null;
+
+  // Check if invitation has expired or was manually closed
+  const isClosed = isInvitationExpiredOrClosed(row);
+  if (isClosed && row.status === "published" && !input.allowDraft) {
+    const groomName =
+      (row.data.groom_name as string) || (row.data.groom_nickname as string) || "";
+    const brideName =
+      (row.data.bride_name as string) || (row.data.bride_nickname as string) || "";
+    const groomBrideNames = groomName && brideName ? `${groomName} & ${brideName}` : undefined;
+
+    return {
+      title: row.title,
+      slug: row.slug,
+      revisionNo: 0,
+      resolved: EMPTY_RESOLVED_DOCUMENT,
+      hasGuest: false,
+      isClosed: true,
+      closedReason: row.isManuallyClosed ? "manual" : "expired",
+      publishedAt: row.publishedAt,
+      expiresAt: row.expiresAt,
+      ...(groomBrideNames && { groomBrideNames }),
+    };
+  }
 
   // 1. If published, load from the immutable active snapshot (FR-PUB-001)
   if (row.status === "published" && row.activePublishedSnapshotId) {
@@ -862,6 +986,9 @@ export async function getPublicInvitation(
         ...(guestToken !== undefined && { guestToken }),
         hasGuest: guestName !== undefined,
         isDraft: false,
+        isClosed: false,
+        publishedAt: row.publishedAt,
+        expiresAt: row.expiresAt,
       };
     }
   }
@@ -884,6 +1011,9 @@ export async function getPublicInvitation(
         ...(guestToken !== undefined && { guestToken }),
         hasGuest: guestName !== undefined,
         isDraft: true,
+        isClosed,
+        publishedAt: row.publishedAt,
+        expiresAt: row.expiresAt,
       };
     } catch {
       return null;

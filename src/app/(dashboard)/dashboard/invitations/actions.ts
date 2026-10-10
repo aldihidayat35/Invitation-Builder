@@ -9,6 +9,7 @@ import {
   archiveGuest,
   create,
   describeInvitationError,
+  extendExpiry,
   importGuestsCsv,
   publish,
   regenerateClientToken,
@@ -16,6 +17,7 @@ import {
   restore,
   rollback,
   saveData,
+  toggleClosure,
 } from "@/features/invitations/api";
 import type {
   ActionState,
@@ -126,14 +128,56 @@ export async function publishInvitationAction(
   await requireOwner();
   const id = idSchema.safeParse(field(formData, "invitationId"));
   if (!id.success) return { error: "Undangan tidak valid." };
+  const duration = field(formData, "duration") || undefined;
   let revisionNo: number;
   try {
-    revisionNo = (await publish(id.data)).revisionNo;
+    revisionNo = (await publish(id.data, { duration })).revisionNo;
   } catch (error) {
     return failure(error);
   }
   revalidatePath(`${LIST}/${id.data}`);
   return { ok: true, message: `Revisi ${revisionNo} dipublish.` };
+}
+
+export async function extendInvitationExpiryAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireOwner();
+  const id = idSchema.safeParse(field(formData, "invitationId"));
+  if (!id.success) return { error: "Undangan tidak valid." };
+  const duration = field(formData, "duration") || "3_months";
+  try {
+    await extendExpiry(id.data, { duration });
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath(`${LIST}/${id.data}`);
+  revalidatePath(LIST);
+  return { ok: true, message: "Masa aktif undangan berhasil diperpanjang." };
+}
+
+export async function toggleInvitationClosureAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireOwner();
+  const id = idSchema.safeParse(field(formData, "invitationId"));
+  if (!id.success) return { error: "Undangan tidak valid." };
+  const isClosed = field(formData, "isClosed") === "true";
+  try {
+    await toggleClosure(id.data, isClosed);
+  } catch (error) {
+    return failure(error);
+  }
+  revalidatePath(`${LIST}/${id.data}`);
+  revalidatePath(LIST);
+  return {
+    ok: true,
+    message: isClosed
+      ? "Undangan berhasil ditutup manual."
+      : "Undangan berhasil dibuka kembali.",
+  };
 }
 
 export async function rollbackInvitationAction(

@@ -14,6 +14,7 @@ import {
   IconUser,
   IconWhatsApp,
 } from "@/features/orders/components/OrderIcons";
+import { formatIndonesianDate, getRemainingDays, EXPIRY_PRESETS } from "../expiry";
 import styles from "./invitations.module.css";
 
 function RollbackButton({
@@ -60,7 +61,7 @@ export interface OrderPublicationContext {
   dueAt?: Date | null;
 }
 
-/** Publish + revision history + rollback (FR-INV-004, FR-PUB-001..003) with Order Approval workflow. */
+/** Publish + revision history + rollback (FR-INV-004, FR-PUB-001..003) with Order Approval workflow and Expiry Lifecycle. */
 export function PublishPanel({
   invitationId,
   slug,
@@ -73,6 +74,12 @@ export function PublishPanel({
   orderContext,
   adminApprove,
   adminSendToReview,
+  publishedAt,
+  expiresAt,
+  isManuallyClosed,
+  isClosed,
+  extendExpiry,
+  toggleClosure,
 }: {
   invitationId: string;
   slug: string;
@@ -85,8 +92,22 @@ export function PublishPanel({
   orderContext?: OrderPublicationContext | null;
   adminApprove?: InvitationAction;
   adminSendToReview?: InvitationAction;
+  publishedAt?: Date | null;
+  expiresAt?: Date | null;
+  isManuallyClosed?: boolean;
+  isClosed?: boolean;
+  extendExpiry?: InvitationAction;
+  toggleClosure?: InvitationAction;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(publish, {});
+  const [extendState, extendAction, extendPending] = useActionState<ActionState, FormData>(
+    extendExpiry ?? (async () => ({})),
+    {},
+  );
+  const [closureState, closureAction, closurePending] = useActionState<ActionState, FormData>(
+    toggleClosure ?? (async () => ({})),
+    {},
+  );
   const [approveState, approveAction, approvePending] = useActionState<ActionState, FormData>(
     adminApprove ?? (async () => ({})),
     {},
@@ -331,10 +352,152 @@ export function PublishPanel({
           </div>
         ) : null}
 
+        {/* Expiry / Lifetime Status Card when Live */}
+        {live ? (
+          <div className="mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                <IconClock size={14} className="text-stone-500" />
+                <span>Masa Aktif Penayangan</span>
+              </span>
+              {isManuallyClosed ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-800">
+                  Ditutup Manual
+                </span>
+              ) : isClosed ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
+                  Kedaluwarsa
+                </span>
+              ) : expiresAt ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+                  Aktif (Sisa {getRemainingDays(expiresAt)} Hari)
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800">
+                  Aktif Selamanya
+                </span>
+              )}
+            </div>
+
+            <div className="text-[11px] text-stone-600 space-y-0.5">
+              <div>
+                <span className="text-stone-400">Dipublikasi: </span>
+                <span className="font-medium text-stone-700">{formatIndonesianDate(publishedAt)}</span>
+              </div>
+              {expiresAt ? (
+                <div>
+                  <span className="text-stone-400">Batas Waktu: </span>
+                  <span className="font-medium text-stone-700">{formatIndonesianDate(expiresAt)}</span>
+                </div>
+              ) : (
+                <div>
+                  <span className="text-stone-400">Batas Waktu: </span>
+                  <span className="font-medium text-stone-700">Tanpa batas waktu (selamanya)</span>
+                </div>
+              )}
+            </div>
+
+            {canWrite && status !== "archived" ? (
+              <div className="pt-2 border-t border-stone-200 flex flex-col gap-2">
+                {/* Extend Form */}
+                {extendExpiry ? (
+                  <form action={extendAction} className="flex items-center gap-1.5">
+                    <input type="hidden" name="invitationId" value={invitationId} />
+                    <select
+                      name="duration"
+                      defaultValue="3_months"
+                      className="flex-1 rounded-lg border border-stone-300 bg-white px-2 py-1 text-xs text-stone-700"
+                    >
+                      <option value="3_months">+3 Bulan</option>
+                      <option value="6_months">+6 Bulan</option>
+                      <option value="1_year">+1 Tahun</option>
+                      <option value="unlimited">Jadikan Selamanya</option>
+                    </select>
+                    <button
+                      type="submit"
+                      disabled={extendPending}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-stone-800 text-white hover:bg-stone-900 transition disabled:opacity-50"
+                    >
+                      {extendPending ? "…" : "Perpanjang"}
+                    </button>
+                  </form>
+                ) : null}
+
+                {/* Manual Closure Toggle */}
+                {toggleClosure ? (
+                  <form action={closureAction}>
+                    <input type="hidden" name="invitationId" value={invitationId} />
+                    <input
+                      type="hidden"
+                      name="isClosed"
+                      value={isManuallyClosed ? "false" : "true"}
+                    />
+                    <button
+                      type="submit"
+                      disabled={closurePending}
+                      className={`w-full py-1 text-xs font-semibold rounded-lg border transition ${
+                        isManuallyClosed
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                          : "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                      } disabled:opacity-50`}
+                    >
+                      {closurePending
+                        ? "Memproses…"
+                        : isManuallyClosed
+                          ? "🔓 Buka Kembali Undangan"
+                          : "🔒 Tutup Undangan Sekarang"}
+                    </button>
+                  </form>
+                ) : null}
+
+                {extendState.error ? (
+                  <p role="alert" className={styles.formError}>
+                    {extendState.error}
+                  </p>
+                ) : null}
+                {extendState.message ? (
+                  <p role="status" className={styles.okText}>
+                    {extendState.message}
+                  </p>
+                ) : null}
+                {closureState.error ? (
+                  <p role="alert" className={styles.formError}>
+                    {closureState.error}
+                  </p>
+                ) : null}
+                {closureState.message ? (
+                  <p role="status" className={styles.okText}>
+                    {closureState.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         {/* Publish Form */}
         {canWrite && status !== "archived" ? (
           <form action={formAction}>
             <input type="hidden" name="invitationId" value={invitationId} />
+            <div className="mb-2.5 space-y-1">
+              <label
+                htmlFor="duration-select"
+                className="text-[11px] font-semibold text-stone-700 block"
+              >
+                Masa Aktif Penayangan:
+              </label>
+              <select
+                id="duration-select"
+                name="duration"
+                defaultValue="6_months"
+                className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+              >
+                <option value="3_months">3 Bulan (Paket Hemat)</option>
+                <option value="6_months">6 Bulan (Standar Penayangan)</option>
+                <option value="1_year">1 Tahun (Paket Spesial)</option>
+                <option value="unlimited">Selamanya (Tanpa Batas Waktu)</option>
+              </select>
+            </div>
             <button
               id="publish-submit"
               type="submit"

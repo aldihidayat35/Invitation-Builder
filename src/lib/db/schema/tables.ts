@@ -228,6 +228,9 @@ export const invitations = pgTable(
     activePublishedSnapshotId: uuid("active_published_snapshot_id").references(
       (): AnyPgColumn => publishedSnapshots.id,
     ),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    isManuallyClosed: pgBoolean("is_manually_closed").notNull().default(false),
     createdBy: uuid("created_by").references(() => users.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

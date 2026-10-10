@@ -24,10 +24,12 @@ import {
   adminApproveOrderProductionAction,
   adminSendOrderToReviewAction,
   archiveGuestAction,
+  extendInvitationExpiryAction,
   importGuestsAction,
   publishInvitationAction,
   rollbackInvitationAction,
   saveInvitationDataAction,
+  toggleInvitationClosureAction,
 } from "../actions";
 
 export const metadata: Metadata = { title: "Data undangan" };
@@ -153,6 +155,12 @@ export default async function InvitationDataPage({
               orderContext={orderContext}
               adminApprove={adminApproveOrderProductionAction}
               adminSendToReview={adminSendOrderToReviewAction}
+              publishedAt={invitation.publishedAt}
+              expiresAt={invitation.expiresAt}
+              isManuallyClosed={invitation.isManuallyClosed}
+              isClosed={invitation.isClosed}
+              extendExpiry={extendInvitationExpiryAction}
+              toggleClosure={toggleInvitationClosureAction}
             />
           ) : (
             <section className={styles.panel} aria-labelledby="publication-owner-title">

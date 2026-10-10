@@ -381,11 +381,52 @@ export async function setActiveSnapshot(
   db: Database,
   invitationId: string,
   snapshotId: string,
+  expiryOptions?: {
+    expiresAt?: Date | null;
+    publishedAt?: Date;
+  },
 ): Promise<InvitationRow | undefined> {
+  const [existing] = await db
+    .select({ publishedAt: invitations.publishedAt })
+    .from(invitations)
+    .where(eq(invitations.id, invitationId))
+    .limit(1);
+
+  const initialPublishedAt = existing?.publishedAt ?? expiryOptions?.publishedAt ?? new Date();
+
   const [row] = await db
     .update(invitations)
-    .set({ status: "published", activePublishedSnapshotId: snapshotId, updatedAt: new Date() })
+    .set({
+      status: "published",
+      activePublishedSnapshotId: snapshotId,
+      publishedAt: initialPublishedAt,
+      ...(expiryOptions && "expiresAt" in expiryOptions && { expiresAt: expiryOptions.expiresAt }),
+      isManuallyClosed: false,
+      updatedAt: new Date(),
+    })
     .where(and(eq(invitations.id, invitationId), ne(invitations.status, "archived")))
     .returning();
   return row;
 }
+
+/** Updates expiration date and/or manual closure state for an invitation. */
+export async function updateInvitationExpiry(
+  db: Database,
+  invitationId: string,
+  input: {
+    expiresAt?: Date | null;
+    isManuallyClosed?: boolean;
+  },
+): Promise<InvitationRow | undefined> {
+  const [row] = await db
+    .update(invitations)
+    .set({
+      ...(input.expiresAt !== undefined && { expiresAt: input.expiresAt }),
+      ...(input.isManuallyClosed !== undefined && { isManuallyClosed: input.isManuallyClosed }),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(invitations.id, invitationId), ne(invitations.status, "archived")))
+    .returning();
+  return row;
+}
+

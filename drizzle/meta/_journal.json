@@ -113,6 +113,13 @@
       "when": 1791900000000,
       "tag": "0015_reseller_storefront_customization",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792000000000,
+      "tag": "0016_invitation_expiry_and_closure",
+      "breakpoints": true
     }
   ]
 }

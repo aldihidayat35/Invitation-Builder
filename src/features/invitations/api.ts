@@ -115,12 +115,35 @@ export async function preview(invitationId: string, guest?: PreviewGuestSelectio
   return service.buildPreview(db, actor, { invitationId, ...(guest && { guest }) });
 }
 
-export async function publish(invitationId: string) {
+export async function publish(
+  invitationId: string,
+  options?: { duration?: string; expiresAt?: Date | null },
+) {
   const { db, actor } = await context();
   const order = await assertApprovedForPublish(db, actor, invitationId);
-  const snapshot = await service.publishInvitation(db, actor, invitationId);
+  const snapshot = await service.publishInvitation(db, actor, invitationId, options);
   if (order) await markOrderPublished(db, actor, order);
   return snapshot;
+}
+
+export async function extendExpiry(
+  invitationId: string,
+  options: { duration?: string; customExpiresAt?: Date | null },
+) {
+  const { db, actor } = await context();
+  return service.extendInvitationExpiry(db, actor, {
+    invitationId,
+    duration: options.duration,
+    customExpiresAt: options.customExpiresAt,
+  });
+}
+
+export async function toggleClosure(invitationId: string, isClosed: boolean) {
+  const { db, actor } = await context();
+  return service.toggleInvitationClosure(db, actor, {
+    invitationId,
+    isClosed,
+  });
 }
 
 export async function rollback(invitationId: string, revisionNo: number) {
