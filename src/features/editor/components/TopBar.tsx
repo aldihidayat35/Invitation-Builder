@@ -7,7 +7,7 @@ import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProv
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
-import { IconCardsView, IconEye, IconGridView, IconSmartphone, IconSnapGuides } from "./icons";
+import { IconCardsView, IconEye, IconGrid, IconGridView, IconSmartphone, IconSnapGuides } from "./icons";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -32,6 +32,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const artboardMode = useEditor((s) => s.artboardMode);
   const theme = useEditor((s) => s.theme);
   const snapToGuides = useEditor((s) => s.snapToGuides);
+  const showCanvasGrid = useEditor((s) => s.showCanvasGrid);
   const canUndo = useEditor(selectCanUndo);
   const canRedo = useEditor(selectCanRedo);
   const zoom = useEditor((s) => s.zoom);
@@ -124,8 +125,8 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
         </button>
       </div>
 
-      {/* Fitur Perataan Otomatis (Snap to Guides) */}
-      <div className={styles.toolGroup} role="group" aria-label="Perataan Otomatis">
+      {/* Fitur Perataan Otomatis (Snap to Guides) & Garis Kisi (Canvas Grid) */}
+      <div className={styles.toolGroup} role="group" aria-label="Alat Kanvas">
         <button
           type="button"
           className={styles.toolButton}
@@ -140,6 +141,22 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
         >
           <IconSnapGuides size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
           <span>Snap {snapToGuides ? "Aktif" : "Mati"}</span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.toolButton}
+          data-active={showCanvasGrid}
+          data-testid="toggle-canvas-grid"
+          onClick={() => store.getState().toggleCanvasGrid()}
+          title={
+            showCanvasGrid
+              ? "Garis Kisi Kanvas (Grid 20px) Aktif — Klik untuk menyembunyikan"
+              : "Tampilkan Garis Kisi Kanvas (Grid 20px)"
+          }
+        >
+          <IconGrid size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
+          <span>Grid {showCanvasGrid ? "Aktif" : "Mati"}</span>
         </button>
       </div>
 

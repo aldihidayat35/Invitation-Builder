@@ -126,6 +126,23 @@ export function getInitialSnapToGuides(): boolean {
   return getStoredSnapToGuides() ?? true;
 }
 
+export const CANVAS_GRID_STORAGE_KEY = "dib_show_canvas_grid";
+
+export function getStoredCanvasGrid(): boolean | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = window.localStorage.getItem(CANVAS_GRID_STORAGE_KEY);
+    if (saved !== null) return saved === "true";
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function getInitialCanvasGrid(): boolean {
+  return getStoredCanvasGrid() ?? false;
+}
+
 export interface MotionEditTarget {
   readonly sectionId: string;
   readonly elementId: string;
@@ -148,6 +165,7 @@ export interface EditorState {
   readonly theme: EditorTheme;
   /** Snap to Guides (Perataan Otomatis): snaps to section boundaries and neighbour elements. */
   readonly snapToGuides: boolean;
+  readonly showCanvasGrid: boolean;
   /** Focused motion path editing mode: locks canvas clicks and enables waypoint dragging (Flash/Animate style). */
   readonly editingMotion: MotionEditTarget | null;
 
@@ -257,6 +275,9 @@ export interface EditorActions {
   setSnapToGuides(enabled: boolean): void;
   toggleSnapToGuides(): void;
   syncSnapToGuidesFromStorage(): void;
+  setCanvasGrid(enabled: boolean): void;
+  toggleCanvasGrid(): void;
+  syncCanvasGridFromStorage(): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -276,6 +297,7 @@ export interface EditorInit {
   readonly artboardMode?: ArtboardMode;
   readonly theme?: EditorTheme;
   readonly snapToGuides?: boolean;
+  readonly showCanvasGrid?: boolean;
 }
 
 export const isDirty = (s: Pick<EditorState, "history" | "savedDocument">): boolean =>
@@ -339,6 +361,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       artboardMode: init.artboardMode ?? "cards",
       theme: init.theme ?? "light",
       snapToGuides: init.snapToGuides ?? getInitialSnapToGuides(),
+      showCanvasGrid: init.showCanvasGrid ?? getInitialCanvasGrid(),
       editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,
@@ -960,6 +983,27 @@ export function createEditorStore(init: EditorInit): EditorStore {
         const saved = getStoredSnapToGuides();
         if (saved !== null && saved !== get().snapToGuides) {
           set({ snapToGuides: saved });
+        }
+      },
+      setCanvasGrid(enabled) {
+        if (get().showCanvasGrid !== enabled) {
+          set({ showCanvasGrid: enabled });
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem(CANVAS_GRID_STORAGE_KEY, String(enabled));
+            } catch {
+              // ignore
+            }
+          }
+        }
+      },
+      toggleCanvasGrid() {
+        get().setCanvasGrid(!get().showCanvasGrid);
+      },
+      syncCanvasGridFromStorage() {
+        const saved = getStoredCanvasGrid();
+        if (saved !== null && saved !== get().showCanvasGrid) {
+          set({ showCanvasGrid: saved });
         }
       },
 

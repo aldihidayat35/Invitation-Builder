@@ -29,7 +29,7 @@ import {
   textPreview,
 } from "../core/display";
 import { findElement } from "../core/ops";
-import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides } from "../core/geometry";
+import { frameFromNodeAttrs, nodeAttrsFromFrame, round2, snapToGuides, type SnapGuide } from "../core/geometry";
 import { ImageVisual, WidgetVisual } from "./canvas-visuals";
 import { konvaShadowProps } from "../core/shadow";
 import { estimateWidgetContentHeight } from "@/features/widgets";
@@ -352,6 +352,64 @@ const ElementNode = memo(function ElementNode({
   );
 });
 
+/** Garis kisi-kisi (grid) canvas 20px dengan pembeda garis modular per 100px */
+function CanvasGridOverlay({
+  width,
+  height,
+  zoom,
+  theme,
+}: {
+  readonly width: number;
+  readonly height: number;
+  readonly zoom: number;
+  readonly theme: "light" | "dark";
+}) {
+  const isDark = theme === "dark";
+  const majorColor = isDark ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.13)";
+  const minorColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.05)";
+
+  const lines = useMemo(() => {
+    const list: { key: string; points: number[]; stroke: string; strokeWidth: number }[] = [];
+    const step = 20;
+
+    for (let x = step; x < width; x += step) {
+      const isMajor = x % 100 === 0;
+      list.push({
+        key: `grid-v-${x}`,
+        points: [x, 0, x, height],
+        stroke: isMajor ? majorColor : minorColor,
+        strokeWidth: (isMajor ? 1 : 0.75) / zoom,
+      });
+    }
+
+    for (let y = step; y < height; y += step) {
+      const isMajor = y % 100 === 0;
+      list.push({
+        key: `grid-h-${y}`,
+        points: [0, y, width, y],
+        stroke: isMajor ? majorColor : minorColor,
+        strokeWidth: (isMajor ? 1 : 0.75) / zoom,
+      });
+    }
+
+    return list;
+  }, [width, height, zoom, majorColor, minorColor]);
+
+  return (
+    <Group listening={false}>
+      {lines.map((l) => (
+        <Line
+          key={l.key}
+          points={l.points}
+          stroke={l.stroke}
+          strokeWidth={l.strokeWidth}
+          listening={false}
+        />
+      ))}
+    </Group>
+  );
+}
+
 export interface SectionCanvasProps {
   readonly sectionId: string;
 }
@@ -368,6 +426,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
   const variables = useEditor((s) => s.history.present.variables);
   const zoom = useEditor((s) => s.zoom);
   const selectedIds = useEditor((s) => s.selectedIds);
+  const showCanvasGrid = useEditor((s) => s.showCanvasGrid);
   const readOnly = useEditor((s) => s.readOnly);
   const panMode = useEditor((s) => s.panMode);
   const editingMotion = useEditor((s) => s.editingMotion);
@@ -607,43 +666,63 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
 
   const showGuides = useCallback(
     (
-      verticals: number | readonly number[] | undefined,
-      horizontals: number | readonly number[] | undefined,
+      verticals: (number | SnapGuide) | readonly (number | SnapGuide)[] | undefined,
+      horizontals: (number | SnapGuide) | readonly (number | SnapGuide)[] | undefined,
     ) => {
       const vList = Array.isArray(verticals)
         ? verticals
-        : typeof verticals === "number"
+        : verticals !== undefined
           ? [verticals]
           : [];
       const hList = Array.isArray(horizontals)
         ? horizontals
-        : typeof horizontals === "number"
+        : horizontals !== undefined
           ? [horizontals]
           : [];
 
       for (let i = 0; i < 4; i++) {
         const vLine = vGuideRefs.current[i];
         if (vLine) {
-          const vx = vList[i];
-          if (vx === undefined) {
+          const item = vList[i];
+          if (item === undefined) {
             vLine.visible(false);
           } else {
+            const vx = typeof item === "number" ? item : item.pos;
+            const kind = typeof item === "number" ? "object" : item.kind;
+            const strokeColor =
+              kind === "section-center"
+                ? "#10b981" // Hijau untuk garis snap tengah section
+                : kind === "section-edge"
+                  ? "#ec4899" // Pink/Magenta untuk batas tepi section
+                  : "#06b6d4"; // Cyan/Biru untuk snap lurus dengan objek lain
+
             vLine.points([vx, 0, vx, baseHeight]);
-            vLine.strokeWidth(1.2 / zoom);
-            vLine.dash([4 / zoom, 4 / zoom]);
+            vLine.stroke(strokeColor);
+            vLine.strokeWidth((kind === "section-center" ? 1.5 : 1.2) / zoom);
+            vLine.dash(kind === "section-center" ? [6 / zoom, 3 / zoom] : [4 / zoom, 4 / zoom]);
             vLine.visible(true);
           }
         }
 
         const hLine = hGuideRefs.current[i];
         if (hLine) {
-          const hy = hList[i];
-          if (hy === undefined) {
+          const item = hList[i];
+          if (item === undefined) {
             hLine.visible(false);
           } else {
+            const hy = typeof item === "number" ? item : item.pos;
+            const kind = typeof item === "number" ? "object" : item.kind;
+            const strokeColor =
+              kind === "section-center"
+                ? "#10b981" // Hijau untuk garis snap tengah section
+                : kind === "section-edge"
+                  ? "#ec4899" // Pink/Magenta untuk batas tepi section
+                  : "#06b6d4"; // Cyan/Biru untuk snap lurus dengan objek lain
+
             hLine.points([0, hy, CANONICAL_BASE_WIDTH, hy]);
-            hLine.strokeWidth(1.2 / zoom);
-            hLine.dash([4 / zoom, 4 / zoom]);
+            hLine.stroke(strokeColor);
+            hLine.strokeWidth((kind === "section-center" ? 1.5 : 1.2) / zoom);
+            hLine.dash(kind === "section-center" ? [6 / zoom, 3 / zoom] : [4 / zoom, 4 / zoom]);
             hLine.visible(true);
           }
         }
@@ -831,7 +910,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           if (snap.dx !== 0 || snap.dy !== 0) {
             node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
           }
-          showGuides(snap.guides.vertical, snap.guides.horizontal);
+          showGuides(
+            snap.guides.detailedVertical ?? snap.guides.vertical,
+            snap.guides.detailedHorizontal ?? snap.guides.horizontal,
+          );
         }
 
         if (drag.origins.size > 1 && origin) {
@@ -1052,6 +1134,14 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               shadowOffset={{ x: 0, y: isEditingThisMotion ? 4 : 0 }}
               shadowOpacity={isEditingThisMotion ? 0.25 : 0}
             />
+            {showCanvasGrid && (
+              <CanvasGridOverlay
+                width={CANONICAL_BASE_WIDTH}
+                height={section.baseHeight}
+                zoom={zoom}
+                theme={theme}
+              />
+            )}
             {/* Clear luminous boundary frame around the active section */}
             {isEditingThisMotion && (
               <Group listening={false}>

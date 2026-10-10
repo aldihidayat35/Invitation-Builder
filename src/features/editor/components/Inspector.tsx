@@ -29,6 +29,7 @@ import {
   IconGroup,
   IconLayers,
   IconLock,
+  IconMusic,
   IconOpacity,
   IconPencil,
   IconPlus,
@@ -83,7 +84,7 @@ export function Inspector() {
   const selectedIds = useEditor((s) => s.selectedIds);
   const activeSectionId = useEditor((s) => s.activeSectionId);
   const readOnly = useEditor((s) => s.readOnly);
-  const [activeTab, setActiveTab] = useState<"properties" | "variables">("properties");
+  const [activeTab, setActiveTab] = useState<"properties" | "music" | "variables">("properties");
 
   const totalVars = doc.variables.length;
   const isElementSelected = selectedIds.length > 0;
@@ -103,7 +104,14 @@ export function Inspector() {
   } else if (selectedIds.length > 1) {
     body = <MultiPanel key={selectedIds.join(",")} ids={selectedIds} readOnly={readOnly} />;
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
-    body = <SectionPanel key={activeSectionId} sectionId={activeSectionId} readOnly={readOnly} />;
+    body = (
+      <SectionPanel
+        key={activeSectionId}
+        sectionId={activeSectionId}
+        readOnly={readOnly}
+        onOpenMusicTab={() => setActiveTab("music")}
+      />
+    );
   } else {
     const openingSection = doc.sections.find((s) => s.isOpening);
     body = (
@@ -201,20 +209,62 @@ export function Inspector() {
           type="button"
           role="tab"
           className={varStyles.inspectorTab}
+          data-active={activeTab === "music"}
+          data-testid="inspector-tab-music"
+          onClick={() => setActiveTab("music")}
+          aria-selected={activeTab === "music"}
+        >
+          <IconMusic size={13} />
+          <span>Musik</span>
+          {doc.design.audio?.enabled && (
+            <span
+              className={varStyles.tabBadge}
+              style={{
+                background: "rgba(16, 185, 129, 0.15)",
+                color: "#059669",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                padding: "2px 6px",
+              }}
+              title="Musik Latar Aktif"
+            >
+              Aktif
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          className={varStyles.inspectorTab}
           data-active={activeTab === "variables"}
           data-testid="inspector-tab-variables"
           onClick={() => setActiveTab("variables")}
           aria-selected={activeTab === "variables"}
         >
           <IconVariable size={13} />
-          <span>Variabel Undangan</span>
+          <span>Variabel</span>
           <span className={varStyles.tabBadge} title={`${totalVars} variabel terdaftar`}>
             {totalVars}
           </span>
         </button>
       </nav>
 
-      {activeTab === "variables" ? (
+      {activeTab === "music" ? (
+        <div className={styles.inspStack} data-testid="inspector-music-tab">
+          <InspectorHeader
+            icon={<IconMusic size={18} />}
+            eyebrow="Musik Latar Template"
+            title="Pengaturan Backsound"
+            badge={doc.design.audio?.enabled ? "Aktif" : "Mati"}
+          />
+          <div style={{ padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            <p className={styles.muted} style={{ fontSize: "0.82rem", margin: 0, lineHeight: 1.45 }}>
+              Musik latar (backsound) berputar otomatis untuk tamu dan menampilkan kontrol pemutar musik mengambang di layar.
+            </p>
+            <GlobalBacksoundControl readOnly={readOnly} />
+          </div>
+        </div>
+      ) : activeTab === "variables" ? (
         <VariablesCatalogPanel onSwitchToProperties={() => setActiveTab("properties")} />
       ) : (
         body
@@ -261,7 +311,15 @@ export const DEFAULT_SECTION_INSPECTOR_ORDER = [
 
 export type SectionInspectorSectionId = (typeof DEFAULT_SECTION_INSPECTOR_ORDER)[number];
 
-function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: boolean }) {
+function SectionPanel({
+  sectionId,
+  readOnly,
+  onOpenMusicTab,
+}: {
+  sectionId: string;
+  readOnly: boolean;
+  onOpenMusicTab?: () => void;
+}) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const clipboard = useEditor((s) => s.clipboard);
@@ -477,6 +535,22 @@ function SectionPanel({ sectionId, readOnly }: { sectionId: string; readOnly: bo
       />
 
       {sectionOrder.map((id) => renderSection(id))}
+
+      {onOpenMusicTab && (
+        <div style={{ padding: "0.5rem 0.85rem" }}>
+          <button
+            type="button"
+            className={styles.ghostButton}
+            onClick={onOpenMusicTab}
+            style={{ width: "100%", justifyContent: "center", gap: "6px" }}
+            title="Buka pengaturan musik latar global (Backsound)"
+            data-testid="section-goto-backsound-btn"
+          >
+            <IconMusic size={13} />
+            <span>Atur Musik Latar (Backsound)</span>
+          </button>
+        </div>
+      )}
 
       <p className={styles.footHint}>
         Urutan section = urutan scroll publik. Lebar kanonik 390 px.

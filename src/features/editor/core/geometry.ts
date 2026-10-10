@@ -129,12 +129,24 @@ export function rotatedBounds(frame: Frame): { x: number; y: number; w: number; 
 
 // ------------------------------------------------------------------- snapping
 
+export type GuideKind = "section-center" | "section-edge" | "object";
+
+export interface SnapGuide {
+  readonly pos: number;
+  readonly kind: GuideKind;
+}
+
 export interface SnapResult {
   /** Offset to add to the frame position so it lines up. */
   readonly dx: number;
   readonly dy: number;
   /** Guide positions (section space) that were matched. */
-  readonly guides: { readonly vertical: number[]; readonly horizontal: number[] };
+  readonly guides: {
+    readonly vertical: number[];
+    readonly horizontal: number[];
+    readonly detailedVertical?: readonly SnapGuide[];
+    readonly detailedHorizontal?: readonly SnapGuide[];
+  };
 }
 
 export const SNAP_THRESHOLD = 6;
@@ -166,31 +178,31 @@ export function snapToGuides(
   ];
 
   // Target lines: Section boundaries & center
-  const targetsX: { target: number; isCenter: boolean }[] = [
-    { target: 0, isCenter: false },
-    { target: section.width / 2, isCenter: true },
-    { target: section.width, isCenter: false },
+  const targetsX: { target: number; isCenter: boolean; kind: GuideKind }[] = [
+    { target: 0, isCenter: false, kind: "section-edge" },
+    { target: section.width / 2, isCenter: true, kind: "section-center" },
+    { target: section.width, isCenter: false, kind: "section-edge" },
   ];
 
-  const targetsY: { target: number; isCenter: boolean }[] = [
-    { target: 0, isCenter: false },
-    { target: section.height / 2, isCenter: true },
-    { target: section.height, isCenter: false },
+  const targetsY: { target: number; isCenter: boolean; kind: GuideKind }[] = [
+    { target: 0, isCenter: false, kind: "section-edge" },
+    { target: section.height / 2, isCenter: true, kind: "section-center" },
+    { target: section.height, isCenter: false, kind: "section-edge" },
   ];
 
   // Target lines: Neighbor elements (tetangga) in the section
   for (const other of otherElements) {
     const ob = rotatedBounds(other);
     targetsX.push(
-      { target: ob.x, isCenter: false },
-      { target: ob.x + ob.w / 2, isCenter: true },
-      { target: ob.x + ob.w, isCenter: false },
+      { target: ob.x, isCenter: false, kind: "object" },
+      { target: ob.x + ob.w / 2, isCenter: true, kind: "object" },
+      { target: ob.x + ob.w, isCenter: false, kind: "object" },
     );
 
     targetsY.push(
-      { target: ob.y, isCenter: false },
-      { target: ob.y + ob.h / 2, isCenter: true },
-      { target: ob.y + ob.h, isCenter: false },
+      { target: ob.y, isCenter: false, kind: "object" },
+      { target: ob.y + ob.h / 2, isCenter: true, kind: "object" },
+      { target: ob.y + ob.h, isCenter: false, kind: "object" },
     );
   }
 
@@ -233,8 +245,8 @@ export function snapToGuides(
   const dx = bestX ? round2(bestX.delta) : 0;
   const dy = bestY ? round2(bestY.delta) : 0;
 
-  // After applying snap dx & dy, collect all matching guide lines
-  const guidesX = new Set<number>();
+  // After applying snap dx & dy, collect all matching guide lines with their kind
+  const detailedGuidesX = new Map<number, GuideKind>();
   if (bestX) {
     const snappedX = [
       round2(b.x + dx),
@@ -244,12 +256,15 @@ export function snapToGuides(
     for (const t of targetsX) {
       const roundedT = round2(t.target);
       if (snappedX.some((sx) => Math.abs(sx - roundedT) < 0.01)) {
-        guidesX.add(roundedT);
+        const existing = detailedGuidesX.get(roundedT);
+        if (!existing || t.kind === "section-center") {
+          detailedGuidesX.set(roundedT, t.kind);
+        }
       }
     }
   }
 
-  const guidesY = new Set<number>();
+  const detailedGuidesY = new Map<number, GuideKind>();
   if (bestY) {
     const snappedY = [
       round2(b.y + dy),
@@ -259,17 +274,25 @@ export function snapToGuides(
     for (const t of targetsY) {
       const roundedT = round2(t.target);
       if (snappedY.some((sy) => Math.abs(sy - roundedT) < 0.01)) {
-        guidesY.add(roundedT);
+        const existing = detailedGuidesY.get(roundedT);
+        if (!existing || t.kind === "section-center") {
+          detailedGuidesY.set(roundedT, t.kind);
+        }
       }
     }
   }
+
+  const detailedV = Array.from(detailedGuidesX.entries()).map(([pos, kind]) => ({ pos, kind }));
+  const detailedH = Array.from(detailedGuidesY.entries()).map(([pos, kind]) => ({ pos, kind }));
 
   return {
     dx,
     dy,
     guides: {
-      vertical: Array.from(guidesX),
-      horizontal: Array.from(guidesY),
+      vertical: Array.from(detailedGuidesX.keys()),
+      horizontal: Array.from(detailedGuidesY.keys()),
+      ...(detailedV.length > 0 ? { detailedVertical: detailedV } : {}),
+      ...(detailedH.length > 0 ? { detailedHorizontal: detailedH } : {}),
     },
   };
 }
