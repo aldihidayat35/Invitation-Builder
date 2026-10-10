@@ -125,8 +125,19 @@ export async function login(
   const stored = user?.passwordHash ?? (await getDummyHash());
   const passwordOk = await verifyPassword(input.password, stored);
 
-  if (!user || !user.passwordHash || !passwordOk || user.status !== "active") {
+  if (!user || !user.passwordHash || !passwordOk) {
     throttle.recordFailure(key);
+    await recordLoginSecurityEvent(db, input, "auth.login_failed");
+    throw new AuthenticationError();
+  }
+
+  if (user.status !== "active") {
+    throttle.recordFailure(key);
+    if (user.systemRole === "reseller") {
+      throw new AuthenticationError(
+        "Pendaftaran akun Reseller Anda sedang menunggu persetujuan (ACC) dari Admin. Silakan tunggu konfirmasi melalui WhatsApp.",
+      );
+    }
     await recordLoginSecurityEvent(db, input, "auth.login_failed");
     throw new AuthenticationError();
   }

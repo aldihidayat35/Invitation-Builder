@@ -10,6 +10,7 @@ import {
 
 const actionFiles = [
   "src/app/(dashboard)/login/actions.ts",
+  "src/app/(dashboard)/register-reseller/actions.ts",
   "src/app/(public)/seller/[slug]/actions.ts",
   "src/app/(public)/c/[code]/actions.ts",
   "src/app/(dashboard)/editor/[id]/actions.ts",

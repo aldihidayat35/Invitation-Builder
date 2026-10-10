@@ -63,3 +63,25 @@ export function buildCustomerOrderWhatsAppUrl(params: WhatsAppCustomerOrderParam
   const text = lines.join("\n");
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
 }
+
+export interface WhatsAppResellerActivationParams {
+  phone: string;
+  resellerName: string;
+  agencyName: string;
+  loginUrl: string;
+}
+
+/**
+ * Builds an activation confirmation WhatsApp URL for newly approved resellers.
+ */
+export function buildResellerActivationWhatsAppUrl(params: WhatsAppResellerActivationParams): string {
+  const rawPhone = (params.phone || "").trim();
+  let cleanPhone = rawPhone.replace(/\D/g, "");
+  if (cleanPhone.startsWith("0")) {
+    cleanPhone = "62" + cleanPhone.slice(1);
+  }
+
+  const message = `Halo *${params.resellerName}* (*${params.agencyName}*), selamat! Pendaftaran akun Reseller Anda telah *disetujui & aktif*. Silakan login ke dashboard melalui tautan berikut: ${params.loginUrl}. Selamat berkarya dan sukses selalu!`;
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+}

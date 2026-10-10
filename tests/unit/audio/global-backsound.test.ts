@@ -109,7 +109,7 @@ describe("Global Backsound Feature", () => {
 
   it("updates audio settings via editor store patchDocumentAudio", () => {
     const initialDoc = createEmptyDocument();
-    const store = createEditorStore({ document: initialDoc });
+    const store = createEditorStore({ document: initialDoc, revision: 1 });
 
     store.getState().patchDocumentAudio({
       enabled: true,

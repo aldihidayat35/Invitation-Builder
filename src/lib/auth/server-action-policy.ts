@@ -56,6 +56,7 @@ const ownerAndClient = [
 
 export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActor[]>> = {
   loginAction: ["anonymous"],
+  registerResellerAction: ["anonymous"],
   submitCustomerOrderAction: ["anonymous"],
   submitPortalDecisionAction: ["anonymous"],
   addPortalGuestAction: ["anonymous"],

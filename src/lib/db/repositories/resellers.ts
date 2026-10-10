@@ -23,6 +23,7 @@ export interface CreateResellerInput {
   logoUrl?: string | null;
   customDomain?: string | null;
   performedBy?: string;
+  isActive?: boolean;
 }
 
 export interface CreateResellerClientInput {
@@ -94,6 +95,7 @@ export async function createResellerWithProfile(
   input: CreateResellerInput,
 ): Promise<{ user: User; profile: ResellerProfile; workspace: Workspace }> {
   return db.transaction(async (tx) => {
+    const isActive = input.isActive ?? true;
     const [user] = await tx
       .insert(users)
       .values({
@@ -101,6 +103,7 @@ export async function createResellerWithProfile(
         name: input.name.trim(),
         passwordHash: input.passwordHash ?? null,
         systemRole: "reseller",
+        status: isActive ? "active" : "disabled",
       })
       .returning();
     if (!user) throw new Error("createResellerWithProfile: failed to insert user");
@@ -133,6 +136,7 @@ export async function createResellerWithProfile(
         domainStatus: input.customDomain ? "pending" : "unconfigured",
         domainVerificationToken: input.customDomain ? randomBytes(18).toString("base64url") : null,
         tlsStatus: input.customDomain ? "pending" : "unconfigured",
+        isActive,
       })
       .returning();
     if (!profile) throw new Error("createResellerWithProfile: failed to insert profile");
