@@ -203,6 +203,7 @@ export function Artboard() {
       data-pan={panMode}
       data-testid="artboard"
       data-zoom={zoom}
+      data-mode={artboardMode}
       onDragOver={handleArtboardDragOver}
       onDrop={handleArtboardDrop}
     >

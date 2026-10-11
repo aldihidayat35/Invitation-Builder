@@ -126,4 +126,12 @@ describe("Artboard Grid / Wrap Mode", () => {
     fireEvent.click(addGridBtn);
     expect(store.getState().history.present.sections.length).toBe(initialCount + 1);
   });
+
+  it("sets data-mode='seamless' on artboard scroll container in seamless phone mode", () => {
+    const { store } = setup("seamless");
+    const artboardEl = screen.getByTestId("artboard");
+    expect(artboardEl).toHaveAttribute("data-mode", "seamless");
+    const innerContainer = artboardEl.querySelector("[data-mode]");
+    expect(innerContainer).toHaveAttribute("data-mode", "seamless");
+  });
 });
