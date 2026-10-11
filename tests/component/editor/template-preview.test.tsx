@@ -98,4 +98,31 @@ describe("Editor Header Real Preview Feature", () => {
     expect(scrollSpy).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
     scrollSpy.mockRestore();
   });
+
+  it("hides navbar by default and toggles visibility via floating trigger and close button", () => {
+    const rawDoc = fullDocument();
+    const doc = canonicalDocumentSchema.parse(rawDoc);
+
+    render(
+      <TemplateRealPreview
+        templateId="tmpl_romantic"
+        templateName="Rustic Floral Wedding"
+        initialDocument={doc}
+      />,
+    );
+
+    // Default: floating trigger visible
+    const openBtn = screen.getByTestId("preview-open-navbar-btn");
+    expect(openBtn).toBeInTheDocument();
+    expect(openBtn).toHaveTextContent("Kontrol Preview");
+
+    // Klik tombol trigger -> navbar terbuka, tombol tutup muncul
+    fireEvent.click(openBtn);
+    const closeBtn = screen.getByTestId("preview-close-navbar-btn");
+    expect(closeBtn).toBeInTheDocument();
+
+    // Klik tombol tutup -> navbar tertutup dan tombol open muncul kembali
+    fireEvent.click(closeBtn);
+    expect(screen.getByTestId("preview-open-navbar-btn")).toBeInTheDocument();
+  });
 });

@@ -143,9 +143,9 @@ export async function initUpload(
     throw new AssetRejectedError(parsed.error.issues.map((i) => i.message).join("; "));
   }
   const upload = parsed.data;
-  if (!isImageMime(upload.mimeType) && !isVideoMime(upload.mimeType)) {
+  if (!isImageMime(upload.mimeType) && !isVideoMime(upload.mimeType) && !isAudioMime(upload.mimeType)) {
     throw new AssetRejectedError(
-      "Hanya gambar (JPEG, PNG, WebP, AVIF, GIF) dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.",
+      "Hanya gambar (JPEG, PNG, WebP, AVIF, GIF), audio (MP3, M4A, AAC, OGG, WAV, WebM, FLAC), dan video (MP4, WebM, OGG, MOV) yang didukung saat ini.",
     );
   }
 
@@ -252,9 +252,15 @@ export async function finalizeUpload(
     if (!sniffed) return fail(db, storage, row, "Berkas bukan audio yang valid.");
     const match =
       sniffed.mime === row.mimeType ||
-      (row.mimeType === "audio/mpeg" && sniffed.mime === "audio/mpeg") ||
-      (row.mimeType === "audio/mp4" && sniffed.mime === "audio/mp4") ||
-      (row.mimeType === "audio/ogg" && sniffed.mime === "audio/ogg");
+      ((row.mimeType === "audio/mpeg" || row.mimeType === "audio/mp3") &&
+        (sniffed.mime === "audio/mpeg" || sniffed.mime === "audio/mp3")) ||
+      ((row.mimeType === "audio/mp4" || row.mimeType === "audio/x-m4a" || row.mimeType === "audio/aac") &&
+        (sniffed.mime === "audio/mp4" || sniffed.mime === "audio/aac")) ||
+      ((row.mimeType === "audio/wav" || row.mimeType === "audio/x-wav") &&
+        (sniffed.mime === "audio/wav" || sniffed.mime === "audio/x-wav")) ||
+      (row.mimeType === "audio/ogg" && sniffed.mime === "audio/ogg") ||
+      (row.mimeType === "audio/webm" && sniffed.mime === "audio/webm") ||
+      (row.mimeType === "audio/flac" && sniffed.mime === "audio/flac");
     if (!match) {
       return fail(db, storage, row, "Isi berkas tidak sesuai dengan tipe yang dinyatakan.");
     }
@@ -338,7 +344,7 @@ export async function getDeliverableAsset(
   if (!idSchema.safeParse(assetId).success) return null;
   const row = await findAssetById(db, assetId);
   if (!row || row.status !== "ready") return null;
-  if (!isImageMime(row.mimeType) && !isVideoMime(row.mimeType)) return null;
+  if (!isImageMime(row.mimeType) && !isVideoMime(row.mimeType) && !isAudioMime(row.mimeType)) return null;
   const maxBytes = maxBytesForMime(row.mimeType as AllowedMimeType);
   const bytes = await storage.read(row.storageKey, maxBytes);
   if (!bytes) return null;

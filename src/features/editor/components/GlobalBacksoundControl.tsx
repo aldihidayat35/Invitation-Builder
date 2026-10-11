@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { DocumentAudio, DocumentAudioPosition } from "@/lib/schema";
+import type { DocumentAudioPosition } from "@/lib/schema";
 import { BACKSOUND_PRESETS, type BacksoundPreset } from "@/features/audio";
 import { selectDoc, useEditor, useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
-import { FieldRow, SelectField, TextField } from "./fields";
-import { IconSparkle } from "./icons";
-import styles from "./editor.module.css";
+import { SelectField, TextField } from "./fields";
+import editorStyles from "./editor.module.css";
+import soundStyles from "./GlobalBacksoundControl.module.css";
 
 function MusicNoteIcon({ size = 14 }: { size?: number }) {
   return (
@@ -77,6 +77,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [previewingPresetSrc, setPreviewingPresetSrc] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -89,7 +90,6 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
 
   // Temukan apakah saat ini menggunakan preset tertentu
   const matchedPreset = BACKSOUND_PRESETS.find((p) => p.src === currentSrc);
-  const selectedPresetId = matchedPreset ? matchedPreset.id : currentSrc ? "custom" : "gending-pengantin";
 
   // Stop audio preview jika src berubah atau unmount
   useEffect(() => {
@@ -100,47 +100,58 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
     };
   }, [currentSrc]);
 
-  const handleTogglePreview = () => {
-    if (!currentSrc) return;
+  const handleTogglePreview = (targetSrc?: string) => {
+    const srcToPlay = targetSrc || currentSrc;
+    if (!srcToPlay) return;
+
     if (!audioRef.current) {
-      audioRef.current = new Audio(currentSrc);
-      audioRef.current.onended = () => setIsPlayingPreview(false);
-      audioRef.current.onerror = () => setIsPlayingPreview(false);
-    } else if (audioRef.current.src !== currentSrc) {
+      audioRef.current = new Audio(srcToPlay);
+      audioRef.current.onended = () => {
+        setIsPlayingPreview(false);
+        setPreviewingPresetSrc(null);
+      };
+      audioRef.current.onerror = () => {
+        setIsPlayingPreview(false);
+        setPreviewingPresetSrc(null);
+      };
+    } else if (audioRef.current.src !== srcToPlay && !audioRef.current.src.endsWith(srcToPlay)) {
       audioRef.current.pause();
-      audioRef.current = new Audio(currentSrc);
-      audioRef.current.onended = () => setIsPlayingPreview(false);
-      audioRef.current.onerror = () => setIsPlayingPreview(false);
+      audioRef.current = new Audio(srcToPlay);
+      audioRef.current.onended = () => {
+        setIsPlayingPreview(false);
+        setPreviewingPresetSrc(null);
+      };
+      audioRef.current.onerror = () => {
+        setIsPlayingPreview(false);
+        setPreviewingPresetSrc(null);
+      };
     }
 
-    if (isPlayingPreview) {
+    if (isPlayingPreview && previewingPresetSrc === srcToPlay) {
       audioRef.current.pause();
       setIsPlayingPreview(false);
+      setPreviewingPresetSrc(null);
     } else {
       audioRef.current
         .play()
-        .then(() => setIsPlayingPreview(true))
-        .catch(() => setIsPlayingPreview(false));
+        .then(() => {
+          setIsPlayingPreview(true);
+          setPreviewingPresetSrc(srcToPlay);
+        })
+        .catch(() => {
+          setIsPlayingPreview(false);
+          setPreviewingPresetSrc(null);
+        });
     }
   };
 
-  const handleSelectPreset = (presetId: string) => {
-    if (presetId === "custom") {
-      store.getState().patchDocumentAudio({
-        enabled: true,
-        src: currentSrc || "https://",
-        title: currentTitle || "Musik Kustom",
-      });
-      return;
-    }
-    const preset = BACKSOUND_PRESETS.find((p) => p.id === presetId);
-    if (preset) {
-      store.getState().patchDocumentAudio({
-        enabled: true,
-        src: preset.src,
-        title: preset.name,
-      });
-    }
+  const handleSelectPreset = (preset: BacksoundPreset) => {
+    if (readOnly) return;
+    store.getState().patchDocumentAudio({
+      enabled: true,
+      src: preset.src,
+      title: `${preset.name} - ${preset.artist}`,
+    });
   };
 
   const handleUploadClick = () => {
@@ -189,15 +200,27 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
     }
   };
 
-  const PRESET_OPTIONS = [
-    ...BACKSOUND_PRESETS.map((p) => ({ value: p.id, label: `🎵 ${p.name}` })),
-    { value: "custom", label: "⚙️ Kustom (Input URL MP3 Sendiri)" },
-  ];
+  const getCategoryBadgeClass = (category: BacksoundPreset["category"]) => {
+    switch (category) {
+      case "klasik":
+        return soundStyles.badgeKlasik;
+      case "romantis":
+        return soundStyles.badgeRomantis;
+      case "akustik":
+        return soundStyles.badgeAkustik;
+      case "tradisional":
+        return soundStyles.badgeTradisional;
+      case "alam":
+        return soundStyles.badgeAlam;
+      default:
+        return soundStyles.badgeRomantis;
+    }
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div className={soundStyles.container}>
       {/* Switch Utama Aktifkan Backsound */}
-      <label className={styles.checkRow} style={{ margin: 0, fontWeight: 600 }}>
+      <label className={editorStyles.checkRow} style={{ margin: 0, fontWeight: 600 }}>
         <input
           id="insp-doc-audio-toggle"
           type="checkbox"
@@ -210,7 +233,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
               store.getState().patchDocumentAudio({
                 enabled: true,
                 src: defaultPreset.src,
-                title: defaultPreset.name,
+                title: `${defaultPreset.name} - ${defaultPreset.artist}`,
                 position: "bottom-right",
                 loop: true,
                 autoplayOnOpen: true,
@@ -225,7 +248,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
         <span>Aktifkan Musik Latar Global (Backsound)</span>
       </label>
 
-      <p className={styles.muted} style={{ fontSize: "0.78rem", margin: "0 0 4px" }}>
+      <p className={editorStyles.muted} style={{ fontSize: "0.78rem", margin: "0 0 4px" }}>
         Musik berputar mengiringi tamu di seluruh section undangan. Jika ada Cover Opening, musik otomatis menyala saat tombol Buka Undangan ditekan.
       </p>
 
@@ -234,36 +257,102 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "12px",
             padding: "10px",
             background: "rgba(255, 255, 255, 0.03)",
             borderRadius: "8px",
             border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
-          {/* Pilihan Koleksi Preset */}
-          <SelectField
-            id="insp-audio-preset"
-            label="Koleksi Lagu Romantis"
-            value={selectedPresetId}
-            options={PRESET_OPTIONS}
-            disabled={readOnly}
-            onChange={handleSelectPreset}
-          />
+          {/* Koleksi Kartu Musik Romantis */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-secondary, #e5e5e5)",
+                }}
+              >
+                Pilih Koleksi Lagu Romantis
+              </label>
+              <span style={{ fontSize: "0.7rem", color: "#888" }}>
+                {BACKSOUND_PRESETS.length} Lagu Tersedia
+              </span>
+            </div>
 
-          {/* Input File Tersembunyi */}
+            <div className={soundStyles.cardGrid}>
+              {BACKSOUND_PRESETS.map((preset) => {
+                const isSelected = currentSrc === preset.src;
+                const isThisPlaying = isPlayingPreview && previewingPresetSrc === preset.src;
+
+                return (
+                  <div
+                    key={preset.id}
+                    className={`${soundStyles.musicCard} ${isSelected ? soundStyles.active : ""}`}
+                    onClick={() => handleSelectPreset(preset)}
+                    data-testid={`music-preset-card-${preset.id}`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectPreset(preset);
+                      }
+                    }}
+                  >
+                    <div className={soundStyles.cardHeader}>
+                      <div className={soundStyles.cardBadges}>
+                        <span
+                          className={`${soundStyles.categoryBadge} ${getCategoryBadgeClass(preset.category)}`}
+                        >
+                          {preset.category}
+                        </span>
+                        {isSelected && (
+                          <span className={soundStyles.selectedBadge}>✓ Digunakan</span>
+                        )}
+                      </div>
+
+                      {/* Tombol Mini Play / Pause Preview */}
+                      <button
+                        type="button"
+                        className={`${soundStyles.playToggleBtn} ${isThisPlaying ? soundStyles.playing : ""}`}
+                        title={isThisPlaying ? "Jeda Dengar" : "Dengarkan Pratinjau"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTogglePreview(preset.src);
+                        }}
+                      >
+                        {isThisPlaying ? <PauseIcon size={10} /> : <PlayIcon size={10} />}
+                      </button>
+                    </div>
+
+                    <div className={soundStyles.cardBody}>
+                      <span className={soundStyles.cardTitle}>{preset.name}</span>
+                      <span className={soundStyles.cardArtist}>by {preset.artist}</span>
+                      {preset.description && (
+                        <span className={soundStyles.cardDesc}>{preset.description}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Input File Tersembunyi - Mendukung semua format audio */}
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,.mp3,.ogg,.m4a"
+            accept="audio/*,.mp3,.ogg,.wav,.m4a,.aac,.weba,.flac"
             style={{ display: "none" }}
             disabled={readOnly || isUploading}
             onChange={handleFileChange}
             data-testid="audio-file-input"
           />
 
-          {/* Tombol Unggah File Musik */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {/* Tombol Unggah File Musik Sendiri */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
             <label
               style={{
                 fontSize: "0.8rem",
@@ -275,7 +364,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
             </label>
             <button
               type="button"
-              className={styles.ghostButton}
+              className={editorStyles.ghostButton}
               disabled={readOnly || isUploading}
               onClick={handleUploadClick}
               style={{
@@ -284,7 +373,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
                 justifyContent: "center",
                 gap: "8px",
                 width: "100%",
-                padding: "8px 12px",
+                padding: "9px 12px",
                 borderRadius: "6px",
                 background: isUploading
                   ? "rgba(255, 255, 255, 0.05)"
@@ -303,7 +392,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
               <span>
                 {isUploading
                   ? "Sedang Mengunggah Musik..."
-                  : "📁 Unggah File MP3 / OGG / M4A"}
+                  : "📁 Unggah File MP3 / OGG / WAV / M4A / AAC"}
               </span>
             </button>
             {uploadError && (
@@ -311,8 +400,8 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
                 ⚠️ {uploadError}
               </span>
             )}
-            <span className={styles.muted} style={{ fontSize: "0.72rem" }}>
-              Maksimal 15 MB dari komputer atau HP Anda.
+            <span className={editorStyles.muted} style={{ fontSize: "0.72rem" }}>
+              Mendukung MP3, WAV, M4A/AAC, OGG, WebM, FLAC (maks. 15 MB).
             </span>
           </div>
 
@@ -339,7 +428,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
                 letterSpacing: "0.05em",
               }}
             >
-              atau input link URL
+              atau link URL eksternal
             </span>
             <div
               style={{
@@ -353,7 +442,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
           {/* Input URL Audio */}
           <TextField
             id="insp-audio-src"
-            label="URL File Audio (MP3 / OGG)"
+            label="URL File Audio (MP3 / OGG / WAV)"
             value={currentSrc}
             disabled={readOnly}
             onCommit={(src) => store.getState().patchDocumentAudio({ src: src.trim() })}
@@ -362,18 +451,18 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
           {/* Input Judul Lagu */}
           <TextField
             id="insp-audio-title"
-            label="Judul Musik / Artis"
+            label="Judul Musik / Artis Ditampilkan"
             value={currentTitle}
             disabled={readOnly}
             onCommit={(title) => store.getState().patchDocumentAudio({ title: title.trim() })}
           />
 
-          {/* Tombol Tes Dengar Audio di Editor */}
+          {/* Tombol Tes Dengar Audio Aktif di Editor */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}>
             <button
               type="button"
-              className={styles.ghostButton}
-              onClick={handleTogglePreview}
+              className={editorStyles.ghostButton}
+              onClick={() => handleTogglePreview()}
               disabled={!currentSrc}
               style={{
                 display: "inline-flex",
@@ -382,23 +471,47 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
                 fontSize: "0.8rem",
                 padding: "6px 12px",
                 borderRadius: "6px",
-                background: isPlayingPreview ? "rgba(212, 175, 55, 0.18)" : undefined,
-                color: isPlayingPreview ? "#d4af37" : undefined,
-                borderColor: isPlayingPreview ? "rgba(212, 175, 55, 0.4)" : undefined,
+                background:
+                  isPlayingPreview && previewingPresetSrc === currentSrc
+                    ? "rgba(212, 175, 55, 0.18)"
+                    : undefined,
+                color:
+                  isPlayingPreview && previewingPresetSrc === currentSrc ? "#d4af37" : undefined,
+                borderColor:
+                  isPlayingPreview && previewingPresetSrc === currentSrc
+                    ? "rgba(212, 175, 55, 0.4)"
+                    : undefined,
               }}
               data-testid="audio-preview-toggle-btn"
             >
-              {isPlayingPreview ? <PauseIcon /> : <PlayIcon />}
-              <span>{isPlayingPreview ? "Jeda Dengar" : "▶ Tes Dengar Audio"}</span>
+              {isPlayingPreview && previewingPresetSrc === currentSrc ? (
+                <PauseIcon />
+              ) : (
+                <PlayIcon />
+              )}
+              <span>
+                {isPlayingPreview && previewingPresetSrc === currentSrc
+                  ? "Jeda Dengar"
+                  : "▶ Tes Dengar Musik Aktif"}
+              </span>
             </button>
-            {isPlayingPreview && (
-              <span className={styles.muted} style={{ fontSize: "0.74rem", color: "#d4af37" }}>
+            {isPlayingPreview && previewingPresetSrc === currentSrc && (
+              <span
+                className={editorStyles.muted}
+                style={{ fontSize: "0.74rem", color: "#d4af37" }}
+              >
                 Sedang memutar...
               </span>
             )}
           </div>
 
-          <hr style={{ border: "none", borderTop: "1px solid rgba(255, 255, 255, 0.06)", margin: "4px 0" }} />
+          <hr
+            style={{
+              border: "none",
+              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+              margin: "4px 0",
+            }}
+          />
 
           {/* Posisi Floating Disc di Layar */}
           <SelectField
@@ -413,7 +526,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
           />
 
           {/* Opsi Putar Ulang & Autoplay saat buka */}
-          <label className={styles.checkRow} style={{ margin: "2px 0 0" }}>
+          <label className={editorStyles.checkRow} style={{ margin: "2px 0 0" }}>
             <input
               type="checkbox"
               checked={loop}
@@ -423,7 +536,7 @@ export function GlobalBacksoundControl({ readOnly }: GlobalBacksoundControlProps
             <span style={{ fontSize: "0.8rem" }}>Putar ulang terus-menerus (Looping)</span>
           </label>
 
-          <label className={styles.checkRow} style={{ margin: 0 }}>
+          <label className={editorStyles.checkRow} style={{ margin: 0 }}>
             <input
               type="checkbox"
               checked={autoplayOnOpen}

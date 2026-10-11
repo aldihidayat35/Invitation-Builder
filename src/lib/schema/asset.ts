@@ -13,7 +13,18 @@ export const IMAGE_MIME_TYPES = [
   "image/avif",
   "image/gif",
 ] as const;
-export const AUDIO_MIME_TYPES = ["audio/mpeg", "audio/mp4", "audio/ogg"] as const;
+export const AUDIO_MIME_TYPES = [
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/aac",
+  "audio/ogg",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/webm",
+  "audio/flac",
+] as const;
 export const VIDEO_MIME_TYPES = [
   "video/mp4",
   "video/webm",
@@ -44,8 +55,15 @@ export const EXTENSIONS_BY_MIME: Readonly<Record<AllowedMimeType, readonly strin
   "image/avif": ["avif"],
   "image/gif": ["gif"],
   "audio/mpeg": ["mp3"],
+  "audio/mp3": ["mp3"],
   "audio/mp4": ["m4a", "mp4"],
-  "audio/ogg": ["ogg", "oga"],
+  "audio/x-m4a": ["m4a"],
+  "audio/aac": ["aac"],
+  "audio/ogg": ["ogg", "oga", "opus"],
+  "audio/wav": ["wav"],
+  "audio/x-wav": ["wav"],
+  "audio/webm": ["webm", "weba"],
+  "audio/flac": ["flac"],
   "video/mp4": ["mp4"],
   "video/webm": ["webm"],
   "video/ogg": ["ogv", "ogg"],

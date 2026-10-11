@@ -4,49 +4,48 @@ export interface BacksoundPreset {
   readonly category: "tradisional" | "romantis" | "klasik" | "akustik" | "alam";
   readonly src: string;
   readonly artist: string;
+  readonly description?: string;
 }
 
 export const BACKSOUND_PRESETS: readonly BacksoundPreset[] = [
   {
-    id: "gending-pengantin",
-    name: "Gending Pengantin - Tradisional Anggun",
-    category: "tradisional",
-    src: "https://actions.google.com/sounds/v1/ambiences/wind_chimes.ogg",
-    artist: "Gamelan & Laras Pelog",
-  },
-  {
-    id: "romantic-piano",
-    name: "A Thousand Years - Romantic Piano Romance",
-    category: "romantis",
-    src: "https://actions.google.com/sounds/v1/ambiences/wind_chimes.ogg",
-    artist: "Acoustic Piano & Cello",
-  },
-  {
     id: "canon-in-d",
-    name: "Canon in D - Romantic Strings & Harmony",
+    name: "Canon in D Major",
     category: "klasik",
-    src: "https://actions.google.com/sounds/v1/ambiences/wind_chimes.ogg",
+    src: "/audio/canon-in-d.mp3",
     artist: "Classical Wedding Orchestra",
+    description: "Alunan string & harmoni orkestra klasik abadi untuk momen sakral pernikahan.",
   },
   {
-    id: "akad-doa-restu",
-    name: "Akad & Doa Restu - Akustik Hangat",
+    id: "there-is-romance",
+    name: "There is Romance",
+    category: "romantis",
+    src: "/audio/there-is-romance.mp3",
+    artist: "Kevin MacLeod",
+    description: "Melodi orkestra cinta yang hangat, agung, dan menyentuh hati para tamu.",
+  },
+  {
+    id: "heartwarming",
+    name: "Heartwarming Piano",
     category: "akustik",
-    src: "https://actions.google.com/sounds/v1/ambiences/wind_chimes.ogg",
-    artist: "Warm Acoustic Guitar",
+    src: "/audio/heartwarming.mp3",
+    artist: "Acoustic Piano & Strings",
+    description: "Petikan piano solo syahdu yang mendalam untuk suasana haru dan romantis.",
   },
   {
-    id: "gentle-stream-nature",
-    name: "Alunan Alam & Gemericik Air Romantis",
-    category: "alam",
-    src: "https://actions.google.com/sounds/v1/water/gentle_stream_flowing.ogg",
-    artist: "Nature Ambience",
+    id: "almost-bliss",
+    name: "Almost Bliss",
+    category: "romantis",
+    src: "/audio/almost-bliss.mp3",
+    artist: "Cinematic Harmony",
+    description: "Nuansa sinematik lembut penuh kedamaian yang mempercantik setiap section undangan.",
   },
   {
-    id: "windchimes-peaceful",
-    name: "Lonceng Angin & Suasana Damai",
-    category: "alam",
-    src: "https://actions.google.com/sounds/v1/ambiences/wind_chimes.ogg",
-    artist: "Gentle Windchimes",
+    id: "eastern-thought",
+    name: "Eastern Harmony Tradisional",
+    category: "tradisional",
+    src: "/audio/eastern-thought.mp3",
+    artist: "Gamelan & Laras Nusantara",
+    description: "Sentuhan instrumen gamelan dan nuansa tradisional yang anggun dan berwibawa.",
   },
 ];

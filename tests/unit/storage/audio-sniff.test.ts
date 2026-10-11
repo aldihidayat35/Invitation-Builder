@@ -48,6 +48,43 @@ describe("Server-Side Audio Sniffing", () => {
     expect(result?.mime).toBe("audio/mp4");
   });
 
+  it("detects WAV audio files with RIFF/WAVE header", () => {
+    const header = new Uint8Array(12);
+    header[0] = "R".charCodeAt(0);
+    header[1] = "I".charCodeAt(0);
+    header[2] = "F".charCodeAt(0);
+    header[3] = "F".charCodeAt(0);
+    header[8] = "W".charCodeAt(0);
+    header[9] = "A".charCodeAt(0);
+    header[10] = "V".charCodeAt(0);
+    header[11] = "E".charCodeAt(0);
+
+    const result = sniffAudio(header);
+    expect(result).not.toBeNull();
+    expect(result?.mime).toBe("audio/wav");
+  });
+
+  it("detects FLAC audio files with 'fLaC' marker", () => {
+    const header = new Uint8Array([0x66, 0x4c, 0x61, 0x43, 0x00, 0x00]);
+    const result = sniffAudio(header);
+    expect(result).not.toBeNull();
+    expect(result?.mime).toBe("audio/flac");
+  });
+
+  it("detects AAC audio files with ADTS sync word", () => {
+    const header = new Uint8Array([0xff, 0xf1, 0x50, 0x80]);
+    const result = sniffAudio(header);
+    expect(result).not.toBeNull();
+    expect(result?.mime).toBe("audio/aac");
+  });
+
+  it("detects WebM audio files with EBML header", () => {
+    const header = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42]);
+    const result = sniffAudio(header);
+    expect(result).not.toBeNull();
+    expect(result?.mime).toBe("audio/webm");
+  });
+
   it("rejects non-audio / garbage bytes", () => {
     const garbage = new Uint8Array([0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
     const result = sniffAudio(garbage);

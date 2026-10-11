@@ -7,10 +7,22 @@ export async function uploadAssetFile(
   file: File,
 ): Promise<{ ok: true; asset: AssetSummary } | { ok: false; error: string }> {
   const processedFile = await optimizeImageBeforeUpload(file);
+  const ext = processedFile.name.split(".").pop()?.toLowerCase() ?? "";
+
+  let resolvedMime = processedFile.type;
+  if (!resolvedMime || resolvedMime === "application/octet-stream") {
+    if (ext === "mp3") resolvedMime = "audio/mpeg";
+    else if (ext === "m4a") resolvedMime = "audio/mp4";
+    else if (ext === "aac") resolvedMime = "audio/aac";
+    else if (ext === "ogg" || ext === "oga") resolvedMime = "audio/ogg";
+    else if (ext === "wav") resolvedMime = "audio/wav";
+    else if (ext === "weba") resolvedMime = "audio/webm";
+    else if (ext === "flac") resolvedMime = "audio/flac";
+  }
 
   const init = await initUploadAction(workspaceId, {
     filename: processedFile.name,
-    mimeType: processedFile.type,
+    mimeType: resolvedMime,
     bytes: processedFile.size,
   });
   if (!init.ok) return init;
