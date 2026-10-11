@@ -154,6 +154,7 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  box-sizing: border-box;
   text-align: left;
   font-size: 14px;
 }
@@ -162,6 +163,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .formField input,
@@ -173,19 +176,29 @@
   background: transparent;
   color: inherit;
   min-height: 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form .button {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .choices {
   display: flex;
-  gap: 16px;
+  justify-content: center;
+  gap: 24px;
   border: 0;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
 .choices legend {
   padding: 0;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .formError {
@@ -499,10 +512,16 @@
 .mapDetails {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch;
+  gap: 8px;
   padding-top: 10px;
   width: 100%;
+  box-sizing: border-box;
+}
+
+.mapDetails .button {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .buttonIcon {

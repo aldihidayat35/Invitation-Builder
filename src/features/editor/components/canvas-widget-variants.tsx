@@ -548,25 +548,26 @@ function MapVisual({ element, tokens }: { element: WidgetElement; tokens?: Theme
       )}
       <Group
         clipFunc={(ctx: { rect(x: number, y: number, w: number, h: number): void }) =>
-          ctx.rect(8, 8, w - 16, h - 72)
+          ctx.rect(8, 8, w - 16, Math.max(60, h - 86))
         }
       >
-        <MapSurface x={8} y={8} width={w - 16} height={h - 72} />
+        <MapSurface x={8} y={8} width={w - 16} height={Math.max(60, h - 86)} />
       </Group>
       <Text
         x={16}
-        y={h - 55}
-        width={w * 0.48}
+        y={h - 74}
+        width={w - 32}
         text={label}
         fontSize={13}
         fontStyle="bold"
         fill={color}
+        align="center"
         ellipsis
       />
       <MapButton
-        x={w - 142}
-        y={h - 61}
-        width={126}
+        x={16}
+        y={h - 48}
+        width={w - 32}
         color={color}
         surface={surface}
         label={button}
@@ -905,7 +906,7 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
             fontStyle="bold"
             fill={color}
             opacity={0.68}
-            align={isHeritage ? "center" : "left"}
+            align={isEditorial ? "left" : "center"}
           />
           <Text
             x={16}
@@ -915,7 +916,7 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
             fontSize={15}
             fontStyle="bold"
             fill={color}
-            align={isHeritage ? "center" : "left"}
+            align={isEditorial ? "left" : "center"}
             ellipsis
           />
           {isHeritage && (

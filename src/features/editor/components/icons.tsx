@@ -670,5 +670,14 @@ export const IconDuplicateMirror = (p: IconProps) => (
   </Svg>
 );
 
+export const IconAlignCenterHorizontal = (p: IconProps) => (
+  <Svg {...p}>
+    <line x1="12" y1="2" x2="12" y2="22" strokeDasharray="3 3" />
+    <rect x="6" y="5" width="12" height="5" rx="1.5" />
+    <rect x="4" y="14" width="16" height="5" rx="1.5" />
+  </Svg>
+);
+
+
 
 

@@ -18,7 +18,7 @@ export interface RendererViewportProps {
 export function RendererViewport({ runtimeMode, children }: RendererViewportProps) {
   const vars = {
     "--dib-base-width": `${CANONICAL_BASE_WIDTH}px`,
-    "--dib-max-width": `${TARGET_VIEWPORT_MAX}px`,
+    "--dib-max-width": `${CANONICAL_BASE_WIDTH}px`,
   } as CSSProperties;
 
   return (

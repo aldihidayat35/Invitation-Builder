@@ -46,6 +46,7 @@ import {
   IconFlipH,
   IconFlipV,
   IconDuplicateMirror,
+  IconAlignCenterHorizontal,
 } from "./icons";
 import { ImagePanel } from "./ImagePanel";
 import { PanelSection } from "./PanelSection";
@@ -1170,6 +1171,29 @@ function ElementPanel({
                 disabled={disabled}
                 onCommit={(rotation) => act().patchFrame(id, { rotation })}
               />
+            </div>
+            <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+              <button
+                type="button"
+                className={styles.smallButton}
+                style={{
+                  width: "100%",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "6px 10px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                }}
+                disabled={disabled}
+                onClick={() => act().centerSelectedHorizontally()}
+                title="Ratakan objek ini tepat di tengah horizontal kanvas (195px)"
+                data-testid="btn-align-center-h"
+              >
+                <IconAlignCenterHorizontal size={14} />
+                <span>Ratakan ke Tengah Kanvas</span>
+              </button>
             </div>
           </PanelSection>
         );

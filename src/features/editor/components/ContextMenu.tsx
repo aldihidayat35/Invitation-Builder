@@ -22,6 +22,7 @@ import {
   IconFlipH,
   IconFlipV,
   IconDuplicateMirror,
+  IconAlignCenterHorizontal,
 } from "./icons";
 import { findElement, type ReorderMode } from "../core/ops";
 import styles from "./editor.module.css";
@@ -96,7 +97,7 @@ export function ContextMenu({
 
   // Viewport bounds clamping
   const menuWidth = 220;
-  const menuHeight = element ? (hasGroup ? 490 : 420) : 180;
+  const menuHeight = element ? (hasGroup ? 565 : 495) : 180;
   const left = typeof window !== "undefined" ? Math.min(x, window.innerWidth - menuWidth - 8) : x;
   const top = typeof window !== "undefined" ? Math.min(y, window.innerHeight - menuHeight - 8) : y;
 
@@ -278,6 +279,19 @@ export function ContextMenu({
               </button>
             </>
           )}
+
+          <button
+            type="button"
+            className={styles.contextMenuItem}
+            disabled={readOnly || isLocked}
+            data-testid="ctx-align-center-h"
+            onClick={() => handleAction(() => store.getState().centerSelectedHorizontally())}
+          >
+            <div className={styles.contextMenuItemLeft}>
+              <IconAlignCenterHorizontal size={15} />
+              <span>Ratakan ke Tengah Kanvas</span>
+            </div>
+          </button>
 
           <div className={styles.contextMenuDivider} />
 

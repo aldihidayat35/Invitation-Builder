@@ -28,6 +28,8 @@ import {
 } from "@/lib/schema";
 import { MIN_ELEMENT_SIZE, normalizeRotation, round2 } from "./geometry";
 
+export { CANONICAL_BASE_WIDTH } from "@/lib/schema";
+
 export type ElementKind = "text" | "rectangle" | "circle" | "line" | "decoration";
 export const ELEMENT_KINDS: readonly ElementKind[] = [
   "text",
@@ -489,6 +491,25 @@ export function updateElementFrame(
   return setFrames(doc, {
     [elementId]: { ...(findElement(doc, elementId)?.element.frame as Frame), ...patch },
   });
+}
+
+/**
+ * Snaps/aligns elements horizontally to the exact center of the canonical canvas (CANONICAL_BASE_WIDTH / 2 = 195px).
+ * New frame x = round2((CANONICAL_BASE_WIDTH - frame.w) / 2).
+ */
+export function centerElementsHorizontally(
+  doc: CanonicalDocument,
+  elementIds: readonly string[],
+): CanonicalDocument {
+  const frames: Record<string, Frame> = {};
+  for (const id of elementIds) {
+    const found = findElement(doc, id);
+    if (!found || found.element.locked) continue;
+    const { frame } = found.element;
+    const newX = round2((CANONICAL_BASE_WIDTH - frame.w) / 2);
+    frames[id] = { ...frame, x: newX };
+  }
+  return setFrames(doc, frames);
 }
 
 function sanitizeFrame(frame: Frame): Frame | null {

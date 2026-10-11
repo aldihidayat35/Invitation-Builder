@@ -190,7 +190,7 @@
 
 .deviceShell {
   width: 100%;
-  max-width: 430px;
+  max-width: 390px;
   height: min(844px, calc(100vh - 120px));
   --dib-screen-height: min(844px, calc(100vh - 120px));
   background: transparent;

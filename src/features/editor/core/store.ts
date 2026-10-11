@@ -30,6 +30,7 @@ import {
   addSection as addSectionOp,
   addVariable as addVariableOp,
   bindTextSegmentToVariable as bindTextSegmentOp,
+  centerElementsHorizontally,
   createElement,
   createImageElement,
   createWidgetElement,
@@ -236,6 +237,7 @@ export interface EditorActions {
   /** Commit the final frames of a finished pointer gesture (one history entry). */
   commitFrames(frames: Readonly<Record<string, Frame>>): void;
   patchFrame(id: string, patch: Partial<Frame>): void;
+  centerSelectedHorizontally(): void;
   patchStyle(ids: readonly string[], patch: Record<string, unknown>): void;
   patchElement(id: string, fn: (element: Element) => Element, coalesceKey?: string): void;
   renameElement(id: string, name: string): void;
@@ -788,6 +790,13 @@ export function createEditorStore(init: EditorInit): EditorStore {
       patchFrame(id, patch) {
         edit((doc) => updateElementFrame(doc, id, patch), {
           coalesceKey: `frame:${id}:${Object.keys(patch).join(",")}`,
+        });
+      },
+      centerSelectedHorizontally() {
+        const ids = get().selectedIds;
+        if (ids.length === 0) return;
+        edit((doc) => centerElementsHorizontally(doc, ids), {
+          coalesceKey: `center-h:${ids.join(",")}`,
         });
       },
       patchStyle(ids, patch) {
