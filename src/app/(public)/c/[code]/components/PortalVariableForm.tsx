@@ -96,7 +96,9 @@ export function PortalVariableForm({
   }, []);
 
   const handleChange = (key: string, val: string) => {
-    setValues((prev) => ({ ...prev, [key]: val }));
+    const field = groups.flatMap((g) => g.fields).find((f) => f.key === key);
+    const finalVal = field?.maxLength ? val.slice(0, field.maxLength) : val;
+    setValues((prev) => ({ ...prev, [key]: finalVal }));
     triggerDebouncedSave();
   };
 
@@ -204,6 +206,7 @@ export function PortalVariableForm({
                           id={fieldId}
                           name={field.key}
                           rows={3}
+                          maxLength={field.maxLength}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className={`${styles.textarea} ${err ? styles.inputError : ""}`}
@@ -239,6 +242,7 @@ export function PortalVariableForm({
                                     : "text"
                           }
                           name={field.key}
+                          maxLength={field.maxLength}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className={`${styles.input} ${err ? styles.inputError : ""}`}
@@ -250,6 +254,17 @@ export function PortalVariableForm({
                                 : `Masukkan ${field.label.toLowerCase()}…`
                           }
                         />
+                      )}
+
+                      {field.maxLength !== undefined && (
+                        <div className={styles.charCountRow}>
+                          <span className={styles.charCountText}>
+                            {val.length} / {field.maxLength} karakter
+                          </span>
+                          {val.length >= field.maxLength && (
+                            <span className={styles.charLimitTag}>Batas tercapai</span>
+                          )}
+                        </div>
                       )}
 
                       {err && <span className={styles.varErrorText}>⚠️ {err}</span>}

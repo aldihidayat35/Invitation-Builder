@@ -102,12 +102,14 @@ describe("VariablesCatalogPanel & Inspector Variables Tab", () => {
     const addBrideBtn = screen.getByTestId("add-preset-couple.bride.nickname");
     fireEvent.click(addBrideBtn);
 
-    // Verify it is added to store
+    // Verify it is added to store with preset maxLength
     const vars = store.getState().history.present.variables;
-    expect(vars.some((v) => v.key === "couple.bride.nickname")).toBe(true);
+    const brideVar = vars.find((v) => v.key === "couple.bride.nickname");
+    expect(brideVar).toBeDefined();
+    expect(brideVar?.type === "text" && brideVar.maxLength).toBe(30);
   });
 
-  it("allows creating a custom variable with auto-generated key", () => {
+  it("allows creating a custom variable with auto-generated key and character limit", () => {
     const store = createEditorStore({ document: createTestDoc(), revision: 1 });
 
     render(
@@ -123,21 +125,25 @@ describe("VariablesCatalogPanel & Inspector Variables Tab", () => {
     fireEvent.click(screen.getByTestId("open-custom-modal-btn"));
     expect(screen.getByText("Buat Variabel Kustom Baru")).toBeDefined();
 
-    // Fill label and default value
+    // Fill label, default value, and maxLength
     const labelInput = screen.getByTestId("custom-var-label-input");
     fireEvent.change(labelInput, { target: { value: "Nomor Meja Tamu" } });
 
     const defaultInput = screen.getByTestId("custom-var-default-input");
     fireEvent.change(defaultInput, { target: { value: "Meja VIP 01" } });
 
+    const maxLenInput = screen.getByTestId("custom-var-maxlength-input");
+    fireEvent.change(maxLenInput, { target: { value: "15" } });
+
     // Submit
     fireEvent.click(screen.getByTestId("submit-custom-var-btn"));
 
-    // Verify variable created with slugified key custom.nomorMejaTamu
+    // Verify variable created with slugified key custom.nomorMejaTamu and maxLength
     const vars = store.getState().history.present.variables;
     const created = vars.find((v) => v.key === "custom.nomorMejaTamu");
     expect(created).toBeDefined();
     expect(created?.label).toBe("Nomor Meja Tamu");
+    expect(created?.type === "text" && created.maxLength).toBe(15);
     expect("default" in created! && created?.default).toBe("Meja VIP 01");
   });
 

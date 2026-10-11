@@ -992,3 +992,30 @@
   cursor: pointer;
 }
 
+.charCountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding: 0 0.15rem;
+}
+
+.charCountText {
+  font-size: 0.725rem;
+  color: #8c7e70;
+  font-variant-numeric: tabular-nums;
+}
+
+.charLimitTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 0.685rem;
+  font-weight: 600;
+}
+

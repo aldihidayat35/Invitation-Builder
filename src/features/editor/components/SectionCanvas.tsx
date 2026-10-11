@@ -103,8 +103,8 @@ function Visual({
       return (
         <Text
           key={`txt-${element.id}-${fontRev}-${guestPreviewName ?? ""}`}
+          name="text-node"
           width={w}
-          height={h}
           text={textPreview(element, variables, guestPreviewName)}
           fontFamily={resolveFontFamily(s.fontFamily, tokens)}
           fontSize={s.fontSize}
@@ -226,6 +226,31 @@ const ElementNode = memo(function ElementNode({
   const attrs = nodeAttrsFromFrame(element.frame);
   const { w, h } = element.frame;
   const innerRef = useRef<Konva.Group | null>(null);
+  const store = useEditorStore();
+
+  // Auto-expand frame height to wrap all lines of text seamlessly (Figma-style auto height)
+  const textContent = element.type === "text" ? element.content : undefined;
+  useEffect(() => {
+    if (element.type !== "text" || !innerRef.current) return;
+    const textNode = innerRef.current.findOne(".text-node") as Konva.Text | null;
+    if (!textNode) return;
+    const measuredHeight = Math.ceil(textNode.height());
+    if (measuredHeight > 0 && Math.abs(measuredHeight - element.frame.h) > 1) {
+      store.getState().patchFrame(element.id, { h: measuredHeight });
+    }
+  }, [
+    element.id,
+    element.type,
+    textContent,
+    element.style,
+    element.frame.w,
+    element.frame.h,
+    fontRev,
+    tokens,
+    variables,
+    guestPreviewName,
+    store,
+  ]);
 
   // Continuous live loop animation in the canvas editor (float, pulse, sway, plantSway, etc.)
   const loopTrack =
@@ -625,6 +650,12 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     [selectedHere, elements, readOnly, panMode, isEditingAnyMotion],
   );
 
+  const isOnlyTextTransformable = useMemo(() => {
+    if (!transformableKey || transformableKey.includes(",")) return false;
+    const el = elements?.find((e) => e.id === transformableKey);
+    return el?.type === "text";
+  }, [transformableKey, elements]);
+
   const motionElement = useMemo(() => {
     if (!section) return null;
     if (isEditingThisMotion && editingMotion) {
@@ -775,15 +806,33 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
     (nodes: readonly Konva.Node[]) => {
       const frames: Record<string, Frame> = {};
       for (const node of nodes) {
-        frames[node.id()] = frameFromNodeAttrs({
-          x: node.x(),
-          y: node.y(),
-          width: node.width(),
-          height: node.height(),
-          scaleX: node.scaleX(),
-          scaleY: node.scaleY(),
-          rotation: node.rotation(),
-        });
+        const textChild = (node as Konva.Group).findOne?.(".text-node") as Konva.Text | null;
+        if (textChild) {
+          const w = Math.max(MIN_BOX, Math.abs(node.width() * node.scaleX()));
+          textChild.width(w);
+          const computedH = Math.max(MIN_BOX, Math.ceil(textChild.height()));
+          const top = node.y() - (node.height() * node.scaleY()) / 2;
+          const newCenterY = top + computedH / 2;
+          frames[node.id()] = frameFromNodeAttrs({
+            x: node.x(),
+            y: newCenterY,
+            width: w,
+            height: computedH,
+            scaleX: 1,
+            scaleY: 1,
+            rotation: node.rotation(),
+          });
+        } else {
+          frames[node.id()] = frameFromNodeAttrs({
+            x: node.x(),
+            y: node.y(),
+            width: node.width(),
+            height: node.height(),
+            scaleX: node.scaleX(),
+            scaleY: node.scaleY(),
+            rotation: node.rotation(),
+          });
+        }
       }
       store.getState().commitFrames(frames);
       const doc = store.getState().history.present;
@@ -1237,6 +1286,20 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               rotateEnabled
               flipEnabled={false}
               keepRatio={false}
+              enabledAnchors={
+                isOnlyTextTransformable
+                  ? ["middle-left", "middle-right"]
+                  : [
+                      "top-left",
+                      "top-center",
+                      "top-right",
+                      "middle-right",
+                      "middle-left",
+                      "bottom-left",
+                      "bottom-center",
+                      "bottom-right",
+                    ]
+              }
               rotationSnaps={[0, 45, 90, 135, 180, -135, -90, -45]}
               rotationSnapTolerance={4}
               borderStroke={ACCENT}

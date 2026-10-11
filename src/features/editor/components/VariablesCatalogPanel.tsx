@@ -27,6 +27,7 @@ export interface VariablePreset {
   type: VariableType;
   default: string;
   description: string;
+  maxLength?: number;
 }
 
 export const WEDDING_PRESETS: readonly VariablePreset[] = [
@@ -38,6 +39,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Danang Aji Pratama, S.Kom.",
     description: "Nama lengkap beserta gelar mempelai pria",
+    maxLength: 80,
   },
   {
     key: "couple.groom.nickname",
@@ -46,6 +48,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Danang",
     description: "Nama panggilan untuk teks singkat atau cover",
+    maxLength: 30,
   },
   {
     key: "couple.groom.parents",
@@ -54,6 +57,16 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Putra pertama dari Bpk. Bambang & Ibu Siti Aminah",
     description: "Informasi keluarga dan orang tua mempelai pria",
+    maxLength: 150,
+  },
+  {
+    key: "couple.groom.bio",
+    label: "Keterangan Mempelai Pria",
+    category: "mempelai",
+    type: "text",
+    default: "Putra pertama dari Bpk. Bambang & Ibu Siti Aminah",
+    description: "Keterangan, silsilah, atau bio singkat mempelai pria",
+    maxLength: 200,
   },
   {
     key: "couple.groom.photo",
@@ -71,6 +84,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Sekar Ayu Kirana, S.Pd.",
     description: "Nama lengkap beserta gelar mempelai wanita",
+    maxLength: 80,
   },
   {
     key: "couple.bride.nickname",
@@ -79,6 +93,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Sekar",
     description: "Nama panggilan untuk teks singkat atau cover",
+    maxLength: 30,
   },
   {
     key: "couple.bride.parents",
@@ -87,6 +102,16 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Putri kedua dari Bpk. Haryono & Ibu Endang Wahyuni",
     description: "Informasi keluarga dan orang tua mempelai wanita",
+    maxLength: 150,
+  },
+  {
+    key: "couple.bride.bio",
+    label: "Keterangan Mempelai Wanita",
+    category: "mempelai",
+    type: "text",
+    default: "Putri kedua dari Bpk. Haryono & Ibu Endang Wahyuni",
+    description: "Keterangan, silsilah, atau bio singkat mempelai wanita",
+    maxLength: 200,
   },
   {
     key: "couple.bride.photo",
@@ -96,6 +121,16 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     default: "",
     description: "Foto profil mempelai wanita",
   },
+  // Judul & Pasangan
+  {
+    key: "wedding.title",
+    label: "Bride and Groom (Judul Pasangan)",
+    category: "mempelai",
+    type: "text",
+    default: "Danang & Sekar",
+    description: "Nama singkat pasangan mempelai untuk cover dan judul utama",
+    maxLength: 60,
+  },
   // Rangkaian Acara
   {
     key: "event.ceremony.startAt",
@@ -104,6 +139,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Minggu, 14 Maret 2027 • 08:00 - 10:00 WIB",
     description: "Hari, tanggal, dan jam pelaksanaan akad",
+    maxLength: 80,
   },
   {
     key: "event.ceremony.location",
@@ -112,6 +148,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Masjid Agung Al-Ikhlas, Jakarta Selatan",
     description: "Tempat atau gedung pelaksanaan akad nikah",
+    maxLength: 120,
   },
   {
     key: "event.reception.startAt",
@@ -120,6 +157,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Minggu, 14 Maret 2027 • 11:00 - 14:00 WIB",
     description: "Hari, tanggal, dan jam acara resepsi",
+    maxLength: 80,
   },
   {
     key: "event.reception.location",
@@ -128,6 +166,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Ballroom Royal Santika Hotel, Jakarta",
     description: "Tempat atau gedung pelaksanaan resepsi",
+    maxLength: 120,
   },
   {
     key: "event.map.url",
@@ -145,6 +184,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Bank BCA",
     description: "Bank atau penyedia dompet digital amplop",
+    maxLength: 40,
   },
   {
     key: "gift.account_number",
@@ -153,6 +193,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "1234567890",
     description: "Nomor rekening tujuan transfer hadiah",
+    maxLength: 30,
   },
   {
     key: "gift.account_holder",
@@ -161,8 +202,29 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Danang Aji Pratama",
     description: "Nama pemilik rekening bank",
+    maxLength: 60,
   },
-  // Informasi Tamu & Doa
+  // Informasi Tamu, Kisah & Ucapan
+  {
+    key: "wedding.story",
+    label: "Our Story (Kisah Cinta)",
+    category: "kustom",
+    type: "text",
+    default:
+      "Pertemuan pertama kami berawal di bangku kuliah pada tahun 2018. Setelah perjalanan panjang penuh tawa dan cerita, kini kami memutuskan untuk melangkah bersama dalam ikatan suci pernikahan.",
+    description: "Kisah perjalanan cinta kedua mempelai",
+    maxLength: 500,
+  },
+  {
+    key: "wedding.thanks",
+    label: "Ucapan Terima Kasih",
+    category: "kustom",
+    type: "text",
+    default:
+      "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu kepada kami kedua mempelai.",
+    description: "Ucapan terima kasih dan permohonan doa restu kepada para tamu",
+    maxLength: 300,
+  },
   {
     key: "greeting.opening",
     label: "Kalimat Pembuka / Salam",
@@ -170,6 +232,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     type: "text",
     default: "Assalamu'alaikum Warahmatullahi Wabarakatuh",
     description: "Salam pembuka undangan pernikahan",
+    maxLength: 120,
   },
   {
     key: "quote.wedding",
@@ -179,6 +242,7 @@ export const WEDDING_PRESETS: readonly VariablePreset[] = [
     default:
       "Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri...",
     description: "Ayat suci atau kutipan mutiara pernikahan",
+    maxLength: 400,
   },
 ];
 
@@ -335,12 +399,14 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [customLabel, setCustomLabel] = useState("");
   const [customType, setCustomType] = useState<VariableType>("text");
   const [customDefault, setCustomDefault] = useState("");
+  const [customMaxLength, setCustomMaxLength] = useState("");
   const [customRequired, setCustomRequired] = useState(false);
   const [customError, setCustomError] = useState<string | null>(null);
 
   // Edit Variable Form State
   const [editLabel, setEditLabel] = useState("");
   const [editDefault, setEditDefault] = useState("");
+  const [editMaxLength, setEditMaxLength] = useState("");
   const [editRequired, setEditRequired] = useState(false);
 
   // Guest Name Canvas Preview Simulation State
@@ -453,10 +519,11 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       act().addVariable({
         key: preset.key,
         label: preset.label,
-        type: "text",
+        type: preset.type,
         default: preset.default || undefined,
+        maxLength: preset.maxLength,
         required: false,
-      });
+      } as Parameters<ReturnType<typeof act>["addVariable"]>[0]);
     }
   };
 
@@ -472,6 +539,11 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       setCustomError("Format kunci tidak valid.");
       return;
     }
+    const parsedMaxLen =
+      customType === "text" && customMaxLength.trim()
+        ? Math.min(2000, Math.max(1, parseInt(customMaxLength, 10)))
+        : undefined;
+
     if (customType === "image") {
       act().addVariable({
         key,
@@ -483,13 +555,15 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       act().addVariable({
         key,
         label,
-        type: "text",
+        type: customType,
         default: customDefault,
+        maxLength: parsedMaxLen,
         required: customRequired,
-      });
+      } as Parameters<ReturnType<typeof act>["addVariable"]>[0]);
     }
     setCustomLabel("");
     setCustomDefault("");
+    setCustomMaxLength("");
     setCustomRequired(false);
     setCustomError(null);
     setShowCustomModal(false);
@@ -503,11 +577,17 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       "default" in v && typeof v.default === "string" ? v.default : "",
     );
     setEditRequired(Boolean(v.required));
+    setEditMaxLength(v.type === "text" && v.maxLength ? String(v.maxLength) : "");
   };
 
   // Save edit variable
   const handleSaveEdit = () => {
     if (!editingVariable) return;
+    const parsedMaxLen =
+      editingVariable.type === "text" && editMaxLength.trim()
+        ? Math.min(2000, Math.max(1, parseInt(editMaxLength, 10)))
+        : undefined;
+
     if (editingVariable.type === "image") {
       act().updateVariable(editingVariable.key, {
         label: editLabel.trim() || editingVariable.label,
@@ -517,8 +597,9 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       act().updateVariable(editingVariable.key, {
         label: editLabel.trim() || editingVariable.label,
         default: editDefault,
+        maxLength: parsedMaxLen,
         required: editRequired,
-      });
+      } as Parameters<ReturnType<typeof act>["updateVariable"]>[1]);
     }
     setEditingVariable(null);
   };
@@ -918,6 +999,11 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                               <span className={styles.typeBadge}>
                                 {v.type === "image" ? "🖼️ Foto" : v.type === "datetime" ? "📅 Tanggal" : v.type === "url" ? "🔗 Tautan" : "📝 Teks"}
                               </span>
+                              {v.type === "text" && v.maxLength !== undefined && (
+                                <span className={styles.limitTag}>
+                                  Maks. {v.maxLength} kar.
+                                </span>
+                              )}
                               <span className={styles.keyChip}>{v.key}</span>
                             </div>
                           </div>
@@ -1029,7 +1115,14 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                   return (
                     <div key={p.key} className={styles.presetCard}>
                       <div className={styles.presetInfo}>
-                        <span className={styles.presetLabel}>{p.label}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={styles.presetLabel}>{p.label}</span>
+                          {p.maxLength !== undefined && (
+                            <span className={styles.presetLimitTag}>
+                              Maks. {p.maxLength} kar.
+                            </span>
+                          )}
+                        </div>
                         <span className={styles.presetDesc}>{p.description}</span>
                         <span className="text-[10px] text-stone-400 font-mono mt-0.5">{p.key}</span>
                       </div>
@@ -1146,6 +1239,25 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 />
               </div>
 
+              {customType === "text" && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Batas Karakter (Limit Karakter)
+                    <span className={styles.formHintInline}> (Maksimal huruf, angka, simbol)</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={2000}
+                    className={styles.formInput}
+                    data-testid="custom-var-maxlength-input"
+                    placeholder="Contoh: 100 (kosongkan jika tanpa batas)"
+                    value={customMaxLength}
+                    onChange={(e) => setCustomMaxLength(e.target.value)}
+                  />
+                </div>
+              )}
+
               <div className="flex items-center gap-2 pt-1">
                 <input
                   type="checkbox"
@@ -1226,6 +1338,30 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                   onChange={(e) => setEditDefault(e.target.value)}
                 />
               </div>
+
+              {editingVariable.type === "text" && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Batas Maksimal Karakter (Limit)
+                    <span className={styles.formHintInline}> (Mencakup huruf, angka, simbol)</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={2000}
+                    className={styles.formInput}
+                    data-testid="edit-var-maxlength-input"
+                    placeholder="Contoh: 100 (kosongkan jika tanpa batas)"
+                    value={editMaxLength}
+                    onChange={(e) => setEditMaxLength(e.target.value)}
+                  />
+                  {editMaxLength.trim() !== "" && (
+                    <p className={styles.charCountHint}>
+                      Panjang teks bawaan saat ini: {editDefault.length} / {editMaxLength} karakter
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center gap-2 pt-1">
                 <input
