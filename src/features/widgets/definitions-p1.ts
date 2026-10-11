@@ -117,6 +117,7 @@ export const photoFrameWidget: WidgetDefinition = {
   type: PHOTO_FRAME_WIDGET_TYPE,
   version: 1,
   label: "Bingkai Foto",
+  hidden: true,
   defaultFrame: { w: 300, h: 360 },
   defaultStyle: getDefaultWidgetStyle(PHOTO_FRAME_WIDGET_TYPE),
   defaultProps: { fit: "cover" },
