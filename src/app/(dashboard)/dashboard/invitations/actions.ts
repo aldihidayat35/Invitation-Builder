@@ -14,6 +14,7 @@ import {
   publish,
   regenerateClientToken,
   remove,
+  permanentDelete,
   restore,
   rollback,
   saveData,
@@ -228,6 +229,24 @@ export async function deleteInvitationAction(invitationId: string): Promise<Acti
       message: res.deleted
         ? "Undangan berhasil dihapus permanen."
         : "Undangan telah dipindahkan ke tab Diarsipkan.",
+    };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function permanentDeleteInvitationAction(invitationId: string): Promise<ActionState> {
+  await requireOwner();
+  const id = idSchema.safeParse(invitationId);
+  if (!id.success) return { error: "Undangan tidak valid." };
+  try {
+    const res = await permanentDelete(id.data);
+    revalidatePath(LIST);
+    return {
+      ok: true,
+      message: res.deleted
+        ? "Undangan berhasil dihapus secara permanen."
+        : "Undangan gagal dihapus permanen.",
     };
   } catch (error) {
     return failure(error);

@@ -198,16 +198,25 @@ export async function deleteInvitationRow(
   db: Database,
   invitationId: string,
 ): Promise<boolean> {
-  // 1. Delete associated RSVPs
+  // 0. Enable local transaction setting to permit deletion of immutable published snapshots
+  await db.execute(sql`SET LOCAL app.allow_permanent_deletion = 'on'`);
+  // 1. Break circular FK reference from invitations to publishedSnapshots
+  await db
+    .update(invitations)
+    .set({ activePublishedSnapshotId: null })
+    .where(eq(invitations.id, invitationId));
+  // 2. Delete associated published snapshots
+  await db.delete(publishedSnapshots).where(eq(publishedSnapshots.invitationId, invitationId));
+  // 3. Delete associated RSVPs
   await db.delete(rsvps).where(eq(rsvps.invitationId, invitationId));
-  // 2. Delete associated guests
+  // 4. Delete associated guests
   await db.delete(guests).where(eq(guests.invitationId, invitationId));
-  // 3. Unlink customer orders if linked
+  // 5. Unlink customer orders if linked
   await db
     .update(customerOrders)
     .set({ invitationId: null })
     .where(eq(customerOrders.invitationId, invitationId));
-  // 4. Delete the invitation row
+  // 6. Delete the invitation row
   const [deleted] = await db
     .delete(invitations)
     .where(eq(invitations.id, invitationId))

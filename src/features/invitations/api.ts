@@ -54,9 +54,14 @@ export async function restore(invitationId: string) {
   return service.restoreInvitation(db, actor, invitationId);
 }
 
-export async function remove(invitationId: string) {
+export async function remove(invitationId: string, options?: { forcePermanent?: boolean }) {
   const { db, actor } = await context();
-  return service.deleteInvitation(db, actor, invitationId);
+  return service.deleteInvitation(db, actor, invitationId, options);
+}
+
+export async function permanentDelete(invitationId: string) {
+  const { db, actor } = await context();
+  return service.deleteInvitation(db, actor, invitationId, { forcePermanent: true });
 }
 
 export async function regenerateClientToken(invitationId: string) {

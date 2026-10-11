@@ -127,6 +127,13 @@
       "when": 1792100000000,
       "tag": "0017_global_variable_presets",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792200000000,
+      "tag": "0018_allow_permanent_invitation_deletion",
+      "breakpoints": true
     }
   ]
 }

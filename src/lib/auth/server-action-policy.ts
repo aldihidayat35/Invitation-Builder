@@ -71,6 +71,7 @@ export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActo
   publishInvitationAction: ["owner"],
   rollbackInvitationAction: ["owner"],
   deleteInvitationAction: ["owner"],
+  permanentDeleteInvitationAction: ["owner"],
   archiveInvitationAction: ["owner"],
   restoreInvitationAction: ["owner"],
   regenerateInvitationClientTokenAction: ["owner"],

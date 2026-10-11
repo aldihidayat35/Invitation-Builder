@@ -467,12 +467,13 @@ export async function deleteInvitation(
   db: Database,
   actor: Actor,
   invitationId: string,
+  options?: { forcePermanent?: boolean },
 ): Promise<{ deleted: boolean; archived: boolean }> {
   const row = await loadAuthorized(db, actor, invitationId, "invitation:project_manage");
   const hasSnapshots = await hasPublishedSnapshots(db, row.id);
 
-  if (!hasSnapshots) {
-    // No immutable snapshots exist: safe to hard-delete
+  if (options?.forcePermanent || row.status === "archived" || !hasSnapshots) {
+    // Safe or requested to hard-delete (includes already archived invitations)
     return db.transaction(async (tx) => {
       await deleteInvitationRow(tx, row.id);
       await insertAuditLog(tx, {
@@ -486,10 +487,19 @@ export async function deleteInvitation(
       return { deleted: true, archived: false };
     });
   } else {
-    // Immutable snapshots exist: soft-delete via archive
+    // Immutable snapshots exist and not archived yet: soft-delete via archive
     await archiveInvitation(db, actor, invitationId);
     return { deleted: false, archived: true };
   }
+}
+
+export async function permanentDeleteInvitation(
+  db: Database,
+  actor: Actor,
+  invitationId: string,
+): Promise<{ deleted: boolean }> {
+  const res = await deleteInvitation(db, actor, invitationId, { forcePermanent: true });
+  return { deleted: res.deleted };
 }
 
 /* ---------------------------------------------------------------- data mode */

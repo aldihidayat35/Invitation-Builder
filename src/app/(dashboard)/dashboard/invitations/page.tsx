@@ -8,7 +8,12 @@ import { KpiStatCard } from "@/features/analytics";
 import { listLibrary } from "@/features/templates/api";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
-import { createInvitationAction, deleteInvitationAction, restoreInvitationAction } from "./actions";
+import {
+  createInvitationAction,
+  deleteInvitationAction,
+  permanentDeleteInvitationAction,
+  restoreInvitationAction,
+} from "./actions";
 
 export const metadata: Metadata = {
   title: "Kelola Undangan Digital | Dashboard",
@@ -260,6 +265,7 @@ export default async function InvitationsPage({
           }
           canWrite={isProductionOwner && permissions.write}
           deleteAction={deleteInvitationAction}
+          permanentDeleteAction={permanentDeleteInvitationAction}
           restoreAction={restoreInvitationAction}
         />
       </section>

@@ -122,6 +122,7 @@ interface InvitationsViewProps {
   readonly initialStatus?: "all" | "published" | "draft" | "archived";
   readonly canWrite?: boolean;
   readonly deleteAction?: (invitationId: string) => Promise<{ ok?: boolean; error?: string; message?: string }>;
+  readonly permanentDeleteAction?: (invitationId: string) => Promise<{ ok?: boolean; error?: string; message?: string }>;
   readonly restoreAction?: (invitationId: string) => Promise<{ ok?: boolean; error?: string; message?: string }>;
 }
 
@@ -131,6 +132,7 @@ export function InvitationsView({
   initialStatus = "published",
   canWrite = true,
   deleteAction,
+  permanentDeleteAction,
   restoreAction,
 }: InvitationsViewProps) {
   const [items, setItems] = useState<readonly InvitationSummary[]>(invitations);
@@ -202,18 +204,33 @@ export function InvitationsView({
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deletingInvitation || !deleteAction) return;
+    if (!deletingInvitation) return;
+    const isArchived = deletingInvitation.status === "archived";
+    const actionToRun = isArchived
+      ? permanentDeleteAction || deleteAction
+      : deleteAction;
+    if (!actionToRun) return;
+
     setIsDeleting(true);
     try {
-      const res = await deleteAction(deletingInvitation.id);
+      const res = await actionToRun(deletingInvitation.id);
       if (res.error) {
         setFeedback({ type: "error", text: res.error });
       } else {
-        setFeedback({ type: "success", text: res.message ?? "Undangan berhasil diproses." });
+        setFeedback({
+          type: "success",
+          text:
+            res.message ??
+            (isArchived
+              ? "Undangan berhasil dihapus secara permanen."
+              : "Undangan telah dipindahkan ke tab Diarsipkan."),
+        });
         setItems((prev) =>
-          deletingInvitation.status === "archived"
+          isArchived
             ? prev.filter((i) => i.id !== deletingInvitation.id)
-            : prev.map((i) => (i.id === deletingInvitation.id ? { ...i, status: "archived" as const } : i)),
+            : prev.map((i) =>
+                i.id === deletingInvitation.id ? { ...i, status: "archived" as const } : i,
+              ),
         );
       }
     } catch {
@@ -657,13 +674,17 @@ export function InvitationsView({
                     )}
 
                     {/* Delete / Archive button */}
-                    {canWrite && deleteAction && (
+                    {canWrite && (deleteAction || permanentDeleteAction) && (
                       <button
                         type="button"
                         onClick={() => setDeletingInvitation(invitation)}
-                        className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-xs font-medium text-stone-400 shadow-2xs transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                        className={`inline-flex items-center justify-center rounded-xl border p-2 text-xs font-semibold shadow-2xs transition ${
+                          invitation.status === "archived"
+                            ? "gap-1.5 border-rose-200 bg-rose-50 px-2.5 text-rose-700 hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
+                            : "border-stone-200 bg-white text-stone-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                        }`}
                         title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
-                        aria-label="Hapus Undangan"
+                        aria-label={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path
@@ -673,6 +694,7 @@ export function InvitationsView({
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
+                        {invitation.status === "archived" && <span>Hapus Permanen</span>}
                       </button>
                     )}
                   </div>
@@ -810,13 +832,17 @@ export function InvitationsView({
                             </button>
                           )}
 
-                          {canWrite && deleteAction && (
+                          {canWrite && (deleteAction || permanentDeleteAction) && (
                             <button
                               type="button"
                               onClick={() => setDeletingInvitation(invitation)}
-                              className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition"
+                              className={`rounded-lg border text-xs font-semibold transition inline-flex items-center gap-1.5 ${
+                                invitation.status === "archived"
+                                  ? "border-rose-200 bg-rose-50 px-2.5 py-1.5 text-rose-700 hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
+                                  : "border-stone-200 bg-white p-1.5 text-stone-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+                              }`}
                               title={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
-                              aria-label="Hapus Undangan"
+                              aria-label={invitation.status === "archived" ? "Hapus Permanen" : "Hapus Undangan"}
                             >
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
@@ -826,6 +852,7 @@ export function InvitationsView({
                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
+                              {invitation.status === "archived" && <span>Hapus Permanen</span>}
                             </button>
                           )}
                         </div>
@@ -864,19 +891,28 @@ export function InvitationsView({
                   {deletingInvitation.status === "archived" ? "Hapus Permanen Undangan?" : "Hapus Undangan?"}
                 </h3>
                 <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
-                  Apakah Anda yakin ingin menghapus undangan{" "}
+                  Apakah Anda yakin ingin menghapus {deletingInvitation.status === "archived" ? "secara permanen " : ""}undangan{" "}
                   <strong className="text-[#2C221E]">&ldquo;{deletingInvitation.title}&rdquo;</strong>?
                 </p>
-                <div className="mt-3 flex items-start gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-600">
-                  <svg className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    {deletingInvitation.status === "archived"
-                      ? "Undangan ini akan dihapus secara permanen dari basis data jika belum pernah dipublish."
-                      : "Undangan yang dihapus akan dinonaktifkan dan dipindahkan ke tab 'Diarsipkan'. Anda masih dapat memulihkannya nanti jika diperlukan."}
+                {deletingInvitation.status === "archived" ? (
+                  <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-[11px] text-rose-900 leading-relaxed">
+                    <svg className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <strong className="font-bold text-rose-950">PERINGATAN PERMANEN:</strong> Seluruh data undangan, daftar tamu, RSVP, serta riwayat publikasi akan <strong>dihapus seutuhnya</strong> dari basis data dan tidak dapat dikembalikan lagi.
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="mt-3 flex items-start gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3 text-[11px] text-stone-600">
+                    <svg className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      Undangan yang dihapus akan dinonaktifkan dan dipindahkan ke tab &lsquo;Diarsipkan&rsquo;. Anda masih dapat memulihkannya nanti jika diperlukan.
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -909,7 +945,9 @@ export function InvitationsView({
                     <span>Menghapus…</span>
                   </>
                 ) : (
-                  <span>Ya, Hapus Undangan</span>
+                  <span>
+                    {deletingInvitation.status === "archived" ? "Ya, Hapus Permanen" : "Ya, Hapus Undangan"}
+                  </span>
                 )}
               </button>
             </div>
