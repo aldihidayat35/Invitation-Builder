@@ -9,10 +9,25 @@ import { CheckIcon, CopyIcon, QrIcon } from "./WidgetIcons";
 export interface GiftWidgetProps {
   readonly title?: unknown;
   readonly accounts?: unknown;
+  readonly bank?: unknown;
+  readonly accountNumber?: unknown;
+  readonly accountName?: unknown;
+  readonly bank2?: unknown;
+  readonly accountNumber2?: unknown;
+  readonly accountName2?: unknown;
   readonly style?: WidgetStyleProps | undefined;
 }
 
-interface GiftAccount {
+export interface GiftExtraProps {
+  readonly bank?: unknown;
+  readonly accountNumber?: unknown;
+  readonly accountName?: unknown;
+  readonly bank2?: unknown;
+  readonly accountNumber2?: unknown;
+  readonly accountName2?: unknown;
+}
+
+export interface GiftAccount {
   readonly bank: string;
   readonly accountNumber: string;
   readonly accountName: string;
@@ -20,23 +35,72 @@ interface GiftAccount {
 
 const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
-/** Picks only known fields from bound collection items. */
-export function parseGiftAccounts(accounts: unknown): GiftAccount[] {
-  if (!Array.isArray(accounts)) return [];
+/** Picks only known fields from bound collection items or individual auto-variables. */
+export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps): GiftAccount[] {
   const out: GiftAccount[] = [];
-  for (const raw of accounts) {
-    if (typeof raw !== "object" || raw === null) continue;
-    const rec = raw as Record<string, unknown>;
-    const accountNumber = s(rec.accountNumber);
-    if (!accountNumber) continue;
-    out.push({ bank: s(rec.bank), accountNumber, accountName: s(rec.accountName) });
+
+  // 1. Cek rekening utama dari variabel auto-binding
+  const mainAccNo = s(extraProps?.accountNumber);
+  if (mainAccNo) {
+    out.push({
+      bank: s(extraProps?.bank) || "BCA",
+      accountNumber: mainAccNo,
+      accountName: s(extraProps?.accountName) || "Nama Mempelai",
+    });
   }
+
+  // 2. Cek rekening kedua (opsional)
+  const secAccNo = s(extraProps?.accountNumber2);
+  if (secAccNo) {
+    out.push({
+      bank: s(extraProps?.bank2) || "Mandiri",
+      accountNumber: secAccNo,
+      accountName: s(extraProps?.accountName2) || "Nama Mempelai",
+    });
+  }
+
+  // 3. Cek array accounts (collection)
+  if (Array.isArray(accounts)) {
+    for (const raw of accounts) {
+      if (typeof raw !== "object" || raw === null) continue;
+      const rec = raw as Record<string, unknown>;
+      const accountNumber = s(rec.accountNumber);
+      if (!accountNumber) continue;
+      if (!out.some((a) => a.accountNumber === accountNumber)) {
+        out.push({ bank: s(rec.bank), accountNumber, accountName: s(rec.accountName) });
+      }
+    }
+  }
+
   return out;
 }
 
 /** Bank/e-wallet list with copy-to-clipboard and visible/announced feedback (FR-WDG-008). */
-export function GiftWidget({ title, accounts, style }: GiftWidgetProps) {
-  const list = parseGiftAccounts(accounts);
+export function GiftWidget({
+  title,
+  accounts,
+  bank,
+  accountNumber,
+  accountName,
+  bank2,
+  accountNumber2,
+  accountName2,
+  style,
+}: GiftWidgetProps) {
+  const parsed = parseGiftAccounts(accounts, {
+    bank,
+    accountNumber,
+    accountName,
+    bank2,
+    accountNumber2,
+    accountName2,
+  });
+  const list =
+    parsed.length > 0
+      ? parsed
+      : [
+          { bank: "BCA", accountNumber: "1234567890", accountName: "Nama Mempelai" },
+        ];
   const [feedback, setFeedback] = useState<{ index: number; ok: boolean } | null>(null);
   const heading = s(title) || "Kirim Hadiah";
   const variant = style?.variant ?? "bank-card";

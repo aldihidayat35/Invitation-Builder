@@ -26,6 +26,7 @@ import {
   type ImageFade,
   isBindingSegment,
 } from "@/lib/schema";
+import { ensureWidgetAutoVariables, getWidgetAutoProps } from "@/features/widgets/auto-binding";
 import { MIN_ELEMENT_SIZE, normalizeRotation, round2 } from "./geometry";
 
 export { CANONICAL_BASE_WIDTH } from "@/lib/schema";
@@ -834,7 +835,11 @@ export function createWidgetElement(
   },
   initialProps?: Record<string, unknown>,
 ): { document: CanonicalDocument; elementId: string | null } {
-  return insertNewElement(doc, sectionId, "el_widget", (id, section) => {
+  // Otomatis daftarkan variabel sistem dan pasang auto-binding untuk widget
+  const preparedDoc = ensureWidgetAutoVariables(doc, widget.type);
+  const autoProps = getWidgetAutoProps(widget.type);
+
+  return insertNewElement(preparedDoc, sectionId, "el_widget", (id, section) => {
     const { w, h } = widget.defaultFrame;
     return {
       id,
@@ -845,6 +850,7 @@ export function createWidgetElement(
       widgetVersion: widget.version,
       props: {
         ...structuredClone(widget.defaultProps),
+        ...autoProps,
         ...(initialProps ? structuredClone(initialProps) : {}),
       },
       ...(widget.defaultStyle && { style: structuredClone(widget.defaultStyle) }),

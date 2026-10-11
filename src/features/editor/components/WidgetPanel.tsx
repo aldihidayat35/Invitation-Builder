@@ -8,6 +8,7 @@ import {
   getWidgetStyleVariants,
   QUICK_COLOR_PALETTES,
   resolveWidgetStyleVariant,
+  isWidgetUsingAutoVariables,
   type WidgetStyleVariant,
   type WidgetPropDefinition,
 } from "@/features/widgets";
@@ -322,6 +323,29 @@ export function WidgetPanel({
       {/* 3. Content Properties */}
       <div className={styles.panelStack}>
         <p className={styles.widgetSectionTitle}>Konten &amp; Properti</p>
+        {isWidgetUsingAutoVariables(element.widgetType) && (
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: "8px",
+              background: "rgba(37, 99, 235, 0.08)",
+              border: "1px solid rgba(37, 99, 235, 0.22)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              fontSize: "12px",
+              color: "#1e3a8a",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600 }}>
+              <IconSparkle size={14} />
+              <span>Variabel Otomatis Aktif</span>
+            </div>
+            <span style={{ fontSize: "11px", opacity: 0.85, lineHeight: 1.4 }}>
+              Widget ini terhubung otomatis ke variabel template. Desainer tidak perlu menyetel ulang; klien dapat langsung mengisi data saat pesanan undangan diproses.
+            </span>
+          </div>
+        )}
         {galleryLayoutFollowsVariant ? (
           <p className={styles.widgetLayoutNotice} data-testid="gallery-layout-notice">
             Tata letak galeri mengikuti gaya <strong>{variantResolution.variant.label}</strong>.

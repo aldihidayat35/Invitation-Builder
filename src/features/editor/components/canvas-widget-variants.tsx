@@ -18,7 +18,7 @@ import { parseCouplePerson } from "@/features/widgets/runtime/CoupleProfileWidge
 import { getOrnamentShape } from "@/features/widgets/ornament-shapes";
 import { parseVideoSource } from "@/features/widgets/video-utils";
 import { parseGifSource } from "@/features/widgets/runtime/GifWidget";
-import { resolveWidgetStyleVariant } from "@/features/widgets";
+import { resolveWidgetStyleVariant, resolveCanvasBoundValue } from "@/features/widgets";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
 import { useCanvasImage } from "./use-canvas-image";
@@ -54,7 +54,15 @@ function Background({ element, tokens }: { element: WidgetElement; tokens?: Them
   );
 }
 
-function CountdownVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function CountdownVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
   const variant = element.style.variant!;
@@ -64,7 +72,8 @@ function CountdownVisual({ element, tokens }: { element: WidgetElement; tokens?:
     const timer = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const result = computeCountdown(props.targetDateTime, nowMs);
+  const resolvedTargetDateTime = resolveCanvasBoundValue(props.targetDateTime, variables);
+  const result = computeCountdown(resolvedTargetDateTime, nowMs);
   const values =
     result.state === "counting" ? result : { days: 14, hours: 8, minutes: 24, seconds: 50 };
   const rawLabels = props.labels as Record<string, string> | undefined;
@@ -402,13 +411,27 @@ function MapButton({
   );
 }
 
-function MapVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function MapVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
   const variant = element.style.variant!;
   const props = element.props as Record<string, unknown>;
+  const resolvedAddress = resolveCanvasBoundValue(props.address, variables);
+  const resolvedLabel = resolveCanvasBoundValue(props.label, variables);
   const label =
-    typeof props.label === "string" && props.label.trim() ? props.label : "Lokasi acara";
+    typeof resolvedAddress === "string" && resolvedAddress.trim()
+      ? resolvedAddress.trim()
+      : typeof resolvedLabel === "string" && resolvedLabel.trim()
+        ? resolvedLabel.trim()
+        : "Lokasi acara";
   const button =
     typeof props.buttonText === "string" && props.buttonText.trim()
       ? props.buttonText
@@ -1122,19 +1145,36 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
   );
 }
 
-function GiftVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function GiftVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
   const variant = element.style.variant!;
   const props = element.props as Record<string, unknown>;
+  const resolvedTitle = resolveCanvasBoundValue(props.title, variables);
   const title =
-    typeof props.title === "string" && props.title.trim() ? props.title : "Kirim Hadiah";
-  const accounts = parseGiftAccounts(props.accounts);
+    typeof resolvedTitle === "string" && resolvedTitle.trim() ? resolvedTitle : "Kirim Hadiah";
+
+  const resolvedExtra = {
+    bank: resolveCanvasBoundValue(props.bank, variables),
+    accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
+    accountName: resolveCanvasBoundValue(props.accountName, variables),
+    bank2: resolveCanvasBoundValue(props.bank2, variables),
+    accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
+    accountName2: resolveCanvasBoundValue(props.accountName2, variables),
+  };
+  const accounts = parseGiftAccounts(props.accounts, resolvedExtra);
   const list = accounts.length
     ? accounts.slice(0, 3)
     : [
-        { bank: "BCA", accountNumber: "1234 5678 90", accountName: "Nama Penerima" },
-        { bank: "MANDIRI", accountNumber: "9876 5432 10", accountName: "Nama Penerima" },
+        { bank: "BCA", accountNumber: "1234567890", accountName: "Nama Mempelai" },
       ];
   const radius = element.style.radius ?? 10;
 
@@ -1543,12 +1583,22 @@ function MusicPlay({
   );
 }
 
-function MusicVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function MusicVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const { color, surface } = colors(element, tokens);
   const variant = element.style.variant!;
   const props = element.props as Record<string, unknown>;
-  const title = typeof props.title === "string" && props.title.trim() ? props.title : "Putar musik";
+  const resolvedTitle = resolveCanvasBoundValue(props.title, variables);
+  const title =
+    typeof resolvedTitle === "string" && resolvedTitle.trim() ? resolvedTitle : "Putar musik";
   const radius = element.style.radius ?? 10;
 
   if (variant === "vinyl") {
@@ -4543,17 +4593,17 @@ export function CurrentWidgetVisual({
 }) {
   switch (element.widgetType) {
     case "countdown":
-      return <CountdownVisual element={element} tokens={tokens} />;
+      return <CountdownVisual element={element} tokens={tokens} variables={variables} />;
     case "map":
-      return <MapVisual element={element} tokens={tokens} />;
+      return <MapVisual element={element} tokens={tokens} variables={variables} />;
     case "guestGreeting":
       return <GreetingVisual element={element} tokens={tokens} guestPreviewName={guestPreviewName} />;
     case "rsvp":
       return <RsvpVisual element={element} tokens={tokens} />;
     case "gift":
-      return <GiftVisual element={element} tokens={tokens} />;
+      return <GiftVisual element={element} tokens={tokens} variables={variables} />;
     case "music":
-      return <MusicVisual element={element} tokens={tokens} />;
+      return <MusicVisual element={element} tokens={tokens} variables={variables} />;
     case "gallery":
       return <GalleryVisual element={element} tokens={tokens} variables={variables} />;
     case "photoFrame":

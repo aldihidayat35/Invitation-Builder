@@ -81,4 +81,16 @@ export {
   type WidgetStyleVariant,
 } from "./widget-styles";
 export { estimateWidgetContentHeight } from "./estimate-height";
-
+export {
+  GIFT_AUTO_VARIABLES,
+  MAP_AUTO_VARIABLES,
+  COUNTDOWN_AUTO_VARIABLES,
+  MUSIC_AUTO_VARIABLES,
+  AUTO_VARIABLE_WIDGET_TYPES,
+  isWidgetUsingAutoVariables,
+  getAutoVariablesForWidget,
+  ensureWidgetAutoVariables,
+  getWidgetAutoProps,
+  resolveCanvasBoundValue,
+  type AutoVariableWidgetType,
+} from "./auto-binding";

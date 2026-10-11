@@ -25,16 +25,25 @@ export const mapWidget: WidgetDefinition = {
   version: 1,
   label: "Peta lokasi",
   defaultFrame: { w: 326, h: 220 },
-  defaultProps: { label: "Lokasi acara", buttonText: "Buka Google Maps" },
+  defaultProps: {
+    latitude: { bind: "event.location.lat" },
+    longitude: { bind: "event.location.lng" },
+    address: { bind: "event.location.address" },
+    label: { bind: "event.location.address" },
+    buttonText: "Buka Google Maps",
+  },
   defaultStyle: getDefaultWidgetStyle(MAP_WIDGET_TYPE),
   props: {
-    coordinate: defineProp("coordinate", "Koordinat", coordinateSchema, { required: true }),
-    label: defineProp("text", "Label lokasi", z.string().max(120)),
+    latitude: defineProp("number", "Latitude Lokasi", z.number().optional()),
+    longitude: defineProp("number", "Longitude Lokasi", z.number().optional()),
+    address: defineProp("text", "Alamat Lokasi Teks", z.string().max(300).optional()),
+    coordinate: defineProp("coordinate", "Koordinat", coordinateSchema.optional()),
+    label: defineProp("text", "Label lokasi", z.string().max(120).optional()),
     buttonText: defineProp("text", "Teks tombol", z.string().min(1).max(40)),
   },
   placeholder: (props) => ({
-    title: describeProp(props.label) ?? "Peta lokasi",
-    subtitle: `Koordinat: ${describeProp(props.coordinate) ?? "belum diatur"}`,
+    title: describeProp(props.address) ?? describeProp(props.label) ?? "Peta lokasi",
+    subtitle: `Koordinat: ${describeProp(props.latitude) ? `${describeProp(props.latitude)}, ${describeProp(props.longitude)}` : (describeProp(props.coordinate) ?? "belum diatur")}`,
   }),
 };
 
@@ -49,6 +58,7 @@ export const countdownWidget: WidgetDefinition = {
   defaultFrame: { w: 326, h: 96 },
   defaultStyle: getDefaultWidgetStyle(COUNTDOWN_WIDGET_TYPE),
   defaultProps: {
+    targetDateTime: { bind: "event.datetime" },
     labels: { ...DEFAULT_COUNTDOWN_LABELS },
     afterState: "message",
     afterMessage: "Acara telah dimulai",

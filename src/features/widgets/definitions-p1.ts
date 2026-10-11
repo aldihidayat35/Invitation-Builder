@@ -75,7 +75,11 @@ export const musicWidget: WidgetDefinition = {
   label: "Musik",
   defaultFrame: { w: 326, h: 72 },
   defaultStyle: getDefaultWidgetStyle(MUSIC_WIDGET_TYPE),
-  defaultProps: { title: "Putar musik", autoplay: false },
+  defaultProps: {
+    src: { bind: "audio.url" },
+    title: { bind: "audio.title" },
+    autoplay: false,
+  },
   props: {
     src: defineProp("url", "URL audio", safeUrlSchema(), { required: true }),
     title: defineProp("text", "Label", z.string().max(60)),
@@ -93,13 +97,28 @@ export const giftWidget: WidgetDefinition = {
   label: "Hadiah",
   defaultFrame: { w: 326, h: 260 },
   defaultStyle: getDefaultWidgetStyle(GIFT_WIDGET_TYPE),
-  defaultProps: { title: "Kirim Hadiah", accounts: [] },
+  defaultProps: {
+    title: "Kirim Hadiah",
+    bank: { bind: "gift.bank" },
+    accountNumber: { bind: "gift.accountNumber" },
+    accountName: { bind: "gift.accountName" },
+    bank2: { bind: "gift.bank2" },
+    accountNumber2: { bind: "gift.accountNumber2" },
+    accountName2: { bind: "gift.accountName2" },
+    accounts: [],
+  },
   props: {
     title: defineProp("text", "Judul", z.string().max(80)),
+    bank: defineProp("text", "Jenis Rekening / Bank (Utama)", z.string().max(60).optional()),
+    accountNumber: defineProp("text", "Nomor Rekening (Utama)", z.string().max(60).optional()),
+    accountName: defineProp("text", "Atas Nama Rekening (Utama)", z.string().max(80).optional()),
+    bank2: defineProp("text", "Jenis Rekening 2 (Opsional)", z.string().max(60).optional()),
+    accountNumber2: defineProp("text", "Nomor Rekening 2 (Opsional)", z.string().max(60).optional()),
+    accountName2: defineProp("text", "Atas Nama Rekening 2 (Opsional)", z.string().max(80).optional()),
     accounts: defineProp(
       "collection",
-      "Rekening/e-wallet (bank, accountNumber, accountName)",
-      collectionSchema,
+      "Rekening Tambahan / Koleksi (bank, accountNumber, accountName)",
+      collectionSchema.optional(),
       {
         control: "binding",
       },
@@ -107,7 +126,9 @@ export const giftWidget: WidgetDefinition = {
   },
   placeholder: (props) => ({
     title: describeProp(props.title) ?? "Hadiah",
-    subtitle: "Rekening & e-wallet",
+    subtitle: describeProp(props.bank)
+      ? `${describeProp(props.bank)} - ${describeProp(props.accountNumber)}`
+      : "Rekening & e-wallet",
   }),
 };
 

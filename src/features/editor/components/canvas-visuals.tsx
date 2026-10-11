@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Circle, Group, Image as KonvaImage, Line, Rect, Text } from "react-konva";
 import type { Element, ImageFade, ThemeTokens, VariableDefinition } from "@/lib/schema";
 import { assetUrl } from "@/features/assets/urls";
-import { defaultWidgetRegistry, resolveWidgetStyleVariant } from "@/features/widgets";
+import { defaultWidgetRegistry, resolveWidgetStyleVariant, resolveCanvasBoundValue } from "@/features/widgets";
 import {
   DEFAULT_COUNTDOWN_LABELS,
   computeCountdown,
@@ -349,9 +349,11 @@ function getWidgetBackground(element: WidgetElement, tokens?: ThemeTokens): stri
 function CountdownWidgetVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
@@ -368,7 +370,8 @@ function CountdownWidgetVisual({
     return () => clearInterval(timer);
   }, []);
 
-  const res = computeCountdown(props.targetDateTime, nowMs);
+  const resolvedTarget = resolveCanvasBoundValue(props.targetDateTime, variables);
+  const res = computeCountdown(resolvedTarget, nowMs);
   const isCounting = res.state === "counting";
   const days = isCounting ? res.days : 14;
   const hours = isCounting ? res.hours : 8;
@@ -522,13 +525,25 @@ function CountdownWidgetVisual({
   );
 }
 
-function MapWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function MapWidgetVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
+  const resolvedAddress = resolveCanvasBoundValue(props.address, variables);
+  const resolvedLabel = resolveCanvasBoundValue(props.label, variables);
   const label =
-    typeof props.label === "string" && props.label.trim() !== ""
-      ? props.label.trim()
-      : "Lokasi acara";
+    typeof resolvedAddress === "string" && resolvedAddress.trim() !== ""
+      ? resolvedAddress.trim()
+      : typeof resolvedLabel === "string" && resolvedLabel.trim() !== ""
+        ? resolvedLabel.trim()
+        : "Lokasi acara";
   const buttonText =
     typeof props.buttonText === "string" && props.buttonText.trim() !== ""
       ? props.buttonText.trim()
@@ -994,14 +1009,31 @@ function GuestGreetingWidgetVisual({
   );
 }
 
-function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function GiftWidgetVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
+  const resolvedTitle = resolveCanvasBoundValue(props.title, variables);
   const title =
-    typeof props.title === "string" && props.title.trim() !== ""
-      ? props.title.trim()
+    typeof resolvedTitle === "string" && resolvedTitle.trim() !== ""
+      ? resolvedTitle.trim()
       : "Tanda Kasih";
-  const accounts = parseGiftAccounts(props.accounts);
+  const resolvedExtra = {
+    bank: resolveCanvasBoundValue(props.bank, variables),
+    accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
+    accountName: resolveCanvasBoundValue(props.accountName, variables),
+    bank2: resolveCanvasBoundValue(props.bank2, variables),
+    accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
+    accountName2: resolveCanvasBoundValue(props.accountName2, variables),
+  };
+  const accounts = parseGiftAccounts(props.accounts, resolvedExtra);
 
   const color = getWidgetColor(element, tokens);
   const background = getWidgetBackground(element, tokens);
@@ -1167,12 +1199,21 @@ function GiftWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?
   );
 }
 
-function MusicWidgetVisual({ element, tokens }: { element: WidgetElement; tokens?: ThemeTokens }) {
+function MusicWidgetVisual({
+  element,
+  tokens,
+  variables,
+}: {
+  element: WidgetElement;
+  tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
+}) {
   const { w, h } = element.frame;
   const props = element.props as Record<string, unknown>;
+  const resolvedTitle = resolveCanvasBoundValue(props.title, variables);
   const title =
-    typeof props.title === "string" && props.title.trim() !== ""
-      ? props.title.trim()
+    typeof resolvedTitle === "string" && resolvedTitle.trim() !== ""
+      ? resolvedTitle.trim()
       : "Putar musik";
 
   const color = getWidgetColor(element, tokens);
@@ -1505,9 +1546,9 @@ export function WidgetVisual({
       : { ...element, style: { ...element.style, variant: styleResolution.variant.id } };
   switch (element.widgetType) {
     case "countdown":
-      return <CountdownWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <CountdownWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "map":
-      return <MapWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <MapWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "guestGreeting":
       return (
         <GuestGreetingWidgetVisual
@@ -1521,9 +1562,9 @@ export function WidgetVisual({
     case "gallery":
       return <GalleryWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "music":
-      return <MusicWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <MusicWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "gift":
-      return <GiftWidgetVisual element={legacyElement} tokens={tokens} />;
+      return <GiftWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "photoFrame":
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "timeline":

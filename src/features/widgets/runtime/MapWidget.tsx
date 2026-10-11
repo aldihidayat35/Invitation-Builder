@@ -8,6 +8,9 @@ import { PinIcon, RouteIcon } from "./WidgetIcons";
 
 export interface MapWidgetProps {
   readonly coordinate?: unknown;
+  readonly latitude?: unknown;
+  readonly longitude?: unknown;
+  readonly address?: unknown;
   readonly label?: unknown;
   readonly buttonText?: unknown;
   readonly style?: WidgetStyleProps | undefined;
@@ -19,9 +22,27 @@ const text = (v: unknown, fallback: string) =>
 /**
  * Map Widget with embedded Google Maps interactive preview and deep-link button.
  */
-export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetProps) {
-  const href = mapUrl(coordinate);
-  const embedUrl = mapEmbedUrl(coordinate);
+export function MapWidget({
+  coordinate,
+  latitude,
+  longitude,
+  address,
+  label,
+  buttonText,
+  style,
+}: MapWidgetProps) {
+  let effectiveCoord = coordinate;
+  if (!effectiveCoord && latitude !== undefined && longitude !== undefined) {
+    const lat = typeof latitude === "number" ? latitude : parseFloat(String(latitude));
+    const lng = typeof longitude === "number" ? longitude : parseFloat(String(longitude));
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      effectiveCoord = { lat, lng };
+    }
+  }
+
+  const href = mapUrl(effectiveCoord);
+  const embedUrl = mapEmbedUrl(effectiveCoord);
+  const locationLabel = text(address, text(label, "Lokasi acara"));
 
   return (
     <WidgetFrame type="map" style={style}>
@@ -29,7 +50,7 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
         <div className={styles.mapViewport}>
           {embedUrl ? (
             <iframe
-              title={text(label, "Peta Lokasi")}
+              title={locationLabel}
               src={embedUrl}
               className={styles.mapIframe}
               loading="lazy"
@@ -53,7 +74,7 @@ export function MapWidget({ coordinate, label, buttonText, style }: MapWidgetPro
         <div className={styles.mapDetails}>
           <div className={styles.mapTitleRow}>
             <PinIcon className={styles.mapLocationIcon} />
-            <p className={styles.label}>{text(label, "Lokasi acara")}</p>
+            <p className={styles.label}>{locationLabel}</p>
           </div>
           {href ? (
             <a

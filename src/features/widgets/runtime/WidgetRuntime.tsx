@@ -34,7 +34,15 @@ type Renderer = (props: Readonly<Record<string, unknown>>, style?: WidgetStylePr
 /** Runtime components keyed by widget type (props are picked explicitly, never spread from stored data); the definition (schema/defaults) lives in the registry. */
 const RUNTIME: Readonly<Record<string, Renderer>> = {
   map: (p, style) => (
-    <MapWidget coordinate={p.coordinate} label={p.label} buttonText={p.buttonText} style={style} />
+    <MapWidget
+      coordinate={p.coordinate}
+      latitude={p.latitude}
+      longitude={p.longitude}
+      address={p.address}
+      label={p.label}
+      buttonText={p.buttonText}
+      style={style}
+    />
   ),
   countdown: (p, style) => (
     <CountdownWidget
@@ -69,7 +77,19 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
   music: (p, style) => (
     <MusicWidget src={p.src} title={p.title} autoplay={p.autoplay} style={style} />
   ),
-  gift: (p, style) => <GiftWidget title={p.title} accounts={p.accounts} style={style} />,
+  gift: (p, style) => (
+    <GiftWidget
+      title={p.title}
+      accounts={p.accounts}
+      bank={p.bank}
+      accountNumber={p.accountNumber}
+      accountName={p.accountName}
+      bank2={p.bank2}
+      accountNumber2={p.accountNumber2}
+      accountName2={p.accountName2}
+      style={style}
+    />
+  ),
   photoFrame: (p, style) => (
     <PhotoFrameWidget
       image={p.image}
