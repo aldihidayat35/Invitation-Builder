@@ -7,7 +7,8 @@ import { selectDoc, useAutosaver, useEditor, useEditorStore } from "./EditorProv
 import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
-import { IconCardsView, IconEye, IconGrid, IconGridView, IconSmartphone, IconSnapGuides } from "./icons";
+import { IconCardsView, IconEye, IconGrid, IconGridView, IconSmartphone, IconSnapGuides, IconSparkle } from "./icons";
+import { PresetManagementModal } from "./PresetManagementModal";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -40,6 +41,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const status = useEditor((s) => s.saveStatus);
   const saveError = useEditor((s) => s.saveError);
   const [resolving, setResolving] = useState(false);
+  const [showPresetManager, setShowPresetManager] = useState(false);
 
   async function overwrite() {
     setResolving(true);
@@ -251,6 +253,18 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
 
       <button
         type="button"
+        className={styles.presetManageButton}
+        data-testid="editor-preset-manage-btn"
+        id="editor-preset-manage-btn"
+        onClick={() => setShowPresetManager(true)}
+        title="Kelola preset variabel global (buat, edit, hapus)"
+      >
+        <IconSparkle size={14} />
+        <span>Manajemen Preset</span>
+      </button>
+
+      <button
+        type="button"
         className={styles.previewButton}
         data-testid="editor-preview-btn"
         id="editor-preview-btn"
@@ -310,6 +324,14 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
           </button>
         </div>
       ) : null}
+
+      {showPresetManager && (
+        <PresetManagementModal
+          isOpen={showPresetManager}
+          onClose={() => setShowPresetManager(false)}
+        />
+      )}
     </header>
   );
 }
+

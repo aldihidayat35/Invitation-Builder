@@ -615,6 +615,26 @@ export const testimonials = pgTable(
   (t) => [index("testimonials_sort_idx").on(t.isActive, t.sortOrder)],
 );
 
+export const globalVariablePresets = pgTable(
+  "global_variable_presets",
+  {
+    id: id(),
+    key: text("key").notNull(),
+    label: text("label").notNull(),
+    category: text("category").notNull().default("kustom"),
+    type: text("type").notNull().default("text"),
+    defaultValue: text("default_value").notNull().default(""),
+    description: text("description").notNull().default(""),
+    maxLength: integer("max_length"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("global_variable_presets_key_uq").on(t.key),
+    index("global_variable_presets_cat_idx").on(t.category),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
@@ -643,3 +663,6 @@ export type TemplateCategoryRow = typeof templateCategories.$inferSelect;
 export type NewTemplateCategoryRow = typeof templateCategories.$inferInsert;
 export type TestimonialRow = typeof testimonials.$inferSelect;
 export type NewTestimonialRow = typeof testimonials.$inferInsert;
+export type GlobalVariablePresetRow = typeof globalVariablePresets.$inferSelect;
+export type NewGlobalVariablePresetRow = typeof globalVariablePresets.$inferInsert;
+

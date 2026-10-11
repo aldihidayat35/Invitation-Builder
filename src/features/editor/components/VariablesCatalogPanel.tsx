@@ -18,6 +18,8 @@ import {
   IconTrash,
   IconVariable,
 } from "./icons";
+import { saveGlobalPreset, useGlobalCustomPresets } from "../core/global-presets";
+import { PresetManagementModal } from "./PresetManagementModal";
 import styles from "./VariablesCatalog.module.css";
 
 export interface VariablePreset {
@@ -393,7 +395,10 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
+  const [showPresetManagerFromCatalog, setShowPresetManagerFromCatalog] = useState(false);
   const [editingVariable, setEditingVariable] = useState<VariableDefinition | null>(null);
+
+  const { presets: customGlobalPresets } = useGlobalCustomPresets();
 
   // New Custom Variable Form State
   const [customLabel, setCustomLabel] = useState("");
@@ -401,6 +406,7 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [customDefault, setCustomDefault] = useState("");
   const [customMaxLength, setCustomMaxLength] = useState("");
   const [customRequired, setCustomRequired] = useState(false);
+  const [customSaveGlobal, setCustomSaveGlobal] = useState(false);
   const [customError, setCustomError] = useState<string | null>(null);
 
   // Edit Variable Form State
@@ -561,10 +567,24 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
         required: customRequired,
       } as Parameters<ReturnType<typeof act>["addVariable"]>[0]);
     }
+
+    if (customSaveGlobal) {
+      void saveGlobalPreset({
+        key,
+        label,
+        category: "kustom",
+        type: customType,
+        default: customDefault,
+        maxLength: parsedMaxLen,
+        description: `Variabel ${label}`,
+      });
+    }
+
     setCustomLabel("");
     setCustomDefault("");
     setCustomMaxLength("");
     setCustomRequired(false);
+    setCustomSaveGlobal(false);
     setCustomError(null);
     setShowCustomModal(false);
   };
@@ -1095,13 +1115,26 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 </span>
                 <h4 className={styles.modalTitle}>Preset Variabel Siap Pakai</h4>
               </div>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => setShowPresetModal(false)}
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-colors"
+                  onClick={() => {
+                    setShowPresetModal(false);
+                    setShowPresetManagerFromCatalog(true);
+                  }}
+                  data-testid="catalog-manage-presets-btn"
+                >
+                  ⚙️ Kelola Preset
+                </button>
+                <button
+                  type="button"
+                  className={styles.modalCloseBtn}
+                  onClick={() => setShowPresetModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className={styles.modalBody}>
@@ -1110,13 +1143,21 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
               </p>
 
               <div className={styles.presetGrid}>
-                {WEDDING_PRESETS.map((p) => {
+                {[
+                  ...WEDDING_PRESETS.map((p) => ({ ...p, isSystem: true })),
+                  ...customGlobalPresets.map((p) => ({ ...p, isSystem: false })),
+                ].map((p) => {
                   const alreadyAdded = declaredKeys.has(p.key);
                   return (
                     <div key={p.key} className={styles.presetCard}>
                       <div className={styles.presetInfo}>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className={styles.presetLabel}>{p.label}</span>
+                          {!p.isSystem && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                              🌐 Global Kustom
+                            </span>
+                          )}
                           {p.maxLength !== undefined && (
                             <span className={styles.presetLimitTag}>
                               Maks. {p.maxLength} kar.
@@ -1270,6 +1311,20 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                   Wajib diisi oleh pengantin di formulir order
                 </label>
               </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="custom-global"
+                  checked={customSaveGlobal}
+                  onChange={(e) => setCustomSaveGlobal(e.target.checked)}
+                  className="rounded text-[#84633f]"
+                  data-testid="custom-var-save-global-checkbox"
+                />
+                <label htmlFor="custom-global" className="text-xs font-semibold text-stone-700 cursor-pointer">
+                  Simpan sebagai Preset Global (Permanen &amp; dapat digunakan di semua template)
+                </label>
+              </div>
             </div>
 
             <div className={styles.modalFooter}>
@@ -1396,6 +1451,14 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
           </div>
         </div>
       )}
+
+      {showPresetManagerFromCatalog && (
+        <PresetManagementModal
+          isOpen={showPresetManagerFromCatalog}
+          onClose={() => setShowPresetManagerFromCatalog(false)}
+        />
+      )}
     </div>
   );
 }
+

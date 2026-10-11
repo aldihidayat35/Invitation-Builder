@@ -10,3 +10,4 @@ export * from "./orders";
 export * from "./settings";
 export * from "./template-categories";
 export * from "./testimonials";
+export * from "./global-presets";
