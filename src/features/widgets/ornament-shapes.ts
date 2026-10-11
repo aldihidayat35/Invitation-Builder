@@ -93,23 +93,6 @@ export const ORNAMENT_SHAPES: readonly OrnamentShapeData[] = [
       "M 200 24 L 376 24 L 376 236 L 24 236 L 24 24 Z",
   },
   {
-    id: "rounded-rect",
-    label: "Persegi Membulat (Rounded Box)",
-    description: "Persegi dengan sudut lengkung halus modern yang bersih dan minimalis.",
-    leftPath:
-      "M 200 12 L 40 12 A 28 28 0 0 0 12 40 L 12 220 A 28 28 0 0 0 40 248 L 200 248",
-    rightPath:
-      "M 200 12 L 360 12 A 28 28 0 0 1 388 40 L 388 220 A 28 28 0 0 1 360 248 L 200 248",
-    fullPath:
-      "M 200 12 L 360 12 A 28 28 0 0 1 388 40 L 388 220 A 28 28 0 0 1 360 248 L 40 248 A 28 28 0 0 1 12 220 L 12 40 A 28 28 0 0 1 40 12 Z",
-    innerLeftPath:
-      "M 200 24 L 42 24 A 18 18 0 0 0 24 42 L 24 218 A 18 18 0 0 0 42 236 L 200 236",
-    innerRightPath:
-      "M 200 24 L 358 24 A 18 18 0 0 1 376 42 L 376 218 A 18 18 0 0 1 358 236 L 200 236",
-    innerFullPath:
-      "M 200 24 L 358 24 A 18 18 0 0 1 376 42 L 376 218 A 18 18 0 0 1 358 236 L 42 236 A 18 18 0 0 1 24 218 L 24 42 A 18 18 0 0 1 42 24 Z",
-  },
-  {
     id: "notched-bracket",
     label: "Sudut Cekung (Vintage Plaque)",
     description: "Plakat klasik dengan sudut cekung ke dalam dan bingkai ganda elegan.",
@@ -257,12 +240,19 @@ export function getOrnamentShape(
   innerGap = 12,
   cornerRadius?: number,
 ): OrnamentShapeData {
-  const match = ORNAMENT_SHAPES.find((s) => s.id === id);
+  const requestedId = id === "rounded-rect" ? "rectangle" : id;
+  const match = ORNAMENT_SHAPES.find((s) => s.id === requestedId);
   const baseShape = match ?? ORNAMENT_SHAPES[0];
   if (!baseShape) throw new Error("No ornament shapes defined");
 
-  // Fast path for standard base size and default gap without custom radius
-  if (width === 400 && height === 260 && innerGap === 12 && cornerRadius === undefined) {
+  // Fast path for standard base size and default gap without custom radius (non-rectangle)
+  if (
+    width === 400 &&
+    height === 260 &&
+    innerGap === 12 &&
+    cornerRadius === undefined &&
+    baseShape.id !== "rectangle"
+  ) {
     return baseShape;
   }
 
@@ -302,18 +292,10 @@ export function getOrnamentShape(
   }
 
   // Base rectangular frames with configurable corner radius and true concentric double border
-  if (baseShape.id === "rectangle" || baseShape.id === "rounded-rect") {
+  if (baseShape.id === "rectangle") {
     const m = 12;
     const maxR = Math.max(0, Math.floor((Math.min(width, height) - 2 * m) / 2));
-    let cr: number;
-    if (cornerRadius !== undefined) {
-      cr = Math.max(0, Math.min(cornerRadius, maxR));
-    } else if (baseShape.id === "rounded-rect") {
-      cr = Math.min(32, Math.max(12, Math.round(Math.min(width, height) * 0.15)));
-      cr = Math.min(cr, maxR);
-    } else {
-      cr = 0;
-    }
+    const cr = cornerRadius !== undefined ? Math.max(0, Math.min(cornerRadius, maxR)) : 0;
 
     const im = m + gap;
     const maxIR = Math.max(0, Math.floor((Math.min(width, height) - 2 * im) / 2));

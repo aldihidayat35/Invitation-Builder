@@ -131,7 +131,10 @@ export function LeftPanel() {
             dragProps={getDragProps("left-widgets")}
           >
             <div className={styles.tileGrid}>
-              {defaultWidgetRegistry.list().map((widget) => (
+              {defaultWidgetRegistry
+                .list()
+                .filter((widget) => !widget.hidden)
+                .map((widget) => (
                 <button
                   key={widget.type}
                   type="button"

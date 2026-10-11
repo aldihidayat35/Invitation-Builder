@@ -9,15 +9,14 @@ import { WidgetRuntime } from "@/features/widgets/runtime";
 import { defaultWidgetRegistry } from "@/features/widgets";
 
 describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", () => {
-  it("provides 11 distinct ornamental and geometric shape definitions", () => {
-    expect(ORNAMENT_SHAPES).toHaveLength(11);
+  it("provides 10 distinct ornamental and geometric shape definitions", () => {
+    expect(ORNAMENT_SHAPES).toHaveLength(10);
     const ids = ORNAMENT_SHAPES.map((s) => s.id);
     expect(ids).toEqual([
       "arch-window",
       "circle",
       "oval",
       "rectangle",
-      "rounded-rect",
       "notched-bracket",
       "baroque-crest",
       "wavy-cartouche",
@@ -38,6 +37,7 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     expect(getOrnamentShape("baroque-crest").id).toBe("baroque-crest");
     expect(getOrnamentShape("circle").id).toBe("circle");
     expect(getOrnamentShape("rectangle").id).toBe("rectangle");
+    expect(getOrnamentShape("rounded-rect").id).toBe("rectangle");
     expect(getOrnamentShape("unknown-shape").id).toBe("arch-window");
   });
 
@@ -50,7 +50,7 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     }
   });
 
-  it("renders each of the 11 variants with its testid and data-variant attribute", () => {
+  it("renders each of the 10 variants with its testid and data-variant attribute", () => {
     for (const shape of ORNAMENT_SHAPES) {
       const { unmount } = render(
         <OrnamentFrameWidget

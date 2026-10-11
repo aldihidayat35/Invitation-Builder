@@ -114,6 +114,13 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
     <OrnamentFrameWidget
       shape={typeof p.shape === "string" ? p.shape : undefined}
       innerGap={typeof p.innerGap === "number" ? p.innerGap : undefined}
+      cornerRadius={
+        typeof p.cornerRadius === "number"
+          ? p.cornerRadius
+          : typeof style?.radius === "number"
+            ? style.radius
+            : undefined
+      }
       fillOpacity={typeof p.fillOpacity === "number" ? p.fillOpacity : undefined}
       image={p.image}
       imageOpacity={typeof p.imageOpacity === "number" ? p.imageOpacity : undefined}
@@ -121,6 +128,7 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       strokeColor={typeof p.strokeColor === "string" ? p.strokeColor : undefined}
       fillColor={typeof p.fillColor === "string" ? p.fillColor : undefined}
       doubleBorder={typeof p.doubleBorder === "boolean" ? p.doubleBorder : undefined}
+      transparentGap={typeof p.transparentGap === "boolean" ? p.transparentGap : undefined}
       animationMode={
         p.animationMode === "once" ||
         p.animationMode === "scroll" ||

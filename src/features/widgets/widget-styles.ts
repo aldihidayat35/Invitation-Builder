@@ -518,12 +518,6 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
       defaultRadius: 0,
     },
     {
-      id: "rounded-rect",
-      label: "Persegi Membulat (Rounded Box)",
-      description: "Persegi dengan sudut lengkung halus modern yang bersih dan minimalis.",
-      defaultRadius: 0,
-    },
-    {
       id: "notched-bracket",
       label: "Sudut Cekung (Vintage Plaque)",
       description: "Plakat klasik dengan sudut cekung ke dalam dan bingkai ganda elegan.",

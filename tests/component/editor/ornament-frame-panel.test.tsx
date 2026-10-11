@@ -61,12 +61,12 @@ describe("OrnamentFrame Widget Panel UI (Clean, consistent, non-redundant)", () 
       </EditorProvider>,
     );
 
-    // 1. Pilihan Gaya (11 Variasi) is rendered
-    expect(screen.getByText(/Pilihan Gaya \(11 Variasi\)/)).toBeInTheDocument();
+    // 1. Pilihan Gaya (10 Variasi) is rendered (rounded-rect removed, rectangle with radius supported)
+    expect(screen.getByText(/Pilihan Gaya \(10 Variasi\)/)).toBeInTheDocument();
     expect(screen.getByTestId("widget-variant-circle")).toBeInTheDocument();
     expect(screen.getByTestId("widget-variant-oval")).toBeInTheDocument();
     expect(screen.getByTestId("widget-variant-rectangle")).toBeInTheDocument();
-    expect(screen.getByTestId("widget-variant-rounded-rect")).toBeInTheDocument();
+    expect(screen.queryByTestId("widget-variant-rounded-rect")).not.toBeInTheDocument();
 
     // 2. NO duplicate "Bentuk Bingkai" dropdown under Konten & Properti
     expect(screen.queryByRole("combobox", { name: "Bentuk Bingkai" })).not.toBeInTheDocument();

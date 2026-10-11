@@ -49,11 +49,17 @@ export function OrnamentFrameWidget({
   const [pathLength, setPathLength] = useState<number>(650);
 
   const activeShapeId = shape || style?.variant || "arch-window";
+  const effectiveRadius =
+    typeof cornerRadius === "number"
+      ? cornerRadius
+    : typeof style?.radius === "number"
+      ? style.radius
+      : undefined;
 
   // Dynamic responsive path generation for container dimensions, innerGap, and cornerRadius
   const shapeData = useMemo(
-    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h, innerGap, cornerRadius),
-    [activeShapeId, dimensions.w, dimensions.h, innerGap, cornerRadius],
+    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h, innerGap, effectiveRadius),
+    [activeShapeId, dimensions.w, dimensions.h, innerGap, effectiveRadius],
   );
 
   const resolvedStroke = strokeColor || style?.color || "#b4833e";

@@ -46,6 +46,7 @@ export const galleryWidget: WidgetDefinition = {
   type: GALLERY_WIDGET_TYPE,
   version: 1,
   label: "Galeri",
+  hidden: true,
   defaultFrame: { w: 326, h: 320 },
   defaultStyle: getDefaultWidgetStyle(GALLERY_WIDGET_TYPE),
   defaultProps: { title: "Galeri", layout: "grid", items: [] },
@@ -261,6 +262,7 @@ export const coupleProfileWidget: WidgetDefinition = {
   type: COUPLE_PROFILE_WIDGET_TYPE,
   version: 1,
   label: "Profil Mempelai",
+  hidden: true,
   defaultFrame: { w: 326, h: 560 },
   defaultStyle: getDefaultWidgetStyle(COUPLE_PROFILE_WIDGET_TYPE),
   defaultProps: {
@@ -391,7 +393,6 @@ export const ornamentFrameWidget: WidgetDefinition = {
           { value: "circle", label: "Lingkaran (Circle)" },
           { value: "oval", label: "Oval (Elips)" },
           { value: "rectangle", label: "Persegi Panjang (Box)" },
-          { value: "rounded-rect", label: "Persegi Membulat (Rounded Box)" },
           { value: "notched-bracket", label: "Sudut Cekung (Vintage Plaque)" },
           { value: "baroque-crest", label: "Mahkota Barok (Royal Crest)" },
           { value: "wavy-cartouche", label: "Pita Bergelombang (Rococo Waves)" },
@@ -490,6 +491,7 @@ export const videoWidget: WidgetDefinition = {
   type: VIDEO_WIDGET_TYPE,
   version: 1,
   label: "Video",
+  hidden: true,
   defaultFrame: { w: 326, h: 220 },
   defaultStyle: getDefaultWidgetStyle(VIDEO_WIDGET_TYPE),
   defaultProps: {
@@ -580,6 +582,7 @@ export const gifWidget: WidgetDefinition = {
   type: GIF_WIDGET_TYPE,
   version: 1,
   label: "Animasi GIF",
+  hidden: true,
   defaultFrame: { w: 200, h: 200 },
   defaultStyle: getDefaultWidgetStyle(GIF_WIDGET_TYPE),
   defaultProps: {

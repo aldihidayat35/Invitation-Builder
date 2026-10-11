@@ -305,16 +305,18 @@ export function WidgetPanel({
           onChange={(background) => setStyle({ background })}
         />
 
-        <NumberField
-          id={`insp-widget-radius-${element.id}`}
-          label="Radius Sudut (px)"
-          value={element.style.radius ?? 0}
-          min={0}
-          max={999}
-          step={1}
-          disabled={disabled}
-          onCommit={(radius) => setStyle({ radius })}
-        />
+        {element.widgetType !== "ornamentFrame" && (
+          <NumberField
+            id={`insp-widget-radius-${element.id}`}
+            label="Radius Sudut (px)"
+            value={element.style.radius ?? 0}
+            min={0}
+            max={999}
+            step={1}
+            disabled={disabled}
+            onCommit={(radius) => setStyle({ radius })}
+          />
+        )}
       </div>
 
       {/* 3. Content Properties */}
@@ -331,6 +333,7 @@ export function WidgetPanel({
             element={element}
             disabled={disabled}
             setProp={setProp}
+            setStyle={setStyle}
           />
         ) : element.widgetType === "video" ? (
           <VideoPropsControl
@@ -443,20 +446,25 @@ function OrnamentFramePropsControl({
   element,
   disabled,
   setProp,
+  setStyle,
 }: {
   readonly element: WidgetElement;
   readonly disabled: boolean;
   readonly setProp: (name: string, value: unknown) => void;
+  readonly setStyle?: (patch: Partial<WidgetElement["style"]>) => void;
 }) {
   const props = (element.props ?? {}) as Record<string, unknown>;
   const shape = (typeof props.shape === "string" ? props.shape : element.style.variant) || "arch-window";
   const isBaseShape =
-    shape === "rounded-rect" ||
     shape === "rectangle" ||
     shape === "arch-window";
-  const defaultRadius = shape === "rectangle" ? 0 : shape === "arch-window" ? 16 : 24;
+  const defaultRadius = shape === "rectangle" ? 0 : 16;
   const cornerRadius =
-    typeof props.cornerRadius === "number" ? props.cornerRadius : defaultRadius;
+    typeof props.cornerRadius === "number"
+      ? props.cornerRadius
+      : typeof element.style.radius === "number"
+        ? element.style.radius
+        : defaultRadius;
   const image = props.image;
   const imageOpacity = typeof props.imageOpacity === "number" ? props.imageOpacity : 100;
   const fillOpacity = typeof props.fillOpacity === "number" ? props.fillOpacity : 100;
@@ -514,7 +522,10 @@ function OrnamentFramePropsControl({
               step={1}
               decimals={0}
               disabled={disabled}
-              onCommit={(val) => setProp("cornerRadius", val)}
+              onCommit={(val) => {
+                setProp("cornerRadius", val);
+                setStyle?.({ radius: val });
+              }}
             />
           </div>
         )}

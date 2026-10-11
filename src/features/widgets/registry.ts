@@ -60,6 +60,8 @@ export interface WidgetDefinition {
   /** Props schema version; bump with `migrateProps` on breaking prop changes. */
   readonly version: number;
   readonly label: string;
+  /** When true, hides the widget from the insert/palette UI while keeping runtime and validation support. */
+  readonly hidden?: boolean;
   readonly props: Readonly<Record<string, WidgetPropDefinition>>;
   readonly defaultFrame: Pick<Frame, "w" | "h">;
   readonly defaultProps: Readonly<Record<string, JsonValue>>;
