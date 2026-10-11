@@ -27,13 +27,22 @@ function mimeToExt(mime: string): string {
     case "video/webm":
       return "webm";
     case "audio/mpeg":
+    case "audio/mp3":
       return "mp3";
     case "audio/mp4":
+    case "audio/x-m4a":
       return "m4a";
+    case "audio/aac":
+      return "aac";
     case "audio/ogg":
       return "ogg";
     case "audio/wav":
+    case "audio/x-wav":
       return "wav";
+    case "audio/webm":
+      return "weba";
+    case "audio/flac":
+      return "flac";
     default:
       return "bin";
   }

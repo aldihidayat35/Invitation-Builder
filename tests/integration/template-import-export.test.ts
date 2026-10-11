@@ -332,4 +332,59 @@ describe("Template Export & Import Integration (FR-TPL-PKG)", () => {
       importTemplatePackage(db(), storage, world.ownerA, world.wsA.id, zipBadJsonBytes),
     ).rejects.toThrow(TemplateImportError);
   });
+
+  it("exports and imports templates with custom audio backsound and preserves presets", async () => {
+    // 1. Upload custom MP3 audio asset in Workspace A
+    const mp3Bytes = new Uint8Array([
+      0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0xfb, 0x90, 0x64,
+    ]);
+    const audioInit = await initUpload(db(), storage, world.ownerA, {
+      workspaceId: world.wsA.id,
+      filename: "wedding-song.mp3",
+      mimeType: "audio/mpeg",
+      bytes: mp3Bytes.byteLength,
+    });
+    await receiveContent(db(), storage, world.ownerA, audioInit.assetId, mp3Bytes);
+    await finalizeUpload(db(), storage, world.ownerA, audioInit.assetId);
+
+    // 2. Create template with custom audio in design.audio
+    const doc = makeTestDoc();
+    doc.design.audio = {
+      enabled: true,
+      src: `/api/assets/${audioInit.assetId}`,
+      title: "Wedding Song Romance",
+      position: "bottom-right",
+      loop: true,
+      autoplayOnOpen: true,
+    };
+
+    const template = await createTemplate(db(), world.ownerA, {
+      workspaceId: world.wsA.id,
+      name: "Musical Wedding Invitation",
+      document: doc,
+    });
+
+    // 3. Export template package
+    const exportedPkg = await exportTemplatePackage(db(), storage, world.ownerA, template.id);
+    expect(exportedPkg.buffer.byteLength).toBeGreaterThan(0);
+
+    const zip = await JSZip.loadAsync(exportedPkg.buffer);
+    const audioFileInZip = zip.file(`assets/${audioInit.assetId}.mp3`);
+    expect(audioFileInZip).not.toBeNull();
+
+    // 4. Import into Workspace B
+    const importResult = await importTemplatePackage(
+      db(),
+      storage,
+      world.ownerB,
+      world.wsB.id,
+      exportedPkg.buffer,
+    );
+    expect(importResult.importedAssetsCount).toBe(1);
+
+    const importedTpl = await getTemplate(db(), world.ownerB, importResult.templateId);
+    expect(importedTpl.document.design.audio?.enabled).toBe(true);
+    expect(importedTpl.document.design.audio?.src).not.toBe(`/api/assets/${audioInit.assetId}`);
+    expect(importedTpl.document.design.audio?.src).toContain("/api/assets/");
+  });
 });
