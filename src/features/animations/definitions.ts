@@ -227,6 +227,22 @@ export const ATTENTION_PRESETS: readonly AnimationPreset[] = [
     },
   },
   {
+    id: "plantSway",
+    category: "attention",
+    label: "Melambai (Waving)",
+    description: "Elemen bergoyang lembut seperti rumput atau dahan dengan titik poros tetap.",
+    applicableElements: ALL_ELEMENT_TYPES,
+    defaultDurationMs: 2400,
+    defaultDelayMs: 0,
+    defaultEasing: "ease-in-out",
+    loop: true,
+    yoyo: true,
+    keyframes: {
+      from: { rotation: -5, transformOrigin: "center bottom" },
+      to: { rotation: 5, transformOrigin: "center bottom" },
+    },
+  },
+  {
     id: "heartbeat",
     category: "attention",
     label: "Detak Jantung (Heartbeat)",

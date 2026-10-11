@@ -22,6 +22,9 @@ export interface CreateTrackOptions {
   readonly repeat?: number;
   readonly yoyo?: boolean;
   readonly once?: boolean;
+  readonly anchor?: AnimationTrack["anchor"];
+  readonly direction?: AnimationTrack["direction"];
+  readonly intensity?: AnimationTrack["intensity"];
 }
 
 export function buildDefaultTrack(options: CreateTrackOptions): AnimationTrack {
@@ -38,6 +41,13 @@ export function buildDefaultTrack(options: CreateTrackOptions): AnimationTrack {
     options.trigger ?? (preset?.category === "exit" ? "onExitViewport" : "onEnterViewport");
   const once = options.once ?? repeat === 0;
 
+  const anchor =
+    options.anchor ?? (options.presetId === "plantSway" ? "bottom-center" : undefined);
+  const direction =
+    options.direction ?? (options.presetId === "plantSway" ? "left-first" : undefined);
+  const intensity =
+    options.intensity ?? (options.presetId === "plantSway" ? 5 : undefined);
+
   const candidate = {
     presetId: options.presetId,
     trigger,
@@ -49,6 +59,9 @@ export function buildDefaultTrack(options: CreateTrackOptions): AnimationTrack {
     staggerUnit,
     staggerAmountMs: Math.max(0, Math.min(ANIMATION_LIMITS.maxStaggerMs, staggerAmountMs)),
     once,
+    anchor,
+    direction,
+    intensity,
   };
 
   return animationTrackSchema.parse(candidate);

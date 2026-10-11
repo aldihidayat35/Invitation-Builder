@@ -298,6 +298,16 @@ export function AnimationPresetIcon({ presetId, size = 22, ...rest }: AnimationI
         </Svg>
       );
 
+    case "plantSway":
+      return (
+        <Svg size={size} {...rest}>
+          {/* Rumput/tanaman bergoyang melambai dengan dasar tetap */}
+          <path d="M12 21c0-5 3.5-9 4.5-13-2 1.5-4.5 3.5-4.5 7" strokeWidth={1.7} />
+          <path d="M12 21c0-4.5-2.5-8-6-10 1.5 2 3.5 4.5 4 6.5" strokeWidth={1.5} />
+          <path d="M8 21h8" strokeWidth={2} strokeLinecap="round" />
+        </Svg>
+      );
+
     case "heartbeat":
       return (
         <Svg size={size} {...rest}>

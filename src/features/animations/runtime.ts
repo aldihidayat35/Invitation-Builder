@@ -66,6 +66,38 @@ export function playAnimation(
   const fromVars = toGsapVars(preset.keyframes.from);
   const toVars = toGsapVars(preset.keyframes.to);
 
+  // Dynamic overrides for anchor, direction, and intensity (e.g. plantSway / waving)
+  if (track.anchor || track.presetId === "plantSway") {
+    const anchor = track.anchor ?? "bottom-center";
+    let cssOrigin = "center bottom";
+    switch (anchor) {
+      case "bottom-center":
+        cssOrigin = "center bottom";
+        break;
+      case "bottom-left":
+        cssOrigin = "left bottom";
+        break;
+      case "bottom-right":
+        cssOrigin = "right bottom";
+        break;
+      case "top-center":
+        cssOrigin = "center top";
+        break;
+      case "center":
+        cssOrigin = "center center";
+        break;
+    }
+    fromVars.transformOrigin = cssOrigin;
+    toVars.transformOrigin = cssOrigin;
+  }
+
+  if (track.presetId === "plantSway" || track.intensity !== undefined || track.direction !== undefined) {
+    const angle = track.intensity ?? 5;
+    const isLeftFirst = track.direction !== "right-first";
+    fromVars.rotation = isLeftFirst ? -angle : angle;
+    toVars.rotation = isLeftFirst ? angle : -angle;
+  }
+
   const execute = () => {
     if (cleanedUp) return;
     options.onStart?.();

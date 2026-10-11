@@ -34,6 +34,18 @@ export type AnimationEasing = (typeof ANIMATION_EASINGS)[number];
 
 export const STAGGER_UNITS = ["none", "char", "word"] as const;
 
+export const ANIMATION_ANCHORS = [
+  "bottom-center",
+  "bottom-left",
+  "bottom-right",
+  "top-center",
+  "center",
+] as const;
+export type AnimationAnchor = (typeof ANIMATION_ANCHORS)[number];
+
+export const ANIMATION_DIRECTIONS = ["left-first", "right-first"] as const;
+export type AnimationDirection = (typeof ANIMATION_DIRECTIONS)[number];
+
 export const ANIMATION_LIMITS = {
   maxDurationMs: 10_000,
   maxDelayMs: 30_000,
@@ -53,6 +65,12 @@ export const animationTrackSchema = z.strictObject({
   staggerUnit: z.enum(STAGGER_UNITS).default("none"),
   staggerAmountMs: z.number().min(0).max(ANIMATION_LIMITS.maxStaggerMs).default(0),
   once: z.boolean().default(true),
+  /** Pivot / fixed anchor point (e.g. bottom-center for swaying grass). */
+  anchor: z.enum(ANIMATION_ANCHORS).optional(),
+  /** Initial swing direction (left-first or right-first). */
+  direction: z.enum(ANIMATION_DIRECTIONS).optional(),
+  /** Sway rotation angle intensity in degrees (e.g. 1 to 45). */
+  intensity: z.number().min(1).max(45).optional(),
 });
 export type AnimationTrack = z.infer<typeof animationTrackSchema>;
 

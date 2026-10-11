@@ -8,6 +8,7 @@ import {
 } from "@/features/animations";
 import {
   ANIMATION_EASINGS,
+  type AnimationAnchor,
   type AnimationTrack,
   type Element,
   type MotionPathShape,
@@ -18,6 +19,14 @@ import { NumberField, SelectField } from "./fields";
 import { IconGroup, IconPlay, IconPlus, IconReplay, IconReverse, IconTrash } from "./icons";
 import { AnimationPresetIcon } from "./AnimationIcon";
 import styles from "./editor.module.css";
+
+const ANCHOR_OPTIONS: readonly { value: AnimationAnchor; label: string }[] = [
+  { value: "bottom-center", label: "Bawah - Tengah (Default Rumput/Tumbuhan)" },
+  { value: "bottom-left", label: "Bawah - Kiri" },
+  { value: "bottom-right", label: "Bawah - Kanan" },
+  { value: "top-center", label: "Atas - Tengah (Gantungan/Lampu)" },
+  { value: "center", label: "Titik Tengah" },
+];
 
 export interface AnimationPanelProps {
   readonly element: Element;
@@ -895,6 +904,78 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                 disabled={readOnly}
                 onChange={(easing) => patchTrack({ easing })}
               />
+
+              {/* Special options for Plant Sway / Waving animation */}
+              {(currentTrack.presetId === "plantSway" || currentTrack.anchor !== undefined) && (
+                <div
+                  className={styles.groupAnimationBanner}
+                  style={{ marginTop: 4, marginBottom: 8, flexDirection: "column", gap: 10 }}
+                  data-testid="plant-sway-controls"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: 12 }}>
+                    <span>🌾</span>
+                    <span>Pengaturan Titik Poros & Arah Melambai</span>
+                  </div>
+
+                  <SelectField
+                    id={`insp-anim-anchor-${activeTab}`}
+                    label="Titik Tetap (Poros Rotasi)"
+                    value={currentTrack.anchor ?? "bottom-center"}
+                    options={ANCHOR_OPTIONS}
+                    disabled={readOnly}
+                    onChange={(anchor) => {
+                      patchTrack({ anchor: anchor as AnimationAnchor });
+                      handleReplayElement();
+                    }}
+                  />
+
+                  <div>
+                    <label className={styles.fieldLabel} style={{ marginBottom: 4 }}>
+                      Arah Goyangan Awal
+                    </label>
+                    <div className={styles.segmented} role="group" aria-label="Arah Goyangan Awal">
+                      <button
+                        type="button"
+                        className={styles.segmentedButton}
+                        aria-pressed={(currentTrack.direction ?? "left-first") === "left-first"}
+                        disabled={readOnly}
+                        onClick={() => {
+                          patchTrack({ direction: "left-first" });
+                          handleReplayElement();
+                        }}
+                      >
+                        ⬅️ Ke Kiri Dulu
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.segmentedButton}
+                        aria-pressed={currentTrack.direction === "right-first"}
+                        disabled={readOnly}
+                        onClick={() => {
+                          patchTrack({ direction: "right-first" });
+                          handleReplayElement();
+                        }}
+                      >
+                        ➡️ Ke Kanan Dulu
+                      </button>
+                    </div>
+                  </div>
+
+                  <NumberField
+                    id={`insp-anim-intensity-${activeTab}`}
+                    label="Sudut Kemiringan / Ayunan (°)"
+                    value={currentTrack.intensity ?? 5}
+                    min={1}
+                    max={25}
+                    step={1}
+                    disabled={readOnly}
+                    onCommit={(intensity) => {
+                      patchTrack({ intensity });
+                      handleReplayElement();
+                    }}
+                  />
+                </div>
+              )}
 
               {isText && activeTab === "enter" ? (
                 <div className={styles.grid2}>

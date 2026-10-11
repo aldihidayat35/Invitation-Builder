@@ -28,16 +28,25 @@ export function replayKonvaNode(
   const fromProps = preset.keyframes.from;
   const toProps = preset.keyframes.to;
 
+  let rotFrom = fromProps.rotation ?? 0;
+  let rotTo = toProps.rotation ?? 0;
+  if (track.presetId === "plantSway" || track.intensity !== undefined || track.direction !== undefined) {
+    const angle = track.intensity ?? 5;
+    const isLeftFirst = track.direction !== "right-first";
+    rotFrom = isLeftFirst ? -angle : angle;
+    rotTo = isLeftFirst ? angle : -angle;
+  }
+
   const startX = origX + (fromProps.x ?? 0);
   const startY = origY + (fromProps.y ?? 0);
-  const startRot = origRotation + (fromProps.rotation ?? 0);
+  const startRot = origRotation + rotFrom;
   const startScaleX = origScaleX * (fromProps.scaleX ?? fromProps.scale ?? 1);
   const startScaleY = origScaleY * (fromProps.scaleY ?? fromProps.scale ?? 1);
   const startOpacity = fromProps.opacity !== undefined ? fromProps.opacity : origOpacity;
 
   const targetX = origX + (toProps.x ?? 0);
   const targetY = origY + (toProps.y ?? 0);
-  const targetRot = origRotation + (toProps.rotation ?? 0);
+  const targetRot = origRotation + rotTo;
   const targetScaleX = origScaleX * (toProps.scaleX ?? toProps.scale ?? 1);
   const targetScaleY = origScaleY * (toProps.scaleY ?? toProps.scale ?? 1);
   const targetOpacity = toProps.opacity !== undefined ? toProps.opacity : origOpacity;
@@ -130,16 +139,25 @@ export function startKonvaLoopAnimation(node: Konva.Node, track: AnimationTrack)
   const fromProps = preset.keyframes.from;
   const toProps = preset.keyframes.to;
 
+  let rotFrom = fromProps.rotation ?? 0;
+  let rotTo = toProps.rotation ?? 0;
+  if (track.presetId === "plantSway" || track.intensity !== undefined || track.direction !== undefined) {
+    const angle = track.intensity ?? 5;
+    const isLeftFirst = track.direction !== "right-first";
+    rotFrom = isLeftFirst ? -angle : angle;
+    rotTo = isLeftFirst ? angle : -angle;
+  }
+
   const startX = origX + (fromProps.x ?? 0);
   const startY = origY + (fromProps.y ?? 0);
-  const startRot = origRotation + (fromProps.rotation ?? 0);
+  const startRot = origRotation + rotFrom;
   const startScaleX = origScaleX * (fromProps.scaleX ?? fromProps.scale ?? 1);
   const startScaleY = origScaleY * (fromProps.scaleY ?? fromProps.scale ?? 1);
   const startOpacity = fromProps.opacity !== undefined ? fromProps.opacity : origOpacity;
 
   const targetX = origX + (toProps.x ?? 0);
   const targetY = origY + (toProps.y ?? 0);
-  const targetRot = origRotation + (toProps.rotation ?? 0);
+  const targetRot = origRotation + rotTo;
   const targetScaleX = origScaleX * (toProps.scaleX ?? toProps.scale ?? 1);
   const targetScaleY = origScaleY * (toProps.scaleY ?? toProps.scale ?? 1);
   const targetOpacity = toProps.opacity !== undefined ? toProps.opacity : origOpacity;

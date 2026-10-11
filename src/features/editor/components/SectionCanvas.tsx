@@ -15,6 +15,7 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import { Circle, Ellipse, Group, Layer, Line, Rect, Stage, Text, Transformer } from "react-konva";
 import {
   CANONICAL_BASE_WIDTH,
+  type AnimationAnchor,
   type Element,
   type Frame,
   type Section,
@@ -189,6 +190,26 @@ function Visual({
   }
 }
 
+function getKonvaPivotCoords(
+  w: number,
+  h: number,
+  anchor?: AnimationAnchor,
+): { pivotX: number; pivotY: number } {
+  switch (anchor) {
+    case "bottom-center":
+      return { pivotX: w / 2, pivotY: h };
+    case "bottom-left":
+      return { pivotX: 0, pivotY: h };
+    case "bottom-right":
+      return { pivotX: w, pivotY: h };
+    case "top-center":
+      return { pivotX: w / 2, pivotY: 0 };
+    case "center":
+    default:
+      return { pivotX: w / 2, pivotY: h / 2 };
+  }
+}
+
 const ElementNode = memo(function ElementNode({
   element,
   tokens,
@@ -206,7 +227,7 @@ const ElementNode = memo(function ElementNode({
   const { w, h } = element.frame;
   const innerRef = useRef<Konva.Group | null>(null);
 
-  // Continuous live loop animation in the canvas editor (float, pulse, sway, etc.)
+  // Continuous live loop animation in the canvas editor (float, pulse, sway, plantSway, etc.)
   const loopTrack =
     element.animations?.attention ??
     (element.animations?.enter?.repeat === -1 ? element.animations.enter : undefined);
@@ -220,6 +241,16 @@ const ElementNode = memo(function ElementNode({
   const effectiveOpacity = isMotionTarget && isOutsideSection
     ? styleOpacity(element) * 0.72
     : styleOpacity(element);
+
+  const activeAnchor =
+    loopTrack?.anchor ??
+    (loopTrack?.presetId === "plantSway" ? "bottom-center" : undefined) ??
+    element.animations?.enter?.anchor ??
+    (element.animations?.enter?.presetId === "plantSway" ? "bottom-center" : undefined) ??
+    element.animations?.exit?.anchor ??
+    "center";
+
+  const { pivotX, pivotY } = getKonvaPivotCoords(w, h, activeAnchor);
 
   return (
     <Group
@@ -247,7 +278,14 @@ const ElementNode = memo(function ElementNode({
     >
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
-      <Group ref={innerRef} x={w / 2} y={h / 2} offsetX={w / 2} offsetY={h / 2}>
+      <Group
+        ref={innerRef}
+        name="element-inner"
+        x={pivotX}
+        y={pivotY}
+        offsetX={pivotX}
+        offsetY={pivotY}
+      >
         <Visual
           element={element}
           tokens={tokens}
@@ -986,7 +1024,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
           anims?.attention ||
           anims?.exit;
         if (node && track) {
-          replayKonvaNode(node, track);
+          const targetNode =
+            (node as Konva.Group).findOne<Konva.Node>(".element-inner") ?? node;
+          replayKonvaNode(targetNode, track);
         }
       } else if (custom.detail?.sectionId === sectionId) {
         for (const el of section.elements) {
@@ -1002,7 +1042,9 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               anims?.attention ||
               anims?.exit;
             if (track) {
-              replayKonvaNode(node, track);
+              const targetNode =
+                (node as Konva.Group).findOne<Konva.Node>(".element-inner") ?? node;
+              replayKonvaNode(targetNode, track);
             }
           }
         }

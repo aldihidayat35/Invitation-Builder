@@ -196,4 +196,69 @@ describe("AnimationPanel Component (FR-ANM-005, FR-ANM-006, AC-07)", () => {
     expect(sectionEvent.type).toBe("dib:replay-animation");
     expect(sectionEvent.detail).toEqual({ sectionId: "sec_1", trackType: "enter" });
   });
+
+  it("configures plantSway animation with anchor, direction, and intensity controls", () => {
+    const textElement: Element = {
+      id: "title_plant_1",
+      type: "text",
+      frame: { x: 10, y: 10, w: 200, h: 40, rotation: 0 },
+      visible: true,
+      locked: false,
+      content: { segments: [{ text: "Rumput" }] },
+      style: {
+        fontSize: 16,
+        fontWeight: 400,
+        lineHeight: 1.4,
+        letterSpacing: 0,
+        textAlign: "left",
+        color: "#000000",
+        opacity: 1,
+      },
+    };
+
+    const { store } = renderWithStore(textElement, "sec_1");
+
+    // Switch to Lain-lain (attention) tab
+    const attentionTab = screen.getByTestId("anim-tab-attention");
+    fireEvent.click(attentionTab);
+
+    // Select plantSway preset box
+    const plantSwayBox = screen.getByTestId("preset-box-plantSway");
+    expect(plantSwayBox).toBeDefined();
+    fireEvent.click(plantSwayBox);
+
+    // Verify plantSway controls are rendered
+    expect(screen.getByTestId("plant-sway-controls")).toBeDefined();
+    expect(screen.getByText("Pengaturan Titik Poros & Arah Melambai")).toBeDefined();
+
+    // Verify default track in store
+    const updatedEl = store
+      .getState()
+      .history.present.sections.flatMap((s) => s.elements)
+      .find((e) => e.id === "title_plant_1");
+    expect(updatedEl?.animations?.attention?.presetId).toBe("plantSway");
+    expect(updatedEl?.animations?.attention?.anchor).toBe("bottom-center");
+    expect(updatedEl?.animations?.attention?.direction).toBe("left-first");
+    expect(updatedEl?.animations?.attention?.intensity).toBe(5);
+
+    // Change direction to right-first
+    const rightFirstBtn = screen.getByText("➡️ Ke Kanan Dulu");
+    fireEvent.click(rightFirstBtn);
+
+    const afterDirEl = store
+      .getState()
+      .history.present.sections.flatMap((s) => s.elements)
+      .find((e) => e.id === "title_plant_1");
+    expect(afterDirEl?.animations?.attention?.direction).toBe("right-first");
+
+    // Change anchor to top-center
+    const anchorSelect = screen.getByLabelText("Titik Tetap (Poros Rotasi)");
+    fireEvent.change(anchorSelect, { target: { value: "top-center" } });
+
+    const afterAnchorEl = store
+      .getState()
+      .history.present.sections.flatMap((s) => s.elements)
+      .find((e) => e.id === "title_plant_1");
+    expect(afterAnchorEl?.animations?.attention?.anchor).toBe("top-center");
+  });
 });
