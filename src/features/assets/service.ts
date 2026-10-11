@@ -32,6 +32,7 @@ import {
   ASSET_LIMITS,
   EXTENSIONS_BY_MIME,
   IMAGE_MIME_TYPES,
+  AUDIO_MIME_TYPES,
   VIDEO_MIME_TYPES,
   assetUploadInitSchema,
   maxBytesForMime,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/schema";
 import { sniffImage } from "@/lib/storage/image-sniff";
 import { sniffVideo } from "@/lib/storage/video-sniff";
+import { sniffAudio } from "@/lib/storage/audio-sniff";
 import type { PresignedUpload, StorageDriver } from "@/lib/storage/types";
 import { z } from "zod";
 import { assetContentUrl, assetUrl } from "./urls";
@@ -78,6 +80,8 @@ const isImageMime = (mime: string): boolean =>
   (IMAGE_MIME_TYPES as readonly string[]).includes(mime);
 const isVideoMime = (mime: string): boolean =>
   (VIDEO_MIME_TYPES as readonly string[]).includes(mime);
+const isAudioMime = (mime: string): boolean =>
+  (AUDIO_MIME_TYPES as readonly string[]).includes(mime);
 
 function toSummary(row: AssetRow): AssetSummary {
   return {
@@ -230,6 +234,35 @@ export async function finalizeUpload(
       bytes: data.byteLength,
       width: sniffed.width,
       height: sniffed.height,
+    });
+    if (!ready) throw new AssetRejectedError("Aset sudah diproses.");
+    await insertAuditLog(db, {
+      workspaceId: row.workspaceId,
+      actorId: actor.userId,
+      action: "asset.upload",
+      entityType: "asset",
+      entityId: row.id,
+      metadata: { filename: row.filename, bytes: ready.bytes },
+    });
+    return toSummary(ready);
+  }
+
+  if (isAudioMime(row.mimeType)) {
+    const sniffed = sniffAudio(data);
+    if (!sniffed) return fail(db, storage, row, "Berkas bukan audio yang valid.");
+    const match =
+      sniffed.mime === row.mimeType ||
+      (row.mimeType === "audio/mpeg" && sniffed.mime === "audio/mpeg") ||
+      (row.mimeType === "audio/mp4" && sniffed.mime === "audio/mp4") ||
+      (row.mimeType === "audio/ogg" && sniffed.mime === "audio/ogg");
+    if (!match) {
+      return fail(db, storage, row, "Isi berkas tidak sesuai dengan tipe yang dinyatakan.");
+    }
+    const ready = await markAssetReady(db, row.id, {
+      mimeType: row.mimeType,
+      bytes: data.byteLength,
+      width: null,
+      height: null,
     });
     if (!ready) throw new AssetRejectedError("Aset sudah diproses.");
     await insertAuditLog(db, {
