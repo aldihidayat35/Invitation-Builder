@@ -4051,7 +4051,8 @@ function OrnamentFrameVisual({
   const shapeId =
     (typeof props.shape === "string" ? props.shape : element.style.variant) || "arch-window";
   const innerGap = typeof props.innerGap === "number" ? props.innerGap : 12;
-  const shapeData = getOrnamentShape(shapeId, w, h, innerGap);
+  const cornerRadius = typeof props.cornerRadius === "number" ? props.cornerRadius : undefined;
+  const shapeData = getOrnamentShape(shapeId, w, h, innerGap, cornerRadius);
   const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
   const doubleBorder = props.doubleBorder !== false;
   const fillOpacity =

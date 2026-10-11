@@ -9,6 +9,7 @@ import styles from "./OrnamentFrameWidget.module.css";
 export interface OrnamentFrameWidgetProps {
   readonly shape?: string;
   readonly innerGap?: number;
+  readonly cornerRadius?: number;
   readonly fillOpacity?: number;
   readonly image?: unknown;
   readonly imageOpacity?: number;
@@ -24,6 +25,7 @@ export interface OrnamentFrameWidgetProps {
 export function OrnamentFrameWidget({
   shape,
   innerGap = 12,
+  cornerRadius,
   fillOpacity = 100,
   image,
   imageOpacity = 100,
@@ -45,10 +47,10 @@ export function OrnamentFrameWidget({
 
   const activeShapeId = shape || style?.variant || "arch-window";
 
-  // Dynamic responsive path generation for container dimensions and innerGap
+  // Dynamic responsive path generation for container dimensions, innerGap, and cornerRadius
   const shapeData = useMemo(
-    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h, innerGap),
-    [activeShapeId, dimensions.w, dimensions.h, innerGap],
+    () => getOrnamentShape(activeShapeId, dimensions.w, dimensions.h, innerGap, cornerRadius),
+    [activeShapeId, dimensions.w, dimensions.h, innerGap, cornerRadius],
   );
 
   const resolvedStroke = strokeColor || style?.color || "#b4833e";

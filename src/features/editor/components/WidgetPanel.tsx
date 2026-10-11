@@ -449,6 +449,14 @@ function OrnamentFramePropsControl({
   readonly setProp: (name: string, value: unknown) => void;
 }) {
   const props = (element.props ?? {}) as Record<string, unknown>;
+  const shape = (typeof props.shape === "string" ? props.shape : element.style.variant) || "arch-window";
+  const isBaseShape =
+    shape === "rounded-rect" ||
+    shape === "rectangle" ||
+    shape === "arch-window";
+  const defaultRadius = shape === "rectangle" ? 0 : shape === "arch-window" ? 16 : 24;
+  const cornerRadius =
+    typeof props.cornerRadius === "number" ? props.cornerRadius : defaultRadius;
   const image = props.image;
   const imageOpacity = typeof props.imageOpacity === "number" ? props.imageOpacity : 100;
   const fillOpacity = typeof props.fillOpacity === "number" ? props.fillOpacity : 100;
@@ -492,8 +500,24 @@ function OrnamentFramePropsControl({
         />
       </div>
 
-      {/* 3. Garis & Border */}
+      {/* 3. Garis, Radius & Border */}
       <div className={styles.panelStack}>
+        {isBaseShape && (
+          <div data-testid="widget-prop-cornerRadius">
+            <NumberField
+              id={`insp-widget-cornerRadius-${element.id}`}
+              label="Radius Sudut (px)"
+              value={cornerRadius}
+              min={0}
+              max={200}
+              step={1}
+              decimals={0}
+              disabled={disabled}
+              onCommit={(val) => setProp("cornerRadius", val)}
+            />
+          </div>
+        )}
+
         <div data-testid="widget-prop-strokeWidth">
           <NumberField
             id={`insp-widget-strokeWidth-${element.id}`}

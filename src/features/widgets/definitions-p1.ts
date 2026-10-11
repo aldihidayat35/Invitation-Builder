@@ -357,6 +357,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
   defaultProps: {
     shape: "arch-window",
     innerGap: 12,
+    cornerRadius: 24,
     fillOpacity: 100,
     imageOpacity: 100,
     strokeWidth: 2,
@@ -398,6 +399,12 @@ export const ornamentFrameWidget: WidgetDefinition = {
           { value: "pointed-cartouche", label: "Bintang Lancip Barok (Pointed Plaque)" },
         ],
       },
+    ),
+    cornerRadius: defineProp(
+      "number",
+      "Radius Sudut (px)",
+      z.number().min(0).max(200).default(24),
+      { bindable: false, min: 0, max: 200, step: 1 },
     ),
     innerGap: defineProp(
       "number",

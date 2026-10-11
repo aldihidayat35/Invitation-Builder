@@ -255,13 +255,14 @@ export function getOrnamentShape(
   width = 400,
   height = 260,
   innerGap = 12,
+  cornerRadius?: number,
 ): OrnamentShapeData {
   const match = ORNAMENT_SHAPES.find((s) => s.id === id);
   const baseShape = match ?? ORNAMENT_SHAPES[0];
   if (!baseShape) throw new Error("No ornament shapes defined");
 
-  // Fast path for standard base size and default gap
-  if (width === 400 && height === 260 && innerGap === 12) {
+  // Fast path for standard base size and default gap without custom radius
+  if (width === 400 && height === 260 && innerGap === 12 && cornerRadius === undefined) {
     return baseShape;
   }
 
@@ -300,33 +301,63 @@ export function getOrnamentShape(
     };
   }
 
-  if (baseShape.id === "rectangle") {
+  // Base rectangular frames with configurable corner radius and true concentric double border
+  if (baseShape.id === "rectangle" || baseShape.id === "rounded-rect") {
     const m = 12;
-    const im = m + gap;
-    return {
-      ...baseShape,
-      leftPath: `M ${cx} ${m} L ${m} ${m} L ${m} ${height - m} L ${cx} ${height - m}`,
-      rightPath: `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${cx} ${height - m}`,
-      fullPath: `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${m} ${height - m} L ${m} ${m} Z`,
-      innerLeftPath: `M ${cx} ${im} L ${im} ${im} L ${im} ${height - im} L ${cx} ${height - im}`,
-      innerRightPath: `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${cx} ${height - im}`,
-      innerFullPath: `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${im} ${height - im} L ${im} ${im} Z`,
-    };
-  }
+    const maxR = Math.max(0, Math.floor((Math.min(width, height) - 2 * m) / 2));
+    let cr: number;
+    if (cornerRadius !== undefined) {
+      cr = Math.max(0, Math.min(cornerRadius, maxR));
+    } else if (baseShape.id === "rounded-rect") {
+      cr = Math.min(32, Math.max(12, Math.round(Math.min(width, height) * 0.15)));
+      cr = Math.min(cr, maxR);
+    } else {
+      cr = 0;
+    }
 
-  if (baseShape.id === "rounded-rect") {
-    const m = 12;
-    const cr = Math.min(32, Math.max(12, Math.round(Math.min(width, height) * 0.15)));
     const im = m + gap;
-    const icr = Math.max(4, cr - Math.round(gap * 0.5));
+    const maxIR = Math.max(0, Math.floor((Math.min(width, height) - 2 * im) / 2));
+    // True concentric inner radius: R_inner = max(0, R_outer - gap)
+    const icr = Math.min(Math.max(0, cr - gap), maxIR);
+
+    const leftPath =
+      cr > 0
+        ? `M ${cx} ${m} L ${m + cr} ${m} A ${cr} ${cr} 0 0 0 ${m} ${m + cr} L ${m} ${height - m - cr} A ${cr} ${cr} 0 0 0 ${m + cr} ${height - m} L ${cx} ${height - m}`
+        : `M ${cx} ${m} L ${m} ${m} L ${m} ${height - m} L ${cx} ${height - m}`;
+
+    const rightPath =
+      cr > 0
+        ? `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${cx} ${height - m}`
+        : `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${cx} ${height - m}`;
+
+    const fullPath =
+      cr > 0
+        ? `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${m + cr} ${height - m} A ${cr} ${cr} 0 0 1 ${m} ${height - m - cr} L ${m} ${m + cr} A ${cr} ${cr} 0 0 1 ${m + cr} ${m} Z`
+        : `M ${cx} ${m} L ${width - m} ${m} L ${width - m} ${height - m} L ${m} ${height - m} L ${m} ${m} Z`;
+
+    const innerLeftPath =
+      icr > 0
+        ? `M ${cx} ${im} L ${im + icr} ${im} A ${icr} ${icr} 0 0 0 ${im} ${im + icr} L ${im} ${height - im - icr} A ${icr} ${icr} 0 0 0 ${im + icr} ${height - im} L ${cx} ${height - im}`
+        : `M ${cx} ${im} L ${im} ${im} L ${im} ${height - im} L ${cx} ${height - im}`;
+
+    const innerRightPath =
+      icr > 0
+        ? `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${cx} ${height - im}`
+        : `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${cx} ${height - im}`;
+
+    const innerFullPath =
+      icr > 0
+        ? `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${im + icr} ${height - im} A ${icr} ${icr} 0 0 1 ${im} ${height - im - icr} L ${im} ${im + icr} A ${icr} ${icr} 0 0 1 ${im + icr} ${im} Z`
+        : `M ${cx} ${im} L ${width - im} ${im} L ${width - im} ${height - im} L ${im} ${height - im} L ${im} ${im} Z`;
+
     return {
       ...baseShape,
-      leftPath: `M ${cx} ${m} L ${m + cr} ${m} A ${cr} ${cr} 0 0 0 ${m} ${m + cr} L ${m} ${height - m - cr} A ${cr} ${cr} 0 0 0 ${m + cr} ${height - m} L ${cx} ${height - m}`,
-      rightPath: `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${cx} ${height - m}`,
-      fullPath: `M ${cx} ${m} L ${width - m - cr} ${m} A ${cr} ${cr} 0 0 1 ${width - m} ${m + cr} L ${width - m} ${height - m - cr} A ${cr} ${cr} 0 0 1 ${width - m - cr} ${height - m} L ${m + cr} ${height - m} A ${cr} ${cr} 0 0 1 ${m} ${height - m - cr} L ${m} ${m + cr} A ${cr} ${cr} 0 0 1 ${m + cr} ${m} Z`,
-      innerLeftPath: `M ${cx} ${im} L ${im + icr} ${im} A ${icr} ${icr} 0 0 0 ${im} ${im + icr} L ${im} ${height - im - icr} A ${icr} ${icr} 0 0 0 ${im + icr} ${height - im} L ${cx} ${height - im}`,
-      innerRightPath: `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${cx} ${height - im}`,
-      innerFullPath: `M ${cx} ${im} L ${width - im - icr} ${im} A ${icr} ${icr} 0 0 1 ${width - im} ${im + icr} L ${width - im} ${height - im - icr} A ${icr} ${icr} 0 0 1 ${width - im - icr} ${height - im} L ${im + icr} ${height - im} A ${icr} ${icr} 0 0 1 ${im} ${height - im - icr} L ${im} ${im + icr} A ${icr} ${icr} 0 0 1 ${im + icr} ${im} Z`,
+      leftPath,
+      rightPath,
+      fullPath,
+      innerLeftPath,
+      innerRightPath,
+      innerFullPath,
     };
   }
 
@@ -338,19 +369,57 @@ export function getOrnamentShape(
     const rightX = width - leftX;
     const cpx = Math.round(cx - (cx - leftX) * 0.55);
 
-    const leftPath = `M ${cx} ${yTop} C ${cpx} ${yTop}, ${leftX} ${Math.round(yTop + archH * 0.45)}, ${leftX} ${yTop + archH} L ${leftX} ${yBot - 10} C ${leftX} ${yBot - 2}, ${leftX + 10} ${yBot}, ${leftX + 30} ${yBot} L ${cx} ${yBot}`;
-    const rightPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} L ${rightX} ${yBot - 10} C ${rightX} ${yBot - 2}, ${rightX - 10} ${yBot}, ${rightX - 30} ${yBot} L ${cx} ${yBot}`;
-    const fullPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} L ${rightX} ${yBot - 10} C ${rightX} ${yBot - 2}, ${rightX - 10} ${yBot}, ${rightX - 30} ${yBot} L ${cx} ${yBot} L ${leftX + 30} ${yBot} C ${leftX + 10} ${yBot}, ${leftX} ${yBot - 2}, ${leftX} ${yBot - 10} L ${leftX} ${yTop + archH} C ${leftX} ${Math.round(yTop + archH * 0.45)}, ${cpx} ${yTop}, ${cx} ${yTop} Z`;
+    // Bottom corner radius
+    const maxBotR = Math.max(0, Math.floor(Math.min(cx - leftX, (yBot - (yTop + archH)) * 0.8)));
+    const botR =
+      cornerRadius !== undefined
+        ? Math.max(0, Math.min(cornerRadius, maxBotR))
+        : Math.min(24, Math.max(8, Math.round(width * 0.06)));
 
     const iyTop = yTop + gap;
-    const iyBot = yBot - gap * 0.6;
+    const iyBot = yBot - gap;
     const ileftX = leftX + gap;
     const irightX = rightX - gap;
     const icpx = Math.round(cx - (cx - ileftX) * 0.55);
+    const ibotR = Math.max(0, botR - gap);
 
-    const innerLeftPath = `M ${cx} ${iyTop} C ${icpx} ${iyTop}, ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${ileftX} ${iyTop + archH} L ${ileftX} ${iyBot - 6} C ${ileftX} ${iyBot - 2}, ${ileftX + 6} ${iyBot}, ${ileftX + 20} ${iyBot} L ${cx} ${iyBot}`;
-    const innerRightPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} L ${irightX} ${iyBot - 6} C ${irightX} ${iyBot - 2}, ${irightX - 6} ${iyBot}, ${irightX - 20} ${iyBot} L ${cx} ${iyBot}`;
-    const innerFullPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} L ${irightX} ${iyBot - 6} C ${irightX} ${iyBot - 2}, ${irightX - 6} ${iyBot}, ${irightX - 20} ${iyBot} L ${cx} ${iyBot} L ${ileftX + 20} ${iyBot} C ${ileftX + 6} ${iyBot}, ${ileftX} ${iyBot - 2}, ${ileftX} ${iyBot - 6} L ${ileftX} ${iyTop + archH} C ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${icpx} ${iyTop}, ${cx} ${iyTop} Z`;
+    const leftBottom =
+      botR > 0
+        ? `L ${leftX} ${yBot - botR} A ${botR} ${botR} 0 0 0 ${leftX + botR} ${yBot} L ${cx} ${yBot}`
+        : `L ${leftX} ${yBot} L ${cx} ${yBot}`;
+
+    const rightBottom =
+      botR > 0
+        ? `L ${rightX} ${yBot - botR} A ${botR} ${botR} 0 0 1 ${rightX - botR} ${yBot} L ${cx} ${yBot}`
+        : `L ${rightX} ${yBot} L ${cx} ${yBot}`;
+
+    const bottomJoin =
+      botR > 0
+        ? `L ${leftX + botR} ${yBot} A ${botR} ${botR} 0 0 1 ${leftX} ${yBot - botR}`
+        : `L ${leftX} ${yBot}`;
+
+    const leftPath = `M ${cx} ${yTop} C ${cpx} ${yTop}, ${leftX} ${Math.round(yTop + archH * 0.45)}, ${leftX} ${yTop + archH} ${leftBottom}`;
+    const rightPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} ${rightBottom}`;
+    const fullPath = `M ${cx} ${yTop} C ${width - cpx} ${yTop}, ${rightX} ${Math.round(yTop + archH * 0.45)}, ${rightX} ${yTop + archH} L ${rightX} ${botR > 0 ? yBot - botR : yBot} ${botR > 0 ? `A ${botR} ${botR} 0 0 1 ${rightX - botR} ${yBot}` : ""} L ${cx} ${yBot} ${bottomJoin} L ${leftX} ${yTop + archH} C ${leftX} ${Math.round(yTop + archH * 0.45)}, ${cpx} ${yTop}, ${cx} ${yTop} Z`;
+
+    const innerLeftBottom =
+      ibotR > 0
+        ? `L ${ileftX} ${iyBot - ibotR} A ${ibotR} ${ibotR} 0 0 0 ${ileftX + ibotR} ${iyBot} L ${cx} ${iyBot}`
+        : `L ${ileftX} ${iyBot} L ${cx} ${iyBot}`;
+
+    const innerRightBottom =
+      ibotR > 0
+        ? `L ${irightX} ${iyBot - ibotR} A ${ibotR} ${ibotR} 0 0 1 ${irightX - ibotR} ${iyBot} L ${cx} ${iyBot}`
+        : `L ${irightX} ${iyBot} L ${cx} ${iyBot}`;
+
+    const innerBottomJoin =
+      ibotR > 0
+        ? `L ${ileftX + ibotR} ${iyBot} A ${ibotR} ${ibotR} 0 0 1 ${ileftX} ${iyBot - ibotR}`
+        : `L ${ileftX} ${iyBot}`;
+
+    const innerLeftPath = `M ${cx} ${iyTop} C ${icpx} ${iyTop}, ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${ileftX} ${iyTop + archH} ${innerLeftBottom}`;
+    const innerRightPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} ${innerRightBottom}`;
+    const innerFullPath = `M ${cx} ${iyTop} C ${width - icpx} ${iyTop}, ${irightX} ${Math.round(iyTop + archH * 0.45)}, ${irightX} ${iyTop + archH} L ${irightX} ${ibotR > 0 ? iyBot - ibotR : iyBot} ${ibotR > 0 ? `A ${ibotR} ${ibotR} 0 0 1 ${irightX - ibotR} ${iyBot}` : ""} L ${cx} ${iyBot} ${innerBottomJoin} L ${ileftX} ${iyTop + archH} C ${ileftX} ${Math.round(iyTop + archH * 0.45)}, ${icpx} ${iyTop}, ${cx} ${iyTop} Z`;
 
     return {
       ...baseShape,
