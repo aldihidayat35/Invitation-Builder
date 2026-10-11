@@ -808,6 +808,7 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
         e.cancelBubble = true;
         dragRef.current.moved = false;
         const evt = e.evt;
+        evt.stopPropagation();
         const additive = evt.shiftKey || evt.ctrlKey || evt.metaKey;
         const state = store.getState();
         const doc = state.history.present;
@@ -1100,7 +1101,6 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
             if (target === target.getStage() || target.name() === "bg") {
               if (store.getState().panMode) return;
               const state = store.getState();
-              state.clearSelection();
               state.setActiveSection(sectionId);
             }
           }}
@@ -1108,7 +1108,6 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
             if (store.getState().editingMotion) return;
             const target = e.target;
             if (target === target.getStage() || target.name() === "bg") {
-              store.getState().clearSelection();
               store.getState().setActiveSection(sectionId);
             }
           }}
@@ -1249,6 +1248,8 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               boundBoxFunc={(oldBox, newBox) =>
                 newBox.width < MIN_BOX || newBox.height < MIN_BOX ? oldBox : newBox
               }
+              onMouseDown={(e) => e.evt.stopPropagation()}
+              onTouchStart={(e) => e.evt.stopPropagation()}
               onTransformEnd={() => {
                 const nodes = transformerRef.current?.nodes() ?? [];
                 if (nodes.length > 0) commitNodes(nodes);
