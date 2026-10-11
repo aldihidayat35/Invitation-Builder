@@ -138,9 +138,10 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
               ? "Perataan Otomatis (Snap to Guides) Aktif — Tekan Alt saat menggeser objek untuk nonaktifkan sementara"
               : "Aktifkan Perataan Otomatis (Snap to Guides)"
           }
+          suppressHydrationWarning
         >
           <IconSnapGuides size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
-          <span>Snap {snapToGuides ? "Aktif" : "Mati"}</span>
+          <span suppressHydrationWarning>Snap {snapToGuides ? "Aktif" : "Mati"}</span>
         </button>
 
         <button
@@ -154,9 +155,10 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
               ? "Garis Kisi Kanvas (Grid 20px) Aktif — Klik untuk menyembunyikan"
               : "Tampilkan Garis Kisi Kanvas (Grid 20px)"
           }
+          suppressHydrationWarning
         >
           <IconGrid size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
-          <span>Grid {showCanvasGrid ? "Aktif" : "Mati"}</span>
+          <span suppressHydrationWarning>Grid {showCanvasGrid ? "Aktif" : "Mati"}</span>
         </button>
       </div>
 

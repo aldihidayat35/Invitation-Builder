@@ -69,11 +69,12 @@ export function EditorShell(props: EditorShellProps) {
     preloadEditorFonts();
   }, []);
 
-  // Synchronize stored artboard mode and theme after mount to prevent SSR hydration mismatch
+  // Synchronize stored artboard mode, theme, snap guides, and canvas grid after mount to prevent SSR hydration mismatch
   useEffect(() => {
     store.getState().syncArtboardModeFromStorage();
     store.getState().syncThemeFromStorage();
     store.getState().syncSnapToGuidesFromStorage();
+    store.getState().syncCanvasGridFromStorage();
   }, [store]);
 
   // Realtime Live Preview Cross-Tab Broadcaster (120ms debounce)

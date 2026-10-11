@@ -105,4 +105,18 @@ describe("Canvas Grid Store and Toggle", () => {
     store.getState().syncCanvasGridFromStorage();
     expect(store.getState().showCanvasGrid).toBe(false);
   });
+
+  it("prevents SSR hydration mismatch: initial store state is deterministic even if localStorage contains true", () => {
+    window.localStorage.setItem(CANVAS_GRID_STORAGE_KEY, "true");
+    const doc = addSection(createEmptyDocument()).document;
+    const store = createEditorStore({ document: doc, revision: 1 });
+
+    // Initial state MUST be false to match SSR HTML
+    expect(store.getState().showCanvasGrid).toBe(false);
+
+    // After hydration effect runs, it syncs to true safely
+    store.getState().syncCanvasGridFromStorage();
+    expect(store.getState().showCanvasGrid).toBe(true);
+  });
 });
+

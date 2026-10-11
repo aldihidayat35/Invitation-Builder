@@ -124,7 +124,7 @@ export function getStoredSnapToGuides(): boolean | null {
 }
 
 export function getInitialSnapToGuides(): boolean {
-  return getStoredSnapToGuides() ?? true;
+  return true;
 }
 
 export const CANVAS_GRID_STORAGE_KEY = "dib_show_canvas_grid";
@@ -141,7 +141,7 @@ export function getStoredCanvasGrid(): boolean | null {
 }
 
 export function getInitialCanvasGrid(): boolean {
-  return getStoredCanvasGrid() ?? false;
+  return false;
 }
 
 export interface MotionEditTarget {
