@@ -85,6 +85,7 @@ export function Inspector() {
   const selectedIds = useEditor((s) => s.selectedIds);
   const activeSectionId = useEditor((s) => s.activeSectionId);
   const readOnly = useEditor((s) => s.readOnly);
+  const inspectorAutoOpen = useEditor((s) => s.inspectorAutoOpen);
   const [activeTab, setActiveTab] = useState<"properties" | "music" | "variables">("properties");
 
   const totalVars = doc.variables.length;
@@ -99,17 +100,26 @@ export function Inspector() {
         element={loc.element}
         readOnly={readOnly}
         sectionId={loc.section.id}
+        defaultOpen={inspectorAutoOpen}
         onOpenVariablesTab={() => setActiveTab("variables")}
       />
     ) : null;
   } else if (selectedIds.length > 1) {
-    body = <MultiPanel key={selectedIds.join(",")} ids={selectedIds} readOnly={readOnly} />;
+    body = (
+      <MultiPanel
+        key={selectedIds.join(",")}
+        ids={selectedIds}
+        readOnly={readOnly}
+        defaultOpen={inspectorAutoOpen}
+      />
+    );
   } else if (activeSectionId && findSection(doc, activeSectionId)) {
     body = (
       <SectionPanel
         key={activeSectionId}
         sectionId={activeSectionId}
         readOnly={readOnly}
+        defaultOpen={inspectorAutoOpen}
         onOpenMusicTab={() => setActiveTab("music")}
       />
     );
@@ -315,10 +325,12 @@ export type SectionInspectorSectionId = (typeof DEFAULT_SECTION_INSPECTOR_ORDER)
 function SectionPanel({
   sectionId,
   readOnly,
+  defaultOpen = true,
   onOpenMusicTab,
 }: {
   sectionId: string;
   readOnly: boolean;
+  defaultOpen?: boolean;
   onOpenMusicTab?: () => void;
 }) {
   const store = useEditorStore();
@@ -343,7 +355,7 @@ function SectionPanel({
             id="insp-section-general"
             title="Umum"
             scopeKey={sectionId}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-section-general")}
           >
             <TextField
@@ -401,7 +413,7 @@ function SectionPanel({
             id="insp-section-layout"
             title="Ukuran & latar"
             scopeKey={sectionId}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-section-layout")}
           >
             <NumberField
@@ -446,7 +458,7 @@ function SectionPanel({
             icon={<IconSparkle size={13} />}
             count={section.transition && section.transition.type !== "none" ? 1 : undefined}
             scopeKey={sectionId}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-section-transition")}
           >
             <SectionTransitionControl section={section} readOnly={readOnly} />
@@ -460,7 +472,7 @@ function SectionPanel({
             id="insp-section-anim"
             title="Animasi elemen section"
             scopeKey={sectionId}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-section-anim")}
           >
             <button
@@ -490,7 +502,7 @@ function SectionPanel({
             id="insp-section-actions"
             title="Tindakan Section"
             scopeKey={sectionId}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-section-actions")}
           >
             <div className={styles.actionGrid}>
@@ -726,7 +738,15 @@ function ElementActions({ ids, readOnly }: { ids: readonly string[]; readOnly: b
   );
 }
 
-function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boolean }) {
+function MultiPanel({
+  ids,
+  readOnly,
+  defaultOpen = true,
+}: {
+  ids: readonly string[];
+  readOnly: boolean;
+  defaultOpen?: boolean;
+}) {
   const store = useEditorStore();
   const doc = useEditor(selectDoc);
   const tokens = doc.design.tokens;
@@ -814,7 +834,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           id="insp-group-mirror-section"
           title="Cermin & Simetri Grup"
           icon={<IconFlipH size={14} />}
-          defaultOpen={true}
+          defaultOpen={defaultOpen}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <p className={styles.muted} style={{ fontSize: "0.75rem", margin: 0 }}>
@@ -885,7 +905,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           id="insp-group-anim-section"
           title="Animasi Grup (Satu Animasi Bersama)"
           icon={<IconSparkle size={14} />}
-          defaultOpen={true}
+          defaultOpen={defaultOpen}
         >
           <AnimationPanel
             element={firstEl}
@@ -898,7 +918,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           id="insp-group-opacity-section"
           title="Transparansi & Opasitas Grup"
           icon={<IconOpacity size={14} />}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
         >
           <OpacityField
             id="insp-group-opacity"
@@ -912,7 +932,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           id="insp-group-shadow-section"
           title="Efek Bayangan (Shadow) Grup"
           icon={<IconSparkle size={14} />}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
         >
           <ShadowControl
             tokens={tokens}
@@ -926,7 +946,7 @@ function MultiPanel({ ids, readOnly }: { ids: readonly string[]; readOnly: boole
           title="Elemen dalam Grup"
           icon={<IconLayers size={14} />}
           count={elements.length}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
         >
           <div className={styles.groupMembersList}>
             {elements.map((el) => (
@@ -1007,11 +1027,13 @@ function ElementPanel({
   element,
   readOnly,
   sectionId,
+  defaultOpen = true,
   onOpenVariablesTab,
 }: {
   element: Element;
   readOnly: boolean;
   sectionId: string;
+  defaultOpen?: boolean;
   onOpenVariablesTab?: () => void;
 }) {
   const store = useEditorStore();
@@ -1039,7 +1061,7 @@ function ElementPanel({
           id="insp-text"
           title="Teks & tipografi"
           scopeKey={id}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
           dragProps={getDragProps("insp-content")}
         >
           <TextPanel
@@ -1058,7 +1080,7 @@ function ElementPanel({
           id="insp-shape"
           title="Bentuk"
           scopeKey={id}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
           dragProps={getDragProps("insp-content")}
         >
           <ShapePanel element={element} readOnly={readOnly} tokens={tokens} />
@@ -1072,7 +1094,7 @@ function ElementPanel({
           id="insp-image"
           title="Gambar"
           scopeKey={id}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
           dragProps={getDragProps("insp-content")}
         >
           <ImagePanel element={element} readOnly={readOnly} />
@@ -1086,7 +1108,7 @@ function ElementPanel({
           id="insp-widget"
           title={`Pengaturan ${typeLabel.toLowerCase()}`}
           scopeKey={id}
-          defaultOpen={false}
+          defaultOpen={defaultOpen}
           dragProps={getDragProps("insp-content")}
         >
           <WidgetPanel element={element} readOnly={readOnly} tokens={tokens} />
@@ -1105,7 +1127,7 @@ function ElementPanel({
             id="insp-general"
             title="Umum"
             scopeKey={id}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-general")}
           >
             <TextField
@@ -1126,7 +1148,7 @@ function ElementPanel({
             id="insp-transform"
             title="Posisi & ukuran"
             scopeKey={id}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-transform")}
           >
             <div className={styles.grid2}>
@@ -1206,7 +1228,7 @@ function ElementPanel({
             title="Transparansi & Opasitas"
             icon={<IconOpacity size={14} />}
             scopeKey={id}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-opacity-section")}
             actions={
               Math.round(opacity * 100) < 100 ? (
@@ -1232,7 +1254,7 @@ function ElementPanel({
             icon={<IconSparkle size={13} />}
             count={element.style.shadow ? 1 : undefined}
             scopeKey={id}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-shadow-section")}
           >
             <ShadowControl
@@ -1260,7 +1282,7 @@ function ElementPanel({
               (element.animations?.exit ? 1 : 0) || undefined
             }
             scopeKey={id}
-            defaultOpen={false}
+            defaultOpen={defaultOpen}
             dragProps={getDragProps("insp-animation")}
           >
             <AnimationPanel element={element} readOnly={readOnly} sectionId={sectionId} />

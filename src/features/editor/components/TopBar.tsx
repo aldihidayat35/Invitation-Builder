@@ -8,7 +8,6 @@ import { selectCanRedo, selectCanUndo } from "../core/store";
 import { MAX_ZOOM, MIN_ZOOM, fitZoom } from "../core/geometry";
 import { PREVIEW_STORAGE_DOC_PREFIX, PREVIEW_STORAGE_TIME_PREFIX } from "../core/preview-sync";
 import { IconCardsView, IconEye, IconGrid, IconGridView, IconSmartphone, IconSnapGuides, IconSparkle } from "./icons";
-import { PresetManagementModal } from "./PresetManagementModal";
 import styles from "./editor.module.css";
 
 const STATUS_LABEL = {
@@ -34,6 +33,7 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const theme = useEditor((s) => s.theme);
   const snapToGuides = useEditor((s) => s.snapToGuides);
   const showCanvasGrid = useEditor((s) => s.showCanvasGrid);
+  const inspectorAutoOpen = useEditor((s) => s.inspectorAutoOpen);
   const canUndo = useEditor(selectCanUndo);
   const canRedo = useEditor(selectCanRedo);
   const zoom = useEditor((s) => s.zoom);
@@ -41,7 +41,6 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
   const status = useEditor((s) => s.saveStatus);
   const saveError = useEditor((s) => s.saveError);
   const [resolving, setResolving] = useState(false);
-  const [showPresetManager, setShowPresetManager] = useState(false);
 
   async function overwrite() {
     setResolving(true);
@@ -253,14 +252,18 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
 
       <button
         type="button"
-        className={styles.presetManageButton}
-        data-testid="editor-preset-manage-btn"
-        id="editor-preset-manage-btn"
-        onClick={() => setShowPresetManager(true)}
-        title="Kelola preset variabel global (buat, edit, hapus)"
+        className={styles.panelModeButton}
+        data-testid="editor-panel-mode-btn"
+        data-auto-open={inspectorAutoOpen}
+        onClick={() => store.getState().toggleInspectorAutoOpen()}
+        title={
+          inspectorAutoOpen
+            ? "Mode Panel: Auto Buka (Seksi panel otomatis terbuka saat objek dipilih). Klik untuk ubah ke Auto Tutup."
+            : "Mode Panel: Auto Tutup (Seksi panel tertutup saat objek dipilih). Klik untuk ubah ke Auto Buka."
+        }
       >
-        <IconSparkle size={14} />
-        <span>Manajemen Preset</span>
+        <span aria-hidden="true">{inspectorAutoOpen ? "📂" : "📁"}</span>
+        <span>{inspectorAutoOpen ? "Panel: Auto Buka" : "Panel: Auto Tutup"}</span>
       </button>
 
       <button
@@ -324,13 +327,6 @@ export function TopBar({ templateId, templateName, currentRevision }: TopBarProp
           </button>
         </div>
       ) : null}
-
-      {showPresetManager && (
-        <PresetManagementModal
-          isOpen={showPresetManager}
-          onClose={() => setShowPresetManager(false)}
-        />
-      )}
     </header>
   );
 }

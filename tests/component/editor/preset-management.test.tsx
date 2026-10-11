@@ -85,7 +85,7 @@ describe("Global Preset Management Feature", () => {
     vi.stubGlobal("fetch", mockFetch);
   });
 
-  it("renders 'Manajemen Preset' button in TopBar and opens modal on click", () => {
+  it("removes 'Manajemen Preset' button from TopBar and provides 'Panel: Auto Buka/Tutup' toggle", () => {
     const store = createEditorStore({ document: createTestDoc(), revision: 1 });
     const currentRevisionMock = vi.fn().mockResolvedValue(1);
 
@@ -99,21 +99,24 @@ describe("Global Preset Management Feature", () => {
       </EditorProvider>,
     );
 
-    const manageBtn = screen.getByTestId("editor-preset-manage-btn");
-    expect(manageBtn).toBeInTheDocument();
-    expect(manageBtn).toHaveTextContent("Manajemen Preset");
+    // Old manage button is removed
+    expect(screen.queryByTestId("editor-preset-manage-btn")).not.toBeInTheDocument();
 
-    // Modal is initially not in DOM
-    expect(screen.queryByTestId("preset-management-modal")).not.toBeInTheDocument();
+    // New panel auto open/close toggle button is present
+    const panelModeBtn = screen.getByTestId("editor-panel-mode-btn");
+    expect(panelModeBtn).toBeInTheDocument();
+    expect(panelModeBtn).toHaveTextContent("Panel: Auto Buka");
+    expect(store.getState().inspectorAutoOpen).toBe(true);
 
-    // Click to open modal
-    fireEvent.click(manageBtn);
-    expect(screen.getByTestId("preset-management-modal")).toBeInTheDocument();
+    // Click to toggle to Auto Tutup
+    fireEvent.click(panelModeBtn);
+    expect(panelModeBtn).toHaveTextContent("Panel: Auto Tutup");
+    expect(store.getState().inspectorAutoOpen).toBe(false);
 
-    // Close modal via close button
-    const closeBtn = screen.getByTestId("preset-modal-close-btn");
-    fireEvent.click(closeBtn);
-    expect(screen.queryByTestId("preset-management-modal")).not.toBeInTheDocument();
+    // Click again to toggle back to Auto Buka
+    fireEvent.click(panelModeBtn);
+    expect(panelModeBtn).toHaveTextContent("Panel: Auto Buka");
+    expect(store.getState().inspectorAutoOpen).toBe(true);
   });
 
   it("displays system presets with read-only badge and allows adding to template", () => {
@@ -254,5 +257,55 @@ describe("Global Preset Management Feature", () => {
       const cached = getCachedGlobalPresets();
       expect(cached.some((p) => p.label === "Alamat Gedung Resepsi")).toBe(true);
     });
+  });
+
+  it("sorts presets alphabetically (A-Z) and allows direct deletion of custom presets in 'Preset Siap Pakai' modal", async () => {
+    // Seed initial custom global preset
+    setCachedGlobalPresets([
+      {
+        id: "preset_cust_1",
+        key: "kustom.doa_restu_keluarga",
+        label: "Doa Restu Keluarga Besar",
+        category: "kustom",
+        type: "text",
+        default: "Mohon doa restu",
+        description: "Ucapan doa restu dari keluarga",
+      },
+    ]);
+
+    const store = createEditorStore({ document: createTestDoc(), revision: 1 });
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_1">
+        <VariablesCatalogPanel />
+      </EditorProvider>,
+    );
+
+    // Open "Preset Siap Pakai" modal
+    const addPresetBtn = screen.getByTestId("open-preset-modal-btn");
+    fireEvent.click(addPresetBtn);
+
+    // Verify modal is open and header doesn't have "Kelola Preset" button
+    expect(screen.getByText("Preset Variabel Siap Pakai")).toBeInTheDocument();
+    expect(screen.queryByTestId("catalog-manage-presets-btn")).not.toBeInTheDocument();
+
+    // Verify custom preset has delete button and system preset doesn't
+    const customDeleteBtn = screen.getByTestId("delete-preset-kustom.doa_restu_keluarga");
+    expect(customDeleteBtn).toBeInTheDocument();
+    expect(screen.queryByTestId("delete-preset-couple.groom.fullName")).not.toBeInTheDocument();
+
+    // Mock window.confirm
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    // Click delete on custom preset
+    fireEvent.click(customDeleteBtn);
+    expect(confirmSpy).toHaveBeenCalled();
+
+    // Verify deleted
+    await waitFor(() => {
+      expect(screen.queryByTestId("preset-card-kustom.doa_restu_keluarga")).not.toBeInTheDocument();
+    });
+
+    confirmSpy.mockRestore();
   });
 });

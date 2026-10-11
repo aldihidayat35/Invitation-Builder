@@ -75,6 +75,7 @@ export function Artboard() {
     shiftKey: boolean;
     initialSelectedIds: readonly string[];
     isDragging: boolean;
+    startedOnCanvas: boolean;
   } | null>(null);
 
   // Listen to custom section transition preview trigger
@@ -171,6 +172,10 @@ export function Artboard() {
       return;
     }
 
+    const isCanvas =
+      target.tagName.toLowerCase() === "canvas" ||
+      Boolean(target.closest("[data-testid^='canvas-']"));
+
     const scrollEl = scrollRef.current;
     if (!scrollEl) return;
     const scrollRect = scrollEl.getBoundingClientRect();
@@ -185,6 +190,7 @@ export function Artboard() {
       shiftKey: e.shiftKey,
       initialSelectedIds: e.shiftKey ? store.getState().selectedIds : [],
       isDragging: false,
+      startedOnCanvas: isCanvas,
     };
   };
 
@@ -278,8 +284,9 @@ export function Artboard() {
       if (!m) return;
 
       if (!m.isDragging) {
-        // Just clicked empty space without dragging -> deselect if shift not pressed
-        if (!m.shiftKey) {
+        // Just clicked empty space without dragging -> deselect if shift not pressed AND not started on canvas
+        // (Klik di area kanvas dikelola sendiri oleh Konva Stage onMouseDown agar objek tidak otomatis ter-unselect)
+        if (!m.shiftKey && !m.startedOnCanvas) {
           store.getState().clearSelection();
         }
       }

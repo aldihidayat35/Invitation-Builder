@@ -86,12 +86,13 @@ describe("Panel Flexibility and Collapse State", () => {
       }
     });
 
-    it("Inspector starts with all groups closed when an element is clicked, and automatically resets to closed when switching to another element", () => {
+    it("Inspector opens groups automatically in Auto Buka mode (default), and respects Auto Tutup mode", () => {
       const doc = createTestDoc();
       const store = createEditorStore({ document: doc, revision: 1 });
       store.getState().setActiveSection("sec_1");
 
-      // Select Gambar 1
+      // 1. Default mode: Auto Buka (true)
+      expect(store.getState().inspectorAutoOpen).toBe(true);
       store.getState().selectElements(["el_img_1"]);
 
       const { container, rerender } = render(
@@ -100,7 +101,6 @@ describe("Panel Flexibility and Collapse State", () => {
         </EditorProvider>,
       );
 
-      // Verify Gambar 1 inspector starts with all groups closed
       const elementSectionKeys = [
         "insp-general",
         "insp-transform",
@@ -110,29 +110,17 @@ describe("Panel Flexibility and Collapse State", () => {
         "insp-animation",
       ];
 
+      // In Auto Buka mode, sections start opened
       for (const key of elementSectionKeys) {
         const sec = container.querySelector(`section[data-section-key="${key}"]`);
         expect(sec).not.toBeNull();
-        expect(sec).toHaveAttribute("data-open", "false");
-        const toggleBtn = sec!.querySelector("button[aria-expanded]");
-        expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+        expect(sec).toHaveAttribute("data-open", "true");
       }
 
-      // User opens "Posisi & ukuran" and "Gambar" on Gambar 1
-      const transformSec = container.querySelector('section[data-section-key="insp-transform"]')!;
-      const transformBtn = transformSec.querySelector("button[aria-expanded]")!;
-      fireEvent.click(transformBtn);
+      // 2. Switch to Auto Tutup mode
+      store.getState().setInspectorAutoOpen(false);
 
-      const imageSec = container.querySelector('section[data-section-key="insp-image"]')!;
-      const imageBtn = imageSec.querySelector("button[aria-expanded]")!;
-      fireEvent.click(imageBtn);
-
-      expect(transformBtn).toHaveAttribute("aria-expanded", "true");
-      expect(transformSec).toHaveAttribute("data-open", "true");
-      expect(imageBtn).toHaveAttribute("aria-expanded", "true");
-      expect(imageSec).toHaveAttribute("data-open", "true");
-
-      // Now switch selection to Gambar 2
+      // Select Gambar 2
       store.getState().selectElements(["el_img_2"]);
 
       rerender(
@@ -141,7 +129,7 @@ describe("Panel Flexibility and Collapse State", () => {
         </EditorProvider>,
       );
 
-      // On Gambar 2, groups MUST AUTOMATICALLY BE CLOSED!
+      // In Auto Tutup mode, sections start closed
       for (const key of elementSectionKeys) {
         const sec = container.querySelector(`section[data-section-key="${key}"]`);
         expect(sec).not.toBeNull();

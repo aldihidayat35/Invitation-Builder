@@ -532,6 +532,40 @@
   color: #065f46;
 }
 
+.presetDeleteBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.presetDeleteBtn:hover {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+:global(.shell[data-theme="dark"]) .presetDeleteBtn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+:global(.shell[data-theme="dark"]) .presetDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.28);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
 /* Form Groups */
 .formGroup {
   display: flex;

@@ -1151,13 +1151,18 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
               if (store.getState().panMode) return;
               const state = store.getState();
               state.setActiveSection(sectionId);
+              if (!e.evt.shiftKey && !e.evt.ctrlKey && !e.evt.metaKey) {
+                state.clearSelection();
+              }
             }
           }}
           onTouchStart={(e) => {
             if (store.getState().editingMotion) return;
             const target = e.target;
             if (target === target.getStage() || target.name() === "bg") {
-              store.getState().setActiveSection(sectionId);
+              const state = store.getState();
+              state.setActiveSection(sectionId);
+              state.clearSelection();
             }
           }}
           onContextMenu={(e) => {

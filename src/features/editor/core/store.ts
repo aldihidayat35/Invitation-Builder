@@ -144,6 +144,23 @@ export function getInitialCanvasGrid(): boolean {
   return false;
 }
 
+export const INSPECTOR_AUTO_OPEN_STORAGE_KEY = "dib_inspector_auto_open";
+
+export function getStoredInspectorAutoOpen(): boolean | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = window.localStorage.getItem(INSPECTOR_AUTO_OPEN_STORAGE_KEY);
+    if (saved !== null) return saved === "true";
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function getInitialInspectorAutoOpen(): boolean {
+  return getStoredInspectorAutoOpen() ?? true;
+}
+
 export interface MotionEditTarget {
   readonly sectionId: string;
   readonly elementId: string;
@@ -169,6 +186,8 @@ export interface EditorState {
   readonly showCanvasGrid: boolean;
   /** Focused motion path editing mode: locks canvas clicks and enables waypoint dragging (Flash/Animate style). */
   readonly editingMotion: MotionEditTarget | null;
+  /** Auto-open or auto-collapse sections in right inspector panel when selecting objects. */
+  readonly inspectorAutoOpen: boolean;
 
   /** Last document known to be persisted on the server, and its revision. */
   readonly savedDocument: CanonicalDocument;
@@ -280,6 +299,8 @@ export interface EditorActions {
   setCanvasGrid(enabled: boolean): void;
   toggleCanvasGrid(): void;
   syncCanvasGridFromStorage(): void;
+  setInspectorAutoOpen(enabled: boolean): void;
+  toggleInspectorAutoOpen(): void;
   // persistence bookkeeping (driven by the autosaver)
   markSaving(): void;
   markSaved(revision: number, savedDocument: CanonicalDocument): void;
@@ -300,6 +321,7 @@ export interface EditorInit {
   readonly theme?: EditorTheme;
   readonly snapToGuides?: boolean;
   readonly showCanvasGrid?: boolean;
+  readonly inspectorAutoOpen?: boolean;
 }
 
 export const isDirty = (s: Pick<EditorState, "history" | "savedDocument">): boolean =>
@@ -364,6 +386,7 @@ export function createEditorStore(init: EditorInit): EditorStore {
       theme: init.theme ?? "light",
       snapToGuides: init.snapToGuides ?? getInitialSnapToGuides(),
       showCanvasGrid: init.showCanvasGrid ?? getInitialCanvasGrid(),
+      inspectorAutoOpen: init.inspectorAutoOpen ?? getInitialInspectorAutoOpen(),
       editingMotion: null,
       savedDocument: init.document,
       revision: init.revision,
@@ -1014,6 +1037,21 @@ export function createEditorStore(init: EditorInit): EditorStore {
         if (saved !== null && saved !== get().showCanvasGrid) {
           set({ showCanvasGrid: saved });
         }
+      },
+      setInspectorAutoOpen(enabled) {
+        if (get().inspectorAutoOpen !== enabled) {
+          set({ inspectorAutoOpen: enabled });
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.setItem(INSPECTOR_AUTO_OPEN_STORAGE_KEY, String(enabled));
+            } catch {
+              // ignore
+            }
+          }
+        }
+      },
+      toggleInspectorAutoOpen() {
+        get().setInspectorAutoOpen(!get().inspectorAutoOpen);
       },
 
       // ---------------------------------------------------------- persistence

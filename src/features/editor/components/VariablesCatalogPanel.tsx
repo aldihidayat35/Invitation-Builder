@@ -19,7 +19,6 @@ import {
   IconVariable,
 } from "./icons";
 import { saveGlobalPreset, useGlobalCustomPresets } from "../core/global-presets";
-import { PresetManagementModal } from "./PresetManagementModal";
 import styles from "./VariablesCatalog.module.css";
 
 export interface VariablePreset {
@@ -395,10 +394,9 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
-  const [showPresetManagerFromCatalog, setShowPresetManagerFromCatalog] = useState(false);
   const [editingVariable, setEditingVariable] = useState<VariableDefinition | null>(null);
 
-  const { presets: customGlobalPresets } = useGlobalCustomPresets();
+  const { presets: customGlobalPresets, deletePreset } = useGlobalCustomPresets();
 
   // New Custom Variable Form State
   const [customLabel, setCustomLabel] = useState("");
@@ -1115,26 +1113,13 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 </span>
                 <h4 className={styles.modalTitle}>Preset Variabel Siap Pakai</h4>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-colors"
-                  onClick={() => {
-                    setShowPresetModal(false);
-                    setShowPresetManagerFromCatalog(true);
-                  }}
-                  data-testid="catalog-manage-presets-btn"
-                >
-                  ⚙️ Kelola Preset
-                </button>
-                <button
-                  type="button"
-                  className={styles.modalCloseBtn}
-                  onClick={() => setShowPresetModal(false)}
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setShowPresetModal(false)}
+              >
+                ✕
+              </button>
             </div>
 
             <div className={styles.modalBody}>
@@ -1144,49 +1129,71 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
 
               <div className={styles.presetGrid}>
                 {[
-                  ...WEDDING_PRESETS.map((p) => ({ ...p, isSystem: true })),
-                  ...customGlobalPresets.map((p) => ({ ...p, isSystem: false })),
-                ].map((p) => {
-                  const alreadyAdded = declaredKeys.has(p.key);
-                  return (
-                    <div key={p.key} className={styles.presetCard}>
-                      <div className={styles.presetInfo}>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={styles.presetLabel}>{p.label}</span>
+                  ...WEDDING_PRESETS.map((p) => ({ ...p, isSystem: true, id: p.key })),
+                  ...customGlobalPresets.map((p) => ({ ...p, isSystem: false, id: p.id })),
+                ]
+                  .sort((a, b) => a.label.localeCompare(b.label, "id"))
+                  .map((p) => {
+                    const alreadyAdded = declaredKeys.has(p.key);
+                    return (
+                      <div key={p.key} className={styles.presetCard} data-testid={`preset-card-${p.key}`}>
+                        <div className={styles.presetInfo}>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={styles.presetLabel}>{p.label}</span>
+                            {!p.isSystem && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                🌐 Global Kustom
+                              </span>
+                            )}
+                            {p.maxLength !== undefined && (
+                              <span className={styles.presetLimitTag}>
+                                Maks. {p.maxLength} kar.
+                              </span>
+                            )}
+                          </div>
+                          <span className={styles.presetDesc}>{p.description}</span>
+                          <span className="text-[10px] text-stone-400 font-mono mt-0.5">{p.key}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
                           {!p.isSystem && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
-                              🌐 Global Kustom
-                            </span>
+                            <button
+                              type="button"
+                              className={styles.presetDeleteBtn}
+                              data-testid={`delete-preset-${p.key}`}
+                              title={`Hapus preset global "${p.label}"`}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Hapus preset global "${p.label}" secara permanen?`)) {
+                                  await deletePreset(p.id);
+                                }
+                              }}
+                            >
+                              <IconTrash size={12} />
+                              <span>Hapus</span>
+                            </button>
                           )}
-                          {p.maxLength !== undefined && (
-                            <span className={styles.presetLimitTag}>
-                              Maks. {p.maxLength} kar.
+
+                          {alreadyAdded ? (
+                            <span className={styles.presetAddedBadge}>
+                              <IconCheck size={12} />
+                              <span>Sudah Ada</span>
                             </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.presetAddBtn}
+                              data-testid={`add-preset-${p.key}`}
+                              onClick={() => handleAddPreset(p)}
+                            >
+                              <IconPlus size={12} />
+                              <span>+ Tambah</span>
+                            </button>
                           )}
                         </div>
-                        <span className={styles.presetDesc}>{p.description}</span>
-                        <span className="text-[10px] text-stone-400 font-mono mt-0.5">{p.key}</span>
                       </div>
-
-                      {alreadyAdded ? (
-                        <span className={styles.presetAddedBadge}>
-                          <IconCheck size={12} />
-                          <span>Sudah Ada</span>
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.presetAddBtn}
-                          data-testid={`add-preset-${p.key}`}
-                          onClick={() => handleAddPreset(p)}
-                        >
-                          <IconPlus size={12} />
-                          <span>+ Tambah</span>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
 
@@ -1450,13 +1457,6 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
             </div>
           </div>
         </div>
-      )}
-
-      {showPresetManagerFromCatalog && (
-        <PresetManagementModal
-          isOpen={showPresetManagerFromCatalog}
-          onClose={() => setShowPresetManagerFromCatalog(false)}
-        />
       )}
     </div>
   );

@@ -269,6 +269,61 @@
   box-shadow: 0 1px 2px rgb(16 24 40 / 0.05);
 }
 
+.panelModeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border, #e2e8f0);
+  background: var(--dash-surface, #ffffff);
+  color: var(--dash-text, #334155);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.panelModeButton:hover {
+  background: var(--dash-surface-hover, #f8fafc);
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.panelModeButton[data-auto-open="true"] {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.panelModeButton[data-auto-open="true"]:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+:global(.shell[data-theme="dark"]) .panelModeButton {
+  background: #1e2029;
+  border-color: #2e3240;
+  color: #cbd5e1;
+}
+
+:global(.shell[data-theme="dark"]) .panelModeButton:hover {
+  background: #252834;
+  border-color: #3b3f52;
+  color: #ffffff;
+}
+
+:global(.shell[data-theme="dark"]) .panelModeButton[data-auto-open="true"] {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
 .presetManageButton:active {
   transform: translateY(1px);
 }

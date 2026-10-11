@@ -255,4 +255,38 @@ describe("Marquee Selection (Seleksi Objek Massal dengan Drag Kursor)", () => {
 
     expect(store.getState().selectedIds).toHaveLength(0);
   });
+
+  it("does NOT clear selection when clicking on canvas target without dragging (preserves element selection)", () => {
+    const { store, sectionId } = setupWithElements(sampleElements);
+
+    // Select el_1
+    store.getState().selectElements(["el_1"]);
+    expect(store.getState().selectedIds).toEqual(["el_1"]);
+
+    // Find canvas container
+    const canvasContainer = screen.getByTestId(`canvas-${sectionId}`);
+    // Simulate canvas DOM element
+    const canvasEl = canvasContainer.querySelector("canvas") ?? canvasContainer;
+
+    // Pointer down on canvas element
+    fireEvent.pointerDown(canvasEl, {
+      clientX: 200,
+      clientY: 100,
+      button: 0,
+      shiftKey: false,
+    });
+
+    // Pointer up without moving/dragging
+    fireEvent(
+      window,
+      new MouseEvent("pointerup", {
+        clientX: 200,
+        clientY: 100,
+        bubbles: true,
+      }),
+    );
+
+    // Selection should remain preserved because Konva handles canvas clicks
+    expect(store.getState().selectedIds).toEqual(["el_1"]);
+  });
 });
