@@ -57,4 +57,10 @@ describe("Ornament Shapes Geometry & Concentric Double Borders", () => {
     expect(shape.leftPath).toContain(`A ${botR} ${botR}`);
     expect(shape.innerLeftPath).toContain(`A ${expectedInnerBotR} ${expectedInnerBotR}`);
   });
+
+  it("defines transparentGap property on ornamentFrameWidget with default false", async () => {
+    const { ornamentFrameWidget } = await import("@/features/widgets/definitions-p1");
+    expect(ornamentFrameWidget.props.transparentGap).toBeDefined();
+    expect(ornamentFrameWidget.defaultProps.transparentGap).toBe(false);
+  });
 });

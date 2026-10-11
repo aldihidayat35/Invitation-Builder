@@ -17,6 +17,7 @@ export interface OrnamentFrameWidgetProps {
   readonly strokeColor?: string;
   readonly fillColor?: string;
   readonly doubleBorder?: boolean;
+  readonly transparentGap?: boolean;
   readonly animationMode?: "once" | "scroll" | "loop" | "none";
   readonly animationSpeed?: "slow" | "normal" | "fast";
   readonly style?: WidgetStyleProps;
@@ -33,6 +34,7 @@ export function OrnamentFrameWidget({
   strokeColor,
   fillColor,
   doubleBorder = true,
+  transparentGap = false,
   animationMode = "once",
   animationSpeed = "normal",
   style,
@@ -41,6 +43,7 @@ export function OrnamentFrameWidget({
   const leftPathRef = useRef<SVGPathElement>(null);
   const rawId = useId();
   const clipId = `ornament-clip-${rawId.replace(/[^a-zA-Z0-9-_]/g, "")}`;
+  const innerClipId = `ornament-inner-clip-${rawId.replace(/[^a-zA-Z0-9-_]/g, "")}`;
 
   const [dimensions, setDimensions] = useState<{ w: number; h: number }>({ w: 400, h: 260 });
   const [pathLength, setPathLength] = useState<number>(650);
@@ -183,17 +186,40 @@ export function OrnamentFrameWidget({
           <clipPath id={clipId}>
             <path d={shapeData.fullPath} />
           </clipPath>
+          <clipPath id={innerClipId}>
+            <path d={shapeData.innerFullPath} />
+          </clipPath>
         </defs>
 
         {/* 1. Base Fill & Outer Card Boundary */}
-        <path
-          d={shapeData.fullPath}
-          fill={resolvedFill}
-          fillOpacity={resolvedFill === "transparent" ? 1 : normalizedFillOpacity}
-          stroke={doubleBorder ? resolvedStroke : "none"}
-          strokeWidth={strokeWidth}
-          className={styles.outerBorder}
-        />
+        {transparentGap && doubleBorder ? (
+          <>
+            {/* Background color only fills the inner boundary (gap is transparent) */}
+            <path
+              d={shapeData.innerFullPath}
+              fill={resolvedFill}
+              fillOpacity={resolvedFill === "transparent" ? 1 : normalizedFillOpacity}
+              className={styles.innerFill}
+            />
+            {/* Outer border without fill */}
+            <path
+              d={shapeData.fullPath}
+              fill="none"
+              stroke={resolvedStroke}
+              strokeWidth={strokeWidth}
+              className={styles.outerBorder}
+            />
+          </>
+        ) : (
+          <path
+            d={shapeData.fullPath}
+            fill={resolvedFill}
+            fillOpacity={resolvedFill === "transparent" ? 1 : normalizedFillOpacity}
+            stroke={doubleBorder ? resolvedStroke : "none"}
+            strokeWidth={strokeWidth}
+            className={styles.outerBorder}
+          />
+        )}
 
         {/* 2. Optional Photo clipped inside shape with opacity control */}
         {resolvedImageUrl && (
@@ -204,7 +230,7 @@ export function OrnamentFrameWidget({
             width={dimensions.w}
             height={dimensions.h}
             preserveAspectRatio="xMidYMid slice"
-            clipPath={`url(#${clipId})`}
+            clipPath={`url(#${transparentGap && doubleBorder ? innerClipId : clipId})`}
             opacity={normalizedImageOpacity}
           />
         )}

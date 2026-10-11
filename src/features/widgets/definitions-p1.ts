@@ -362,6 +362,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
     imageOpacity: 100,
     strokeWidth: 2,
     doubleBorder: true,
+    transparentGap: false,
     animationMode: "once",
     animationSpeed: "normal",
   },
@@ -439,6 +440,12 @@ export const ornamentFrameWidget: WidgetDefinition = {
       "boolean",
       "Garis Ganda (Double Border)",
       z.boolean().default(true),
+      { bindable: false },
+    ),
+    transparentGap: defineProp(
+      "boolean",
+      "Transparan Antara Garis Pertama & Kedua",
+      z.boolean().default(false),
       { bindable: false },
     ),
     animationMode: defineProp(

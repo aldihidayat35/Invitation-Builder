@@ -4055,6 +4055,7 @@ function OrnamentFrameVisual({
   const shapeData = getOrnamentShape(shapeId, w, h, innerGap, cornerRadius);
   const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
   const doubleBorder = props.doubleBorder !== false;
+  const transparentGap = Boolean(props.transparentGap);
   const fillOpacity =
     (typeof props.fillOpacity === "number" ? Math.max(0, Math.min(100, props.fillOpacity)) : 100) / 100;
   const imageOpacity =
@@ -4065,16 +4066,33 @@ function OrnamentFrameVisual({
 
   return (
     <Group width={w} height={h}>
-      <Path
-        data={shapeData.fullPath}
-        fill={background === "transparent" ? undefined : background}
-        opacity={background === "transparent" ? 1 : fillOpacity}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-      />
-      {canvasImage && (
+      {transparentGap && doubleBorder ? (
+        <>
+          {/* Inner background fill (gap between border 1 and 2 is transparent) */}
+          <Path
+            data={shapeData.innerFullPath}
+            fill={background === "transparent" ? undefined : background}
+            opacity={background === "transparent" ? 1 : fillOpacity}
+          />
+          {/* Outer border stroke without fill */}
+          <Path
+            data={shapeData.fullPath}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+          />
+        </>
+      ) : (
         <Path
           data={shapeData.fullPath}
+          fill={background === "transparent" ? undefined : background}
+          opacity={background === "transparent" ? 1 : fillOpacity}
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+        />
+      )}
+      {canvasImage && (
+        <Path
+          data={transparentGap && doubleBorder ? shapeData.innerFullPath : shapeData.fullPath}
           fillPatternImage={canvasImage}
           fillPatternRepeat="no-repeat"
           fillPatternScale={{
@@ -4089,7 +4107,7 @@ function OrnamentFrameVisual({
           data={shapeData.innerFullPath}
           stroke={strokeColor}
           strokeWidth={Math.max(1, strokeWidth * 0.65)}
-          opacity={0.45}
+          opacity={transparentGap ? 0.9 : 0.45}
         />
       )}
     </Group>

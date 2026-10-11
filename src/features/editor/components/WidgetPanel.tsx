@@ -462,6 +462,7 @@ function OrnamentFramePropsControl({
   const fillOpacity = typeof props.fillOpacity === "number" ? props.fillOpacity : 100;
   const strokeWidth = typeof props.strokeWidth === "number" ? props.strokeWidth : 2;
   const doubleBorder = props.doubleBorder !== false;
+  const transparentGap = Boolean(props.transparentGap);
   const innerGap = typeof props.innerGap === "number" ? props.innerGap : 12;
   const animationMode = typeof props.animationMode === "string" ? props.animationMode : "once";
   const animationSpeed = typeof props.animationSpeed === "string" ? props.animationSpeed : "normal";
@@ -546,19 +547,48 @@ function OrnamentFramePropsControl({
         </div>
 
         {doubleBorder && (
-          <div data-testid="widget-prop-innerGap">
-            <NumberField
-              id={`insp-widget-innerGap-${element.id}`}
-              label="Jarak Garis Dalam (px)"
-              value={innerGap}
-              min={2}
-              max={40}
-              step={1}
-              decimals={0}
-              disabled={disabled}
-              onCommit={(val) => setProp("innerGap", val)}
-            />
-          </div>
+          <>
+            <div data-testid="widget-prop-transparentGap" style={{ marginTop: 2 }}>
+              <label
+                className={styles.fieldLabel}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  id={`insp-widget-transparentGap-${element.id}`}
+                  type="checkbox"
+                  checked={transparentGap}
+                  disabled={disabled}
+                  onChange={(e) => setProp("transparentGap", e.target.checked)}
+                />
+                <span>Transparan Antara Garis Pertama &amp; Kedua</span>
+              </label>
+              <span
+                className={styles.muted}
+                style={{ fontSize: "0.72rem", marginLeft: 24, display: "block" }}
+              >
+                Warna latar hanya mengisi di dalam garis kedua, membuat celah antar garis tembus pandang.
+              </span>
+            </div>
+
+            <div data-testid="widget-prop-innerGap">
+              <NumberField
+                id={`insp-widget-innerGap-${element.id}`}
+                label="Jarak Garis Dalam (px)"
+                value={innerGap}
+                min={2}
+                max={40}
+                step={1}
+                decimals={0}
+                disabled={disabled}
+                onCommit={(val) => setProp("innerGap", val)}
+              />
+            </div>
+          </>
         )}
       </div>
 
