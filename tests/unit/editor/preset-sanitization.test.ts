@@ -98,4 +98,42 @@ describe("Preset Sanitization and Addition to Template", () => {
       "custom.warnaTema",
     ]);
   });
+
+  it("sanitizes image preset with default assetId (uuid, json string, or object)", () => {
+    const validUuid = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
+    // Case 1: UUID string
+    const res1 = sanitizePresetToVariableInput({
+      key: "custom.foto1",
+      label: "Foto 1",
+      type: "image",
+      default: validUuid,
+    });
+    expect(res1).not.toBeNull();
+    expect(variableDefinitionSchema.safeParse(res1).success).toBe(true);
+    expect(res1?.default).toEqual({ assetId: validUuid });
+
+    // Case 2: JSON string
+    const res2 = sanitizePresetToVariableInput({
+      key: "custom.foto2",
+      label: "Foto 2",
+      type: "image",
+      default: JSON.stringify({ assetId: validUuid }),
+    });
+    expect(res2).not.toBeNull();
+    expect(variableDefinitionSchema.safeParse(res2).success).toBe(true);
+    expect(res2?.default).toEqual({ assetId: validUuid });
+
+    // Case 3: Object with assetId
+    const res3 = sanitizePresetToVariableInput({
+      key: "custom.foto3",
+      label: "Foto 3",
+      type: "image",
+      default: { assetId: validUuid } as unknown as string,
+    });
+    expect(res3).not.toBeNull();
+    expect(variableDefinitionSchema.safeParse(res3).success).toBe(true);
+    expect(res3?.default).toEqual({ assetId: validUuid });
+  });
 });
+

@@ -11,8 +11,13 @@ import {
   type GlobalCustomPreset,
 } from "../core/global-presets";
 import { showEditorToast } from "../utils/external-image-handler";
+import type { AssetSummary } from "@/features/assets/api";
+import { assetUrl } from "@/features/assets/urls";
+import { AssetLibrary } from "./AssetLibrary";
 import {
   IconCheck,
+  IconClose,
+  IconImages,
   IconPencil,
   IconPlus,
   IconSearch,
@@ -72,6 +77,33 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
   const [formMaxLength, setFormMaxLength] = useState<string>("");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [pickingAsset, setPickingAsset] = useState(false);
+  const [showDirectUrl, setShowDirectUrl] = useState(false);
+
+  const previewImgSrc = useMemo(() => {
+    if (!formDefault) return null;
+    const raw = formDefault.trim();
+    if (/^[0-9a-f-]{36}$/i.test(raw)) {
+      return assetUrl(raw);
+    }
+    if (/^(https?:\/\/|\/|data:image\/)/i.test(raw)) {
+      return raw;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        "assetId" in parsed &&
+        typeof parsed.assetId === "string"
+      ) {
+        return assetUrl(parsed.assetId);
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }, [formDefault]);
 
   // Delete Confirmation State
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -151,6 +183,8 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
     setFormMaxLength("");
     setFormDescription("");
     setFormError(null);
+    setPickingAsset(false);
+    setShowDirectUrl(false);
     setIsFormOpen(true);
   };
 
@@ -166,6 +200,8 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
     setFormMaxLength(preset.maxLength ? String(preset.maxLength) : "");
     setFormDescription(preset.description);
     setFormError(null);
+    setPickingAsset(false);
+    setShowDirectUrl(false);
     setIsFormOpen(true);
   };
 
@@ -464,17 +500,221 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
                 )}
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  data-testid="preset-form-default"
-                  placeholder="Ketik nilai contoh default yang akan tampil..."
-                  value={formDefault}
-                  onChange={(e) => setFormDefault(e.target.value)}
-                />
-              </div>
+              {formType === "image" ? (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Foto / Gambar Bawaan (Default Preset)
+                  </label>
+
+                  {previewImgSrc ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "8px 10px",
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 6,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewImgSrc}
+                        alt="Pratinjau foto bawaan"
+                        style={{
+                          width: 52,
+                          height: 52,
+                          objectFit: "cover",
+                          borderRadius: 4,
+                          border: "1px solid #cbd5e1",
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#1e293b",
+                            display: "block",
+                          }}
+                        >
+                          Foto Default Terpilih
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            color: "#64748b",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {formDefault}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          className={styles.btnActionIcon}
+                          onClick={() => setPickingAsset(true)}
+                          title="Ganti foto bawaan"
+                        >
+                          <IconImages size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.btnActionIcon} ${styles.btnActionDelete}`}
+                          onClick={() => setFormDefault("")}
+                          title="Hapus foto bawaan"
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <button
+                        type="button"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          borderRadius: 6,
+                          border: "1px dashed #cbd5e1",
+                          background: "#f8fafc",
+                          padding: "10px 14px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => setPickingAsset(true)}
+                        data-testid="preset-pick-image-btn"
+                      >
+                        <IconImages size={15} />
+                        <span>Pilih / Unggah Foto Bawaan dari Pustaka</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        style={{
+                          textAlign: "left",
+                          fontSize: 11,
+                          color: "#b45309",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                        onClick={() => setShowDirectUrl((v) => !v)}
+                      >
+                        {showDirectUrl
+                          ? "− Tutup input URL manual"
+                          : "+ Masukkan link URL gambar manual"}
+                      </button>
+
+                      {showDirectUrl && (
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          placeholder="https://example.com/foto.jpg"
+                          value={formDefault}
+                          onChange={(e) => setFormDefault(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {pickingAsset && (
+                    <div
+                      style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(0, 0, 0, 0.6)",
+                        padding: 16,
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          maxWidth: 580,
+                          maxHeight: "85vh",
+                          overflowY: "auto",
+                          borderRadius: 12,
+                          background: "#ffffff",
+                          padding: 20,
+                          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            paddingBottom: 10,
+                            marginBottom: 12,
+                            borderBottom: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <h4
+                            style={{
+                              margin: 0,
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: "#1e293b",
+                            }}
+                          >
+                            Pilih / Unggah Foto Bawaan Preset
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => setPickingAsset(false)}
+                            style={{
+                              padding: 4,
+                              borderRadius: 4,
+                              border: "none",
+                              background: "none",
+                              color: "#64748b",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <IconClose size={16} />
+                          </button>
+                        </div>
+                        <AssetLibrary
+                          idPrefix="preset-img"
+                          pickLabel="Gunakan untuk Preset"
+                          onPick={(asset: AssetSummary) => {
+                            setFormDefault(asset.id);
+                            setPickingAsset(false);
+                          }}
+                          onUploaded={(asset: AssetSummary) => {
+                            setFormDefault(asset.id);
+                            setPickingAsset(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    data-testid="preset-form-default"
+                    placeholder="Ketik nilai contoh default yang akan tampil..."
+                    value={formDefault}
+                    onChange={(e) => setFormDefault(e.target.value)}
+                  />
+                </div>
+              )}
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Deskripsi / Penjelasan Singkat</label>

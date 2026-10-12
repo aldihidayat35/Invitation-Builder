@@ -208,13 +208,40 @@ function createMaskedImageCanvas({
 export function ImageVisual({
   element,
   tokens,
+  variables,
 }: {
   element: ImageElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   const assetId = "assetId" in element.source ? element.source.assetId : null;
-  const sourceUrl = assetId ? assetUrl(assetId) : null;
+  const boundKey = "bind" in element.source ? element.source.bind : null;
+
+  let sourceUrl = assetId ? assetUrl(assetId) : null;
+  if (!sourceUrl && boundKey && variables) {
+    const matchedVar = variables.find((v) => v.key === boundKey);
+    if (matchedVar && "default" in matchedVar && matchedVar.default) {
+      const def = matchedVar.default;
+      if (
+        typeof def === "object" &&
+        def !== null &&
+        "assetId" in def &&
+        typeof (def as { assetId: unknown }).assetId === "string"
+      ) {
+        const aid = (def as { assetId: string }).assetId.trim();
+        if (aid) sourceUrl = assetUrl(aid);
+      } else if (typeof def === "string" && def.trim()) {
+        const raw = def.trim();
+        if (/^[0-9a-f-]{36}$/i.test(raw)) {
+          sourceUrl = assetUrl(raw);
+        } else if (/^(https?:\/\/|\/|data:image\/)/i.test(raw)) {
+          sourceUrl = raw;
+        }
+      }
+    }
+  }
+
   const image = useCanvasImage(sourceUrl);
 
   const isGif = Boolean(
@@ -274,51 +301,76 @@ export function ImageVisual({
   const shadowProps = tokens ? konvaShadowProps(element.style.shadow, tokens) : {};
 
   return (
-    <Group
-      listening={false}
-      x={isFlipH ? w : 0}
-      y={isFlipV ? h : 0}
-      scaleX={isFlipH ? -1 : 1}
-      scaleY={isFlipV ? -1 : 1}
-      opacity={typeof element.style.opacity === "number" ? element.style.opacity : 1}
-      {...(r > 0 && {
-        clipFunc: (ctx: {
-          beginPath(): void;
-          moveTo(x: number, y: number): void;
-          arcTo(x1: number, y1: number, x2: number, y2: number, r: number): void;
-          closePath(): void;
-        }) => {
-          ctx.beginPath();
-          ctx.moveTo(r, 0);
-          ctx.arcTo(w, 0, w, h, r);
-          ctx.arcTo(w, h, 0, h, r);
-          ctx.arcTo(0, h, 0, 0, r);
-          ctx.arcTo(0, 0, w, 0, r);
-          ctx.closePath();
-        },
-      })}
-    >
-      {maskedCanvas ? (
-        <KonvaImage
-          image={maskedCanvas}
-          x={0}
-          y={0}
-          width={w}
-          height={h}
-          listening={false}
-          {...shadowProps}
-        />
-      ) : (
-        <KonvaImage
-          image={image}
-          x={dest.x}
-          y={dest.y}
-          width={dest.width}
-          height={dest.height}
-          crop={crop}
-          listening={false}
-          {...shadowProps}
-        />
+    <Group listening={false}>
+      <Group
+        x={isFlipH ? w : 0}
+        y={isFlipV ? h : 0}
+        scaleX={isFlipH ? -1 : 1}
+        scaleY={isFlipV ? -1 : 1}
+        opacity={typeof element.style.opacity === "number" ? element.style.opacity : 1}
+        {...(r > 0 && {
+          clipFunc: (ctx: {
+            beginPath(): void;
+            moveTo(x: number, y: number): void;
+            arcTo(x1: number, y1: number, x2: number, y2: number, r: number): void;
+            closePath(): void;
+          }) => {
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.arcTo(w, 0, w, h, r);
+            ctx.arcTo(w, h, 0, h, r);
+            ctx.arcTo(0, h, 0, 0, r);
+            ctx.arcTo(0, 0, w, 0, r);
+            ctx.closePath();
+          },
+        })}
+      >
+        {maskedCanvas ? (
+          <KonvaImage
+            image={maskedCanvas}
+            x={0}
+            y={0}
+            width={w}
+            height={h}
+            listening={false}
+            {...shadowProps}
+          />
+        ) : (
+          <KonvaImage
+            image={image}
+            x={dest.x}
+            y={dest.y}
+            width={dest.width}
+            height={dest.height}
+            crop={crop}
+            listening={false}
+            {...shadowProps}
+          />
+        )}
+      </Group>
+
+      {boundKey && (
+        <Group x={8} y={8}>
+          <Rect
+            width={Math.min(w - 16, Math.max(50, boundKey.length * 6.5 + 24))}
+            height={20}
+            fill="rgba(15, 23, 42, 0.78)"
+            cornerRadius={10}
+            stroke="#e2b774"
+            strokeWidth={1}
+          />
+          <Text
+            text={`✦ {${boundKey}}`}
+            x={8}
+            y={5}
+            width={Math.min(w - 32, Math.max(40, boundKey.length * 6.5 + 16))}
+            fontSize={10}
+            fontStyle="bold"
+            fill="#ffffff"
+            ellipsis
+            wrap="none"
+          />
+        </Group>
       )}
     </Group>
   );

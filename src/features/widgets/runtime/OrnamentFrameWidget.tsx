@@ -21,6 +21,7 @@ export interface OrnamentFrameWidgetProps {
   readonly animationMode?: "once" | "scroll" | "loop" | "none";
   readonly animationSpeed?: "slow" | "normal" | "fast";
   readonly style?: WidgetStyleProps;
+  readonly variables?: readonly { key: string; default?: unknown }[];
 }
 
 export function OrnamentFrameWidget({
@@ -38,6 +39,7 @@ export function OrnamentFrameWidget({
   animationMode = "once",
   animationSpeed = "normal",
   style,
+  variables,
 }: OrnamentFrameWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftPathRef = useRef<SVGPathElement>(null);
@@ -64,7 +66,7 @@ export function OrnamentFrameWidget({
 
   const resolvedStroke = strokeColor || style?.color || "#b4833e";
   const resolvedFill = fillColor || style?.background || "transparent";
-  const resolvedImageUrl = useMemo(() => parseFrameImage(image), [image]);
+  const resolvedImageUrl = useMemo(() => parseFrameImage(image, variables), [image, variables]);
 
   const [isActive, setIsActive] = useState<boolean>(() => animationMode === "none");
 

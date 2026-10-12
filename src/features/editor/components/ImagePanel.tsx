@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import type { Element, ImageFade } from "@/lib/schema";
+import { isBindingCompatible, variableKeySchema } from "@/lib/schema";
 import type { AssetSummary } from "@/features/assets/api";
 import { assetUrl } from "@/features/assets/urls";
+import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { AssetLibrary } from "./AssetLibrary";
-import { BindingControl } from "./BindingControl";
-import { useEditorStore, useWorkspaceId } from "./EditorProvider";
+import { selectDoc, useEditor, useEditorStore, useWorkspaceId } from "./EditorProvider";
 import { ImageCropModal } from "./ImageCropModal";
 import { RemoveBgModal } from "./RemoveBgModal";
 import { NumberField, SelectField, TextField } from "./fields";
-import { IconCrop, IconFlipH, IconFlipV, IconWand } from "./icons";
+import {
+  IconCrop,
+  IconFlipH,
+  IconFlipV,
+  IconImages,
+  IconLandscape,
+  IconPlus,
+  IconVariable,
+  IconWand,
+} from "./icons";
 import styles from "./editor.module.css";
 
 type ImageElement = Extract<Element, { type: "image" }>;
@@ -20,10 +30,21 @@ const FIT_OPTIONS = [
   { value: "contain", label: "Contain (muat semua)" },
 ] as const;
 
+function labelFromKey(key: string): string {
+  const text = key.replace(/[._]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function uniqueKey(taken: ReadonlySet<string>, base: string): string {
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) if (!taken.has(`${base}${n}`)) return `${base}${n}`;
+}
+
 /** Inspector section for an image element (FR-EDT-008): source, replace, fit, focal, radius, alt, binding. */
 export function ImagePanel({ element, readOnly }: { element: ImageElement; readOnly: boolean }) {
   const store = useEditorStore();
   const workspaceId = useWorkspaceId();
+  const doc = useEditor(selectDoc);
   const [picking, setPicking] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
   const [removeBgOpen, setRemoveBgOpen] = useState(false);
@@ -33,6 +54,27 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
   const assetId = "assetId" in element.source ? element.source.assetId : undefined;
   const boundKey = "bind" in element.source ? element.source.bind : undefined;
   const imgSrc = assetId ? assetUrl(assetId) : undefined;
+
+  const isBound = Boolean(boundKey);
+  const [activeTab, setActiveTab] = useState<"static" | "variable">(() =>
+    isBound ? "variable" : "static",
+  );
+  const effectiveTab = isBound ? "variable" : activeTab;
+
+  // Variabel dinamis state
+  const declaredImageVars = doc.variables.filter(
+    (v) => v.type === "image" || v.type === "url" || isBindingCompatible("image", v.type),
+  );
+  const declaredKeys = new Set(doc.variables.map((v) => v.key));
+  const boundVarDef = boundKey ? doc.variables.find((v) => v.key === boundKey) : undefined;
+  const boundVarDefault = boundVarDef && "default" in boundVarDef ? boundVarDef.default : undefined;
+  const boundVarDefaultSrc = boundVarDefault
+    ? parseFrameImage(boundVarDefault, doc.variables)
+    : null;
+
+  const [creatingVar, setCreatingVar] = useState(false);
+  const [newVarKey, setNewVarKey] = useState("");
+  const [varError, setVarError] = useState<string | null>(null);
 
   const setSource = (source: ImageElement["source"]) =>
     store.getState().patchElement(id, (el) => ({ ...el, source }) as Element);
@@ -44,90 +86,353 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
     setPicking(false);
   }
 
+  const handleSelectVariable = (key: string) => {
+    if (!key) {
+      handleUnbind();
+    } else {
+      setSource({ bind: key });
+    }
+  };
+
+  const handleUnbind = () => {
+    if (
+      boundVarDefault &&
+      typeof boundVarDefault === "object" &&
+      "assetId" in boundVarDefault &&
+      typeof (boundVarDefault as { assetId: unknown }).assetId === "string"
+    ) {
+      setSource({ assetId: (boundVarDefault as { assetId: string }).assetId });
+    } else {
+      setPicking(true);
+    }
+    setActiveTab("static");
+  };
+
+  const handleStartCreateVar = () => {
+    setNewVarKey(uniqueKey(declaredKeys, "photo.custom"));
+    setVarError(null);
+    setCreatingVar(true);
+  };
+
+  const handleCreateVariable = () => {
+    const key = newVarKey.trim();
+    if (!variableKeySchema.safeParse(key).success) {
+      setVarError("Kunci harus berupa format dot path, misal couple.bride.photo atau photo.gallery");
+      return;
+    }
+    if (declaredKeys.has(key)) {
+      setVarError("Kunci variabel ini sudah ada.");
+      return;
+    }
+
+    store.getState().addVariable({
+      key,
+      label: labelFromKey(key),
+      type: "image",
+      required: false,
+      ...(assetId ? { default: { assetId } } : {}),
+    } as Parameters<ReturnType<typeof store.getState>["addVariable"]>[0]);
+
+    setCreatingVar(false);
+    setSource({ bind: key });
+  };
+
   return (
     <div className={styles.panelStack} data-testid="image-inspector">
-      {imgSrc ? (
-        <div className={styles.imagePreview}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- editor preview */}
-          <img src={imgSrc} alt="" data-testid="image-preview" />
-        </div>
+      {/* Tab Switcher: Foto Statis vs Variabel Dinamis */}
+      <div className={styles.photoModeSwitcher} role="tablist" aria-label="Mode Sumber Foto">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveTab === "static"}
+          className={`${styles.photoModeBtn} ${effectiveTab === "static" ? styles.photoModeBtnActive : ""}`}
+          onClick={() => {
+            setActiveTab("static");
+            if (isBound) {
+              handleUnbind();
+            }
+          }}
+          data-testid="image-mode-static"
+        >
+          <IconImages size={13} />
+          <span>Foto Statis</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveTab === "variable"}
+          className={`${styles.photoModeBtn} ${effectiveTab === "variable" ? styles.photoModeBtnActive : ""}`}
+          onClick={() => {
+            setActiveTab("variable");
+            if (!isBound && declaredImageVars.length > 0) {
+              handleSelectVariable(declaredImageVars[0]!.key);
+            }
+          }}
+          data-testid="image-mode-variable"
+        >
+          <IconVariable size={13} />
+          <span>Variabel Dinamis</span>
+        </button>
+      </div>
+
+      {effectiveTab === "static" ? (
+        <>
+          {imgSrc ? (
+            <div className={styles.imagePreview}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- editor preview */}
+              <img src={imgSrc} alt="" data-testid="image-preview" />
+            </div>
+          ) : (
+            <div
+              className={styles.photoFrameCanvaPlaceholderThumb}
+              style={{ minHeight: 90, borderRadius: 6 }}
+            >
+              <IconLandscape size={28} />
+              <span style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                Belum ada gambar statis
+              </span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className={styles.ghostButton}
+            disabled={disabled}
+            data-testid="image-replace"
+            onClick={() => setPicking((open) => !open)}
+          >
+            <IconImages size={14} style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+            {picking ? "Tutup pilihan" : imgSrc ? "Ganti gambar" : "Pilih / Unggah Foto"}
+          </button>
+
+          {assetId ? (
+            <div className={styles.imageActionGrid}>
+              <button
+                type="button"
+                className={styles.imageToolBtn}
+                disabled={disabled}
+                data-testid="image-crop-btn"
+                title="Potong & atur rasio gambar"
+                onClick={() => setCropOpen(true)}
+              >
+                <IconCrop size={14} />
+                <span>Potong (Crop)</span>
+              </button>
+              <button
+                type="button"
+                className={styles.imageToolBtn}
+                disabled={disabled}
+                data-active={Boolean(style.flipH)}
+                data-testid="image-flip-h-btn"
+                title="Balik horizontal (kiri-kanan)"
+                onClick={() => patchStyle({ flipH: !style.flipH })}
+              >
+                <IconFlipH size={14} />
+                <span>Flip H</span>
+              </button>
+              <button
+                type="button"
+                className={styles.imageToolBtn}
+                disabled={disabled}
+                data-active={Boolean(style.flipV)}
+                data-testid="image-flip-v-btn"
+                title="Balik vertikal (atas-bawah)"
+                onClick={() => patchStyle({ flipV: !style.flipV })}
+              >
+                <IconFlipV size={14} />
+                <span>Flip V</span>
+              </button>
+              <button
+                type="button"
+                className={styles.imageToolBtn}
+                disabled={disabled}
+                data-testid="image-remove-bg-btn"
+                title="Hapus latar belakang menjadi transparan"
+                onClick={() => setRemoveBgOpen(true)}
+              >
+                <IconWand size={14} />
+                <span>Hapus BG</span>
+              </button>
+            </div>
+          ) : null}
+
+          {picking ? <AssetLibrary idPrefix="pick" pickLabel="Pakai gambar" onPick={pick} /> : null}
+        </>
       ) : (
-        <p className={styles.muted}>Terhubung ke variabel: {boundKey}</p>
-      )}
-      <button
-        type="button"
-        className={styles.ghostButton}
-        disabled={disabled}
-        data-testid="image-replace"
-        onClick={() => setPicking((open) => !open)}
-      >
-        {picking ? "Tutup pilihan" : imgSrc ? "Ganti gambar" : "Pakai aset statis"}
-      </button>
-      {assetId ? (
-        <div className={styles.imageActionGrid}>
-          <button
-            type="button"
-            className={styles.imageToolBtn}
-            disabled={disabled}
-            data-testid="image-crop-btn"
-            title="Potong & atur rasio gambar"
-            onClick={() => setCropOpen(true)}
-          >
-            <IconCrop size={14} />
-            <span>Potong (Crop)</span>
-          </button>
-          <button
-            type="button"
-            className={styles.imageToolBtn}
-            disabled={disabled}
-            data-active={Boolean(style.flipH)}
-            data-testid="image-flip-h-btn"
-            title="Balik horizontal (kiri-kanan)"
-            onClick={() => patchStyle({ flipH: !style.flipH })}
-          >
-            <IconFlipH size={14} />
-            <span>Flip H</span>
-          </button>
-          <button
-            type="button"
-            className={styles.imageToolBtn}
-            disabled={disabled}
-            data-active={Boolean(style.flipV)}
-            data-testid="image-flip-v-btn"
-            title="Balik vertikal (atas-bawah)"
-            onClick={() => patchStyle({ flipV: !style.flipV })}
-          >
-            <IconFlipV size={14} />
-            <span>Flip V</span>
-          </button>
-          <button
-            type="button"
-            className={styles.imageToolBtn}
-            disabled={disabled}
-            data-testid="image-remove-bg-btn"
-            title="Hapus latar belakang menjadi transparan"
-            onClick={() => setRemoveBgOpen(true)}
-          >
-            <IconWand size={14} />
-            <span>Hapus BG</span>
-          </button>
+        /* Variabel Dinamis Tab */
+        <div
+          className={styles.variableControlBox}
+          data-testid="image-variable-controls"
+          style={{
+            background: "rgba(37, 99, 235, 0.04)",
+            border: "1px solid rgba(37, 99, 235, 0.18)",
+            borderRadius: 8,
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <label className={styles.fieldLabel} htmlFor={`image-var-select-${id}`}>
+              Pilih Variabel Foto (URL / Gambar)
+            </label>
+            <select
+              id={`image-var-select-${id}`}
+              className={styles.input}
+              value={boundKey ?? ""}
+              disabled={disabled}
+              onChange={(e) => handleSelectVariable(e.target.value)}
+              data-testid="image-var-select"
+            >
+              <option value="">-- Pilih Variabel Foto --</option>
+              {declaredImageVars.map((v) => (
+                <option key={v.key} value={v.key}>
+                  {v.label} ({v.key})
+                </option>
+              ))}
+              {boundKey && !declaredImageVars.some((v) => v.key === boundKey) && (
+                <option value={boundKey}>{boundKey} (runtime)</option>
+              )}
+            </select>
+          </div>
+
+          {boundKey && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                padding: "8px 10px",
+                background: "#ffffff",
+                border: "1px solid rgba(37, 99, 235, 0.25)",
+                borderRadius: 6,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontWeight: 600,
+                    fontSize: 11,
+                    color: "#1d4ed8",
+                  }}
+                >
+                  <IconVariable size={13} />
+                  <span>{`{${boundKey}}`}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.smallButton}
+                  disabled={disabled}
+                  onClick={handleUnbind}
+                  data-testid="image-unbind-btn"
+                  style={{ fontSize: 11, padding: "2px 8px" }}
+                >
+                  Lepas Variabel
+                </button>
+              </div>
+
+              {boundVarDefaultSrc ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={boundVarDefaultSrc}
+                    alt="Foto bawaan variabel"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      objectFit: "cover",
+                      borderRadius: 4,
+                      border: "1px solid #cbd5e1",
+                    }}
+                  />
+                  <div style={{ fontSize: 11, color: "#475569" }}>
+                    <span style={{ fontWeight: 600, color: "#334155" }}>Foto Bawaan Terpasang</span>
+                    <div style={{ fontSize: 10, color: "#64748b" }}>
+                      Otomatis tampil di kanvas &amp; pratinjau
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: "#64748b" }}>
+                  Belum ada foto bawaan (bisa diisi klien saat pesanan diproses).
+                </div>
+              )}
+
+              <p style={{ margin: 0, fontSize: 10.5, color: "#64748b", lineHeight: 1.4 }}>
+                ℹ️ Di kanvas &amp; pratinjau, gambar otomatis menggunakan foto bawaan variabel ini. Klien dapat mengunggah foto baru saat memesan undangan.
+              </p>
+            </div>
+          )}
+
+          {/* Form Buat Variabel Foto Baru */}
+          {!disabled &&
+            (creatingVar ? (
+              <div className={styles.newVariableBox} data-testid="image-new-var-box">
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--dash-text)" }}>
+                  Buat Variabel Foto Baru
+                </span>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="misal: couple.moment.photo"
+                  value={newVarKey}
+                  onChange={(e) => setNewVarKey(e.target.value)}
+                  data-testid="image-new-var-input"
+                />
+                {varError && (
+                  <span className={styles.errorText} style={{ fontSize: 11 }}>
+                    {varError}
+                  </span>
+                )}
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className={styles.smallButton}
+                    onClick={() => setCreatingVar(false)}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.smallButton}
+                    style={{
+                      background: "var(--dash-accent)",
+                      color: "#fff",
+                      borderColor: "var(--dash-accent)",
+                    }}
+                    onClick={handleCreateVariable}
+                    data-testid="image-create-var-submit"
+                  >
+                    Buat &amp; Hubungkan
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={styles.smallButton}
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  borderStyle: "dashed",
+                  padding: "8px",
+                }}
+                onClick={handleStartCreateVar}
+                data-testid="image-start-create-var"
+              >
+                <IconPlus size={12} />
+                <span>+ Buat Variabel Foto Baru</span>
+              </button>
+            ))}
         </div>
-      ) : null}
-      {picking ? <AssetLibrary idPrefix="pick" pickLabel="Pakai gambar" onPick={pick} /> : null}
-
-
-      <BindingControl
-        id="insp-image-bind"
-        slot="image"
-        boundKey={boundKey}
-        disabled={disabled}
-        newVariableDefault={assetId ? { assetId } : undefined}
-        onBind={(key) => setSource({ bind: key })}
-        onUnbind={() => {
-          // Keep showing something sensible: fall back to the variable's default asset if known.
-          setPicking(true);
-        }}
-      />
+      )}
 
       <SelectField
         id="insp-image-fit"

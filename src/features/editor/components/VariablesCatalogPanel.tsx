@@ -9,8 +9,14 @@ import {
   setGuestPreviewName,
 } from "../core/display";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
+import type { AssetSummary } from "@/features/assets/api";
+import { assetUrl } from "@/features/assets/urls";
+import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
+import { AssetLibrary } from "./AssetLibrary";
 import {
   IconCheck,
+  IconClose,
+  IconImages,
   IconPencil,
   IconPlus,
   IconSearch,
@@ -419,6 +425,27 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const [editMaxLength, setEditMaxLength] = useState("");
   const [editRequired, setEditRequired] = useState(false);
 
+  // Asset picker state for custom & edit variable modals
+  const [pickingAssetFor, setPickingAssetFor] = useState<"custom" | "edit" | null>(null);
+  const [showCustomDirectUrl, setShowCustomDirectUrl] = useState(false);
+  const [showEditDirectUrl, setShowEditDirectUrl] = useState(false);
+
+  const customImgSrc = useMemo(() => {
+    if (!customDefault) return null;
+    const raw = customDefault.trim();
+    if (/^[0-9a-f-]{36}$/i.test(raw)) return assetUrl(raw);
+    if (/^(https?:\/\/|\/|data:image\/)/i.test(raw)) return raw;
+    return null;
+  }, [customDefault]);
+
+  const editImgSrc = useMemo(() => {
+    if (!editDefault) return null;
+    const raw = editDefault.trim();
+    if (/^[0-9a-f-]{36}$/i.test(raw)) return assetUrl(raw);
+    if (/^(https?:\/\/|\/|data:image\/)/i.test(raw)) return raw;
+    return null;
+  }, [editDefault]);
+
   // Guest Name Canvas Preview Simulation State
   const [guestPreviewInput, setGuestPreviewInput] = useState(() => getGuestPreviewName());
 
@@ -561,10 +588,16 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
         : undefined;
 
     if (customType === "image") {
+      let imageDef: { assetId: string } | undefined;
+      const raw = customDefault.trim();
+      if (/^[0-9a-f-]{36}$/i.test(raw)) {
+        imageDef = { assetId: raw };
+      }
       act().addVariable({
         key,
         label,
         type: "image",
+        ...(imageDef ? { default: imageDef } : {}),
         required: customRequired,
       });
     } else {
@@ -596,6 +629,8 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
     setCustomRequired(false);
     setCustomSaveGlobal(false);
     setCustomError(null);
+    setPickingAssetFor(null);
+    setShowCustomDirectUrl(false);
     setShowCustomModal(false);
   };
 
@@ -603,11 +638,23 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   const handleOpenEdit = (v: VariableDefinition) => {
     setEditingVariable(v);
     setEditLabel(v.label);
-    setEditDefault(
-      "default" in v && typeof v.default === "string" ? v.default : "",
-    );
+    let defVal = "";
+    if ("default" in v && v.default) {
+      if (typeof v.default === "string") {
+        defVal = v.default;
+      } else if (
+        typeof v.default === "object" &&
+        v.default !== null &&
+        "assetId" in v.default &&
+        typeof (v.default as { assetId: unknown }).assetId === "string"
+      ) {
+        defVal = (v.default as { assetId: string }).assetId;
+      }
+    }
+    setEditDefault(defVal);
     setEditRequired(Boolean(v.required));
     setEditMaxLength(v.type === "text" && v.maxLength ? String(v.maxLength) : "");
+    setShowEditDirectUrl(false);
   };
 
   // Save edit variable
@@ -619,8 +666,14 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
         : undefined;
 
     if (editingVariable.type === "image") {
+      let imageDef: { assetId: string } | undefined;
+      const raw = editDefault.trim();
+      if (/^[0-9a-f-]{36}$/i.test(raw)) {
+        imageDef = { assetId: raw };
+      }
       act().updateVariable(editingVariable.key, {
         label: editLabel.trim() || editingVariable.label,
+        ...(imageDef ? { default: imageDef } : {}),
         required: editRequired,
       });
     } else {
@@ -632,6 +685,7 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
       } as Parameters<ReturnType<typeof act>["updateVariable"]>[1]);
     }
     setEditingVariable(null);
+    setPickingAssetFor(null);
   };
 
   // Delete variable
@@ -1019,6 +1073,10 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                       "default" in v && typeof v.default === "string"
                         ? v.default
                         : "";
+                    const imageDefaultSrc =
+                      v.type === "image" && "default" in v && v.default
+                        ? parseFrameImage(v.default, doc.variables)
+                        : null;
 
                     return (
                       <div key={v.key} className={styles.variableCard}>
@@ -1057,7 +1115,25 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                         {/* Default / Sample Value */}
                         <div className={styles.defaultBox}>
                           <span className={styles.defaultLabel}>Contoh Teks / Nilai:</span>
-                          {defaultValue ? (
+                          {imageDefaultSrc ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={imageDefaultSrc}
+                                alt="Foto contoh variabel"
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  objectFit: "cover",
+                                  borderRadius: 4,
+                                  border: "1px solid #cbd5e1",
+                                }}
+                              />
+                              <span style={{ fontSize: 11, color: "#475569", fontWeight: 500 }}>
+                                Foto contoh terpasang
+                              </span>
+                            </div>
+                          ) : defaultValue ? (
                             <span className={styles.defaultValue}>{defaultValue}</span>
                           ) : (
                             <span className={styles.defaultEmpty}>
@@ -1287,17 +1363,144 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
-                <textarea
-                  className={styles.formTextarea}
-                  data-testid="custom-var-default-input"
-                  rows={2}
-                  placeholder="Ketik contoh isi teks yang akan tampil di undangan..."
-                  value={customDefault}
-                  onChange={(e) => setCustomDefault(e.target.value)}
-                />
-              </div>
+              {customType === "image" ? (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Foto / Gambar Bawaan (Opsional)
+                  </label>
+
+                  {customImgSrc ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "8px 10px",
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 6,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={customImgSrc}
+                        alt="Pratinjau foto bawaan"
+                        style={{
+                          width: 48,
+                          height: 48,
+                          objectFit: "cover",
+                          borderRadius: 4,
+                          border: "1px solid #cbd5e1",
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#1e293b",
+                            display: "block",
+                          }}
+                        >
+                          Foto Bawaan Terpilih
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            color: "#64748b",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {customDefault}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          className={styles.btnActionIcon}
+                          onClick={() => setPickingAssetFor("custom")}
+                          title="Ganti foto bawaan"
+                        >
+                          <IconImages size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.btnActionIcon} ${styles.btnActionDelete}`}
+                          onClick={() => setCustomDefault("")}
+                          title="Hapus foto bawaan"
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <button
+                        type="button"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          borderRadius: 6,
+                          border: "1px dashed #cbd5e1",
+                          background: "#f8fafc",
+                          padding: "10px 14px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => setPickingAssetFor("custom")}
+                        data-testid="custom-pick-image-btn"
+                      >
+                        <IconImages size={15} />
+                        <span>Pilih / Unggah Foto Bawaan dari Pustaka</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        style={{
+                          textAlign: "left",
+                          fontSize: 11,
+                          color: "#b45309",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                        onClick={() => setShowCustomDirectUrl((v) => !v)}
+                      >
+                        {showCustomDirectUrl
+                          ? "− Tutup input URL manual"
+                          : "+ Masukkan link URL gambar manual"}
+                      </button>
+
+                      {showCustomDirectUrl && (
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          placeholder="https://example.com/foto.jpg"
+                          value={customDefault}
+                          onChange={(e) => setCustomDefault(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
+                  <textarea
+                    className={styles.formTextarea}
+                    data-testid="custom-var-default-input"
+                    rows={2}
+                    placeholder="Ketik contoh isi teks yang akan tampil di undangan..."
+                    value={customDefault}
+                    onChange={(e) => setCustomDefault(e.target.value)}
+                  />
+                </div>
+              )}
 
               {customType === "text" && (
                 <div className={styles.formGroup}>
@@ -1403,15 +1606,142 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
-                <textarea
-                  className={styles.formTextarea}
-                  rows={3}
-                  value={editDefault}
-                  onChange={(e) => setEditDefault(e.target.value)}
-                />
-              </div>
+              {editingVariable.type === "image" ? (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Foto / Gambar Bawaan (Opsional)
+                  </label>
+
+                  {editImgSrc ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "8px 10px",
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 6,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editImgSrc}
+                        alt="Pratinjau foto bawaan"
+                        style={{
+                          width: 48,
+                          height: 48,
+                          objectFit: "cover",
+                          borderRadius: 4,
+                          border: "1px solid #cbd5e1",
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#1e293b",
+                            display: "block",
+                          }}
+                        >
+                          Foto Bawaan Terpilih
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            color: "#64748b",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {editDefault}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          className={styles.btnActionIcon}
+                          onClick={() => setPickingAssetFor("edit")}
+                          title="Ganti foto bawaan"
+                        >
+                          <IconImages size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.btnActionIcon} ${styles.btnActionDelete}`}
+                          onClick={() => setEditDefault("")}
+                          title="Hapus foto bawaan"
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <button
+                        type="button"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          borderRadius: 6,
+                          border: "1px dashed #cbd5e1",
+                          background: "#f8fafc",
+                          padding: "10px 14px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => setPickingAssetFor("edit")}
+                        data-testid="edit-pick-image-btn"
+                      >
+                        <IconImages size={15} />
+                        <span>Pilih / Unggah Foto Bawaan dari Pustaka</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        style={{
+                          textAlign: "left",
+                          fontSize: 11,
+                          color: "#b45309",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                        onClick={() => setShowEditDirectUrl((v) => !v)}
+                      >
+                        {showEditDirectUrl
+                          ? "− Tutup input URL manual"
+                          : "+ Masukkan link URL gambar manual"}
+                      </button>
+
+                      {showEditDirectUrl && (
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          placeholder="https://example.com/foto.jpg"
+                          value={editDefault}
+                          onChange={(e) => setEditDefault(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Contoh Teks / Nilai Bawaan</label>
+                  <textarea
+                    className={styles.formTextarea}
+                    rows={3}
+                    value={editDefault}
+                    onChange={(e) => setEditDefault(e.target.value)}
+                  />
+                </div>
+              )}
 
               {editingVariable.type === "text" && (
                 <div className={styles.formGroup}>
@@ -1467,6 +1797,85 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                 Simpan Perubahan
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Asset Library Drawer for Image Picking */}
+      {pickingAssetFor && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0, 0, 0, 0.6)",
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: 580,
+              maxHeight: "85vh",
+              overflowY: "auto",
+              borderRadius: 12,
+              background: "#ffffff",
+              padding: 20,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingBottom: 10,
+                marginBottom: 12,
+                borderBottom: "1px solid #e2e8f0",
+              }}
+            >
+              <h4 style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#1e293b" }}>
+                Pilih / Unggah Foto Bawaan Variabel
+              </h4>
+              <button
+                type="button"
+                onClick={() => setPickingAssetFor(null)}
+                style={{
+                  padding: 4,
+                  borderRadius: 4,
+                  border: "none",
+                  background: "none",
+                  color: "#64748b",
+                  cursor: "pointer",
+                }}
+              >
+                <IconClose size={16} />
+              </button>
+            </div>
+            <AssetLibrary
+              idPrefix="catalog-var-img"
+              pickLabel="Gunakan untuk Variabel"
+              onPick={(asset: AssetSummary) => {
+                if (pickingAssetFor === "custom") {
+                  setCustomDefault(asset.id);
+                } else if (pickingAssetFor === "edit") {
+                  setEditDefault(asset.id);
+                }
+                setPickingAssetFor(null);
+              }}
+              onUploaded={(asset: AssetSummary) => {
+                if (pickingAssetFor === "custom") {
+                  setCustomDefault(asset.id);
+                } else if (pickingAssetFor === "edit") {
+                  setEditDefault(asset.id);
+                }
+                setPickingAssetFor(null);
+              }}
+            />
           </div>
         </div>
       )}

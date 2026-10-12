@@ -81,9 +81,42 @@ export function sanitizePresetToVariableInput(preset: {
     }
 
     case "image": {
+      let imageDef: { assetId: string } | undefined;
+      if (preset.default) {
+        if (
+          typeof preset.default === "object" &&
+          preset.default !== null &&
+          "assetId" in preset.default &&
+          typeof (preset.default as { assetId: unknown }).assetId === "string"
+        ) {
+          const aid = (preset.default as { assetId: string }).assetId.trim();
+          if (/^[0-9a-f-]{36}$/i.test(aid)) imageDef = { assetId: aid };
+        } else if (typeof preset.default === "string" && preset.default.trim() !== "") {
+          const raw = preset.default.trim();
+          if (/^[0-9a-f-]{36}$/i.test(raw)) {
+            imageDef = { assetId: raw };
+          } else {
+            try {
+              const parsed = JSON.parse(raw);
+              if (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                "assetId" in parsed &&
+                typeof parsed.assetId === "string" &&
+                /^[0-9a-f-]{36}$/i.test(parsed.assetId)
+              ) {
+                imageDef = { assetId: parsed.assetId };
+              }
+            } catch {
+              // ignore invalid json
+            }
+          }
+        }
+      }
       return {
         ...base,
         type: "image",
+        ...(imageDef ? { default: imageDef } : {}),
       };
     }
 

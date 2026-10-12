@@ -59,6 +59,11 @@ export function PhotoFrameImageControl({
   const declaredKeys = new Set(doc.variables.map((v) => v.key));
 
   const currentSrc = parseFrameImage(value, doc.variables);
+  const boundVarDef = boundKey ? doc.variables.find((v) => v.key === boundKey) : undefined;
+  const boundVarDefault = boundVarDef && "default" in boundVarDef ? boundVarDef.default : undefined;
+  const boundVarDefaultSrc = boundVarDefault
+    ? parseFrameImage(boundVarDefault, doc.variables)
+    : null;
 
   const handlePickAsset = (asset: AssetSummary) => {
     onChange({ assetId: asset.id });
@@ -291,23 +296,59 @@ export function PhotoFrameImageControl({
           </div>
 
           {boundKey && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-              <div className={styles.variableChip}>
-                <IconVariable size={12} />
-                <span>{boundKey}</span>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                padding: "8px 10px",
+                background: "#ffffff",
+                border: "1px solid rgba(37, 99, 235, 0.25)",
+                borderRadius: 6,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: 11, color: "#1d4ed8" }}>
+                  <IconVariable size={13} />
+                  <span>{`{${boundKey}}`}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.smallButton}
+                  disabled={disabled}
+                  onClick={() => {
+                    onChange(undefined);
+                    setActiveTab("static");
+                  }}
+                  data-testid="photo-frame-unbind-btn"
+                  style={{ fontSize: 11, padding: "2px 8px" }}
+                >
+                  Lepas Variabel
+                </button>
               </div>
-              <button
-                type="button"
-                className={styles.smallButton}
-                disabled={disabled}
-                onClick={() => {
-                  onChange(undefined);
-                  setActiveTab("static");
-                }}
-                data-testid="photo-frame-unbind-btn"
-              >
-                Lepas Variabel
-              </button>
+
+              {boundVarDefaultSrc ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={boundVarDefaultSrc}
+                    alt="Foto bawaan variabel"
+                    style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                  />
+                  <div style={{ fontSize: 11, color: "#475569" }}>
+                    <span style={{ fontWeight: 600, color: "#334155" }}>Foto Bawaan Terpasang</span>
+                    <div style={{ fontSize: 10, color: "#64748b" }}>Otomatis tampil di bingkai saat pratinjau</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: "#64748b" }}>
+                  Belum ada foto bawaan (bisa diisi klien saat pesanan diproses).
+                </div>
+              )}
+
+              <p style={{ margin: 0, fontSize: 10.5, color: "#64748b", lineHeight: 1.4 }}>
+                ℹ️ Di kanvas &amp; pratinjau, bingkai ornamen otomatis menggunakan foto dari variabel ini. Klien dapat mengunggah foto baru saat memesan undangan.
+              </p>
             </div>
           )}
 

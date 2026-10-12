@@ -163,6 +163,7 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
           : undefined
       }
       style={style}
+      variables={p.variables as readonly { key: string; default?: unknown }[] | undefined}
     />
   ),
   video: (p, style) => (

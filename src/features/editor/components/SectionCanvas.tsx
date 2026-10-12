@@ -163,7 +163,7 @@ function Visual({
       );
     }
     case "image":
-      return <ImageVisual element={element} tokens={tokens} />;
+      return <ImageVisual element={element} tokens={tokens} variables={variables} />;
     case "widget": {
       const s = element.style;
       const shadowProps = konvaShadowProps(s.shadow, tokens);
