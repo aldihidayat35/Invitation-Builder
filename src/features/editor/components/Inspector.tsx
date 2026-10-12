@@ -1111,7 +1111,12 @@ function ElementPanel({
           defaultOpen={defaultOpen}
           dragProps={getDragProps("insp-content")}
         >
-          <WidgetPanel element={element} readOnly={readOnly} tokens={tokens} />
+          <WidgetPanel
+            element={element}
+            readOnly={readOnly}
+            tokens={tokens}
+            onOpenVariablesTab={onOpenVariablesTab}
+          />
         </PanelSection>
       );
     }

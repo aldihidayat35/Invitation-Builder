@@ -31,13 +31,16 @@ export function MapWidget({
   buttonText,
   style,
 }: MapWidgetProps) {
-  let effectiveCoord = coordinate;
-  if (!effectiveCoord && latitude !== undefined && longitude !== undefined) {
+  let effectiveCoord: unknown = undefined;
+  if (latitude !== undefined && longitude !== undefined) {
     const lat = typeof latitude === "number" ? latitude : parseFloat(String(latitude));
     const lng = typeof longitude === "number" ? longitude : parseFloat(String(longitude));
     if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
       effectiveCoord = { lat, lng };
     }
+  }
+  if (!effectiveCoord && coordinate) {
+    effectiveCoord = coordinate;
   }
 
   const href = mapUrl(effectiveCoord);

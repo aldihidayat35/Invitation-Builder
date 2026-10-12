@@ -4,7 +4,7 @@
  * and the editor. Runtime React components live in `./runtime`.
  */
 import { z } from "zod";
-import { coordinateSchema, datetimeValueSchema } from "@/lib/schema";
+import { datetimeValueSchema } from "@/lib/schema";
 import { defineProp, type WidgetDefinition } from "./registry";
 import { getDefaultWidgetStyle } from "./widget-styles";
 import {
@@ -37,13 +37,12 @@ export const mapWidget: WidgetDefinition = {
     latitude: defineProp("number", "Latitude Lokasi", z.number().optional()),
     longitude: defineProp("number", "Longitude Lokasi", z.number().optional()),
     address: defineProp("text", "Alamat Lokasi Teks", z.string().max(300).optional()),
-    coordinate: defineProp("coordinate", "Koordinat", coordinateSchema.optional()),
     label: defineProp("text", "Label lokasi", z.string().max(120).optional()),
     buttonText: defineProp("text", "Teks tombol", z.string().min(1).max(40)),
   },
   placeholder: (props) => ({
     title: describeProp(props.address) ?? describeProp(props.label) ?? "Peta lokasi",
-    subtitle: `Koordinat: ${describeProp(props.latitude) ? `${describeProp(props.latitude)}, ${describeProp(props.longitude)}` : (describeProp(props.coordinate) ?? "belum diatur")}`,
+    subtitle: `Koordinat: ${describeProp(props.latitude) ? `${describeProp(props.latitude)}, ${describeProp(props.longitude)}` : "Otomatis (Data Acara)"}`,
   }),
 };
 

@@ -73,10 +73,12 @@ export function WidgetPanel({
   element,
   readOnly,
   tokens,
+  onOpenVariablesTab,
 }: {
   element: WidgetElement;
   readOnly: boolean;
   tokens?: ThemeTokens;
+  onOpenVariablesTab?: () => void;
 }) {
   const store = useEditorStore();
   const resolved = defaultWidgetRegistry.resolve(element.widgetType);
@@ -376,6 +378,13 @@ export function WidgetPanel({
             element={element}
             disabled={disabled}
             setProp={setProp}
+          />
+        ) : element.widgetType === "map" ? (
+          <MapPropsControl
+            element={element}
+            disabled={disabled}
+            setProp={setProp}
+            onOpenVariablesTab={onOpenVariablesTab}
           />
         ) : (
           Object.entries(definition.props).map(([name, spec]) => {
@@ -1571,6 +1580,115 @@ function RsvpPropsControl({
             const val = e.target.value;
             setProp("deadline", val ? new Date(val).toISOString() : undefined);
           }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MapPropsControl({
+  element,
+  disabled,
+  setProp,
+  onOpenVariablesTab,
+}: {
+  readonly element: WidgetElement;
+  readonly disabled: boolean;
+  readonly setProp: (name: string, value: unknown) => void;
+  readonly onOpenVariablesTab?: () => void;
+}) {
+  const store = useEditorStore();
+  const doc = selectDoc(store.getState());
+  const props = (element.props ?? {}) as Record<string, unknown>;
+  const buttonText = typeof props.buttonText === "string" ? props.buttonText : "Buka Google Maps";
+
+  // Ambil nilai variabel saat ini dari dokumen
+  const latVar = doc.variables.find((v) => v.key === "event.location.lat");
+  const lngVar = doc.variables.find((v) => v.key === "event.location.lng");
+  const addrVar = doc.variables.find((v) => v.key === "event.location.address");
+
+  const currentLat =
+    latVar && "default" in latVar && latVar.default !== undefined ? latVar.default : "-6.175392";
+  const currentLng =
+    lngVar && "default" in lngVar && lngVar.default !== undefined ? lngVar.default : "106.827153";
+  const currentAddr =
+    addrVar && "default" in addrVar && addrVar.default !== undefined ? addrVar.default : "Lokasi acara";
+
+  return (
+    <div className={styles.panelStack} data-testid="map-props-controls">
+      {/* 1. Banner Info Terhubung Otomatis */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          padding: "12px",
+          background: "rgba(59, 130, 246, 0.08)",
+          border: "1px solid rgba(59, 130, 246, 0.25)",
+          borderRadius: "8px",
+          color: "#2563eb",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "12px" }}>
+          <span>📍</span>
+          <span>Terhubung Otomatis ke Data Acara</span>
+        </div>
+        <p style={{ margin: 0, color: "#4b5563", fontSize: "11px", lineHeight: "1.4" }}>
+          Peta ini terikat secara otomatis ke koordinat &amp; alamat di Data Undangan (Variabel). Nilai tidak akan beradu dengan input statis manual.
+        </p>
+
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "6px",
+            padding: "8px 10px",
+            border: "1px solid #e5e7eb",
+            fontSize: "11px",
+            color: "#374151",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+        >
+          <div><strong>Alamat:</strong> {String(currentAddr)}</div>
+          <div><strong>Koordinat:</strong> {String(currentLat)}, {String(currentLng)}</div>
+        </div>
+
+        {onOpenVariablesTab && (
+          <button
+            type="button"
+            onClick={onOpenVariablesTab}
+            disabled={disabled}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 12px",
+              background: "#3b82f6",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "11px",
+              fontWeight: 600,
+              cursor: disabled ? "not-allowed" : "pointer",
+              transition: "background 0.15s ease",
+            }}
+          >
+            <span>✏️</span>
+            <span>Ubah Lokasi di Data Undangan</span>
+          </button>
+        )}
+      </div>
+
+      {/* 2. Pengaturan Teks Tombol Google Maps */}
+      <div className={styles.panelStack} data-testid="widget-prop-buttonText">
+        <TextField
+          id={`insp-widget-btn-${element.id}`}
+          label="Teks tombol Google Maps"
+          value={buttonText}
+          disabled={disabled}
+          onCommit={(val) => setProp("buttonText", val.trim() || "Buka Google Maps")}
         />
       </div>
     </div>

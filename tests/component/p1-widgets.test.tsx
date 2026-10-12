@@ -181,6 +181,26 @@ describe("MapWidget analytics & preview", () => {
     expect(container.querySelector("iframe")).not.toBeInTheDocument();
     expect(screen.getByTestId("map-link-disabled")).toBeInTheDocument();
   });
+
+  it("prioritizes latitude & longitude over legacy coordinate to avoid data clash", () => {
+    const { container } = render(
+      <MapWidget
+        latitude={-6.175392}
+        longitude={106.827153}
+        coordinate={{ lat: -9.9999, lng: 99.9999 }}
+        address="Monas, Jakarta Pusat"
+        buttonText="Buka Peta Acara"
+      />,
+    );
+    const iframe = container.querySelector("iframe");
+    expect(iframe).toBeInTheDocument();
+    expect(iframe).toHaveAttribute(
+      "src",
+      "https://maps.google.com/maps?q=-6.175392,106.827153&hl=id&z=15&output=embed",
+    );
+    expect(screen.getByText("Monas, Jakarta Pusat")).toBeInTheDocument();
+    expect(screen.getByText("Buka Peta Acara")).toBeInTheDocument();
+  });
 });
 
 describe("PhotoFrameWidget", () => {

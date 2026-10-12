@@ -322,8 +322,10 @@ export function createRoyalElegantDemoDocument(): CanonicalDocument {
             frame: { x: 25, y: 750, w: 340, h: 350, rotation: 0 },
             props: {
               label: "Sasana Kriya Grand Ballroom, TMII, Jakarta Timur",
+              address: "Sasana Kriya Grand Ballroom, TMII, Jakarta Timur",
               buttonText: "Buka Petunjuk Arah Google Maps",
-              coordinate: { lat: -6.3024, lng: 106.8952 },
+              latitude: -6.3024,
+              longitude: 106.8952,
             },
             style: {
               color: "#F3E5AB",
@@ -879,8 +881,10 @@ export function createClassicFloralDemoDocument(): CanonicalDocument {
             frame: { x: 25, y: 725, w: 340, h: 340, rotation: 0 },
             props: {
               label: "Pine Hill Garden, Lembang, Bandung Barat",
+              address: "Pine Hill Garden, Lembang, Bandung Barat",
               buttonText: "Buka Lokasi di Google Maps",
-              coordinate: { lat: -6.8234, lng: 107.6321 },
+              latitude: -6.8234,
+              longitude: 107.6321,
             },
             style: {
               color: "#2A3229",
@@ -1151,8 +1155,10 @@ export function createModernMinimalDemoDocument(): CanonicalDocument {
             frame: { x: 25, y: 650, w: 340, h: 240, rotation: 0 },
             props: {
               label: "Plataran Menteng, Jakarta Pusat",
+              address: "Plataran Menteng, Jakarta Pusat",
               buttonText: "Lihat Peta Lokasi",
-              coordinate: { lat: -6.1952, lng: 106.8329 },
+              latitude: -6.1952,
+              longitude: 106.8329,
             },
             style: {
               color: "#583B2B",
