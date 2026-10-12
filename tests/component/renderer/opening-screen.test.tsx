@@ -188,6 +188,21 @@ describe("Custom Canvas Opening Screen (Section 0)", () => {
     expect(screen.getByText("The Wedding of Romeo & Juliet")).toBeInTheDocument();
     expect(screen.getByText("Assalamu'alaikum Warahmatullahi Wabarakatuh")).toBeInTheDocument();
   });
+
+  it("renders Section 0 with data-runtime-mode attribute in preview mode", () => {
+    const doc = makeDocWithCanvasOpening(true);
+    const resolved = resolveDocument(doc);
+
+    render(
+      <PublicContextProvider value={{ slug: "test-slug" }}>
+        <DocumentRenderer document={resolved} runtimeMode="preview" />
+      </PublicContextProvider>,
+    );
+
+    const cover = screen.getByTestId("opening-cover-canvas");
+    expect(cover).toBeInTheDocument();
+    expect(cover).toHaveAttribute("data-runtime-mode", "preview");
+  });
 });
 
 describe("Editor Artboard & Store Section 0 Opening Integration", () => {
@@ -218,7 +233,10 @@ describe("Editor Artboard & Store Section 0 Opening Integration", () => {
         <Inspector />
       </EditorProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /^umum$/i }));
+    const umumBtn = screen.getByRole("button", { name: /^umum$/i });
+    if (umumBtn.getAttribute("aria-expanded") !== "true") {
+      fireEvent.click(umumBtn);
+    }
 
     const toggle = screen.getByTestId("section-opening-toggle") as HTMLInputElement;
     expect(toggle.checked).toBe(false);

@@ -26,6 +26,7 @@ export function OpeningCoverCanvas({
   nextSectionId,
   tokens,
   baseWidth,
+  runtimeMode = "public",
   renderElements,
   onOpen,
   children,
@@ -63,8 +64,9 @@ export function OpeningCoverCanvas({
     return () => clearTimeout(timer);
   }, [isClosing, isOpened, nextSectionId, onOpen]);
 
-  // Lock body scroll while opening screen is active
+  // Lock body scroll while opening screen is active (Hanya di mode publik/production, jangan kunci body di editor preview)
   useEffect(() => {
+    if (runtimeMode === "preview") return;
     if (isOpened) {
       document.body.style.overflow = "";
       return;
@@ -74,7 +76,7 @@ export function OpeningCoverCanvas({
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpened]);
+  }, [isOpened, runtimeMode]);
 
   // Replay trigger from preview or tests
   useEffect(() => {
@@ -116,6 +118,7 @@ export function OpeningCoverCanvas({
       onClick={handleOpen}
       data-testid="opening-cover-canvas"
       data-section-id={openingSection.id}
+      data-runtime-mode={runtimeMode}
       role="dialog"
       aria-modal="true"
       aria-label={openingSection.name || "Cover Opening (Section 0)"}

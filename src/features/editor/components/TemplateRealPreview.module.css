@@ -286,6 +286,10 @@
   height: 0;
 }
 
+.deviceShell[data-opening-active="true"] {
+  overflow-y: hidden !important;
+}
+
 .deviceShell[data-view="full"] {
   max-width: 100%;
   height: auto;

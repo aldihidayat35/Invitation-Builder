@@ -125,4 +125,71 @@ describe("Editor Header Real Preview Feature", () => {
     fireEvent.click(closeBtn);
     expect(screen.getByTestId("preview-open-navbar-btn")).toBeInTheDocument();
   });
+
+  it("locks opening cover inside device shell in preview and provides replay cover button", () => {
+    const rawDoc = fullDocument();
+    const docWithOpening: CanonicalDocument = canonicalDocumentSchema.parse({
+      ...rawDoc,
+      sections: [
+        {
+          id: "sec_0_opening",
+          name: "Cover",
+          baseHeight: 844,
+          overflow: "hidden",
+          visible: true,
+          isOpening: true,
+          elements: [
+            {
+              id: "el_cov_txt",
+              type: "text",
+              frame: { x: 0, y: 100, w: 300, h: 50, rotation: 0 },
+              visible: true,
+              locked: false,
+              content: { segments: [{ text: "Undangan Spesial" }] },
+              style: {
+                fontSize: 20,
+                fontWeight: 600,
+                lineHeight: 1.2,
+                letterSpacing: 0,
+                textAlign: "center",
+                color: "#000000",
+                opacity: 1,
+              },
+            },
+          ],
+        },
+        ...(rawDoc.sections as any[]),
+      ],
+    });
+
+    render(
+      <TemplateRealPreview
+        templateId="tmpl_with_cover"
+        templateName="Wedding Invitation"
+        initialDocument={docWithOpening}
+      />,
+    );
+
+    const deviceShell = screen.getByTestId("preview-device-shell");
+    expect(deviceShell).toBeInTheDocument();
+    // Device shell locks scroll while cover is active
+    expect(deviceShell).toHaveAttribute("data-opening-active", "true");
+
+    // Opening cover canvas should be rendered in preview mode
+    const openingCover = screen.getByTestId("opening-cover-canvas");
+    expect(openingCover).toBeInTheDocument();
+    expect(openingCover).toHaveAttribute("data-runtime-mode", "preview");
+
+    // Replay cover button should be present in toolbar
+    const replayCoverBtn = screen.getByTestId("preview-replay-cover");
+    expect(replayCoverBtn).toBeInTheDocument();
+    expect(replayCoverBtn).toHaveTextContent("Ulangi Cover");
+
+    // Replay cover button click dispatches dib:replay-opening
+    const replayOpeningSpy = vi.fn();
+    window.addEventListener("dib:replay-opening", replayOpeningSpy);
+    fireEvent.click(replayCoverBtn);
+    expect(replayOpeningSpy).toHaveBeenCalledTimes(1);
+    window.removeEventListener("dib:replay-opening", replayOpeningSpy);
+  });
 });

@@ -112,11 +112,24 @@ export function TemplateRealPreview({
   }, [document, guestPreviewName]);
 
   const hasOpeningSection = document.sections.some((s) => s.isOpening);
+  const [isCoverOpened, setIsCoverOpened] = useState(false);
+
+  useEffect(() => {
+    const onOpen = () => setIsCoverOpened(true);
+    const onReplay = () => setIsCoverOpened(false);
+    window.addEventListener("dib:open-invitation", onOpen);
+    window.addEventListener("dib:replay-opening", onReplay);
+    return () => {
+      window.removeEventListener("dib:open-invitation", onOpen);
+      window.removeEventListener("dib:replay-opening", onReplay);
+    };
+  }, []);
 
   const stageRef = useRef<HTMLElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
 
   function handleReplay() {
+    setIsCoverOpened(false);
     if (typeof stageRef.current?.scrollTo === "function") {
       stageRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -200,21 +213,43 @@ export function TemplateRealPreview({
 
         <div className={styles.rightGroup}>
           {hasOpeningSection ? (
-            <button
-              type="button"
-              className={`${styles.toolBtn} ${showCover ? styles.toolBtnActive : ""}`}
-              onClick={() => {
-                setShowCover((v) => !v);
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("dib:replay-opening"));
-                }
-              }}
-              data-testid="preview-toggle-cover"
-              title="Aktifkan/nonaktifkan Cover Opening (Section 0)"
-            >
-              <IconSparkle size={13} />
-              <span>Cover (#0): {showCover ? "On" : "Off"}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className={`${styles.toolBtn} ${showCover ? styles.toolBtnActive : ""}`}
+                onClick={() => {
+                  setShowCover((v) => !v);
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("dib:replay-opening"));
+                  }
+                }}
+                data-testid="preview-toggle-cover"
+                title="Aktifkan/nonaktifkan Cover Opening (Section 0)"
+              >
+                <IconSparkle size={13} />
+                <span>Cover (#0): {showCover ? "On" : "Off"}</span>
+              </button>
+              {showCover && (
+                <button
+                  type="button"
+                  className={styles.toolBtn}
+                  onClick={() => {
+                    setIsCoverOpened(false);
+                    if (typeof shellRef.current?.scrollTo === "function") {
+                      shellRef.current.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("dib:replay-opening"));
+                    }
+                  }}
+                  data-testid="preview-replay-cover"
+                  title="Tampilkan kembali Cover Opening di dalam frame"
+                >
+                  <IconReplay size={13} />
+                  <span>Ulangi Cover</span>
+                </button>
+              )}
+            </>
           ) : null}
 
           <button
@@ -281,6 +316,7 @@ export function TemplateRealPreview({
           ref={shellRef}
           className={styles.deviceShell}
           data-view={viewMode}
+          data-opening-active={hasOpeningSection && showCover && !isCoverOpened}
           data-testid="preview-device-shell"
         >
           <PublicContextProvider
