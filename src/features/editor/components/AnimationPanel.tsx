@@ -905,22 +905,22 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                 onChange={(easing) => patchTrack({ easing })}
               />
 
-              {/* Special options for Plant Sway / Waving animation */}
-              {(currentTrack.presetId === "plantSway" || currentTrack.anchor !== undefined) && (
+              {/* Special options for Plant Sway / Swing / Waving animation */}
+              {(currentTrack.presetId === "plantSway" || currentTrack.presetId === "swing" || currentTrack.anchor !== undefined) && (
                 <div
                   className={styles.groupAnimationBanner}
                   style={{ marginTop: 4, marginBottom: 8, flexDirection: "column", gap: 10 }}
                   data-testid="plant-sway-controls"
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: 12 }}>
-                    <span>🌾</span>
-                    <span>Pengaturan Titik Poros & Arah Melambai</span>
+                    <span>{currentTrack.presetId === "swing" ? "🔔" : "🌾"}</span>
+                    <span>Pengaturan Titik Poros & Arah Ayunan</span>
                   </div>
 
                   <SelectField
                     id={`insp-anim-anchor-${activeTab}`}
                     label="Titik Tetap (Poros Rotasi)"
-                    value={currentTrack.anchor ?? "bottom-center"}
+                    value={currentTrack.anchor ?? (currentTrack.presetId === "swing" ? "top-center" : "bottom-center")}
                     options={ANCHOR_OPTIONS}
                     disabled={readOnly}
                     onChange={(anchor) => {
@@ -964,9 +964,28 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                   <NumberField
                     id={`insp-anim-intensity-${activeTab}`}
                     label="Sudut Kemiringan / Ayunan (°)"
-                    value={currentTrack.intensity ?? 5}
+                    value={currentTrack.intensity ?? (currentTrack.presetId === "swing" ? 7 : 5)}
                     min={1}
                     max={25}
+                    step={1}
+                    disabled={readOnly}
+                    onCommit={(intensity) => {
+                      patchTrack({ intensity });
+                      handleReplayElement();
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Special intensity option for Wiggle & Shake */}
+              {(currentTrack.presetId === "wiggle" || currentTrack.presetId === "shake") && (
+                <div style={{ marginTop: 4, marginBottom: 8 }}>
+                  <NumberField
+                    id={`insp-anim-intensity-${activeTab}`}
+                    label={currentTrack.presetId === "wiggle" ? "Sudut Goyang Ceria (°)" : "Kekuatan Getar (px)"}
+                    value={currentTrack.intensity ?? 4}
+                    min={1}
+                    max={15}
                     step={1}
                     disabled={readOnly}
                     onCommit={(intensity) => {

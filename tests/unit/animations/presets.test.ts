@@ -78,4 +78,26 @@ describe("Animation Preset Registry (P-09)", () => {
     expect(shapePresetIds).toContain("fadeIn");
     expect(shapePresetIds).toContain("slideDown");
   });
+
+  it("includes Canva & CapCut object animation presets", () => {
+    // Enter
+    expect(animationPresetRegistry.has("popIn")).toBe(true);
+    expect(animationPresetRegistry.has("dropBounce")).toBe(true);
+    expect(animationPresetRegistry.has("tumble")).toBe(true);
+    expect(animationPresetRegistry.has("drift")).toBe(true);
+    expect(animationPresetRegistry.has("spinIn")).toBe(true);
+    expect(animationPresetRegistry.has("wipeSoft")).toBe(true);
+
+    // Attention / Loop
+    expect(animationPresetRegistry.has("breathe")).toBe(true);
+    expect(animationPresetRegistry.has("swing")).toBe(true);
+    expect(animationPresetRegistry.has("wiggle")).toBe(true);
+    expect(animationPresetRegistry.has("jelly")).toBe(true);
+    expect(animationPresetRegistry.has("shake")).toBe(true);
+
+    // Exit
+    expect(animationPresetRegistry.has("popOut")).toBe(true);
+    expect(animationPresetRegistry.has("dropOut")).toBe(true);
+    expect(animationPresetRegistry.has("tumbleOut")).toBe(true);
+  });
 });

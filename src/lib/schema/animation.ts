@@ -27,7 +27,10 @@ export const ANIMATION_EASINGS = [
   "power1.out",
   "power2.out",
   "power3.out",
+  "power2.in",
   "back.out",
+  "bounce.out",
+  "elastic.out",
   "expo.out",
 ] as const;
 export type AnimationEasing = (typeof ANIMATION_EASINGS)[number];

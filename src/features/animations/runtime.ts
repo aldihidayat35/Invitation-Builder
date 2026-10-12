@@ -66,9 +66,9 @@ export function playAnimation(
   const fromVars = toGsapVars(preset.keyframes.from);
   const toVars = toGsapVars(preset.keyframes.to);
 
-  // Dynamic overrides for anchor, direction, and intensity (e.g. plantSway / waving)
-  if (track.anchor || track.presetId === "plantSway") {
-    const anchor = track.anchor ?? "bottom-center";
+  // Dynamic overrides for anchor, direction, and intensity (e.g. plantSway / waving / swing)
+  if (track.anchor || track.presetId === "plantSway" || track.presetId === "swing") {
+    const anchor = track.anchor ?? (track.presetId === "swing" ? "top-center" : "bottom-center");
     let cssOrigin = "center bottom";
     switch (anchor) {
       case "bottom-center":
@@ -91,11 +91,24 @@ export function playAnimation(
     toVars.transformOrigin = cssOrigin;
   }
 
-  if (track.presetId === "plantSway" || track.intensity !== undefined || track.direction !== undefined) {
-    const angle = track.intensity ?? 5;
+  if (
+    track.presetId === "plantSway" ||
+    track.presetId === "swing" ||
+    track.presetId === "wiggle" ||
+    (track.intensity !== undefined && (fromVars.rotation !== undefined || toVars.rotation !== undefined)) ||
+    track.direction !== undefined
+  ) {
+    const angle =
+      track.intensity ?? (track.presetId === "swing" ? 7 : track.presetId === "wiggle" ? 4 : 5);
     const isLeftFirst = track.direction !== "right-first";
     fromVars.rotation = isLeftFirst ? -angle : angle;
     toVars.rotation = isLeftFirst ? angle : -angle;
+  }
+
+  if (track.presetId === "shake" && track.intensity !== undefined) {
+    const shift = track.intensity;
+    fromVars.x = -shift;
+    toVars.x = shift;
   }
 
   const execute = () => {

@@ -127,6 +127,55 @@ export function AnimationPresetIcon({ presetId, size = 22, ...rest }: AnimationI
         </Svg>
       );
 
+    case "popIn":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="12" r="5" strokeWidth={2} />
+          <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4" strokeWidth={1.6} />
+        </Svg>
+      );
+
+    case "dropBounce":
+      return (
+        <Svg size={size} {...rest}>
+          <path d="M12 3v13M7 11l5 5 5-5" strokeWidth={1.8} />
+          <path d="M5 20c2-2 4-2 7 0s5 2 7 0" strokeWidth={1.6} />
+        </Svg>
+      );
+
+    case "tumble":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="5" y="6" width="10" height="10" rx="2" transform="rotate(-20 10 11)" strokeWidth={1.8} />
+          <path d="M18 10l3 3-3 3M15 13h6" strokeWidth={1.6} />
+        </Svg>
+      );
+
+    case "drift":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="9" y="5" width="10" height="10" rx="2" strokeWidth={1.8} />
+          <path d="M4 17l6-6M3 13l4-4" strokeWidth={1.5} strokeDasharray="2 2" opacity="0.6" />
+        </Svg>
+      );
+
+    case "spinIn":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="12" r="7" strokeWidth={1.5} strokeDasharray="3 2" opacity="0.6" />
+          <rect x="8" y="8" width="8" height="8" rx="1.5" strokeWidth={1.8} />
+          <path d="M19 8a8 8 0 0 1-1 7l3 1M5 16a8 8 0 0 1 1-7L3 8" strokeWidth={1.6} />
+        </Svg>
+      );
+
+    case "wipeSoft":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="5" y="4" width="14" height="16" rx="2" strokeWidth={1.6} />
+          <path d="M2 8h8M2 12h12M2 16h6" strokeWidth={1.8} />
+        </Svg>
+      );
+
     case "charFade":
       return (
         <Svg size={size} {...rest}>
@@ -254,6 +303,30 @@ export function AnimationPresetIcon({ presetId, size = 22, ...rest }: AnimationI
         </Svg>
       );
 
+    case "popOut":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="12" r="3" strokeWidth={2} />
+          <path d="M12 5v-2M12 21v-2M5 12H3M21 12h-2M7 7L5.6 5.6M18.4 18.4L17 17M7 17l-1.4 1.4M18.4 5.6L17 7" strokeWidth={1.5} opacity="0.6" />
+        </Svg>
+      );
+
+    case "dropOut":
+      return (
+        <Svg size={size} {...rest}>
+          <path d="M12 4v14M7 13l5 5 5-5" strokeWidth={1.8} />
+          <path d="M3 21h18" strokeWidth={2} strokeDasharray="3 2" />
+        </Svg>
+      );
+
+    case "tumbleOut":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="7" y="6" width="10" height="10" rx="2" transform="rotate(20 12 11)" strokeWidth={1.8} />
+          <path d="M18 12h4M19 9l3 3-3 3" strokeWidth={1.6} />
+        </Svg>
+      );
+
     // ==========================================
     // ATTENTION / LAIN-LAIN (CONTINUOUS / LOOP)
     // ==========================================
@@ -336,6 +409,50 @@ export function AnimationPresetIcon({ presetId, size = 22, ...rest }: AnimationI
             fill="currentColor"
             stroke="none"
           />
+        </Svg>
+      );
+
+    case "breathe":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="12" r="8" strokeWidth={1.5} strokeDasharray="3 2" opacity="0.6" />
+          <circle cx="12" cy="12" r="5" strokeWidth={1.8} fill="currentColor" fillOpacity="0.25" />
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2" strokeWidth={1.5} opacity="0.5" />
+        </Svg>
+      );
+
+    case "swing":
+      return (
+        <Svg size={size} {...rest}>
+          <circle cx="12" cy="3" r="1.5" fill="currentColor" />
+          <path d="M12 4.5l-4 11" strokeWidth={1.8} />
+          <rect x="5" y="14" width="6" height="5" rx="1" transform="rotate(-15 8 16)" strokeWidth={1.6} />
+          <path d="M6 21c3 1.5 9 1.5 12 0" strokeWidth={1.5} strokeDasharray="2 2" opacity="0.6" />
+        </Svg>
+      );
+
+    case "wiggle":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="7" y="7" width="10" height="10" rx="2" strokeWidth={1.8} />
+          <path d="M3 10c0-2 1-3 2-3M21 10c0-2-1-3-2-3M3 14c0 2 1 3 2 3M21 14c0 2-1 3-2 3" strokeWidth={1.6} />
+        </Svg>
+      );
+
+    case "jelly":
+      return (
+        <Svg size={size} {...rest}>
+          <ellipse cx="12" cy="13" rx="7" ry="5" strokeWidth={1.8} />
+          <path d="M7 11c1-4 9-4 10 0" strokeWidth={1.5} />
+          <path d="M9 18c1.5 1 4.5 1 6 0" strokeWidth={1.5} />
+        </Svg>
+      );
+
+    case "shake":
+      return (
+        <Svg size={size} {...rest}>
+          <rect x="8" y="6" width="8" height="12" rx="2" strokeWidth={1.8} />
+          <path d="M3 9l2 3-2 3M21 9l-2 3 2 3" strokeWidth={1.6} />
         </Svg>
       );
 

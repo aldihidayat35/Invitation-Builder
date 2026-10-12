@@ -30,21 +30,35 @@ export function replayKonvaNode(
 
   let rotFrom = fromProps.rotation ?? 0;
   let rotTo = toProps.rotation ?? 0;
-  if (track.presetId === "plantSway" || track.intensity !== undefined || track.direction !== undefined) {
-    const angle = track.intensity ?? 5;
+  if (
+    track.presetId === "plantSway" ||
+    track.presetId === "swing" ||
+    track.presetId === "wiggle" ||
+    (track.intensity !== undefined && (fromProps.rotation !== undefined || toProps.rotation !== undefined)) ||
+    track.direction !== undefined
+  ) {
+    const angle =
+      track.intensity ?? (track.presetId === "swing" ? 7 : track.presetId === "wiggle" ? 4 : 5);
     const isLeftFirst = track.direction !== "right-first";
     rotFrom = isLeftFirst ? -angle : angle;
     rotTo = isLeftFirst ? angle : -angle;
   }
 
-  const startX = origX + (fromProps.x ?? 0);
+  let xFromOffset = fromProps.x ?? 0;
+  let xToOffset = toProps.x ?? 0;
+  if (track.presetId === "shake" && track.intensity !== undefined) {
+    xFromOffset = -track.intensity;
+    xToOffset = track.intensity;
+  }
+
+  const startX = origX + xFromOffset;
   const startY = origY + (fromProps.y ?? 0);
   const startRot = origRotation + rotFrom;
   const startScaleX = origScaleX * (fromProps.scaleX ?? fromProps.scale ?? 1);
   const startScaleY = origScaleY * (fromProps.scaleY ?? fromProps.scale ?? 1);
   const startOpacity = fromProps.opacity !== undefined ? fromProps.opacity : origOpacity;
 
-  const targetX = origX + (toProps.x ?? 0);
+  const targetX = origX + xToOffset;
   const targetY = origY + (toProps.y ?? 0);
   const targetRot = origRotation + rotTo;
   const targetScaleX = origScaleX * (toProps.scaleX ?? toProps.scale ?? 1);
