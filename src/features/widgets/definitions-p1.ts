@@ -513,7 +513,6 @@ export const videoWidget: WidgetDefinition = {
   type: VIDEO_WIDGET_TYPE,
   version: 1,
   label: "Video",
-  hidden: true,
   defaultFrame: { w: 326, h: 220 },
   defaultStyle: getDefaultWidgetStyle(VIDEO_WIDGET_TYPE),
   defaultProps: {

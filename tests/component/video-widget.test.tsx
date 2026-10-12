@@ -14,6 +14,7 @@ describe("Video Widget (FR-WDG-VIDEO: YouTube, Direct Upload, Loop, Scroll Autop
     expect(resolved.kind).toBe("known");
     if (resolved.kind === "known") {
       expect(resolved.definition.label).toBe("Video");
+      expect(resolved.definition.hidden).toBeFalsy();
       expect(resolved.definition.defaultFrame).toEqual({ w: 326, h: 220 });
       expect(resolved.definition.defaultProps).toMatchObject({
         sourceType: "youtube",
@@ -22,6 +23,9 @@ describe("Video Widget (FR-WDG-VIDEO: YouTube, Direct Upload, Loop, Scroll Autop
         showControls: true,
         aspectRatio: "16:9",
       });
+
+      const visibleWidgets = defaultWidgetRegistry.list().filter((w) => !w.hidden);
+      expect(visibleWidgets.some((w) => w.type === "video")).toBe(true);
     }
   });
 
