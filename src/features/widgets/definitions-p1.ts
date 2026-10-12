@@ -143,7 +143,7 @@ export const photoFrameWidget: WidgetDefinition = {
   defaultStyle: getDefaultWidgetStyle(PHOTO_FRAME_WIDGET_TYPE),
   defaultProps: { fit: "cover" },
   props: {
-    image: defineProp("url", "Foto (asset / URL)", z.union([z.string(), z.record(z.string(), z.unknown())]).optional()),
+    image: defineProp("image", "Foto (asset / URL)", z.union([z.string(), z.record(z.string(), z.unknown())]).optional()),
     caption: defineProp("text", "Keterangan foto (opsional)", z.string().max(120).optional()),
     fit: defineProp("text", "Mode tampilan", z.enum(["cover", "contain"]).default("cover"), {
       control: "select",
@@ -443,7 +443,7 @@ export const ornamentFrameWidget: WidgetDefinition = {
       { bindable: false, min: 0, max: 100, step: 1 },
     ),
     image: defineProp(
-      "url",
+      "image",
       "Foto di Dalam Bentuk (Opsional)",
       z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
     ),
@@ -513,6 +513,7 @@ export const videoWidget: WidgetDefinition = {
   type: VIDEO_WIDGET_TYPE,
   version: 1,
   label: "Video",
+  hidden: true,
   defaultFrame: { w: 326, h: 220 },
   defaultStyle: getDefaultWidgetStyle(VIDEO_WIDGET_TYPE),
   defaultProps: {
@@ -547,7 +548,7 @@ export const videoWidget: WidgetDefinition = {
       },
     ),
     poster: defineProp(
-      "url",
+      "image",
       "Foto Sampul / Poster (Opsional)",
       z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
     ),

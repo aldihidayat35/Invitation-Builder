@@ -54,7 +54,7 @@ export function PhotoFrameImageControl({
   const [varError, setVarError] = useState<string | null>(null);
 
   const declaredImageVars = doc.variables.filter(
-    (v) => v.type === "image" || v.type === "url" || isBindingCompatible("image", v.type),
+    (v) => isBindingCompatible("image", v.type),
   );
   const declaredKeys = new Set(doc.variables.map((v) => v.key));
 

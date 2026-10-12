@@ -111,7 +111,7 @@ describe("Preset Sanitization and Addition to Template", () => {
     });
     expect(res1).not.toBeNull();
     expect(variableDefinitionSchema.safeParse(res1).success).toBe(true);
-    expect(res1?.default).toEqual({ assetId: validUuid });
+    expect(res1 && "default" in res1 ? res1.default : undefined).toEqual({ assetId: validUuid });
 
     // Case 2: JSON string
     const res2 = sanitizePresetToVariableInput({
@@ -122,7 +122,7 @@ describe("Preset Sanitization and Addition to Template", () => {
     });
     expect(res2).not.toBeNull();
     expect(variableDefinitionSchema.safeParse(res2).success).toBe(true);
-    expect(res2?.default).toEqual({ assetId: validUuid });
+    expect(res2 && "default" in res2 ? res2.default : undefined).toEqual({ assetId: validUuid });
 
     // Case 3: Object with assetId
     const res3 = sanitizePresetToVariableInput({
@@ -133,7 +133,7 @@ describe("Preset Sanitization and Addition to Template", () => {
     });
     expect(res3).not.toBeNull();
     expect(variableDefinitionSchema.safeParse(res3).success).toBe(true);
-    expect(res3?.default).toEqual({ assetId: validUuid });
+    expect(res3 && "default" in res3 ? res3.default : undefined).toEqual({ assetId: validUuid });
   });
 });
 

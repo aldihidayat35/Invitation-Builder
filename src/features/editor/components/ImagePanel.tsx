@@ -63,7 +63,7 @@ export function ImagePanel({ element, readOnly }: { element: ImageElement; readO
 
   // Variabel dinamis state
   const declaredImageVars = doc.variables.filter(
-    (v) => v.type === "image" || v.type === "url" || isBindingCompatible("image", v.type),
+    (v) => isBindingCompatible("image", v.type),
   );
   const declaredKeys = new Set(doc.variables.map((v) => v.key));
   const boundVarDef = boundKey ? doc.variables.find((v) => v.key === boundKey) : undefined;

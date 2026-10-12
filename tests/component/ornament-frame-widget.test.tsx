@@ -7,6 +7,12 @@ import {
 import { OrnamentFrameWidget } from "@/features/widgets/runtime/OrnamentFrameWidget";
 import { WidgetRuntime } from "@/features/widgets/runtime";
 import { defaultWidgetRegistry } from "@/features/widgets";
+import {
+  canonicalDocumentSchema,
+  parseDocumentOrThrow,
+  validateDocumentSemantics,
+} from "@/lib/schema";
+import { fullDocument } from "../helpers/documents";
 
 describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", () => {
   it("provides 10 distinct ornamental and geometric shape definitions", () => {
@@ -176,5 +182,29 @@ describe("OrnamentFrameWidget (Interactive Shape Widget with Line Animation)", (
     const tallShape = getOrnamentShape("arch-window", 326, 600, 12);
     expect(tallShape.leftPath).toMatch(/^M 163/);
     expect(tallShape.leftPath).toContain("590");
+  });
+
+  it("allows binding image prop to an image variable during semantic validation", () => {
+    const raw = fullDocument();
+    (raw.sections![0]!.elements as unknown[]).push({
+      id: "el_ornament_test_binding",
+      name: "Bingkai Ornamen",
+      type: "widget",
+      widgetType: "ornamentFrame",
+      widgetVersion: 1,
+      visible: true,
+      locked: false,
+      frame: { x: 0, y: 0, w: 326, h: 360, rotation: 0 },
+      style: {},
+      props: {
+        shape: "arch-window",
+        image: { bind: "media.coverPhoto" },
+      },
+    });
+
+    const doc = parseDocumentOrThrow(raw);
+    const issues = validateDocumentSemantics(doc, { widgets: defaultWidgetRegistry });
+    const imageBindingIssues = issues.filter((i) => i.path.includes("image"));
+    expect(imageBindingIssues).toHaveLength(0);
   });
 });
