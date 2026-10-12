@@ -534,7 +534,7 @@ export const videoWidget: WidgetDefinition = {
     sourceType: defineProp(
       "text",
       "Sumber Video",
-      z.enum(["youtube", "direct", "upload"]).default("youtube"),
+      z.enum(["youtube", "direct", "upload", "variable"]).default("youtube"),
       {
         control: "select",
         bindable: false,
@@ -542,6 +542,7 @@ export const videoWidget: WidgetDefinition = {
           { value: "youtube", label: "YouTube" },
           { value: "direct", label: "Link Video Langsung (MP4/WebM)" },
           { value: "upload", label: "Unggah File Video" },
+          { value: "variable", label: "Variabel Dinamis" },
         ],
       },
     ),

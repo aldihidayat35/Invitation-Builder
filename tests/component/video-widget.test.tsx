@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { createEmptyDocument, validateDocumentSemantics } from "@/lib/schema";
 import {
   defaultWidgetRegistry,
   getWidgetStyleVariants,
@@ -181,5 +182,57 @@ describe("Video Widget (FR-WDG-VIDEO: YouTube, Direct Upload, Loop, Scroll Autop
     );
     expect(screen.queryByTestId("video-empty-placeholder")).not.toBeInTheDocument();
     expect(screen.getByTestId("youtube-iframe")).toBeInTheDocument();
+  });
+
+  it("validates sourceType: 'variable' in document semantics without schema issues", () => {
+    const baseDoc = createEmptyDocument();
+    const doc = {
+      ...baseDoc,
+      variables: [
+        {
+          key: "custom.vidioYoutube",
+          type: "url" as const,
+          label: "Vidio YouTube",
+          default: "https://youtu.be/P6lZQS3Odc8",
+          required: false,
+        },
+      ],
+      sections: [
+        {
+          id: "sec-1",
+          visible: true,
+          baseHeight: 500,
+          overflow: "hidden" as const,
+          background: { fit: "cover" as const },
+          elements: [
+            {
+              id: "el-video-1",
+              type: "widget" as const,
+              name: "Video",
+              visible: true,
+              locked: false,
+              frame: { x: 0, y: 0, w: 326, h: 220, rotation: 0 },
+              widgetType: "video",
+              widgetVersion: 1,
+              style: { variant: "cinematic-frame" },
+              props: {
+                sourceType: "variable",
+                url: { bind: "custom.vidioYoutube", fallback: "https://youtu.be/P6lZQS3Odc8" },
+                autoplayOnScroll: false,
+                loop: true,
+                muted: true,
+                showControls: true,
+                aspectRatio: "16:9",
+                caption: "",
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const issues = validateDocumentSemantics(doc, { widgets: defaultWidgetRegistry });
+    expect(issues.filter((i) => i.path.includes("sourceType"))).toEqual([]);
+    expect(issues).toEqual([]);
   });
 });
