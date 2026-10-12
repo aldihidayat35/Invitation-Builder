@@ -326,7 +326,8 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     const pts = [...motionTrack.points];
     if (pts[index]) {
       pts[index] = { ...pts[index], [key]: val };
-      pts[pts.length - 1] = { x: 0, y: 0 };
+      const lastExisting = pts[pts.length - 1];
+      pts[pts.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
       patchMotion({
         points: pts,
         preset: "custom",
@@ -334,18 +335,57 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     }
   };
 
+  const handleUpdateWaypointScale = (index: number, scalePct: number) => {
+    if (!motionTrack || readOnly) return;
+    const pts = [...motionTrack.points];
+    if (pts[index]) {
+      const normalizedScale = Math.max(0.1, Math.min(3, Math.round((scalePct / 100) * 100) / 100));
+      pts[index] = { ...pts[index], scale: normalizedScale };
+      const lastExisting = pts[pts.length - 1];
+      pts[pts.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
+      patchMotion({
+        points: pts,
+        preset: "custom",
+      });
+    }
+  };
+
+  const handleResetWaypointScale = (index: number) => {
+    handleUpdateWaypointScale(index, 100);
+  };
+
+  const handleMakeAllScalesUniform = (targetPct = 100) => {
+    if (!motionTrack || readOnly) return;
+    const normalizedScale = Math.max(0.1, Math.min(3, Math.round((targetPct / 100) * 100) / 100));
+    const pts = motionTrack.points.map((pt, idx, arr) => {
+      const isEnd = idx === arr.length - 1;
+      return {
+        x: isEnd ? 0 : pt.x,
+        y: isEnd ? 0 : pt.y,
+        scale: normalizedScale,
+      };
+    });
+    patchMotion({
+      points: pts,
+      preset: "custom",
+    });
+  };
+
   const handleAddWaypoint = () => {
     if (!motionTrack || readOnly) return;
     const pts = [...motionTrack.points];
     if (pts.length >= 20) return;
-    const pPrev = pts[pts.length - 2] ?? { x: -80, y: 0 };
-    const pLast = { x: 0, y: 0 };
+    const pPrev = pts[pts.length - 2] ?? { x: -80, y: 0, scale: 1 };
+    const pLast = pts[pts.length - 1] ?? { x: 0, y: 0, scale: 1 };
+    const prevScale = pPrev.scale ?? 1;
+    const lastScale = pLast.scale ?? 1;
     const newPt = {
       x: Math.round((pPrev.x + pLast.x) / 2),
       y: Math.round((pPrev.y + pLast.y) / 2),
+      scale: Math.round(((prevScale + lastScale) / 2) * 100) / 100,
     };
     pts.splice(pts.length - 1, 0, newPt);
-    pts[pts.length - 1] = { x: 0, y: 0 };
+    pts[pts.length - 1] = { x: 0, y: 0, scale: lastScale };
     patchMotion({ points: pts, preset: "custom" });
   };
 
@@ -354,17 +394,20 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
     if (motionTrack.points.length <= 2) return;
     if (index === motionTrack.points.length - 1) return; // Cannot remove end point
     const pts = motionTrack.points.filter((_, i) => i !== index);
-    pts[pts.length - 1] = { x: 0, y: 0 };
+    const lastExisting = pts[pts.length - 1];
+    pts[pts.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
     patchMotion({ points: pts, preset: "custom" });
   };
 
   const handleReverseMotion = () => {
     if (!motionTrack || readOnly) return;
     const reversed = motionTrack.points.map((p, idx, arr) => {
-      if (idx === arr.length - 1) return { x: 0, y: 0 };
-      return { x: -p.x, y: -p.y };
+      const scale = p.scale ?? 1;
+      if (idx === arr.length - 1) return { x: 0, y: 0, scale };
+      return { x: -p.x, y: -p.y, scale };
     });
-    reversed[reversed.length - 1] = { x: 0, y: 0 };
+    const lastExisting = reversed[reversed.length - 1];
+    reversed[reversed.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
     patchMotion({ points: reversed, preset: "custom" });
   };
 
@@ -574,26 +617,41 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                   }}
                 >
                   <label className={styles.fieldLabel} style={{ margin: 0 }}>
-                    Titik Koordinat Gerakan (Waypoints)
+                    Titik Koordinat & Ukuran Gerakan (Waypoints)
                   </label>
-                  <button
-                    type="button"
-                    className={styles.ghostButton}
-                    style={{ padding: "3px 7px", fontSize: 11 }}
-                    onClick={handleReverseMotion}
-                    disabled={readOnly}
-                    title="Balik arah lintasan (tukar posisi awal & akhir)"
-                    data-testid="motion-reverse-btn"
-                  >
-                    <IconReverse size={12} />
-                    <span>Balik Arah</span>
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button
+                      type="button"
+                      className={styles.ghostButton}
+                      style={{ padding: "3px 7px", fontSize: 11 }}
+                      onClick={() => handleMakeAllScalesUniform(100)}
+                      disabled={readOnly}
+                      title="Samakan ukuran seluruh waypoint ke 100% normal"
+                      data-testid="motion-uniform-scale-btn"
+                    >
+                      <span>⚖️ Samakan 100%</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.ghostButton}
+                      style={{ padding: "3px 7px", fontSize: 11 }}
+                      onClick={handleReverseMotion}
+                      disabled={readOnly}
+                      title="Balik arah lintasan (tukar posisi awal & akhir)"
+                      data-testid="motion-reverse-btn"
+                    >
+                      <IconReverse size={12} />
+                      <span>Balik Arah</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.motionWaypointsList}>
                   {motionTrack.points.map((pt, idx) => {
                     const isStart = idx === 0;
                     const isEnd = idx === motionTrack.points.length - 1;
+                    const ptScale = pt.scale ?? 1;
+                    const ptScalePct = Math.round(ptScale * 100);
                     const badgeClass = isStart
                       ? styles.motionPointBadgeStart
                       : isEnd
@@ -625,12 +683,14 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                             </button>
                           )}
                         </div>
+
+                        {/* Coords Row */}
                         {isEnd ? (
                           <div
                             style={{
                               fontSize: 11,
                               color: "var(--text-muted)",
-                              marginTop: 6,
+                              marginTop: 2,
                               display: "flex",
                               alignItems: "center",
                               gap: 6,
@@ -663,6 +723,51 @@ export function AnimationPanel({ element, readOnly, sectionId }: AnimationPanelP
                             />
                           </div>
                         )}
+
+                        {/* Scale / Zoom Control Row */}
+                        <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 3 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              fontSize: 11,
+                            }}
+                          >
+                            <span style={{ color: "var(--dash-text-muted, #94a3b8)", fontSize: 10.5 }}>
+                              Ukuran Objek: <strong style={{ color: "var(--dash-text, #f8fafc)" }}>{ptScalePct}%</strong>
+                              {ptScalePct < 100 ? " (Mengecil)" : ptScalePct > 100 ? " (Membesar)" : ""}
+                            </span>
+                            {ptScalePct !== 100 && (
+                              <button
+                                type="button"
+                                className={styles.ghostButton}
+                                style={{ padding: "1px 6px", fontSize: 10, height: 18 }}
+                                onClick={() => handleResetWaypointScale(idx)}
+                                disabled={readOnly}
+                                title="Reset ukuran titik ini ke 100%"
+                                data-testid={`motion-reset-scale-${idx}`}
+                              >
+                                Reset 100%
+                              </button>
+                            )}
+                          </div>
+                          <div className={styles.motionSliderRow}>
+                            <input
+                              id={`motion-pt-${idx}-scale`}
+                              type="range"
+                              min="10"
+                              max="300"
+                              step="5"
+                              value={ptScalePct}
+                              disabled={readOnly}
+                              className={styles.motionSliderInput}
+                              onChange={(e) => handleUpdateWaypointScale(idx, parseInt(e.target.value, 10))}
+                              data-testid={`motion-scale-slider-${idx}`}
+                            />
+                            <span className={styles.motionSliderValue}>{ptScalePct}%</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}

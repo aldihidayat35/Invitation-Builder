@@ -36,8 +36,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek bergerak lurus mendatar dari arah kiri menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -180, y: 0 },
-      { x: 0, y: 0 },
+      { x: -180, y: 0, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -48,8 +48,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek bergerak lurus mendatar dari arah kanan menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 180, y: 0 },
-      { x: 0, y: 0 },
+      { x: 180, y: 0, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -60,8 +60,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek bergerak meluncur turun dari atas menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 0, y: -180 },
-      { x: 0, y: 0 },
+      { x: 0, y: -180, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -72,8 +72,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek meluncur naik dari bawah menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: 0, y: 180 },
-      { x: 0, y: 0 },
+      { x: 0, y: 180, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2000,
@@ -84,8 +84,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek meluncur miring dari kiri atas menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -140, y: -140 },
-      { x: 0, y: 0 },
+      { x: -140, y: -140, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2200,
@@ -96,8 +96,8 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek meluncur miring dari kiri bawah menuju tengah objek.",
     pathShape: "linear",
     points: [
-      { x: -140, y: 140 },
-      { x: 0, y: 0 },
+      { x: -140, y: 140, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 0,
     defaultDurationMs: 2200,
@@ -108,9 +108,9 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek melintas membentuk lengkungan busur ke atas menuju tengah objek.",
     pathShape: "arcUp",
     points: [
-      { x: -180, y: 40 },
-      { x: -90, y: -60 },
-      { x: 0, y: 0 },
+      { x: -180, y: 40, scale: 1 },
+      { x: -90, y: -60, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 1.2,
     defaultDurationMs: 2400,
@@ -121,9 +121,9 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek melintas melengkung ke bawah seperti ayunan menuju tengah objek.",
     pathShape: "arcDown",
     points: [
-      { x: -180, y: -40 },
-      { x: -90, y: 60 },
-      { x: 0, y: 0 },
+      { x: -180, y: -40, scale: 1 },
+      { x: -90, y: 60, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 1.2,
     defaultDurationMs: 2400,
@@ -134,10 +134,10 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek bergerak menyusuri gelombang berayun naik-turun menuju tengah objek.",
     pathShape: "wave",
     points: [
-      { x: -200, y: 0 },
-      { x: -130, y: -40 },
-      { x: -65, y: 40 },
-      { x: 0, y: 0 },
+      { x: -200, y: 0, scale: 1 },
+      { x: -130, y: -40, scale: 1 },
+      { x: -65, y: 40, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 1.4,
     defaultDurationMs: 2800,
@@ -148,11 +148,11 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Objek berputar mengitari poros membentuk jalur oval melingkar.",
     pathShape: "circle",
     points: [
-      { x: 0, y: -70 },
-      { x: 70, y: 0 },
-      { x: 0, y: 70 },
-      { x: -70, y: 0 },
-      { x: 0, y: 0 },
+      { x: 0, y: -70, scale: 1 },
+      { x: 70, y: 0, scale: 1 },
+      { x: 0, y: 70, scale: 1 },
+      { x: -70, y: 0, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 1.5,
     defaultDurationMs: 3000,
@@ -164,9 +164,9 @@ export const MOTION_PRESET_CONFIGS: readonly MotionPresetDefinition[] = [
     description: "Atur titik-titik koordinat jalur gerakan secara manual menuju tengah objek.",
     pathShape: "curved",
     points: [
-      { x: -150, y: -40 },
-      { x: -70, y: 30 },
-      { x: 0, y: 0 },
+      { x: -150, y: -40, scale: 1 },
+      { x: -70, y: 30, scale: 1 },
+      { x: 0, y: 0, scale: 1 },
     ],
     curviness: 1.0,
     defaultDurationMs: 2500,
@@ -188,7 +188,8 @@ export function buildDefaultMotionTrack(options: Partial<MotionTrack> = {}): Mot
   const pathShape = options.pathShape ?? presetDef.pathShape;
   const points = options.points ? [...options.points] : [...presetDef.points];
   if (points.length >= 2) {
-    points[points.length - 1] = { x: 0, y: 0 };
+    const lastExisting = points[points.length - 1];
+    points[points.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
   }
   const repeat = options.repeat ?? presetDef.repeat ?? 0;
   const yoyo = options.yoyo ?? presetDef.yoyo ?? false;
@@ -271,20 +272,20 @@ function interpolateCatmullRom(
 }
 
 /**
- * Computes exact position (x, y) and rotation angle in degrees along the motion path at progress t (0..1).
+ * Computes exact position (x, y), rotation angle in degrees, and scale factor along the motion path at progress t (0..1).
  */
 export function getPointOnMotionPath(
   track: MotionTrack,
   rawT: number,
-): { x: number; y: number; rotation: number } {
+): { x: number; y: number; rotation: number; scale: number } {
   const t = Math.max(0, Math.min(1, rawT));
   const points = track.points;
   if (!points || points.length === 0) {
-    return { x: 0, y: 0, rotation: 0 };
+    return { x: 0, y: 0, rotation: 0, scale: 1 };
   }
   const firstPt = points[0]!;
   if (points.length === 1) {
-    return { x: firstPt.x, y: firstPt.y, rotation: 0 };
+    return { x: firstPt.x, y: firstPt.y, rotation: 0, scale: firstPt.scale ?? 1 };
   }
   const lastPt = points[points.length - 1]!;
 
@@ -393,15 +394,31 @@ export function getPointOnMotionPath(
     }
   }
 
+  // Linear scale interpolation along waypoint segments
+  const segTotal = points.length - 1;
+  const segFrac = t * segTotal;
+  const segIdx = Math.min(Math.floor(segFrac), segTotal - 1);
+  const segU = segFrac - segIdx;
+  const pA = points[segIdx] ?? firstPt;
+  const pB = points[segIdx + 1] ?? lastPt;
+  const sA = pA.scale ?? 1;
+  const sB = pB.scale ?? 1;
+  const interpolatedScale = sA + (sB - sA) * segU;
+
   const cleanZero = (n: number) => {
     const rounded = Math.round(n * 100) / 100;
     return Object.is(rounded, -0) || rounded === 0 ? 0 : rounded;
+  };
+
+  const cleanScale = (s: number) => {
+    return Math.round(s * 1000) / 1000;
   };
 
   return {
     x: cleanZero(current.x),
     y: cleanZero(current.y),
     rotation: cleanZero(rotation),
+    scale: cleanScale(interpolatedScale),
   };
 }
 
@@ -411,13 +428,13 @@ export function getPointOnMotionPath(
 export function sampleMotionPathPoints(
   track: MotionTrack,
   numSamples = 32,
-): readonly { x: number; y: number }[] {
-  const result: { x: number; y: number }[] = [];
+): readonly { x: number; y: number; scale: number }[] {
+  const result: { x: number; y: number; scale: number }[] = [];
   const count = Math.max(2, numSamples);
   for (let i = 0; i <= count; i++) {
     const t = i / count;
     const pt = getPointOnMotionPath(track, t);
-    result.push({ x: pt.x, y: pt.y });
+    result.push({ x: pt.x, y: pt.y, scale: pt.scale });
   }
   return result;
 }
@@ -459,9 +476,9 @@ export function playMotionAnimation(
     options.onStart?.();
 
     if (reducedMotion) {
-      // For reduced motion users, place element at start or destination smoothly without rapid transit
+      // For reduced motion users, place element at destination smoothly without rapid transit
       const finalPt = getPointOnMotionPath(track, 1);
-      element.style.transform = `translate3d(${finalPt.x}px, ${finalPt.y}px, 0px)`;
+      element.style.transform = `translate3d(${finalPt.x}px, ${finalPt.y}px, 0px) scale(${finalPt.scale})`;
       options.onComplete?.();
       return;
     }
@@ -470,11 +487,11 @@ export function playMotionAnimation(
     const durationSec = Math.max(0.1, track.durationMs / 1000);
     const delaySec = Math.max(0, track.delayMs / 1000);
 
-    // Initial position
+    // Initial position & scale
     const startPt = getPointOnMotionPath(track, 0);
     element.style.transform = `translate3d(${startPt.x}px, ${startPt.y}px, 0px)${
       track.autoRotate ? ` rotate(${startPt.rotation}deg)` : ""
-    }`;
+    } scale(${startPt.scale})`;
 
     activeTween = gsap.to(state, {
       progress: 1,
@@ -488,7 +505,7 @@ export function playMotionAnimation(
         const pt = getPointOnMotionPath(track, state.progress);
         element.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0px)${
           track.autoRotate ? ` rotate(${pt.rotation}deg)` : ""
-        }`;
+        } scale(${pt.scale})`;
       },
       onComplete: () => {
         options.onComplete?.();

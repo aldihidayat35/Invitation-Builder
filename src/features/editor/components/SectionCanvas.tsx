@@ -1425,6 +1425,8 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                     absolutePtY < 0 ||
                     absolutePtY > section.baseHeight;
 
+                  const ptScale = pt.scale ?? 1;
+
                   if (isEnd) {
                     // Red dot (Finish): anchored at the center of the object (0, 0).
                     // It is NOT individually draggable and always stays locked at the object center.
@@ -1436,6 +1438,16 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                         y={0}
                         listening={false}
                       >
+                        {/* Visual scale halo ring preview for target center */}
+                        <Circle
+                          radius={Math.max(16, (Math.min(motionElement.frame.w, motionElement.frame.h) * 0.28 * ptScale)) / zoom}
+                          stroke="#ef4444"
+                          strokeWidth={1.2 / zoom}
+                          dash={[3 / zoom, 3 / zoom]}
+                          opacity={0.65}
+                          listening={false}
+                        />
+
                         {/* Crosshair target lines at object center */}
                         <Line
                           points={[-11 / zoom, 0, 11 / zoom, 0]}
@@ -1469,6 +1481,19 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                         <Circle
                           radius={2.5 / zoom}
                           fill="#ffffff"
+                        />
+
+                        {/* Scale percentage label */}
+                        <Text
+                          y={15 / zoom}
+                          x={-24 / zoom}
+                          width={48 / zoom}
+                          text={`${Math.round(ptScale * 100)}%`}
+                          fontSize={8 / zoom}
+                          fontStyle="bold"
+                          fill="#ef4444"
+                          align="center"
+                          listening={false}
                         />
 
                         {/* If target object itself is outside the screen, show indicator */}
@@ -1535,9 +1560,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                             if (!el.animations?.motion) return el;
                             const pts = [...el.animations.motion.points];
                             if (pts[idx]) {
-                              pts[idx] = { x: nx, y: ny };
+                              pts[idx] = { x: nx, y: ny, scale: pts[idx]?.scale ?? 1 };
                             }
-                            pts[pts.length - 1] = { x: 0, y: 0 };
+                            const lastExisting = pts[pts.length - 1];
+                            pts[pts.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
                             return {
                               ...el,
                               animations: {
@@ -1565,9 +1591,10 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                             if (!el.animations?.motion) return el;
                             const pts = [...el.animations.motion.points];
                             if (pts[idx]) {
-                              pts[idx] = { x: nx, y: ny };
+                              pts[idx] = { x: nx, y: ny, scale: pts[idx]?.scale ?? 1 };
                             }
-                            pts[pts.length - 1] = { x: 0, y: 0 };
+                            const lastExisting = pts[pts.length - 1];
+                            pts[pts.length - 1] = { x: 0, y: 0, scale: lastExisting?.scale ?? 1 };
                             return {
                               ...el,
                               animations: {
@@ -1585,6 +1612,16 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                     >
                       {/* Invisible wide hit circle for easy grab */}
                       <Circle radius={20 / zoom} fill="transparent" />
+
+                      {/* Visual scale halo ring preview */}
+                      <Circle
+                        radius={Math.max(16, (Math.min(motionElement.frame.w, motionElement.frame.h) * 0.28 * ptScale)) / zoom}
+                        stroke={pointColor}
+                        strokeWidth={1.2 / zoom}
+                        dash={[3 / zoom, 3 / zoom]}
+                        opacity={0.65}
+                        listening={false}
+                      />
 
                       {/* Outer glow / dash ring */}
                       <Circle
@@ -1621,6 +1658,19 @@ export default function SectionCanvas({ sectionId }: SectionCanvasProps) {
                         verticalAlign="middle"
                         offsetX={3 / zoom}
                         offsetY={4 / zoom}
+                        listening={false}
+                      />
+
+                      {/* Scale percentage label */}
+                      <Text
+                        y={15 / zoom}
+                        x={-24 / zoom}
+                        width={48 / zoom}
+                        text={`${Math.round(ptScale * 100)}%`}
+                        fontSize={8 / zoom}
+                        fontStyle="bold"
+                        fill={pointColor}
+                        align="center"
                         listening={false}
                       />
 

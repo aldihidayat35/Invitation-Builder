@@ -23,7 +23,7 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
 
     for (const preset of MOTION_PRESET_CONFIGS) {
       const lastPt = preset.points[preset.points.length - 1]!;
-      expect(lastPt).toEqual({ x: 0, y: 0 });
+      expect(lastPt).toEqual({ x: 0, y: 0, scale: 1 });
     }
 
     const arcUp = getMotionPresetConfig("arcUp");
@@ -156,5 +156,25 @@ describe("Motion Path Engine (Math, Presets, and Interpolation)", () => {
     const svgPath = buildMotionSvgPath(track, 8);
     expect(svgPath).toMatch(/^M\s+-?[0-9.]+\s+-?[0-9.]+/);
     expect(svgPath).toContain("L");
+  });
+
+  it("interpolates scale smoothly along custom waypoints", () => {
+    const track = buildDefaultMotionTrack({
+      preset: "custom",
+      pathShape: "linear",
+      points: [
+        { x: -100, y: 0, scale: 0.5 },
+        { x: 0, y: 0, scale: 1.5 },
+      ],
+    });
+
+    const start = getPointOnMotionPath(track, 0);
+    expect(start.scale).toBe(0.5);
+
+    const mid = getPointOnMotionPath(track, 0.5);
+    expect(mid.scale).toBe(1.0);
+
+    const end = getPointOnMotionPath(track, 1);
+    expect(end.scale).toBe(1.5);
   });
 });

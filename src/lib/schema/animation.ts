@@ -81,6 +81,7 @@ export type AnimationTrack = z.infer<typeof animationTrackSchema>;
 export const motionPointSchema = z.strictObject({
   x: z.number().min(-5000).max(5000),
   y: z.number().min(-5000).max(5000),
+  scale: z.number().min(0.05).max(5).optional(),
 });
 export type MotionPoint = z.infer<typeof motionPointSchema>;
 
@@ -116,8 +117,8 @@ export const motionTrackSchema = z.strictObject({
   preset: z.enum(MOTION_PRESETS).default("leftToRight"),
   pathShape: z.enum(MOTION_PATH_SHAPES).default("curved"),
   points: z.array(motionPointSchema).min(2).max(20).default([
-    { x: -120, y: 0 },
-    { x: 120, y: 0 },
+    { x: -120, y: 0, scale: 1 },
+    { x: 120, y: 0, scale: 1 },
   ]),
   curviness: z.number().min(0).max(3).default(1),
   durationMs: z.number().min(100).max(30_000).default(2000),

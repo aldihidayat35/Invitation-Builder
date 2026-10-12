@@ -272,4 +272,60 @@ describe("AnimationPanel Motion Feature", () => {
     expect(screen.queryByTestId("motion-pt-1-x")).not.toBeInTheDocument();
     expect(screen.queryByTestId("motion-remove-point-1")).not.toBeInTheDocument();
   });
+
+  it("allows adjusting waypoint scale percentage and resetting or making uniform", () => {
+    const { doc, element } = makeDocWithElement({
+      motion: {
+        enabled: true,
+        preset: "custom",
+        pathShape: "curved",
+        points: [
+          { x: -100, y: 0, scale: 0.5 },
+          { x: 0, y: 0, scale: 1 },
+        ],
+        curviness: 1,
+        durationMs: 2000,
+        delayMs: 0,
+        easing: "ease-in-out",
+        repeat: 0,
+        yoyo: false,
+        autoRotate: false,
+        trigger: "onEnterViewport",
+        once: true,
+      },
+    });
+
+    const store = createEditorStore({ document: doc, revision: 1 });
+    store.getState().selectElements(["el_shape_1"]);
+
+    render(
+      <EditorProvider store={store} autosaver={null} workspaceId="ws_1">
+        <AnimationPanel element={element} readOnly={false} sectionId="sec_1" />
+      </EditorProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId("anim-tab-motion"));
+
+    // Check scale slider exists
+    const scaleSlider0 = screen.getByTestId("motion-scale-slider-0");
+    expect(scaleSlider0).toBeInTheDocument();
+    expect(scaleSlider0).toHaveValue("50");
+
+    // Reset button appears when scale is not 100%
+    const resetBtn0 = screen.getByTestId("motion-reset-scale-0");
+    expect(resetBtn0).toBeInTheDocument();
+
+    // Click reset to 100%
+    fireEvent.click(resetBtn0);
+    const updatedPoints = store.getState().history.present.sections[0]!.elements[0]!.animations!.motion!.points;
+    expect(updatedPoints[0]!.scale).toBe(1);
+
+    // Click uniform scale button
+    const uniformBtn = screen.getByTestId("motion-uniform-scale-btn");
+    expect(uniformBtn).toBeInTheDocument();
+    fireEvent.click(uniformBtn);
+    const finalPoints = store.getState().history.present.sections[0]!.elements[0]!.animations!.motion!.points;
+    expect(finalPoints[0]!.scale).toBe(1);
+    expect(finalPoints[1]!.scale).toBe(1);
+  });
 });

@@ -240,10 +240,14 @@ export function replayKonvaMotion(
   const origX = node.x();
   const origY = node.y();
   const origRotation = node.rotation();
+  const origScaleX = node.scaleX();
+  const origScaleY = node.scaleY();
 
   const startPt = getPointOnMotionPath(track, 0);
   node.x(origX + startPt.x);
   node.y(origY + startPt.y);
+  node.scaleX(origScaleX * startPt.scale);
+  node.scaleY(origScaleY * startPt.scale);
   if (track.autoRotate) {
     node.rotation(origRotation + startPt.rotation);
   }
@@ -264,6 +268,8 @@ export function replayKonvaMotion(
       const pt = getPointOnMotionPath(track, tweenObj.progress);
       node.x(origX + pt.x);
       node.y(origY + pt.y);
+      node.scaleX(origScaleX * pt.scale);
+      node.scaleY(origScaleY * pt.scale);
       if (track.autoRotate) {
         node.rotation(origRotation + pt.rotation);
       }
@@ -273,6 +279,8 @@ export function replayKonvaMotion(
       node.x(origX);
       node.y(origY);
       node.rotation(origRotation);
+      node.scaleX(origScaleX);
+      node.scaleY(origScaleY);
       layer?.batchDraw();
       onComplete?.();
     },
@@ -283,6 +291,8 @@ export function replayKonvaMotion(
     node.x(origX);
     node.y(origY);
     node.rotation(origRotation);
+    node.scaleX(origScaleX);
+    node.scaleY(origScaleY);
     layer?.batchDraw();
   };
 }
