@@ -21,6 +21,7 @@ export interface VideoWidgetProps {
   readonly showControls?: unknown;
   readonly aspectRatio?: unknown;
   readonly style?: WidgetStyleProps;
+  readonly variables?: readonly { key: string; default?: unknown }[];
 }
 
 function PlayIcon() {
@@ -59,6 +60,7 @@ export function VideoWidget({
   showControls = true,
   aspectRatio = "16:9",
   style,
+  variables,
 }: VideoWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -66,11 +68,11 @@ export function VideoWidget({
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Parse video source (YouTube or direct URL)
-  const sourceInfo: VideoSourceInfo = useMemo(() => parseVideoSource(url), [url]);
+  // Parse video source (YouTube or direct URL), resolving variable default if bound
+  const sourceInfo: VideoSourceInfo = useMemo(() => parseVideoSource(url, variables), [url, variables]);
 
   // Parse custom poster image (URL or asset ID)
-  const posterUrl = useMemo(() => parseFrameImage(poster), [poster]);
+  const posterUrl = useMemo(() => parseFrameImage(poster, variables), [poster, variables]);
 
   const captionText = typeof caption === "string" && caption.trim() ? caption.trim() : null;
   const shouldLoop = loop !== false;

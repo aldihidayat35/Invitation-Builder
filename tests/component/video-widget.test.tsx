@@ -5,6 +5,7 @@ import {
   getWidgetStyleVariants,
   WIDGET_STYLE_VARIANTS,
 } from "@/features/widgets";
+import { parseVideoSource } from "@/features/widgets/video-utils";
 import { VideoWidget } from "@/features/widgets/runtime/VideoWidget";
 import { WidgetRuntime } from "@/features/widgets/runtime";
 
@@ -136,5 +137,49 @@ describe("Video Widget (FR-WDG-VIDEO: YouTube, Direct Upload, Loop, Scroll Autop
 
     expect(screen.getByTestId("youtube-iframe")).toBeInTheDocument();
     expect(screen.getByText("Video Bahagia")).toBeInTheDocument();
+  });
+
+  it("resolves dynamic bound variable to default preset URL and renders video without showing 'Video Belum Diatur'", () => {
+    const mockVariables = [
+      {
+        key: "video.url",
+        default: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      },
+    ];
+
+    // 1. parseVideoSource resolves default preset URL when bound to variable
+    const sourceInfo = parseVideoSource({ bind: "video.url" }, mockVariables);
+    expect(sourceInfo.isYouTube).toBe(true);
+    expect(sourceInfo.youtubeId).toBe("dQw4w9WgXcQ");
+    expect(sourceInfo.resolvedUrl).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+    // 2. parseVideoSource uses fallback if provided in binding object
+    const fallbackSourceInfo = parseVideoSource({
+      bind: "video.custom",
+      fallback: "https://youtu.be/dQw4w9WgXcQ",
+    });
+    expect(fallbackSourceInfo.isYouTube).toBe(true);
+    expect(fallbackSourceInfo.youtubeId).toBe("dQw4w9WgXcQ");
+
+    // 3. VideoWidget renders YouTube iframe automatically from variable default
+    const { unmount } = render(
+      <VideoWidget
+        url={{ bind: "video.url" }}
+        variables={mockVariables}
+      />,
+    );
+
+    expect(screen.queryByTestId("video-empty-placeholder")).not.toBeInTheDocument();
+    expect(screen.getByTestId("youtube-iframe")).toBeInTheDocument();
+    unmount();
+
+    // 4. VideoWidget with fallback renders without error
+    render(
+      <VideoWidget
+        url={{ bind: "video.custom", fallback: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }}
+      />,
+    );
+    expect(screen.queryByTestId("video-empty-placeholder")).not.toBeInTheDocument();
+    expect(screen.getByTestId("youtube-iframe")).toBeInTheDocument();
   });
 });

@@ -114,7 +114,10 @@ const SAFE_VIDEO_PREFIX = /^(https?:\/\/|\/|data:video\/|blob:)/i;
 /**
  * Resolves a raw URL/object prop into parsed video source info.
  */
-export function parseVideoSource(raw: unknown): VideoSourceInfo {
+export function parseVideoSource(
+  raw: unknown,
+  variables?: readonly { key: string; default?: unknown }[],
+): VideoSourceInfo {
   let urlString: string | null = null;
 
   if (typeof raw === "string") {
@@ -134,6 +137,23 @@ export function parseVideoSource(raw: unknown): VideoSourceInfo {
       urlString = rec.src.trim();
     } else if (typeof rec.url === "string" && rec.url.trim()) {
       urlString = rec.url.trim();
+    } else if (typeof rec.bind === "string") {
+      // 1. Cek fallback langsung pada objek binding
+      if (typeof rec.fallback === "string" && rec.fallback.trim()) {
+        const fbTrimmed = rec.fallback.trim();
+        if (ASSET_ID_REGEX.test(fbTrimmed)) {
+          urlString = `/api/assets/${fbTrimmed}/file`;
+        } else {
+          urlString = fbTrimmed;
+        }
+      }
+      // 2. Cek default value dari variabel di template
+      if (!urlString && variables) {
+        const matching = variables.find((v) => v.key === rec.bind);
+        if (matching && matching.default !== undefined && matching.default !== null) {
+          return parseVideoSource(matching.default, variables);
+        }
+      }
     }
   }
 

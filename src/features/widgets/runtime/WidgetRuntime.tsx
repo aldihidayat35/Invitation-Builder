@@ -177,6 +177,7 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       showControls={p.showControls}
       aspectRatio={p.aspectRatio}
       style={style}
+      variables={p.variables as readonly { key: string; default?: unknown }[] | undefined}
     />
   ),
   gif: (p, style) => (

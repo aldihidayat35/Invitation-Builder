@@ -4172,17 +4172,19 @@ function OrnamentFrameVisual({
 function VideoVisual({
   element,
   tokens,
+  variables,
 }: {
   element: WidgetElement;
   tokens?: ThemeTokens;
+  variables?: readonly VariableDefinition[];
 }) {
   const { w, h } = element.frame;
   const { color } = colors(element, tokens);
   const variant = resolveWidgetStyleVariant("video", element.style.variant).variant.id;
   const props = (element.props ?? {}) as Record<string, unknown>;
 
-  const sourceInfo = parseVideoSource(props.url);
-  const customPoster = parseFrameImage(props.poster);
+  const sourceInfo = parseVideoSource(props.url, variables);
+  const customPoster = parseFrameImage(props.poster, variables);
   const posterUrl =
     customPoster ||
     (sourceInfo.isYouTube && sourceInfo.thumbnailUrl ? sourceInfo.thumbnailUrl : null);
@@ -4344,35 +4346,73 @@ function VideoVisual({
         </>
       )}
 
-      {/* Top Badge (YouTube / Story) */}
-      {sourceInfo.isYouTube && (
-        <Group x={12} y={12}>
-          <Rect width={72} height={20} fill="#dc2626" cornerRadius={10} />
-          <Text
-            text="YouTube"
-            x={10}
-            y={4}
-            fontSize={11}
-            fontStyle="bold"
-            fill="#ffffff"
-            align="center"
-          />
-        </Group>
-      )}
-      {variant === "story-portrait" && !sourceInfo.isYouTube && (
-        <Group x={12} y={12}>
-          <Rect width={66} height={20} fill="rgba(15, 23, 42, 0.75)" cornerRadius={10} />
-          <Text
-            text="✦ STORY"
-            x={8}
-            y={5}
-            fontSize={10}
-            fontStyle="bold"
-            fill="#ffffff"
-            align="center"
-          />
-        </Group>
-      )}
+      {/* Top Badge (YouTube / Story / Dynamic Variable) */}
+      {(() => {
+        const isBound =
+          typeof props.url === "object" &&
+          props.url !== null &&
+          "bind" in props.url &&
+          typeof (props.url as { bind: unknown }).bind === "string";
+        const boundKey = isBound ? (props.url as { bind: string }).bind : null;
+
+        if (boundKey) {
+          const badgeText = `{${boundKey}}`;
+          const badgeW = Math.max(76, Math.min(180, badgeText.length * 7 + 18));
+          return (
+            <Group x={12} y={12}>
+              <Rect width={badgeW} height={20} fill="rgba(37, 99, 235, 0.9)" cornerRadius={10} />
+              <Text
+                text={`✦ ${badgeText}`}
+                x={8}
+                y={4}
+                width={badgeW - 16}
+                fontSize={9.5}
+                fontStyle="bold"
+                fill="#ffffff"
+                align="center"
+                ellipsis
+                wrap="none"
+              />
+            </Group>
+          );
+        }
+
+        if (sourceInfo.isYouTube) {
+          return (
+            <Group x={12} y={12}>
+              <Rect width={72} height={20} fill="#dc2626" cornerRadius={10} />
+              <Text
+                text="YouTube"
+                x={10}
+                y={4}
+                fontSize={11}
+                fontStyle="bold"
+                fill="#ffffff"
+                align="center"
+              />
+            </Group>
+          );
+        }
+
+        if (variant === "story-portrait") {
+          return (
+            <Group x={12} y={12}>
+              <Rect width={66} height={20} fill="rgba(15, 23, 42, 0.75)" cornerRadius={10} />
+              <Text
+                text="✦ STORY"
+                x={8}
+                y={5}
+                fontSize={10}
+                fontStyle="bold"
+                fill="#ffffff"
+                align="center"
+              />
+            </Group>
+          );
+        }
+
+        return null;
+      })()}
 
       {/* Center Play Button */}
       <Circle
@@ -4617,7 +4657,7 @@ export function CurrentWidgetVisual({
     case "ornamentFrame":
       return <OrnamentFrameVisual element={element} tokens={tokens} variables={variables} />;
     case "video":
-      return <VideoVisual element={element} tokens={tokens} />;
+      return <VideoVisual element={element} tokens={tokens} variables={variables} />;
     case "gif":
       return <GifVisual element={element} tokens={tokens} />;
     default:

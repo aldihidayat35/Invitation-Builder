@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Element, ThemeTokens } from "@/lib/schema";
+import { variableKeySchema, type Element, type ThemeTokens } from "@/lib/schema";
 import {
   defaultWidgetRegistry,
   estimateWidgetContentHeight,
@@ -28,8 +28,8 @@ import { AssetLibrary } from "./AssetLibrary";
 import { saveAssetFromUrlAction } from "@/features/assets/actions";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
-import { selectDoc, useEditorStore, useWorkspaceId } from "./EditorProvider";
-import { IconCheck, IconSparkle, IconZap } from "./icons";
+import { selectDoc, useEditor, useEditorStore, useWorkspaceId } from "./EditorProvider";
+import { IconCheck, IconPlus, IconSparkle, IconVariable, IconZap } from "./icons";
 import {
   ColorField,
   FieldRow,
@@ -675,6 +675,16 @@ function OrnamentFramePropsControl({
   );
 }
 
+function videoLabelFromKey(key: string): string {
+  const text = key.replace(/[._]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function videoUniqueKey(taken: ReadonlySet<string>, base: string): string {
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) if (!taken.has(`${base}${n}`)) return `${base}${n}`;
+}
+
 function VideoPropsControl({
   element,
   disabled,
@@ -685,9 +695,41 @@ function VideoPropsControl({
   readonly setProp: (name: string, value: unknown) => void;
 }) {
   const workspaceId = useWorkspaceId();
+  const store = useEditorStore();
+  const doc = useEditor(selectDoc);
+
   const props = (element.props ?? {}) as Record<string, unknown>;
+  const isBound =
+    typeof props.url === "object" &&
+    props.url !== null &&
+    "bind" in props.url &&
+    typeof (props.url as { bind: unknown }).bind === "string";
+  const boundKey = isBound ? (props.url as { bind: string }).bind : undefined;
+  const boundFallback =
+    isBound && typeof (props.url as { fallback?: unknown }).fallback === "string"
+      ? (props.url as { fallback: string }).fallback
+      : undefined;
+
+  const declaredVideoVars = doc.variables.filter((v) => v.type === "url" || v.type === "text");
+  const declaredKeys = new Set(doc.variables.map((v) => v.key));
+  const boundVarDef = boundKey ? doc.variables.find((v) => v.key === boundKey) : undefined;
+  const boundVarDefault =
+    boundVarDef && "default" in boundVarDef && typeof boundVarDef.default === "string"
+      ? boundVarDef.default.trim()
+      : undefined;
+
   const rawUrl = typeof props.url === "string" ? props.url : "";
-  const sourceType = (props.sourceType as string) || "youtube";
+  const effectiveUrl = isBound
+    ? boundVarDefault || boundFallback || ""
+    : rawUrl;
+
+  const storedSourceType = (props.sourceType as string) || "youtube";
+  const activeTab: "youtube" | "upload" | "direct" | "variable" = isBound
+    ? "variable"
+    : storedSourceType === "variable"
+      ? "variable"
+      : (storedSourceType as "youtube" | "upload" | "direct") || "youtube";
+
   const poster = props.poster;
   const caption = (props.caption as string) || "";
   const autoplayOnScroll = props.autoplayOnScroll === true;
@@ -697,9 +739,15 @@ function VideoPropsControl({
   const aspectRatio = (props.aspectRatio as string) || "16:9";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const detectedYtId = extractYouTubeId(rawUrl);
+  const detectedYtId = extractYouTubeId(effectiveUrl);
   const [showGallery, setShowGallery] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Form Buat Variabel Baru
+  const [creatingVar, setCreatingVar] = useState(false);
+  const [newVarKey, setNewVarKey] = useState("");
+  const [newVarDefault, setNewVarDefault] = useState("");
+  const [varError, setVarError] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -729,26 +777,82 @@ function VideoPropsControl({
     }
   };
 
+  const handleSelectVariable = (key: string) => {
+    if (!key) {
+      handleUnbind();
+    } else {
+      const targetVar = doc.variables.find((v) => v.key === key);
+      const targetDefault =
+        targetVar && "default" in targetVar && typeof targetVar.default === "string"
+          ? targetVar.default.trim()
+          : undefined;
+      const defaultUrl =
+        targetDefault || effectiveUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+      setProp("url", { bind: key, fallback: defaultUrl });
+      setProp("sourceType", "variable");
+    }
+  };
+
+  const handleStartCreateVar = () => {
+    setNewVarKey(videoUniqueKey(declaredKeys, "video.url"));
+    setNewVarDefault(effectiveUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    setVarError(null);
+    setCreatingVar(true);
+  };
+
+  const handleCreateVariable = () => {
+    const key = newVarKey.trim();
+    if (!variableKeySchema.safeParse(key).success) {
+      setVarError("Kunci harus berupa format dot path, misal video.url atau event.video");
+      return;
+    }
+    if (declaredKeys.has(key)) {
+      setVarError("Kunci variabel ini sudah ada.");
+      return;
+    }
+
+    const defaultUrl = newVarDefault.trim() || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+    store.getState().addVariable({
+      key,
+      label: videoLabelFromKey(key),
+      type: "url",
+      default: defaultUrl,
+      required: false,
+    } as Parameters<ReturnType<typeof store.getState>["addVariable"]>[0]);
+
+    setCreatingVar(false);
+    setProp("url", { bind: key, fallback: defaultUrl });
+    setProp("sourceType", "variable");
+  };
+
+  const handleUnbind = () => {
+    const fallback = effectiveUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+    setProp("url", fallback);
+    setProp("sourceType", "youtube");
+  };
+
   return (
     <div className={styles.panelStack} data-testid="video-widget-controls">
       {/* 1. Sumber Video Tabs */}
       <div className={styles.panelStack}>
         <p className={styles.fieldLabel}>Sumber Video</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           <button
             type="button"
             className={[
               styles.widgetVariantCard,
-              sourceType === "youtube" && styles.widgetVariantCardActive,
+              activeTab === "youtube" && styles.widgetVariantCardActive,
             ]
               .filter(Boolean)
               .join(" ")}
             style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
             disabled={disabled}
             onClick={() => {
+              if (isBound) handleUnbind();
               setProp("sourceType", "youtube");
               setShowGallery(false);
             }}
+            data-testid="video-source-youtube-btn"
           >
             YouTube
           </button>
@@ -756,16 +860,48 @@ function VideoPropsControl({
             type="button"
             className={[
               styles.widgetVariantCard,
-              sourceType === "upload" && styles.widgetVariantCardActive,
+              activeTab === "variable" && styles.widgetVariantCardActive,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{
+              padding: "8px 6px",
+              textAlign: "center",
+              fontSize: 11,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+            }}
+            disabled={disabled}
+            onClick={() => {
+              if (!isBound && declaredVideoVars.length > 0) {
+                handleSelectVariable(declaredVideoVars[0]!.key);
+              }
+              setProp("sourceType", "variable");
+              setShowGallery(false);
+            }}
+            data-testid="video-source-variable-btn"
+          >
+            <IconVariable size={12} />
+            <span>Variabel Dinamis</span>
+          </button>
+          <button
+            type="button"
+            className={[
+              styles.widgetVariantCard,
+              activeTab === "upload" && styles.widgetVariantCardActive,
             ]
               .filter(Boolean)
               .join(" ")}
             style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
             disabled={disabled}
             onClick={() => {
+              if (isBound) handleUnbind();
               setProp("sourceType", "upload");
               setShowGallery(true);
             }}
+            data-testid="video-source-upload-btn"
           >
             Galeri / File
           </button>
@@ -773,16 +909,18 @@ function VideoPropsControl({
             type="button"
             className={[
               styles.widgetVariantCard,
-              sourceType === "direct" && styles.widgetVariantCardActive,
+              activeTab === "direct" && styles.widgetVariantCardActive,
             ]
               .filter(Boolean)
               .join(" ")}
             style={{ padding: "8px 6px", textAlign: "center", fontSize: 11 }}
             disabled={disabled}
             onClick={() => {
+              if (isBound) handleUnbind();
               setProp("sourceType", "direct");
               setShowGallery(false);
             }}
+            data-testid="video-source-direct-btn"
           >
             Link MP4
           </button>
@@ -799,110 +937,298 @@ function VideoPropsControl({
         onChange={handleFileUpload}
       />
 
-      {/* 2. URL Input & YouTube Detection Feedback */}
-      <div className={styles.panelStack} data-testid="widget-prop-url">
-        <TextField
-          id={`insp-widget-url-${element.id}`}
-          label={
-            sourceType === "youtube"
-              ? "Link Video YouTube"
-              : sourceType === "upload"
-                ? "File Video / URL"
-                : "URL Video Langsung (MP4 / WebM)"
-          }
-          value={rawUrl}
-          disabled={disabled}
-          placeholder={
-            sourceType === "youtube"
-              ? "https://www.youtube.com/watch?v=..."
-              : "https://domain.com/video.mp4"
-          }
-          onCommit={(val) => setProp("url", val)}
-        />
-
-        {sourceType === "upload" && (
-          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-            <button
-              type="button"
-              className={styles.primaryActionButton}
-              style={{ flex: 1, justifyContent: "center", fontSize: 11 }}
-              disabled={disabled || uploading}
-              onClick={() => setShowGallery((prev) => !prev)}
-              data-testid="video-open-gallery-btn"
+      {/* 2. Kontrol Variabel Dinamis vs Input URL Statis */}
+      {activeTab === "variable" ? (
+        <div
+          className={styles.variableControlBox}
+          data-testid="video-variable-controls"
+          style={{
+            background: "rgba(37, 99, 235, 0.04)",
+            border: "1px solid rgba(37, 99, 235, 0.18)",
+            borderRadius: 8,
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <label className={styles.fieldLabel} htmlFor={`video-var-select-${element.id}`}>
+              Pilih Variabel Video (URL / Teks)
+            </label>
+            <select
+              id={`video-var-select-${element.id}`}
+              className={styles.input}
+              value={boundKey ?? ""}
+              disabled={disabled}
+              onChange={(e) => handleSelectVariable(e.target.value)}
+              data-testid="video-var-select"
             >
-              {showGallery ? "Tutup Galeri" : "🎬 Pilih dari Galeri"}
-            </button>
-            <button
-              type="button"
-              className={styles.widgetVariantCard}
-              style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
-              disabled={disabled || uploading}
-              onClick={() => fileInputRef.current?.click()}
-              data-testid="video-upload-file-btn"
+              <option value="">-- Pilih Variabel Video --</option>
+              {declaredVideoVars.map((v) => (
+                <option key={v.key} value={v.key}>
+                  {v.label} ({v.key})
+                </option>
+              ))}
+              {boundKey && !declaredVideoVars.some((v) => v.key === boundKey) && (
+                <option value={boundKey}>{boundKey} (runtime)</option>
+              )}
+            </select>
+          </div>
+
+          {boundKey && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                padding: "8px 10px",
+                background: "#ffffff",
+                border: "1px solid rgba(37, 99, 235, 0.25)",
+                borderRadius: 6,
+              }}
             >
-              {uploading ? "Mengunggah..." : "📁 Unggah File"}
-            </button>
-          </div>
-        )}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: 11, color: "#1d4ed8" }}>
+                  <IconVariable size={13} />
+                  <span>{`{${boundKey}}`}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.smallButton}
+                  disabled={disabled}
+                  onClick={handleUnbind}
+                  data-testid="video-unbind-btn"
+                  style={{ fontSize: 11, padding: "2px 8px" }}
+                >
+                  Lepas Variabel
+                </button>
+              </div>
 
-        {showGallery && (
-          <div
-            style={{
-              marginTop: 8,
-              padding: 10,
-              background: "var(--dash-surface, #ffffff)",
-              borderRadius: 10,
-              border: "1px solid var(--dash-border, #e2e8f0)",
-              boxShadow: "var(--dash-shadow-sm)",
-            }}
-            data-testid="video-asset-library-container"
-          >
-            <AssetLibrary
-              idPrefix="video-picker"
-              pickLabel="Gunakan Video Ini"
-              filterType="video"
-              onPick={(asset) => {
-                setProp("url", assetUrl(asset.id));
-                setProp("assetId", asset.id);
-                setProp("sourceType", "upload");
-                if (!caption) {
-                  setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
-                }
-                setShowGallery(false);
-              }}
-              onUploaded={(asset) => {
-                setProp("url", assetUrl(asset.id));
-                setProp("assetId", asset.id);
-                setProp("sourceType", "upload");
-                if (!caption) {
-                  setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
-                }
-                setShowGallery(false);
-              }}
-            />
-          </div>
-        )}
+              {effectiveUrl && (
+                <div style={{ fontSize: 11, color: "#475569", wordBreak: "break-all" }}>
+                  <span style={{ fontWeight: 600, color: "#334155" }}>Nilai Contoh / Default: </span>
+                  {effectiveUrl}
+                </div>
+              )}
 
-        {detectedYtId ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 10px",
-              background: "rgba(220, 38, 38, 0.1)",
-              border: "1px solid rgba(220, 38, 38, 0.3)",
-              borderRadius: 6,
-              fontSize: 12,
-              color: "#ef4444",
-              marginTop: 4,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>✓ YouTube Terdeteksi</span>
-            <span style={{ fontSize: 11, opacity: 0.85 }}>ID: {detectedYtId}</span>
-          </div>
-        ) : null}
-      </div>
+              {detectedYtId && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "4px 8px",
+                    background: "rgba(220, 38, 38, 0.08)",
+                    border: "1px solid rgba(220, 38, 38, 0.2)",
+                    borderRadius: 4,
+                    fontSize: 11,
+                    color: "#dc2626",
+                    fontWeight: 600,
+                  }}
+                >
+                  <span>✓ YouTube Terdeteksi (ID: {detectedYtId})</span>
+                </div>
+              )}
+
+              <p style={{ margin: 0, fontSize: 10.5, color: "#64748b", lineHeight: 1.4 }}>
+                ℹ️ Di kanvas &amp; pratinjau, video otomatis menggunakan link default ini. Klien dapat mengisi link baru saat memesan undangan.
+              </p>
+            </div>
+          )}
+
+          {/* Form Buat Variabel Baru */}
+          {!disabled && (
+            creatingVar ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  padding: 10,
+                  background: "#ffffff",
+                  border: "1px solid var(--dash-border, #e2e8f0)",
+                  borderRadius: 6,
+                }}
+                data-testid="video-new-var-box"
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--dash-text)" }}>
+                  Buat Variabel Video Baru
+                </span>
+                <div>
+                  <label className={styles.fieldLabel}>Kunci Variabel (Dot Path)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="misal: video.url atau couple.video"
+                    value={newVarKey}
+                    onChange={(e) => setNewVarKey(e.target.value)}
+                    data-testid="video-new-var-key-input"
+                  />
+                </div>
+                <div>
+                  <label className={styles.fieldLabel}>Contoh / Nilai Default (URL YouTube / MP4)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={newVarDefault}
+                    onChange={(e) => setNewVarDefault(e.target.value)}
+                    data-testid="video-new-var-default-input"
+                  />
+                </div>
+                {varError && (
+                  <span style={{ fontSize: 11, color: "#dc2626" }}>{varError}</span>
+                )}
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    className={styles.primaryActionButton}
+                    style={{ flex: 1, fontSize: 11 }}
+                    onClick={handleCreateVariable}
+                    data-testid="video-save-new-var-btn"
+                  >
+                    Simpan &amp; Hubungkan
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.smallButton}
+                    style={{ fontSize: 11 }}
+                    onClick={() => setCreatingVar(false)}
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={styles.widgetVariantCard}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  color: "#2563eb",
+                  fontWeight: 600,
+                  borderStyle: "dashed",
+                }}
+                onClick={handleStartCreateVar}
+                data-testid="video-start-create-var-btn"
+              >
+                <IconPlus size={12} />
+                <span>+ Buat Variabel Video Baru</span>
+              </button>
+            )
+          )}
+        </div>
+      ) : (
+        <div className={styles.panelStack} data-testid="widget-prop-url">
+          <TextField
+            id={`insp-widget-url-${element.id}`}
+            label={
+              activeTab === "youtube"
+                ? "Link Video YouTube"
+                : activeTab === "upload"
+                  ? "File Video / URL"
+                  : "URL Video Langsung (MP4 / WebM)"
+            }
+            value={rawUrl}
+            disabled={disabled}
+            placeholder={
+              activeTab === "youtube"
+                ? "https://www.youtube.com/watch?v=..."
+                : "https://domain.com/video.mp4"
+            }
+            onCommit={(val) => setProp("url", val)}
+          />
+
+          {activeTab === "upload" && (
+            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+              <button
+                type="button"
+                className={styles.primaryActionButton}
+                style={{ flex: 1, justifyContent: "center", fontSize: 11 }}
+                disabled={disabled || uploading}
+                onClick={() => setShowGallery((prev) => !prev)}
+                data-testid="video-open-gallery-btn"
+              >
+                {showGallery ? "Tutup Galeri" : "🎬 Pilih dari Galeri"}
+              </button>
+              <button
+                type="button"
+                className={styles.widgetVariantCard}
+                style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}
+                disabled={disabled || uploading}
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="video-upload-file-btn"
+              >
+                {uploading ? "Mengunggah..." : "📁 Unggah File"}
+              </button>
+            </div>
+          )}
+
+          {showGallery && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: 10,
+                background: "var(--dash-surface, #ffffff)",
+                borderRadius: 10,
+                border: "1px solid var(--dash-border, #e2e8f0)",
+                boxShadow: "var(--dash-shadow-sm)",
+              }}
+              data-testid="video-asset-library-container"
+            >
+              <AssetLibrary
+                idPrefix="video-picker"
+                pickLabel="Gunakan Video Ini"
+                filterType="video"
+                onPick={(asset) => {
+                  setProp("url", assetUrl(asset.id));
+                  setProp("assetId", asset.id);
+                  setProp("sourceType", "upload");
+                  if (!caption) {
+                    setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
+                  }
+                  setShowGallery(false);
+                }}
+                onUploaded={(asset) => {
+                  setProp("url", assetUrl(asset.id));
+                  setProp("assetId", asset.id);
+                  setProp("sourceType", "upload");
+                  if (!caption) {
+                    setProp("caption", asset.filename.replace(/\.[^/.]+$/, ""));
+                  }
+                  setShowGallery(false);
+                }}
+              />
+            </div>
+          )}
+
+          {detectedYtId ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 10px",
+                background: "rgba(220, 38, 38, 0.1)",
+                border: "1px solid rgba(220, 38, 38, 0.3)",
+                borderRadius: 6,
+                fontSize: 12,
+                color: "#ef4444",
+                marginTop: 4,
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>✓ YouTube Terdeteksi</span>
+              <span style={{ fontSize: 11, opacity: 0.85 }}>ID: {detectedYtId}</span>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* 3. Cover / Poster Thumbnail */}
       <div className={styles.panelStack} data-testid="widget-prop-poster">
