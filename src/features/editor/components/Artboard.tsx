@@ -14,40 +14,6 @@ import {
 } from "../utils/external-image-handler";
 import styles from "./editor.module.css";
 
-function getElementScreenAABB(
-  canvasRect: DOMRect,
-  frame: { x: number; y: number; w: number; h: number; rotation?: number },
-  zoom: number,
-): { left: number; top: number; right: number; bottom: number } {
-  const rot = frame.rotation ?? 0;
-  const cx = canvasRect.left + (frame.x + frame.w / 2) * zoom;
-  const cy = canvasRect.top + (frame.y + frame.h / 2) * zoom;
-  const hw = (frame.w / 2) * zoom;
-  const hh = (frame.h / 2) * zoom;
-
-  if (rot === 0) {
-    return {
-      left: cx - hw,
-      top: cy - hh,
-      right: cx + hw,
-      bottom: cy + hh,
-    };
-  }
-
-  const rad = (rot * Math.PI) / 180;
-  const cos = Math.abs(Math.cos(rad));
-  const sin = Math.abs(Math.sin(rad));
-  const boundingHw = hw * cos + hh * sin;
-  const boundingHh = hw * sin + hh * cos;
-
-  return {
-    left: cx - boundingHw,
-    top: cy - boundingHh,
-    right: cx + boundingHw,
-    bottom: cy + boundingHh,
-  };
-}
-
 export function Artboard() {
   const store = useEditorStore();
   const workspaceId = useWorkspaceId();
@@ -58,25 +24,6 @@ export function Artboard() {
   const activeSectionId = useEditor((s) => s.activeSectionId);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [previewState, setPreviewState] = useState<{ sectionId: string; visible: boolean } | null>(null);
-
-  // Marquee mass-selection state
-  const [marquee, setMarquee] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  } | null>(null);
-
-  const marqueeRef = useRef<{
-    startClientX: number;
-    startClientY: number;
-    startLocalX: number;
-    startLocalY: number;
-    shiftKey: boolean;
-    initialSelectedIds: readonly string[];
-    isDragging: boolean;
-    startedOnCanvas: boolean;
-  } | null>(null);
 
   // Listen to custom section transition preview trigger
   useEffect(() => {
@@ -157,152 +104,6 @@ export function Artboard() {
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
-    };
-  }, [store]);
-
-  // Pointer down handler for marquee selection (can start from outside or canvas background)
-  const handleArtboardPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    if (store.getState().panMode) return;
-    if (store.getState().editingMotion) return;
-
-    const target = e.target as HTMLElement;
-    // Don't initiate marquee if clicking on buttons, inputs, links, or specific action triggers
-    if (target.closest("button, input, select, textarea, [data-prevent-marquee]")) {
-      return;
-    }
-
-    const isCanvas =
-      target.tagName.toLowerCase() === "canvas" ||
-      Boolean(target.closest("[data-testid^='canvas-']"));
-
-    const scrollEl = scrollRef.current;
-    if (!scrollEl) return;
-    const scrollRect = scrollEl.getBoundingClientRect();
-    const startLocalX = e.clientX - scrollRect.left + scrollEl.scrollLeft;
-    const startLocalY = e.clientY - scrollRect.top + scrollEl.scrollTop;
-
-    marqueeRef.current = {
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startLocalX,
-      startLocalY,
-      shiftKey: e.shiftKey,
-      initialSelectedIds: e.shiftKey ? store.getState().selectedIds : [],
-      isDragging: false,
-      startedOnCanvas: isCanvas,
-    };
-  };
-
-  // Marquee mousemove / mouseup tracking effect
-  useEffect(() => {
-    const handlePointerMove = (e: PointerEvent) => {
-      const m = marqueeRef.current;
-      const scrollEl = scrollRef.current;
-      if (!m || !scrollEl) return;
-
-      const dx = e.clientX - m.startClientX;
-      const dy = e.clientY - m.startClientY;
-
-      if (!m.isDragging) {
-        if (Math.hypot(dx, dy) < 4) return;
-        m.isDragging = true;
-      }
-
-      const scrollRect = scrollEl.getBoundingClientRect();
-      const currentLocalX = e.clientX - scrollRect.left + scrollEl.scrollLeft;
-      const currentLocalY = e.clientY - scrollRect.top + scrollEl.scrollTop;
-
-      const left = Math.min(m.startLocalX, currentLocalX);
-      const top = Math.min(m.startLocalY, currentLocalY);
-      const width = Math.abs(currentLocalX - m.startLocalX);
-      const height = Math.abs(currentLocalY - m.startLocalY);
-
-      setMarquee({ left, top, width, height });
-
-      // Calculate marquee screen rect
-      const marqueeScreen = {
-        left: Math.min(m.startClientX, e.clientX),
-        top: Math.min(m.startClientY, e.clientY),
-        right: Math.max(m.startClientX, e.clientX),
-        bottom: Math.max(m.startClientY, e.clientY),
-      };
-
-      const state = store.getState();
-      const doc = state.history.present;
-      const zoom = state.zoom;
-      const activeSecId = state.activeSectionId;
-
-      let targetSecId: string | null = null;
-      const touchedMap = new Map<string, string[]>();
-
-      for (const section of doc.sections) {
-        const canvasEl = scrollEl.querySelector(`[data-testid="canvas-${section.id}"]`);
-        if (!canvasEl) continue;
-        const canvasRect = canvasEl.getBoundingClientRect();
-
-        const touchedIds: string[] = [];
-        for (const el of section.elements) {
-          if (!el.visible || el.locked) continue;
-          const elAabb = getElementScreenAABB(canvasRect, el.frame, zoom);
-
-          // Touch / Intersect check (cukup tersentuh sebagian)
-          const isIntersecting = !(
-            marqueeScreen.right < elAabb.left ||
-            marqueeScreen.left > elAabb.right ||
-            marqueeScreen.bottom < elAabb.top ||
-            marqueeScreen.top > elAabb.bottom
-          );
-
-          if (isIntersecting) {
-            touchedIds.push(el.id);
-          }
-        }
-
-        if (touchedIds.length > 0) {
-          touchedMap.set(section.id, touchedIds);
-        }
-      }
-
-      // Prioritize active section if touched, else first touched section
-      if (activeSecId && touchedMap.has(activeSecId)) {
-        targetSecId = activeSecId;
-      } else if (touchedMap.size > 0) {
-        targetSecId = touchedMap.keys().next().value ?? null;
-      }
-
-      const selectedFromMarquee = targetSecId ? touchedMap.get(targetSecId) ?? [] : [];
-      const combined = m.shiftKey
-        ? Array.from(new Set([...m.initialSelectedIds, ...selectedFromMarquee]))
-        : selectedFromMarquee;
-
-      state.selectElements(combined);
-    };
-
-    const handlePointerUp = () => {
-      const m = marqueeRef.current;
-      if (!m) return;
-
-      if (!m.isDragging) {
-        // Just clicked empty space without dragging -> deselect if shift not pressed AND not started on canvas
-        // (Klik di area kanvas dikelola sendiri oleh Konva Stage onMouseDown agar objek tidak otomatis ter-unselect)
-        if (!m.shiftKey && !m.startedOnCanvas) {
-          store.getState().clearSelection();
-        }
-      }
-
-      marqueeRef.current = null;
-      setMarquee(null);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }, [store]);
 
@@ -403,23 +204,14 @@ export function Artboard() {
       data-testid="artboard"
       data-zoom={zoom}
       data-mode={artboardMode}
-      onPointerDown={handleArtboardPointerDown}
+      onPointerDown={(e) => {
+        if (e.target === scrollRef.current && !e.shiftKey) {
+          store.getState().clearSelection();
+        }
+      }}
       onDragOver={handleArtboardDragOver}
       onDrop={handleArtboardDrop}
     >
-      {/* Visual Marquee Box for mass-selection */}
-      {marquee && (
-        <div
-          className={styles.marqueeBox}
-          data-testid="marquee-selection-box"
-          style={{
-            left: marquee.left,
-            top: marquee.top,
-            width: marquee.width,
-            height: marquee.height,
-          }}
-        />
-      )}
       {editingMotion && motionElement && (
         <div className={styles.motionFloatingBar} data-testid="motion-floating-bar">
           <div className={styles.motionFloatingLeft}>

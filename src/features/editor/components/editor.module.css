@@ -900,16 +900,6 @@
   -ms-overflow-style: none;
 }
 
-.marqueeBox {
-  position: absolute;
-  border: 1.5px solid var(--dash-accent, #3b82f6);
-  background: rgba(59, 130, 246, 0.16);
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 100;
-  box-sizing: border-box;
-}
-
 .artboardScroll::-webkit-scrollbar {
   display: none;
   width: 0;
