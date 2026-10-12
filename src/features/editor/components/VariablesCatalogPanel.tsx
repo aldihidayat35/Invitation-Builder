@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import type { CanonicalDocument, VariableDefinition, VariableType } from "@/lib/schema";
-import { variableKeySchema } from "@/lib/schema";
+import { variableKeySchema, MAX_VARIABLES } from "@/lib/schema";
 import {
   GUEST_PREVIEW_CHANGED_EVENT,
   getGuestPreviewName,
@@ -18,7 +18,13 @@ import {
   IconTrash,
   IconVariable,
 } from "./icons";
-import { saveGlobalPreset, useGlobalCustomPresets } from "../core/global-presets";
+import {
+  saveGlobalPreset,
+  useGlobalCustomPresets,
+  sanitizePresetToVariableInput,
+  type GlobalCustomPreset,
+} from "../core/global-presets";
+import { showEditorToast } from "../utils/external-image-handler";
 import styles from "./VariablesCatalog.module.css";
 
 export interface VariablePreset {
@@ -510,24 +516,30 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
   }, [filteredVariables]);
 
   // Handle adding preset
-  const handleAddPreset = (preset: VariablePreset) => {
-    if (declaredKeys.has(preset.key)) return;
-    if (preset.type === "image") {
-      act().addVariable({
-        key: preset.key,
-        label: preset.label,
-        type: "image",
-        required: false,
-      });
+  const handleAddPreset = (preset: VariablePreset | GlobalCustomPreset) => {
+    if (declaredKeys.has(preset.key)) {
+      showEditorToast(`Variabel "${preset.label}" sudah ada di template ini.`, "info");
+      return;
+    }
+    if (doc.variables.length >= MAX_VARIABLES) {
+      showEditorToast(`Maksimal ${MAX_VARIABLES} variabel telah tercapai.`, "error");
+      return;
+    }
+
+    const sanitized = sanitizePresetToVariableInput(preset);
+    if (!sanitized) {
+      showEditorToast(`Format preset "${preset.label}" tidak valid.`, "error");
+      return;
+    }
+
+    const prevCount = doc.variables.length;
+    act().addVariable(sanitized);
+    const nextDoc = selectDoc(store.getState());
+
+    if (nextDoc.variables.length > prevCount) {
+      showEditorToast(`Variabel "${preset.label}" berhasil ditambahkan ke template!`, "success");
     } else {
-      act().addVariable({
-        key: preset.key,
-        label: preset.label,
-        type: preset.type,
-        default: preset.default || undefined,
-        maxLength: preset.maxLength,
-        required: false,
-      } as Parameters<ReturnType<typeof act>["addVariable"]>[0]);
+      showEditorToast(`Gagal menambahkan variabel "${preset.label}".`, "error");
     }
   };
 
@@ -1187,7 +1199,7 @@ export function VariablesCatalogPanel({ onSwitchToProperties }: VariablesCatalog
                               onClick={() => handleAddPreset(p)}
                             >
                               <IconPlus size={12} />
-                              <span>+ Tambah</span>
+                              <span>Tambah</span>
                             </button>
                           )}
                         </div>

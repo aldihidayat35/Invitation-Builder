@@ -2,12 +2,15 @@
 
 import React, { useState, useMemo } from "react";
 import type { VariableType } from "@/lib/schema";
+import { MAX_VARIABLES } from "@/lib/schema";
 import { selectDoc, useEditor, useEditorStore } from "./EditorProvider";
 import { WEDDING_PRESETS } from "./VariablesCatalogPanel";
 import {
   useGlobalCustomPresets,
+  sanitizePresetToVariableInput,
   type GlobalCustomPreset,
 } from "../core/global-presets";
+import { showEditorToast } from "../utils/external-image-handler";
 import {
   IconCheck,
   IconPencil,
@@ -218,24 +221,29 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
 
   const handleApplyToTemplate = (preset: UnifiedPreset) => {
     if (readOnly) return;
-    if (declaredKeys.has(preset.key)) return;
+    if (declaredKeys.has(preset.key)) {
+      showEditorToast(`Variabel "${preset.label}" sudah ada di template ini.`, "info");
+      return;
+    }
+    if (doc.variables.length >= MAX_VARIABLES) {
+      showEditorToast(`Maksimal ${MAX_VARIABLES} variabel telah tercapai.`, "error");
+      return;
+    }
 
-    if (preset.type === "image") {
-      store.getState().addVariable({
-        key: preset.key,
-        label: preset.label,
-        type: "image",
-        required: false,
-      });
+    const sanitized = sanitizePresetToVariableInput(preset);
+    if (!sanitized) {
+      showEditorToast(`Format preset "${preset.label}" tidak valid.`, "error");
+      return;
+    }
+
+    const prevCount = doc.variables.length;
+    store.getState().addVariable(sanitized);
+    const nextDoc = selectDoc(store.getState());
+
+    if (nextDoc.variables.length > prevCount) {
+      showEditorToast(`Variabel "${preset.label}" berhasil diterapkan ke template!`, "success");
     } else {
-      store.getState().addVariable({
-        key: preset.key,
-        label: preset.label,
-        type: preset.type,
-        default: preset.default || undefined,
-        maxLength: preset.maxLength,
-        required: false,
-      } as Parameters<ReturnType<typeof store.getState>["addVariable"]>[0]);
+      showEditorToast(`Gagal menerapkan variabel "${preset.label}".`, "error");
     }
   };
 
@@ -608,7 +616,7 @@ export function PresetManagementModal({ isOpen, onClose }: PresetManagementModal
                           disabled={readOnly}
                         >
                           <IconPlus size={12} />
-                          <span>+ Pakai di Template</span>
+                          <span>Pakai di Template</span>
                         </button>
                       )}
                     </div>

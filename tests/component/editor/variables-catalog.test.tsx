@@ -276,12 +276,13 @@ describe("VariablesCatalogPanel & Inspector Variables Tab", () => {
       </EditorProvider>,
     );
 
-    // Inspector is in Properties tab; expand "Teks & tipografi" section
-    const textSectionHeader = screen.getByText("Teks & tipografi");
-    fireEvent.click(textSectionHeader);
-
-    // Plain text now reveals the 1-click button
-    const quickGuestBtn = screen.getByTestId("bind-guest-quick-btn-0");
+    // Inspector is in Properties tab; ensure "Teks & tipografi" section is open
+    let quickGuestBtn = screen.queryByTestId("bind-guest-quick-btn-0");
+    if (!quickGuestBtn) {
+      const textSectionHeader = screen.getByText("Teks & tipografi");
+      fireEvent.click(textSectionHeader);
+      quickGuestBtn = screen.getByTestId("bind-guest-quick-btn-0");
+    }
     expect(quickGuestBtn).toBeDefined();
 
     // Click 1-click button
