@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import type { OrderClientVariablesSummary } from "../service";
+import { isGiftAccountVariableKey } from "@/lib/engine";
 import {
   IconClipboard,
   IconEdit,
@@ -337,7 +338,14 @@ export function OrderClientVariablesCard({
                           }`}
                         >
                           <dt className="flex items-center justify-between gap-1 text-[11px] font-medium text-stone-500">
-                            <span className="line-clamp-1">{field.label}</span>
+                            <span className="line-clamp-1 flex items-center gap-1.5">
+                              <span>{field.label}</span>
+                              {isGiftAccountVariableKey(field.key) && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 text-amber-800 px-1.5 py-0.2 text-[9px] font-bold">
+                                  🔒 Terkunci Admin
+                                </span>
+                              )}
+                            </span>
                             <span className="font-mono text-[9px] text-stone-400">
                               {field.key}
                             </span>

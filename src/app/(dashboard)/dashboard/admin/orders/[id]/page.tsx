@@ -11,6 +11,7 @@ import {
   OrderTemplateManager,
   OrderStudioAccessCard,
   OrderClientVariablesCard,
+  OrderBankVerificationCard,
   IconClipboard,
   IconUser,
   IconHeart,
@@ -39,6 +40,7 @@ import {
   transitionOrderAction,
   transitionProductionAction,
   updatePaymentAction,
+  adminVerifyOrderBankAction,
 } from "../actions";
 
 export const metadata: Metadata = { title: "Detail Order — Pusat Pengolahan Pesanan" };
@@ -369,6 +371,13 @@ export default async function AdminOrderDetailPage({
                 />
               )}
 
+              <OrderBankVerificationCard
+                orderId={order.id}
+                orderStatus={order.orderStatus}
+                bankVerification={detail.bankVerification}
+                verifyAction={adminVerifyOrderBankAction}
+              />
+
               {/* Jika dalam mode showAll, tampilkan juga kartu studio & portal */}
               {showAll && (
                 <>
@@ -411,6 +420,13 @@ export default async function AdminOrderDetailPage({
                 clientAccessToken={order.clientAccessToken}
                 createOrderProjectAction={createOrderProjectAction}
                 transitionProductionAction={transitionProductionAction}
+              />
+
+              <OrderBankVerificationCard
+                orderId={order.id}
+                orderStatus={order.orderStatus}
+                bankVerification={detail.bankVerification}
+                verifyAction={adminVerifyOrderBankAction}
               />
 
               <OrderClientVariablesCard
@@ -577,6 +593,13 @@ export default async function AdminOrderDetailPage({
                 orderId={order.id}
                 canRegenerate={true}
                 regenerateAction={regenerateOrderClientTokenAction}
+              />
+
+              <OrderBankVerificationCard
+                orderId={order.id}
+                orderStatus={order.orderStatus}
+                bankVerification={detail.bankVerification}
+                verifyAction={adminVerifyOrderBankAction}
               />
 
               <OrderClientVariablesCard

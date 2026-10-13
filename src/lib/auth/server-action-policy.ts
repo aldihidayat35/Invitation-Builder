@@ -32,6 +32,7 @@ const ownerOnly = [
   "toggleUserStatusAction",
   "deleteUserAction",
   "fetchUsersListAction",
+  "adminVerifyOrderBankAction",
 ] as const;
 
 const authenticated = [

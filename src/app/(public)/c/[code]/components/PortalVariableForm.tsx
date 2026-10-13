@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { FormGroup } from "@/lib/engine";
+import { isGiftAccountVariableKey, type BankVerificationMeta } from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
 import styles from "../client-portal.module.css";
 
@@ -11,6 +12,7 @@ interface PortalVariableFormProps {
   initialValues: Record<string, string>;
   initialErrors: Record<string, string>;
   previewUrl?: string | null;
+  bankVerification?: BankVerificationMeta | null;
   onSwitchToAdmin?: () => void;
   onSaved?: (values: Record<string, string>) => void;
 }
@@ -35,6 +37,7 @@ export function PortalVariableForm({
   initialValues,
   initialErrors,
   previewUrl,
+  bankVerification,
   onSwitchToAdmin,
   onSaved,
 }: PortalVariableFormProps) {
@@ -44,6 +47,11 @@ export function PortalVariableForm({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const [isRequestingBankChange, setIsRequestingBankChange] = useState(false);
+  const [bankChangeNote, setBankChangeNote] = useState(bankVerification?.clientNote ?? "");
+
+  const isBankVerified = bankVerification?.status === "verified";
+
   const valuesRef = useRef(values);
   valuesRef.current = values;
 
@@ -51,18 +59,35 @@ export function PortalVariableForm({
   const sequenceRef = useRef(0);
 
   const saveToServer = useCallback(
-    async (currentValues: Record<string, string>) => {
+    async (
+      currentValues: Record<string, string>,
+      opts?: { requestingBankChange?: boolean; bankNote?: string },
+    ) => {
       const currentSeq = ++sequenceRef.current;
       setSaveStatus("saving");
       setStatusMessage("Menyimpan perubahan…");
 
+      const payload: Record<string, string> = { ...currentValues };
+      const reqChange = opts?.requestingBankChange ?? isRequestingBankChange;
+      const bNote = opts?.bankNote ?? bankChangeNote;
+      if (reqChange) {
+        payload["_requestBankChange"] = "true";
+        if (bNote) {
+          payload["_bankChangeNote"] = bNote;
+        }
+      }
+
       try {
-        const res = await savePortalInvitationDataAction(token, currentValues);
+        const res = await savePortalInvitationDataAction(token, payload);
         if (currentSeq !== sequenceRef.current) return;
 
         if (res.ok) {
           setSaveStatus("saved");
-          setStatusMessage("Perubahan tersimpan otomatis.");
+          setStatusMessage(
+            reqChange
+              ? "Perubahan data & permohonan rekening berhasil dikirim ke Admin."
+              : "Perubahan tersimpan otomatis.",
+          );
           setErrors(res.errors || {});
           onSaved?.(currentValues);
         } else {
@@ -77,7 +102,7 @@ export function PortalVariableForm({
         );
       }
     },
-    [token, onSaved],
+    [token, onSaved, isRequestingBankChange, bankChangeNote],
   );
 
   const triggerDebouncedSave = useCallback(() => {
@@ -171,6 +196,8 @@ export function PortalVariableForm({
       <div className={styles.varGroupsList}>
         {groups.map((group) => {
           const icon = getGroupIcon(group.group, group.label);
+          const hasBankFields = group.fields.some((f) => isGiftAccountVariableKey(f.key));
+
           return (
             <fieldset key={group.group} className={styles.varGroupCard}>
               <legend className={styles.varGroupLegend}>
@@ -183,6 +210,8 @@ export function PortalVariableForm({
                   const val = values[field.key] ?? "";
                   const err = errors[field.key];
                   const fieldId = `portal-field-${field.key}`;
+                  const isBankField = isGiftAccountVariableKey(field.key);
+                  const isFieldLocked = isBankField && isBankVerified && !isRequestingBankChange;
 
                   return (
                     <div
@@ -199,6 +228,30 @@ export function PortalVariableForm({
                             *
                           </span>
                         )}
+                        {isBankField && isFieldLocked && (
+                          <span
+                            className={styles.bankVerifiedTag}
+                            title="Terkunci demi keamanan, telah diverifikasi resmi oleh Admin"
+                          >
+                            🔒 Terverifikasi Admin
+                          </span>
+                        )}
+                        {isBankField && isRequestingBankChange && (
+                          <span
+                            className={styles.bankProposalTag}
+                            title="Usulan rekening ini akan ditinjau dan diverifikasi oleh Admin"
+                          >
+                            ✏️ Usulan Baru
+                          </span>
+                        )}
+                        {isBankField && !isBankVerified && !isRequestingBankChange && (
+                          <span
+                            className={styles.bankPendingTag}
+                            title="Rekening akan diverifikasi oleh Admin sebelum terbit"
+                          >
+                            ⏳ Usulan Rekening
+                          </span>
+                        )}
                       </label>
 
                       {field.control === "richtext" ? (
@@ -207,6 +260,7 @@ export function PortalVariableForm({
                           name={field.key}
                           rows={3}
                           maxLength={field.maxLength}
+                          disabled={isFieldLocked}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className={`${styles.textarea} ${err ? styles.inputError : ""}`}
@@ -216,6 +270,7 @@ export function PortalVariableForm({
                         <select
                           id={fieldId}
                           name={field.key}
+                          disabled={isFieldLocked}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className={`${styles.input} ${err ? styles.inputError : ""}`}
@@ -243,6 +298,7 @@ export function PortalVariableForm({
                           }
                           name={field.key}
                           maxLength={field.maxLength}
+                          disabled={isFieldLocked}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className={`${styles.input} ${err ? styles.inputError : ""}`}
@@ -272,6 +328,118 @@ export function PortalVariableForm({
                   );
                 })}
               </div>
+
+              {/* Bank Verification & Security Box */}
+              {hasBankFields && (
+                <>
+                  {isBankVerified ? (
+                    !isRequestingBankChange ? (
+                      <div className={styles.bankNoticeBox}>
+                        <div className={styles.bankNoticeHeader}>
+                          <span>
+                            🔒 <strong>Rekening Resmi Terkunci</strong>
+                          </span>
+                          {bankVerification?.verifiedAt && (
+                            <span className={styles.bankNoticeDate}>
+                              Diverifikasi pada{" "}
+                              {new Date(bankVerification.verifiedAt).toLocaleDateString("id-ID")}
+                            </span>
+                          )}
+                        </div>
+                        <p className={styles.bankNoticeText}>
+                          Nomor rekening amplop digital ini telah diverifikasi resmi oleh tim Admin demi
+                          keamanan transaksi undangan Anda. Kolom rekening dikunci dari pengeditan langsung.
+                        </p>
+                        {bankVerification?.proposedPrimary && (
+                          <div className={styles.bankPendingAlert}>
+                            ⏳ <strong>Permohonan perubahan rekening sedang ditinjau Admin:</strong>
+                            <div style={{ marginTop: "0.25rem" }}>
+                              {bankVerification.proposedPrimary.bank} -{" "}
+                              {bankVerification.proposedPrimary.accountNumber} a/n{" "}
+                              {bankVerification.proposedPrimary.accountName}
+                            </div>
+                            {bankVerification.clientNote && (
+                              <div style={{ fontStyle: "italic", marginTop: "0.2rem" }}>
+                                Catatan: &ldquo;{bankVerification.clientNote}&rdquo;
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsRequestingBankChange(true)}
+                          className={styles.btnSecondary}
+                          style={{
+                            alignSelf: "flex-start",
+                            fontSize: "0.8rem",
+                            padding: "0.45rem 0.85rem",
+                            marginTop: "0.25rem",
+                          }}
+                        >
+                          🔄 Ajukan Perubahan Rekening
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={styles.bankChangeRequestBox}>
+                        <div className={styles.bankNoticeHeader}>
+                          <span style={{ color: "#92400e" }}>
+                            ✏️ <strong>Form Pengajuan Perubahan Rekening</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsRequestingBankChange(false)}
+                            className={styles.bankCancelBtn}
+                          >
+                            ✕ Batal
+                          </button>
+                        </div>
+                        <p className={styles.bankNoticeText}>
+                          Silakan ketik nomor rekening baru pada kolom di atas. Kolom rekening kini dapat diedit
+                          untuk pengajuan usulan baru. Masukkan alasan perubahan di bawah ini lalu klik Simpan Perubahan.
+                        </p>
+                        <div>
+                          <label
+                            htmlFor="portal-bank-change-note"
+                            style={{
+                              fontSize: "0.785rem",
+                              fontWeight: 600,
+                              color: "#78350f",
+                              display: "block",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            Alasan / Catatan Perubahan untuk Admin:
+                          </label>
+                          <input
+                            id="portal-bank-change-note"
+                            type="text"
+                            value={bankChangeNote}
+                            onChange={(e) => setBankChangeNote(e.target.value)}
+                            placeholder="Contoh: Mengganti rekening BCA karena rekening lama sudah pasif"
+                            className={styles.input}
+                            style={{ background: "#ffffff" }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <div className={styles.bankUnverifiedNotice}>
+                      <span style={{ fontSize: "0.85rem", color: "#23180d" }}>
+                        🛡️ <strong>Verifikasi Keamanan Rekening</strong>
+                      </span>
+                      <p style={{ margin: "0.15rem 0 0", fontSize: "0.8rem", color: "#786b5e" }}>
+                        Rekening yang Anda isikan di atas merupakan <strong>usulan awal</strong>. Tim Admin
+                        akan memeriksa dan memverifikasi rekening Anda sebelum menguncinya secara resmi pada undangan live.
+                      </p>
+                      {bankVerification?.status === "pending_review" && (
+                        <div className={styles.bankPendingAlert} style={{ marginTop: "0.5rem" }}>
+                          ⏳ Usulan rekening Anda sedang menunggu verifikasi oleh tim Admin.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </fieldset>
           );
         })}

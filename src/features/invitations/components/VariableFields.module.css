@@ -67,3 +67,19 @@
   font-size: 0.78rem;
   color: var(--dash-danger);
 }
+
+.bankLockBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  vertical-align: middle;
+}
+

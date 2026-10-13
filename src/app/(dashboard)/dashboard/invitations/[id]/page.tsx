@@ -122,6 +122,7 @@ export default async function InvitationDataPage({
               initialAssets={imageAssets}
               save={saveInvitationDataAction}
               readOnly={archived || !permissions.write}
+              readOnlyBank={user.systemRole !== "owner"}
             />
           )}
         </div>

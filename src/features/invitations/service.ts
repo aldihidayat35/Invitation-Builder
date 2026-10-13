@@ -70,6 +70,8 @@ import {
   parseFormSubmission,
   resolveDocument,
   validateInvitationData,
+  isGiftAccountVariableKey,
+  BANK_VERIFICATION_KEY,
   type DataIssue,
   type GuestData,
   type ResolvedDocument,
@@ -528,7 +530,26 @@ export async function saveInvitationData(
   });
   const stored = persistableData(data, issues);
 
-  const updated = await updateInvitationData(db, { invitationId: row.id, data: stored });
+  let finalStored = stored;
+  // Keamanan: Jika aktor BUKAN super admin ("owner"), kunci seluruh variabel rekening
+  if (actor.systemRole !== "owner") {
+    const protectedStored: Record<string, unknown> = { ...stored };
+    for (const key of Object.keys(stored)) {
+      if (isGiftAccountVariableKey(key)) {
+        if (key in row.data) {
+          protectedStored[key] = row.data[key];
+        } else {
+          delete protectedStored[key];
+        }
+      }
+    }
+    if (BANK_VERIFICATION_KEY in row.data) {
+      protectedStored[BANK_VERIFICATION_KEY] = row.data[BANK_VERIFICATION_KEY];
+    }
+    finalStored = protectedStored;
+  }
+
+  const updated = await updateInvitationData(db, { invitationId: row.id, data: finalStored });
   if (!updated) throw new InvitationArchivedError();
   return { invitation: toSummary(updated), issues };
 }

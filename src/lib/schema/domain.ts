@@ -103,6 +103,7 @@ export const AUDIT_ACTIONS = [
   "order.client_approve",
   "order.revision_requested",
   "order.payment_update",
+  "order.bank_verified",
   "privacy.request",
   "privacy.resolve",
   "domain.tls_activate",

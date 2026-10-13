@@ -63,9 +63,15 @@ import {
   groupFormFields,
   parseFormSubmission,
   validateInvitationData,
+  isGiftAccountVariableKey,
+  getBankVerificationMeta,
+  extractBankAccountsFromRecord,
+  BANK_VERIFICATION_KEY,
   type DataIssue,
   type FormField,
   type FormGroup,
+  type BankVerificationMeta,
+  type BankAccountDetails,
 } from "@/lib/engine";
 import { createInvitation } from "@/features/invitations/service";
 import { normalizeWhatsAppNumber } from "./platform-order";
@@ -131,6 +137,7 @@ export interface OrderDetailModel {
   invitation: { id: string; title: string; slug: string; status: string } | null;
   events: OrderWorkflowEvent[];
   variables: OrderClientVariablesSummary | null;
+  bankVerification?: BankVerificationMeta;
 }
 
 export async function getOrderDetail(
@@ -239,6 +246,9 @@ export async function getOrderDetail(
       : null,
     events,
     variables: variablesSummary,
+    bankVerification: invitation
+      ? getBankVerificationMeta(invitation.data)
+      : { status: "unconfigured" },
   };
 }
 
@@ -1037,6 +1047,7 @@ export interface ClientPortalData {
     phone: string;
     whatsappUrl: string;
   };
+  bankVerification?: BankVerificationMeta;
 }
 
 export async function getClientPortalDataByToken(
@@ -1226,6 +1237,37 @@ export async function getClientPortalDataByToken(
     portalUrl,
   });
 
+  const bankVerification = invitation
+    ? getBankVerificationMeta(invitation.data)
+    : { status: "unconfigured" as const };
+
+  // Jika rekening belum diverifikasi tetapi klien memiliki usulan, tampilkan usulan di variableValues portal klien
+  if (bankVerification.status !== "verified" && bankVerification.proposedPrimary) {
+    if (bankVerification.proposedPrimary.bank) {
+      variableValues["gift.bank"] = bankVerification.proposedPrimary.bank;
+      variableValues["gift.bank_name"] = bankVerification.proposedPrimary.bank;
+    }
+    if (bankVerification.proposedPrimary.accountNumber) {
+      variableValues["gift.accountNumber"] = bankVerification.proposedPrimary.accountNumber;
+      variableValues["gift.account_number"] = bankVerification.proposedPrimary.accountNumber;
+    }
+    if (bankVerification.proposedPrimary.accountName) {
+      variableValues["gift.accountName"] = bankVerification.proposedPrimary.accountName;
+      variableValues["gift.account_holder"] = bankVerification.proposedPrimary.accountName;
+    }
+    if (bankVerification.proposedSecondary) {
+      if (bankVerification.proposedSecondary.bank) {
+        variableValues["gift.bank2"] = bankVerification.proposedSecondary.bank;
+      }
+      if (bankVerification.proposedSecondary.accountNumber) {
+        variableValues["gift.accountNumber2"] = bankVerification.proposedSecondary.accountNumber;
+      }
+      if (bankVerification.proposedSecondary.accountName) {
+        variableValues["gift.accountName2"] = bankVerification.proposedSecondary.accountName;
+      }
+    }
+  }
+
   const slug = invitation?.slug;
   const shareableUrl = slug ? `/i/${slug}` : null;
   const previewUrl = slug
@@ -1250,6 +1292,7 @@ export async function getClientPortalDataByToken(
       phone: contactPhone,
       whatsappUrl,
     },
+    bankVerification,
   };
 }
 
@@ -1284,7 +1327,61 @@ export async function saveClientPortalInvitationData(
   });
   const stored = persistableData(data, issues);
 
-  const updatedData = { ...invitation.data, ...stored };
+  // Kunci Keamanan: Variabel rekening dilindungi dan tidak boleh langsung ditimpa oleh klien
+  const existingBankMeta = getBankVerificationMeta(invitation.data);
+  const clientBankInput = extractBankAccountsFromRecord(values);
+
+  // Ambil hanya variabel non-rekening dari submission klien
+  const safeNonBankStored: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(stored)) {
+    if (!isGiftAccountVariableKey(k)) {
+      safeNonBankStored[k] = v;
+    }
+  }
+
+  const updatedData: Record<string, unknown> = {
+    ...invitation.data,
+    ...safeNonBankStored,
+  };
+
+  // Tangani usulan atau permohonan perubahan rekening dari klien
+  let hasNewBankProposal = false;
+  if (clientBankInput.primary) {
+    if (existingBankMeta.status === "verified") {
+      const isDifferentFromVerified =
+        clientBankInput.primary.bank !== existingBankMeta.verifiedPrimary?.bank ||
+        clientBankInput.primary.accountNumber !== existingBankMeta.verifiedPrimary?.accountNumber ||
+        clientBankInput.primary.accountName !== existingBankMeta.verifiedPrimary?.accountName;
+
+      if (isDifferentFromVerified || values["_requestBankChange"] === "true") {
+        hasNewBankProposal = true;
+        updatedData[BANK_VERIFICATION_KEY] = {
+          ...existingBankMeta,
+          proposedPrimary: clientBankInput.primary,
+          proposedSecondary: clientBankInput.secondary,
+          proposedAt: new Date().toISOString(),
+          clientNote:
+            typeof values["_bankChangeNote"] === "string"
+              ? values["_bankChangeNote"].trim()
+              : "Pengajuan perubahan nomor rekening oleh klien",
+        };
+      }
+    } else {
+      hasNewBankProposal = true;
+      updatedData[BANK_VERIFICATION_KEY] = {
+        ...existingBankMeta,
+        status: "pending_review",
+        proposedPrimary: clientBankInput.primary,
+        proposedSecondary: clientBankInput.secondary,
+        proposedAt: new Date().toISOString(),
+        clientNote:
+          typeof values["_bankChangeNote"] === "string"
+            ? values["_bankChangeNote"].trim()
+            : undefined,
+      };
+    }
+  }
+
   const updatedInv = await updateInvitationData(db, {
     invitationId: invitation.id,
     data: updatedData,
@@ -1358,6 +1455,16 @@ export async function saveClientPortalInvitationData(
       note: `Klien memperbarui ${Object.keys(stored).length} data/variabel undangan melalui Portal Mandiri.`,
       metadata: { token, updatedKeys: Object.keys(stored) },
     });
+
+    if (hasNewBankProposal && clientBankInput.primary) {
+      await insertOrderWorkflowEvent(db, {
+        orderId: portal.order.id,
+        actorId: null,
+        eventType: "order.bank_proposal",
+        note: `Klien mengajukan usulan data rekening (${clientBankInput.primary.bank} - ${clientBankInput.primary.accountNumber} a/n ${clientBankInput.primary.accountName}) untuk diverifikasi Admin.`,
+        metadata: { proposed: clientBankInput },
+      });
+    }
   }
 
   const errors: Record<string, string> = {};
@@ -1412,4 +1519,109 @@ export async function regenerateOrderClientToken(
     throw new OrderWorkflowError("Gagal memperbarui token akses order.");
   }
   return updated.clientAccessToken;
+}
+
+export interface AdminVerifyOrderBankInput {
+  orderId: string;
+  primary: BankAccountDetails;
+  secondary?: BankAccountDetails | null;
+  adminNote?: string;
+  confirmOrderAccepted?: boolean;
+}
+
+export async function adminVerifyOrderBank(
+  db: Database,
+  actor: Actor,
+  input: AdminVerifyOrderBankInput,
+): Promise<{ order: CustomerOrder; bankVerification: BankVerificationMeta }> {
+  requirePlatformOwner(actor);
+  const order = await findCustomerOrderById(db, input.orderId);
+  if (!order) throw new OrderWorkflowError("Pesanan tidak ditemukan.");
+
+  let invitation = order.invitationId ? await findInvitationById(db, order.invitationId) : null;
+  if (!invitation && order.templateId) {
+    invitation = await ensureOrderInvitation(db, order);
+  }
+  if (!invitation) {
+    throw new OrderWorkflowError("Proyek undangan untuk pesanan ini belum disiapkan.");
+  }
+
+  const verifiedMeta: BankVerificationMeta = {
+    status: "verified",
+    verifiedAt: new Date().toISOString(),
+    verifiedBy: actor.userId,
+    verifiedPrimary: input.primary,
+    verifiedSecondary: input.secondary || null,
+    proposedPrimary: null,
+    proposedSecondary: null,
+    adminNote: input.adminNote?.trim() || null,
+  };
+
+  const bankPatch: Record<string, unknown> = {
+    "gift.bank": input.primary.bank,
+    "gift.accountNumber": input.primary.accountNumber,
+    "gift.accountName": input.primary.accountName,
+    "gift.bank_name": input.primary.bank,
+    "gift.account_number": input.primary.accountNumber,
+    "gift.account_holder": input.primary.accountName,
+    [BANK_VERIFICATION_KEY]: verifiedMeta,
+  };
+
+  if (input.secondary?.bank && input.secondary.accountNumber) {
+    bankPatch["gift.bank2"] = input.secondary.bank;
+    bankPatch["gift.accountNumber2"] = input.secondary.accountNumber;
+    bankPatch["gift.accountName2"] = input.secondary.accountName || "";
+  } else {
+    delete bankPatch["gift.bank2"];
+    delete bankPatch["gift.accountNumber2"];
+    delete bankPatch["gift.accountName2"];
+  }
+
+  const updatedInv = await updateInvitationData(db, {
+    invitationId: invitation.id,
+    data: {
+      ...invitation.data,
+      ...bankPatch,
+    },
+  });
+  if (!updatedInv) throw new OrderWorkflowError("Gagal memperbarui data undangan.");
+
+  await insertOrderWorkflowEvent(db, {
+    orderId: order.id,
+    actorId: actor.userId,
+    eventType: "order.bank_verified",
+    note: `Rekening resmi diverifikasi & disuntikkan ke undangan oleh Admin: ${input.primary.bank} - ${input.primary.accountNumber} a/n ${input.primary.accountName}${
+      input.adminNote ? ` (${input.adminNote})` : ""
+    }`,
+    metadata: {
+      primary: input.primary,
+      secondary: input.secondary,
+      note: input.adminNote,
+    },
+  });
+
+  await insertAuditLog(db, {
+    workspaceId: order.workspaceId,
+    actorId: actor.userId,
+    action: "order.bank_verified",
+    entityType: "customer_order",
+    entityId: order.id,
+    metadata: {
+      primary: input.primary,
+      secondary: input.secondary,
+    },
+  });
+
+  let currentOrder = order;
+  if (input.confirmOrderAccepted && (order.orderStatus === "new" || order.orderStatus === "qualified")) {
+    currentOrder = await transitionOrder(
+      db,
+      actor,
+      order.id,
+      "accepted",
+      "Dikonfirmasi bersamaan dengan verifikasi rekening oleh Admin",
+    );
+  }
+
+  return { order: currentOrder, bankVerification: verifiedMeta };
 }

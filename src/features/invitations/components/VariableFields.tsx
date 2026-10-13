@@ -1,5 +1,5 @@
 import type { AssetSummary } from "@/features/assets/api";
-import type { FormField, FormGroup } from "@/lib/engine";
+import { isGiftAccountVariableKey, type FormField, type FormGroup } from "@/lib/engine";
 import { InvitationImagePicker } from "./InvitationImagePicker";
 import styles from "./VariableFields.module.css";
 
@@ -15,6 +15,8 @@ export interface VariableFieldsProps {
   readonly imageOptions?: readonly { readonly id: string; readonly label: string }[];
   readonly workspaceId?: string;
   readonly initialAssets?: readonly AssetSummary[];
+  /** When true, gift/bank variables are rendered read-only for sellers/resellers. */
+  readonly readOnlyBank?: boolean;
 }
 
 const INPUT_TYPE: Partial<Record<FormField["control"], string>> = {
@@ -45,6 +47,7 @@ export function VariableFields({
   imageOptions,
   workspaceId,
   initialAssets,
+  readOnlyBank = false,
 }: VariableFieldsProps) {
   return (
     <div className={styles.groups}>
@@ -56,8 +59,10 @@ export function VariableFields({
             const name = `${namePrefix}${field.key}`;
             const value = values[field.key] ?? "";
             const error = errors[field.key];
+            const isBankField = isGiftAccountVariableKey(field.key);
+            const isFieldLocked = isBankField && readOnlyBank;
             const hintId = `${id}-hint`;
-            const describedBy = error || HINT[field.control] ? hintId : undefined;
+            const describedBy = error || HINT[field.control] || isFieldLocked ? hintId : undefined;
             return (
               <div
                 key={field.key}
@@ -72,6 +77,14 @@ export function VariableFields({
                       *
                     </span>
                   ) : null}
+                  {isFieldLocked && (
+                    <span
+                      className={styles.bankLockBadge}
+                      title="Kolom rekening hanya dapat diverifikasi dan diisi resmi oleh Admin melalui detail pesanan."
+                    >
+                      🔒 Terkunci oleh Admin
+                    </span>
+                  )}
                 </label>
                 {field.control === "image" ? (
                   <InvitationImagePicker
@@ -90,6 +103,7 @@ export function VariableFields({
                     id={id}
                     name={name}
                     defaultValue={value}
+                    disabled={isFieldLocked}
                     className={styles.input}
                     required={field.required}
                     aria-describedby={describedBy}
@@ -106,6 +120,7 @@ export function VariableFields({
                     id={id}
                     name={name}
                     defaultValue={value}
+                    disabled={isFieldLocked}
                     className={styles.input}
                     rows={3}
                     maxLength={field.maxLength}
@@ -117,6 +132,7 @@ export function VariableFields({
                     id={id}
                     name={name}
                     type="checkbox"
+                    disabled={isFieldLocked}
                     defaultChecked={value === "on"}
                     aria-describedby={describedBy}
                   />
@@ -126,6 +142,7 @@ export function VariableFields({
                     name={name}
                     type={INPUT_TYPE[field.control] ?? "text"}
                     defaultValue={value}
+                    disabled={isFieldLocked}
                     className={styles.input}
                     required={field.required}
                     maxLength={field.maxLength}
@@ -138,6 +155,10 @@ export function VariableFields({
                 {error ? (
                   <p id={hintId} className={styles.error}>
                     {error}
+                  </p>
+                ) : isFieldLocked ? (
+                  <p id={hintId} className={styles.hint} style={{ color: "#b45309" }}>
+                    Variabel rekening dilindungi demi keamanan. Hanya Super Admin yang dapat memverifikasi atau mengubah rekening live melalui Detail Pesanan.
                   </p>
                 ) : HINT[field.control] ? (
                   <p id={hintId} className={styles.hint}>

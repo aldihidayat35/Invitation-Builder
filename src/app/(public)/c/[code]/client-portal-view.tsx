@@ -357,6 +357,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 initialValues={data.variableValues}
                 initialErrors={data.variableErrors}
                 previewUrl={data.previewUrl}
+                bankVerification={data.bankVerification}
                 onSwitchToAdmin={() => setDataMode("admin_assisted")}
                 onSaved={() => {
                   showToast("Data undangan berhasil disimpan!");

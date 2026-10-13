@@ -170,6 +170,11 @@ export async function adminSendOrderToReview(orderId: string, note?: string) {
   return service.adminSendOrderToReview(await getDb(), actorOf(user), orderId, note);
 }
 
+export async function adminVerifyOrderBank(input: service.AdminVerifyOrderBankInput) {
+  const user = await requireOwner();
+  return service.adminVerifyOrderBank(await getDb(), actorOf(user), input);
+}
+
 export {
   OrderWorkflowError,
   buildClientCustomizationWhatsAppUrl,
@@ -179,5 +184,7 @@ export type {
   ClientCustomizationWhatsAppParams,
   OrderClientVariablesSummary,
   OrderDetailModel,
+  AdminVerifyOrderBankInput,
 } from "./service";
+
 

@@ -11,6 +11,7 @@ import {
   configureProduction,
   createOrderProject,
   regenerateOrderClientToken,
+  adminVerifyOrderBank,
 } from "@/features/orders/api";
 import { ORDER_STATUSES, PAYMENT_STATUSES, PRODUCTION_STATUSES } from "@/lib/schema/domain";
 
@@ -82,5 +83,44 @@ export async function changeOrderTemplateAction(formData: FormData): Promise<voi
   const templateId = idSchema.parse(textField(formData, "templateId"));
   await changeOrderTemplate(orderId, templateId);
   refreshOrder(orderId);
+}
+
+export async function adminVerifyOrderBankAction(
+  formData: FormData,
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  try {
+    const orderId = idSchema.parse(textField(formData, "orderId"));
+    const bank = textField(formData, "bank");
+    const accountNumber = textField(formData, "accountNumber");
+    const accountName = textField(formData, "accountName");
+    const bank2 = textField(formData, "bank2");
+    const accountNumber2 = textField(formData, "accountNumber2");
+    const accountName2 = textField(formData, "accountName2");
+    const adminNote = textField(formData, "adminNote");
+    const confirmOrderAccepted = formData.get("confirmOrderAccepted") === "true";
+
+    if (!bank || !accountNumber || !accountName) {
+      return {
+        ok: false,
+        error: "Nama bank, nomor rekening, dan atas nama rekening utama wajib diisi.",
+      };
+    }
+
+    await adminVerifyOrderBank({
+      orderId,
+      primary: { bank, accountNumber, accountName },
+      secondary:
+        bank2 && accountNumber2
+          ? { bank: bank2, accountNumber: accountNumber2, accountName: accountName2 }
+          : null,
+      adminNote: adminNote || undefined,
+      confirmOrderAccepted,
+    });
+
+    refreshOrder(orderId);
+    return { ok: true, message: "Rekening resmi berhasil diverifikasi dan disinkronkan ke undangan." };
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : "Gagal memverifikasi rekening." };
+  }
 }
 

@@ -5,3 +5,4 @@ export * from "./variable-registry";
 export * from "./resolver";
 export * from "./resolve-document";
 export * from "./form";
+export * from "./bank-lock";

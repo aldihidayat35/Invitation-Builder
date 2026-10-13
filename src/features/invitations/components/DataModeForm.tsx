@@ -45,6 +45,7 @@ export function DataModeForm({
   initialAssets,
   save,
   readOnly = false,
+  readOnlyBank = false,
 }: {
   invitationId: string;
   workspaceId?: string;
@@ -55,6 +56,7 @@ export function DataModeForm({
   initialAssets?: readonly AssetSummary[];
   save: SaveDataAction;
   readOnly?: boolean;
+  readOnlyBank?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -114,6 +116,7 @@ export function DataModeForm({
           errors={errors}
           workspaceId={workspaceId}
           initialAssets={initialAssets}
+          readOnlyBank={readOnlyBank}
           {...(imageOptions && { imageOptions })}
         />
       </fieldset>
