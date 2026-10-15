@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPublicSellerStorefront } from "@/features/reseller/api";
 import { StorefrontInteractiveSection } from "./StorefrontInteractiveSection";
+import { getBaseUrl, absoluteUrl } from "@/lib/seo/config";
+import { LocalBusinessJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import styles from "./seller-storefront.module.css";
 
 interface SellerStorefrontPageProps {
@@ -26,9 +28,23 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
     profile.heroSubtitle ||
     `Layanan pembuatan website undangan digital premium bersama ${profile.agencyName}. Desain elegan, responsif, dan siap kirim ke para tamu.`;
 
+  const canonicalUrl = absoluteUrl(`/seller/${encodeURIComponent(slug)}`);
+
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+      },
+    },
     icons: {
       icon: profile.logoUrl
         ? `/api/app-favicon?seller=${encodeURIComponent(slug)}`
@@ -43,6 +59,7 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
       images: [
         {
           url: profile.heroImageUrl || "/images/landing-hero.jpg",
@@ -51,6 +68,12 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
           alt: profile.agencyName,
         },
       ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [profile.heroImageUrl || "/images/landing-hero.jpg"],
     },
   };
 }
@@ -79,12 +102,30 @@ export default async function SellerStorefrontPage({ params }: SellerStorefrontP
     "Wujudkan momen pernikahan istimewa Anda dengan website undangan digital elegan, modern, dan fitur terlengkap untuk seluruh tamu tercinta.";
 
   const brandColor = profile.brandColor || "#d4af37";
+  const siteUrl = getBaseUrl();
+  const currentUrl = absoluteUrl(`/seller/${encodeURIComponent(slug)}`);
 
   return (
-    <div
-      className={styles.storefront}
-      style={{ "--seller-brand": brandColor } as React.CSSProperties}
-    >
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Beranda", url: siteUrl },
+          { name: "Mitra Resmi", url: `${siteUrl}/#reseller` },
+          { name: profile.agencyName, url: currentUrl },
+        ]}
+      />
+      <LocalBusinessJsonLd
+        name={profile.agencyName}
+        description={heroSubtitle}
+        url={currentUrl}
+        image={profile.logoUrl ? absoluteUrl(profile.logoUrl) : undefined}
+        telephone={profile.whatsappContact}
+        address="Indonesia"
+      />
+      <div
+        className={styles.storefront}
+        style={{ "--seller-brand": brandColor } as React.CSSProperties}
+      >
       {/* Topbar Navigation */}
       <header className={styles.topbar}>
         <div className={styles.topbarContainer}>
@@ -284,5 +325,6 @@ export default async function SellerStorefrontPage({ params }: SellerStorefrontP
         </div>
       </footer>
     </div>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { logoutAction } from "@/app/(dashboard)/login/actions";
 import { DashboardShell, type NavGroup } from "@/features/dashboard-layout";
 import { fetchStorageOverview } from "@/features/assets/api";
@@ -27,6 +28,10 @@ import {
 } from "./nav-icons";
 import { getPublicSiteSettings } from "@/features/site/api";
 import { switchWorkspaceAction } from "@/features/workspaces/actions";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /** Authenticated enterprise dashboard shell layout. */
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {

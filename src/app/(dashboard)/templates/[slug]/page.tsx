@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getCatalogDetail } from "@/features/templates/api";
 import { getPublicSiteSettings } from "@/features/site/api";
 import { TemplateDetailView, type PublicTemplateDetail } from "./TemplateDetailView";
+import { buildPublicMetadata, getBaseUrl, absoluteUrl } from "@/lib/seo/config";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -160,18 +162,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const fallback = PRESET_FALLBACK_TEMPLATES[slug.toLowerCase()] || PRESET_FALLBACK_TEMPLATES["classic-floral-botanical"];
   const name = template?.name || fallback?.name || "Template Undangan";
-  const appName = settings?.appName || "Undangan.id";
   const desc = template?.description || fallback?.description || "Template undangan digital eksklusif siap pakai.";
+  const thumbnail = template?.thumbnailUrl || fallback?.thumbnailUrl;
 
-  return {
-    title: `${name} — Template Undangan Digital Elegan | ${appName}`,
+  return buildPublicMetadata({
+    title: `${name} — Template Undangan Digital Elegan`,
     description: desc,
-    openGraph: {
-      title: `${name} — Template Undangan Digital | ${appName}`,
-      description: desc,
-      images: template?.thumbnailUrl || fallback?.thumbnailUrl ? [{ url: template?.thumbnailUrl || fallback?.thumbnailUrl || "" }] : [],
-    },
-  };
+    canonicalPath: `/templates/${encodeURIComponent(slug)}`,
+    keywords: [
+      `template ${name.toLowerCase()}`,
+      "undangan digital elegan",
+      "desain undangan pernikahan",
+      "tema undangan website",
+    ],
+    ogImage: thumbnail,
+    robots: { index: true, follow: true },
+    settings,
+  });
 }
 
 export default async function TemplateDetailPage({ params, searchParams }: PageProps) {
@@ -273,11 +280,33 @@ export default async function TemplateDetailPage({ params, searchParams }: PageP
           ],
   };
 
+  const siteUrl = getBaseUrl(settings);
+  const currentUrl = absoluteUrl(`/templates/${encodeURIComponent(slug)}`, siteUrl);
+
   return (
-    <TemplateDetailView
-      template={templateDetail}
-      appSettings={settings}
-      autoOpenOrder={autoOpenOrder}
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Beranda", url: siteUrl },
+          { name: "Katalog Template", url: `${siteUrl}/#template` },
+          { name: templateDetail.name, url: currentUrl },
+        ]}
+      />
+      <ProductJsonLd
+        name={`${templateDetail.name} — Template Undangan Digital`}
+        description={templateDetail.description}
+        images={templateDetail.thumbnailUrl ? [absoluteUrl(templateDetail.thumbnailUrl, siteUrl)] : []}
+        price={templateDetail.price}
+        currency="IDR"
+        url={currentUrl}
+        category={templateDetail.category}
+        brandName={settings?.appName || "Undangan.id"}
+      />
+      <TemplateDetailView
+        template={templateDetail}
+        appSettings={settings}
+        autoOpenOrder={autoOpenOrder}
+      />
+    </>
   );
 }

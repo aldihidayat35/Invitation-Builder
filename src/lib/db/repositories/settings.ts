@@ -15,6 +15,15 @@ export const DEFAULT_APP_SETTINGS: AppSettingRow = {
   footerDescription:
     "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
   heroBackgroundImage: null,
+  siteUrl: null,
+  metaTitle: "Undangan.id — Template Undangan Digital Elegan & Modern",
+  metaDescription:
+    "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
+  metaKeywords:
+    "undangan digital, template undangan, undangan pernikahan online, undangan nikah website, rsvp digital, undangan aqiqah, undangan ulang tahun",
+  ogImage: null,
+  googleSiteVerification: null,
+  googleAnalyticsId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -37,12 +46,40 @@ export async function ensureAppSettingsTable(db: Database): Promise<void> {
         "address" text DEFAULT 'Jl. Jenderal Sudirman No. 45, Jakarta Selatan, DKI Jakarta 12190' NOT NULL,
         "footer_description" text DEFAULT 'Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.' NOT NULL,
         "hero_background_image" text,
+        "site_url" text,
+        "meta_title" text,
+        "meta_description" text,
+        "meta_keywords" text,
+        "og_image" text,
+        "google_site_verification" text,
+        "google_analytics_id" text,
         "created_at" timestamp with time zone DEFAULT now() NOT NULL,
         "updated_at" timestamp with time zone DEFAULT now() NOT NULL
       );
     `);
     await db.execute(sql`
       ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "hero_background_image" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "site_url" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "meta_title" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "meta_description" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "meta_keywords" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "og_image" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "google_site_verification" text;
+    `);
+    await db.execute(sql`
+      ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "google_analytics_id" text;
     `);
   } catch (err) {
     console.warn("[ensureAppSettingsTable] notice:", err);
@@ -81,6 +118,13 @@ export async function getAppSettings(database?: Database): Promise<AppSettingRow
         address: DEFAULT_APP_SETTINGS.address,
         footerDescription: DEFAULT_APP_SETTINGS.footerDescription,
         heroBackgroundImage: DEFAULT_APP_SETTINGS.heroBackgroundImage,
+        siteUrl: DEFAULT_APP_SETTINGS.siteUrl,
+        metaTitle: DEFAULT_APP_SETTINGS.metaTitle,
+        metaDescription: DEFAULT_APP_SETTINGS.metaDescription,
+        metaKeywords: DEFAULT_APP_SETTINGS.metaKeywords,
+        ogImage: DEFAULT_APP_SETTINGS.ogImage,
+        googleSiteVerification: DEFAULT_APP_SETTINGS.googleSiteVerification,
+        googleAnalyticsId: DEFAULT_APP_SETTINGS.googleAnalyticsId,
       })
       .onConflictDoNothing()
       .returning();

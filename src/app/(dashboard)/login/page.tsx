@@ -6,7 +6,10 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { LoginForm } from "./login-form";
 import styles from "./login.module.css";
 
-export const metadata: Metadata = { title: "Masuk" };
+export const metadata: Metadata = {
+  title: "Masuk",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;

@@ -4,11 +4,20 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { RegisterForm } from "./register-form";
 import styles from "./register.module.css";
 
-export const metadata: Metadata = {
-  title: "Pendaftaran Mitra Reseller",
-  description:
-    "Daftarkan brand dan bisnis undangan digital Anda untuk mendapatkan dashboard dan storefront khusus reseller.",
-};
+import { getPublicSiteSettings } from "@/features/site/api";
+import { buildPublicMetadata } from "@/lib/seo/config";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSiteSettings().catch(() => null);
+  return buildPublicMetadata({
+    title: "Pendaftaran Mitra Reseller",
+    description:
+      "Daftarkan brand dan bisnis undangan digital Anda untuk mendapatkan dashboard dan storefront khusus reseller resmi.",
+    canonicalPath: "/register-reseller",
+    keywords: ["mitra reseller undangan", "bisnis undangan digital", "daftar reseller undangan"],
+    settings,
+  });
+}
 
 export default async function RegisterResellerPage() {
   const currentUser = await getCurrentUser();

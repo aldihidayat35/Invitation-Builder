@@ -574,6 +574,13 @@ export const appSettings = pgTable("app_settings", {
       "Platform pembuatan website undangan digital yang elegan, praktis, dan penuh makna untuk berbagai momen spesial di Indonesia.",
     ),
   heroBackgroundImage: text("hero_background_image"),
+  siteUrl: text("site_url"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  metaKeywords: text("meta_keywords"),
+  ogImage: text("og_image"),
+  googleSiteVerification: text("google_site_verification"),
+  googleAnalyticsId: text("google_analytics_id"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

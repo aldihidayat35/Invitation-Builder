@@ -6,7 +6,10 @@ import { TemplateNotFoundError, openTemplate, permissionsFor } from "@/features/
 import { requireOwner } from "@/lib/auth/server";
 import { currentRevisionAction, saveDraftAction } from "./actions";
 
-export const metadata: Metadata = { title: "Editor template" };
+export const metadata: Metadata = {
+  title: "Editor template",
+  robots: { index: false, follow: false },
+};
 
 export default async function EditorPage({ params }: PageProps<"/editor/[id]">) {
   await requireOwner();
