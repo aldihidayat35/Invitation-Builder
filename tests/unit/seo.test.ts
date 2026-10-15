@@ -82,9 +82,14 @@ describe("Robots.txt & Sitemap.xml Dynamic Handlers", () => {
     expect(robotsConfig.sitemap).toContain("/sitemap.xml");
     const rules = Array.isArray(robotsConfig.rules) ? robotsConfig.rules[0] : robotsConfig.rules;
     expect(rules).toBeDefined();
+    if (!rules) {
+      throw new Error("Robots rules are required");
+    }
 
-    const allow = Array.isArray(rules.allow) ? rules.allow : [rules.allow];
-    const disallow = Array.isArray(rules.disallow) ? rules.disallow : [rules.disallow];
+    const rawAllow = rules.allow;
+    const rawDisallow = rules.disallow;
+    const allow = Array.isArray(rawAllow) ? rawAllow : rawAllow ? [rawAllow] : [];
+    const disallow = Array.isArray(rawDisallow) ? rawDisallow : rawDisallow ? [rawDisallow] : [];
 
     // Must allow public marketing & catalog routes
     expect(allow).toContain("/");

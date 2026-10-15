@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { getBaseUrl } from "@/lib/seo/config";
 import "./public.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   // PRD §13.1 / §19: public invitations are noindex by default.
   robots: { index: false, follow: false },
   icons: {

@@ -28,9 +28,11 @@ export async function generateMetadata({ params }: SellerStorefrontPageProps): P
     profile.heroSubtitle ||
     `Layanan pembuatan website undangan digital premium bersama ${profile.agencyName}. Desain elegan, responsif, dan siap kirim ke para tamu.`;
 
-  const canonicalUrl = absoluteUrl(`/seller/${encodeURIComponent(slug)}`);
+  const baseUrl = getBaseUrl();
+  const canonicalUrl = absoluteUrl(`/seller/${encodeURIComponent(slug)}`, baseUrl);
 
   return {
+    metadataBase: new URL(baseUrl),
     title,
     description,
     alternates: {
