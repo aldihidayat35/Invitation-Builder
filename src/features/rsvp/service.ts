@@ -130,3 +130,96 @@ export async function listInvitationRsvps(
     createdAt: r.createdAt,
   }));
 }
+
+export interface PublicWishItem {
+  readonly id: string;
+  readonly name: string;
+  readonly presence: "hadir" | "berhalangan" | string;
+  readonly message: string;
+  readonly date: string;
+  readonly createdAt: string;
+}
+
+export function formatWishTime(date: Date | string | undefined): string {
+  if (!date) return "Baru saja";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "Baru saja";
+
+  const diffMs = Date.now() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSec < 60) return "Baru saja";
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  if (diffHours < 24) return `${diffHours} jam lalu`;
+  if (diffDays === 1) return "Kemarin";
+  if (diffDays < 7) return `${diffDays} hari lalu`;
+
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+const DEMO_WISHES: readonly PublicWishItem[] = [
+  {
+    id: "demo-1",
+    name: "Dina & Rian",
+    presence: "hadir",
+    message:
+      "Selamat menempuh hidup baru! Semoga menjadi keluarga yang sakinah, mawaddah, warahmah. Bahagia selalu! 💕",
+    date: "Baru saja",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "demo-2",
+    name: "Budi Santoso",
+    presence: "hadir",
+    message:
+      "Happy wedding brother! Lancar jaya acaranya sampai hari H. Doa terbaik untuk kalian berdua!",
+    date: "1 jam lalu",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "demo-3",
+    name: "Maya Indah",
+    presence: "berhalangan",
+    message:
+      "Selamat ya kalian berdua! Maaf belum bisa hadir langsung karena masih dinas, tapi doa restu kami selalu menyertai kalian.",
+    date: "3 jam lalu",
+    createdAt: new Date(Date.now() - 10800000).toISOString(),
+  },
+];
+
+export async function listPublicWishesBySlug(
+  db: Database,
+  slug: string,
+): Promise<PublicWishItem[]> {
+  const clean = slug.trim().toLowerCase();
+  const invitation = await findInvitationBySlug(db, clean);
+
+  if (!invitation) {
+    if (clean.startsWith("demo-") || clean.includes("showcase")) {
+      return [...DEMO_WISHES];
+    }
+    return [];
+  }
+
+  const rows = await listRsvpRows(db, invitation.id);
+  const withMessage = rows.filter(
+    (r) => typeof r.message === "string" && r.message.trim().length > 0,
+  );
+
+  return withMessage.map((r) => ({
+    id: r.id,
+    name: r.guestName || r.name,
+    presence: r.response === "attending" ? "hadir" : "berhalangan",
+    message: r.message!.trim(),
+    date: formatWishTime(r.createdAt),
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+

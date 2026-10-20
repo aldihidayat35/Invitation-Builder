@@ -88,6 +88,18 @@ export function RsvpWidget({
         return;
       }
       track("rsvp_submitted", { response });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("dib:rsvp-submitted", {
+            detail: {
+              name: name.trim(),
+              presence: response === "attending" ? "hadir" : "berhalangan",
+              message: message.trim(),
+              date: "Baru saja",
+            },
+          }),
+        );
+      }
       setPhase("done");
     } catch {
       setError("Gagal mengirim. Periksa koneksi Anda.");
