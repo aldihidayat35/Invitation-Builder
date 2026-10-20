@@ -15,12 +15,14 @@ import {
   createRoyalElegantDemoDocument,
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
+  createAllFeaturesShowcaseDocument,
 } from "./demo-presets";
 
 export {
   createRoyalElegantDemoDocument,
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
+  createAllFeaturesShowcaseDocument,
 };
 
 function formatGuestName(rawTokenOrName?: string): string | undefined {
@@ -87,6 +89,14 @@ export async function getDemoInvitation(
   // 2. Jika template tidak ditemukan di database, gunakan preset fallback bawaan
   if (!doc) {
     if (
+      clean === "demo-master-showcase" ||
+      clean === "master-showcase-all-features" ||
+      clean === "master-showcase" ||
+      clean.includes("showcase")
+    ) {
+      doc = createAllFeaturesShowcaseDocument();
+      title = "Arya & Nabila — Grand Master Showcase";
+    } else if (
       clean === "demo-royal-elegant" ||
       clean === "royal-elegant-jawa" ||
       clean === "royal-elegant" ||
