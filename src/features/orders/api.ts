@@ -133,6 +133,13 @@ export async function savePortalInvitationData(
   return service.saveClientPortalInvitationData(await getDb(), token, values);
 }
 
+export async function savePortalGallery(
+  token: string,
+  items: { assetId?: string; src?: string; alt?: string }[],
+) {
+  return service.saveClientPortalGallery(await getDb(), token, items);
+}
+
 export async function regenerateOrderClientToken(orderId: string) {
   const user = await requireUser();
   return service.regenerateOrderClientToken(await getDb(), actorOf(user), orderId);

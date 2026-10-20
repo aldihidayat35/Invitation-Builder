@@ -231,7 +231,13 @@ export function resolveDocument(
           let hiddenByBinding = false;
           const props: Record<string, unknown> = {};
           for (const [name, value] of Object.entries(element.props)) {
-            if (isBinding(value)) {
+            if (
+              element.widgetType === "gallery" &&
+              name === "items" &&
+              Array.isArray(data["gallery.items"])
+            ) {
+              props[name] = structuredClone(data["gallery.items"]);
+            } else if (isBinding(value)) {
               const resolved = resolveAt(value, [...path, "props", name], where);
               if (resolved.hidden) hiddenByBinding = true;
               props[name] = resolved.value === undefined ? null : structuredClone(resolved.value);

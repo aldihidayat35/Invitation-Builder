@@ -8,6 +8,7 @@ import {
   submitPortalDecisionAction,
 } from "./actions";
 import { PortalVariableForm } from "./components/PortalVariableForm";
+import { PortalGalleryManager } from "./components/PortalGalleryManager";
 import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
 import styles from "./client-portal.module.css";
 
@@ -17,7 +18,8 @@ interface ClientPortalViewProps {
 }
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
-  const [activeTab, setActiveTab] = useState<"data" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [galleryItems, setGalleryItems] = useState(data.galleryItems || []);
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
   const [guestSearch, setGuestSearch] = useState("");
   const [rsvpFilter, setRsvpFilter] = useState<"all" | "attending" | "not_attending">("all");
@@ -255,6 +257,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("gallery")}
+            className={`${styles.tabBtn} ${activeTab === "gallery" ? styles.tabBtnActive : ""}`}
+          >
+            <span>🖼️</span>
+            <span>Galeri Foto</span>
+            <span className={styles.tabCount}>{galleryItems.length}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("review")}
             className={`${styles.tabBtn} ${activeTab === "review" ? styles.tabBtnActive : ""}`}
           >
@@ -373,6 +384,19 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
               />
             )}
           </div>
+        )}
+
+        {/* --- TAB 0.5: GALERI FOTO UNDANGAN --- */}
+        {activeTab === "gallery" && (
+          <PortalGalleryManager
+            token={token}
+            initialItems={galleryItems}
+            previewUrl={data.previewUrl}
+            onSaved={(newItems) => {
+              setGalleryItems(newItems);
+              showToast("Galeri foto berhasil disimpan!");
+            }}
+          />
         )}
 
         {/* --- TAB 1: REVIEW UNDANGAN --- */}

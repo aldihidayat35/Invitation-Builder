@@ -171,7 +171,10 @@ export function formatFormValue(field: FormField, value: unknown): string {
     case "datetime":
       return typeof value === "object" && "local" in value ? String(value.local).slice(0, 16) : "";
     case "image":
-      return typeof value === "object" && "assetId" in value ? String(value.assetId) : "";
+      if (typeof value === "string") return value;
+      return typeof value === "object" && value !== null && "assetId" in value
+        ? String((value as { assetId: unknown }).assetId)
+        : "";
     case "coordinate":
       return typeof value === "object" && "lat" in value && "lng" in value
         ? `${String(value.lat)}, ${String(value.lng)}`

@@ -1048,6 +1048,7 @@ export interface ClientPortalData {
     whatsappUrl: string;
   };
   bankVerification?: BankVerificationMeta;
+  galleryItems?: { assetId?: string; src?: string; alt?: string }[];
 }
 
 export async function getClientPortalDataByToken(
@@ -1268,6 +1269,43 @@ export async function getClientPortalDataByToken(
     }
   }
 
+  // Resolving gallery items for portal
+  let galleryItems: { assetId?: string; src?: string; alt?: string }[] = [];
+  if (invitation && Array.isArray(invitation.data["gallery.items"])) {
+    galleryItems = (invitation.data["gallery.items"] as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
+  } else if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
+      for (const sec of doc.sections) {
+        for (const el of sec.elements) {
+          if (el.type === "widget" && el.widgetType === "gallery" && Array.isArray(el.props?.items)) {
+            galleryItems = (el.props.items as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
+            break;
+          }
+        }
+        if (galleryItems.length > 0) break;
+      }
+    }
+  } else if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl && tmpl.publishedVersionNo !== null) {
+      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
+      if (ver) {
+        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
+        for (const sec of doc.sections) {
+          for (const el of sec.elements) {
+            if (el.type === "widget" && el.widgetType === "gallery" && Array.isArray(el.props?.items)) {
+              galleryItems = (el.props.items as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
+              break;
+            }
+          }
+          if (galleryItems.length > 0) break;
+        }
+      }
+    }
+  }
+
   const slug = invitation?.slug;
   const shareableUrl = slug ? `/i/${slug}` : null;
   const previewUrl = slug
@@ -1293,6 +1331,7 @@ export async function getClientPortalDataByToken(
       whatsappUrl,
     },
     bankVerification,
+    galleryItems,
   };
 }
 
@@ -1473,6 +1512,67 @@ export async function saveClientPortalInvitationData(
   }
 
   return { ok: true, issues, errors };
+}
+
+export async function saveClientPortalGallery(
+  db: Database,
+  token: string,
+  items: { assetId?: string; src?: string; alt?: string }[],
+): Promise<{ ok: boolean; count: number; slug?: string }> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal) {
+    throw new Error("Token akses portal tidak valid.");
+  }
+
+  let invitation = portal.invitation;
+  if (!invitation) {
+    if (portal.order?.templateId) {
+      invitation = await ensureOrderInvitation(db, portal.order);
+    }
+    if (!invitation) {
+      throw new Error("Proyek undangan belum siap atau template belum ditentukan.");
+    }
+  }
+
+  // Batas maksimal 15 foto galeri sesuai kesepakatan
+  const cleanItems = (Array.isArray(items) ? items : []).slice(0, 15).map((item) => ({
+    ...(item.assetId ? { assetId: item.assetId } : {}),
+    ...(item.src ? { src: item.src } : {}),
+    alt: typeof item.alt === "string" ? item.alt.slice(0, 100) : "",
+  }));
+
+  const updatedData: Record<string, unknown> = {
+    ...invitation.data,
+    "gallery.items": cleanItems,
+  };
+
+  const updatedInv = await updateInvitationData(db, {
+    invitationId: invitation.id,
+    data: updatedData,
+  });
+  if (!updatedInv) throw new Error("Gagal menyimpan galeri foto undangan.");
+
+  await insertAuditLog(db, {
+    workspaceId: invitation.workspaceId,
+    actorId: null,
+    action: "order.portal_data_update",
+    entityType: "invitation",
+    entityId: invitation.id,
+    metadata: { token, photoCount: cleanItems.length, type: "gallery" },
+  });
+
+  const isRealOrder = portal.order && portal.order.id !== invitation.id;
+  if (isRealOrder) {
+    await insertOrderWorkflowEvent(db, {
+      orderId: portal.order.id,
+      actorId: null,
+      eventType: "portal_data_update",
+      note: `Klien memperbarui galeri foto undangan (${cleanItems.length} foto) melalui Portal Mandiri.`,
+      metadata: { token, photoCount: cleanItems.length },
+    });
+  }
+
+  return { ok: true, count: cleanItems.length, slug: invitation.slug };
 }
 
 export async function addGuestByClientToken(

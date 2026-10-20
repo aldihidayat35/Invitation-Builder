@@ -1,0 +1,161 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1rem;
+  border: 2px dashed #d8c3b0;
+  border-radius: 12px;
+  background: #fdfbf8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.dropzone:hover:not(.disabled) {
+  border-color: #7b5836;
+  background: #fbf5ee;
+}
+
+.dropzoneActive {
+  border-color: #7b5836;
+  background: #f7efe4;
+  transform: scale(0.99);
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropzoneIcon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.dropzoneTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #3f2e1e;
+}
+
+.dropzoneSub {
+  font-size: 0.75rem;
+  color: #8c7d6f;
+}
+
+.previewWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ebd9c8;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.previewThumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #ebd9c8;
+  background: #fbf5ee;
+  flex-shrink: 0;
+}
+
+.previewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.previewLabel {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #23180d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.previewActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btnAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid #d8c3b0;
+  background: #ffffff;
+  color: #554433;
+}
+
+.btnAction:hover:not(:disabled) {
+  background: #fbf5ee;
+  border-color: #7b5836;
+  color: #23180d;
+}
+
+.btnDanger {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.uploadingBox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #fbf5ee;
+  border: 1px solid #e2cfbd;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ebd9c8;
+  border-top-color: #7b5836;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorText {
+  color: #dc2626;
+  font-size: 0.75rem;
+  font-weight: 500;
+}

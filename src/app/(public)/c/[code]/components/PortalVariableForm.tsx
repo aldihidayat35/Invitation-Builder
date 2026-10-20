@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState, useTransition } from "
 import type { FormGroup } from "@/lib/engine";
 import { isGiftAccountVariableKey, type BankVerificationMeta } from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
+import { PortalImageField } from "./PortalImageField";
 import styles from "../client-portal.module.css";
 
 interface PortalVariableFormProps {
@@ -282,6 +283,17 @@ export function PortalVariableForm({
                             </option>
                           ))}
                         </select>
+                      ) : field.control === "image" ? (
+                        <PortalImageField
+                          id={fieldId}
+                          name={field.key}
+                          label={field.label}
+                          value={val}
+                          disabled={isFieldLocked}
+                          token={token}
+                          onChange={(newVal) => handleChange(field.key, newVal)}
+                          error={err}
+                        />
                       ) : (
                         <input
                           id={fieldId}
@@ -305,9 +317,7 @@ export function PortalVariableForm({
                           placeholder={
                             field.control === "url"
                               ? "https://maps.google.com/..."
-                              : field.control === "image"
-                                ? "URL Gambar / Foto (atau kirim via WA)"
-                                : `Masukkan ${field.label.toLowerCase()}…`
+                              : `Masukkan ${field.label.toLowerCase()}…`
                           }
                         />
                       )}
