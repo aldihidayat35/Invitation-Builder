@@ -164,6 +164,7 @@ export async function savePortalInvitationDataAction(
 export async function savePortalGalleryAction(
   token: string,
   items: { assetId?: string; src?: string; alt?: string }[],
+  enabled?: boolean,
 ): Promise<PortalActionResult> {
   const cleanToken = token.trim();
   if (!cleanToken) {
@@ -171,7 +172,7 @@ export async function savePortalGalleryAction(
   }
 
   try {
-    const res = await savePortalGallery(cleanToken, items);
+    const res = await savePortalGallery(cleanToken, items, enabled);
     revalidatePath(`/c/${cleanToken}`);
     revalidatePath(`/portal/${cleanToken}`);
     if (res.slug) {

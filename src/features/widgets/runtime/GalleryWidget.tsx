@@ -90,20 +90,7 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
   const presentation = getGalleryPresentation(style?.variant, layout);
 
   if (images.length === 0) {
-    return (
-      <WidgetFrame type="gallery" style={style} className={styles.gallery}>
-        <div
-          className={styles.galleryEmptyPreview}
-          data-gallery-presentation={presentation}
-          data-testid="gallery-empty-preview"
-          aria-label="Belum ada foto galeri"
-        >
-          <span />
-          <span />
-          <span />
-        </div>
-      </WidgetFrame>
-    );
+    return null;
   }
 
   const isSlider =

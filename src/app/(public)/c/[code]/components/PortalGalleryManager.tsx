@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState, useTransition } from "
 import { assetUrl } from "@/features/assets/urls";
 import { savePortalGalleryAction, uploadPortalAssetAction } from "../actions";
 import { compressImageClient } from "./image-compressor";
+import { PhotoCropModal } from "./PhotoCropModal";
 import styles from "./PortalGalleryManager.module.css";
 
 const MAX_GALLERY_PHOTOS = 15;
@@ -18,23 +19,31 @@ export interface GalleryItem {
 interface PortalGalleryManagerProps {
   token: string;
   initialItems?: GalleryItem[];
+  initialEnabled?: boolean;
   previewUrl?: string | null;
-  onSaved?: (items: GalleryItem[]) => void;
+  onSaved?: (items: GalleryItem[], enabled: boolean) => void;
 }
 
 export function PortalGalleryManager({
   token,
   initialItems = [],
+  initialEnabled = true,
   previewUrl,
   onSaved,
 }: PortalGalleryManagerProps) {
   const [items, setItems] = useState<GalleryItem[]>(() => [...initialItems]);
+  const [isEnabled, setIsEnabled] = useState<boolean>(initialEnabled);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadText, setUploadText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "dirty" | "error">("saved");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [cropTarget, setCropTarget] = useState<{
+    itemIndex?: number;
+    file?: File;
+    url: string;
+    isTemp: boolean;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,16 +57,18 @@ export function PortalGalleryManager({
   };
 
   const saveGallery = useCallback(
-    async (itemsToSave: GalleryItem[]) => {
+    async (itemsToSave: GalleryItem[], enabledToSave?: boolean) => {
       setSaveStatus("saving");
       setStatusMessage("Menyimpan galeri foto…");
 
+      const activeEnabled = enabledToSave !== undefined ? enabledToSave : isEnabled;
+
       try {
-        const res = await savePortalGalleryAction(token, itemsToSave);
+        const res = await savePortalGalleryAction(token, itemsToSave, activeEnabled);
         if (res.ok) {
           setSaveStatus("saved");
           setStatusMessage(res.message || "Galeri foto tersimpan otomatis.");
-          onSaved?.(itemsToSave);
+          onSaved?.(itemsToSave, activeEnabled);
         } else {
           setSaveStatus("error");
           setStatusMessage(res.error || "Gagal menyimpan galeri.");
@@ -67,7 +78,7 @@ export function PortalGalleryManager({
         setStatusMessage(err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
       }
     },
-    [token, onSaved],
+    [token, isEnabled, onSaved],
   );
 
   const queueAutoSave = useCallback(
@@ -101,6 +112,14 @@ export function PortalGalleryManager({
       alert(
         `Hanya ${availableSlots} foto yang dapat ditambahkan karena batas maksimal ${MAX_GALLERY_PHOTOS} foto.`,
       );
+    }
+
+    // If 1 photo is picked, open PhotoCropModal immediately for zoom and position framing
+    if (filesToUpload.length === 1 && filesToUpload[0]) {
+      const file = filesToUpload[0];
+      const tempUrl = URL.createObjectURL(file);
+      setCropTarget({ file, url: tempUrl, isTemp: true });
+      return;
     }
 
     setIsUploading(true);
@@ -139,6 +158,54 @@ export function PortalGalleryManager({
       const updated = [...items, ...newlyUploaded];
       setItems(updated);
       void saveGallery(updated);
+    }
+  };
+
+  const handleCropConfirm = async (file: File) => {
+    if (!cropTarget) return;
+
+    setIsUploading(true);
+    setUploadText("Mengompres & mengunggah foto potongan…");
+
+    try {
+      const compressed = await compressImageClient(file);
+      const formData = new FormData();
+      formData.append("file", compressed);
+
+      const res = await uploadPortalAssetAction(token, formData);
+      if (res.ok && res.data) {
+        if (cropTarget.itemIndex !== undefined) {
+          // Editing existing gallery item
+          const updated = items.map((it, idx) =>
+            idx === cropTarget.itemIndex
+              ? { ...it, assetId: res.data!.assetId, src: undefined }
+              : it,
+          );
+          setItems(updated);
+          void saveGallery(updated);
+        } else {
+          // Adding new photo
+          const newPhoto: GalleryItem = {
+            assetId: res.data.assetId,
+            alt: cropTarget.file?.name.replace(/\.[^.]+$/, "").slice(0, 50) || "Foto Galeri",
+          };
+          const updated = [...items, newPhoto];
+          setItems(updated);
+          void saveGallery(updated);
+        }
+      } else {
+        alert(res.error || "Gagal mengunggah foto.");
+      }
+    } catch (err) {
+      console.error("Error cropping gallery photo:", err);
+      alert("Gagal memproses foto potongan.");
+    } finally {
+      setIsUploading(false);
+      setUploadText("");
+      if (cropTarget.isTemp) {
+        URL.revokeObjectURL(cropTarget.url);
+      }
+      setCropTarget(null);
     }
   };
 
@@ -235,6 +302,71 @@ export function PortalGalleryManager({
           widget galeri undangan digital Anda secara rapi. Maksimal {MAX_GALLERY_PHOTOS} foto.
         </p>
 
+        {/* Toggle Switch Tampilkan Galeri di Undangan */}
+        <div className={styles.toggleRow}>
+          <div className={styles.toggleLabelGroup}>
+            <div className={styles.toggleTitle}>
+              <span>Tampilkan Galeri Foto di Undangan</span>
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  padding: "0.15rem 0.55rem",
+                  borderRadius: "9999px",
+                  background: isEnabled ? "#d1fae5" : "#fee2e2",
+                  color: isEnabled ? "#065f46" : "#991b1b",
+                  fontWeight: 700,
+                }}
+              >
+                {isEnabled ? "Aktif" : "Nonaktif"}
+              </span>
+            </div>
+            <div className={styles.toggleSub}>
+              Bagian galeri akan otomatis disembunyikan di undangan pernikahan jika dinonaktifkan atau belum ada foto.
+            </div>
+          </div>
+
+          <label className={styles.switchWrapper}>
+            <input
+              type="checkbox"
+              checked={isEnabled}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsEnabled(checked);
+                void saveGallery(items, checked);
+              }}
+              className={styles.switchInput}
+            />
+            <span className={styles.switchSlider} />
+          </label>
+        </div>
+
+        {/* Notice Status */}
+        {!isEnabled ? (
+          <div className={`${styles.noticeBanner} ${styles.noticeBannerDisabled}`}>
+            <span>⚠️</span>
+            <span>
+              Galeri foto saat ini <strong>dinonaktifkan</strong>. Bagian galeri tidak akan ditampilkan pada undangan pernikahan Anda.
+            </span>
+          </div>
+        ) : items.length === 0 ? (
+          <div className={styles.noticeBanner}>
+            <span>💡</span>
+            <span>
+              Belum ada foto galeri yang diunggah. Bagian galeri <strong>otomatis disembunyikan</strong> di undangan pernikahan hingga Anda menambahkan foto.
+            </span>
+          </div>
+        ) : (
+          <div
+            className={styles.noticeBanner}
+            style={{ background: "#ecfdf5", borderColor: "#a7f3d0", color: "#065f46" }}
+          >
+            <span>✓</span>
+            <span>
+              Galeri aktif dan akan ditampilkan di undangan digital Anda dengan <strong>{items.length} foto</strong>.
+            </span>
+          </div>
+        )}
+
         {/* Save Bar / Notification */}
         <div className={styles.saveBar}>
           <div className={styles.saveStatus}>
@@ -323,7 +455,7 @@ export function PortalGalleryManager({
           <h3 className={styles.emptyTitle}>Belum Ada Foto Galeri</h3>
           <p className={styles.emptyDesc}>
             Klik tombol &quot;Tambah Foto&quot; di atas untuk mulai menambahkan foto momen bahagia Anda
-            ke dalam undangan pernikahan.
+            ke dalam undangan pernikahan. Bagian galeri otomatis disembunyikan sampai Anda menambahkan foto.
           </p>
           <button
             type="button"
@@ -384,20 +516,53 @@ export function PortalGalleryManager({
                       </button>
                     </div>
 
-                    <button
-                      type="button"
-                      title="Hapus foto ini"
-                      onClick={() => handleRemove(idx)}
-                      className={`${styles.iconBtn} ${styles.deleteBtn}`}
-                    >
-                      🗑️
-                    </button>
+                    <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                      <button
+                        type="button"
+                        title="Sesuaikan zoom, rotasi, & posisi foto"
+                        onClick={() =>
+                          setCropTarget({ itemIndex: idx, url, isTemp: false })
+                        }
+                        className={`${styles.iconBtn} ${styles.cropBtn}`}
+                      >
+                        ✂️
+                      </button>
+                      <button
+                        type="button"
+                        title="Hapus foto ini"
+                        onClick={() => handleRemove(idx)}
+                        className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Interactive Photo Crop & Zoom Modal */}
+      {cropTarget && (
+        <PhotoCropModal
+          isOpen={true}
+          imageSrc={cropTarget.url}
+          title={
+            cropTarget.itemIndex !== undefined
+              ? `Sesuaikan Foto Galeri #${cropTarget.itemIndex + 1}`
+              : "Sesuaikan Foto Galeri"
+          }
+          defaultAspectRatio="3:4"
+          onClose={() => {
+            if (cropTarget.isTemp) {
+              URL.revokeObjectURL(cropTarget.url);
+            }
+            setCropTarget(null);
+          }}
+          onConfirm={handleCropConfirm}
+        />
       )}
     </div>
   );

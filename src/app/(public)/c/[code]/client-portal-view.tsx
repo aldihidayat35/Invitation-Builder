@@ -417,10 +417,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
           <PortalGalleryManager
             token={token}
             initialItems={galleryItems}
+            initialEnabled={data.galleryEnabled ?? true}
             previewUrl={data.previewUrl}
-            onSaved={(newItems) => {
+            onSaved={(newItems, enabled) => {
               setGalleryItems(newItems);
-              showToast("Galeri foto berhasil disimpan!");
+              showToast(
+                enabled
+                  ? "Galeri foto berhasil disimpan!"
+                  : "Pengaturan galeri disimpan (galeri dinonaktifkan).",
+              );
             }}
           />
         )}

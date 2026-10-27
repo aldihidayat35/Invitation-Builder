@@ -1,9 +1,8 @@
-"use client";
-
 import React, { useRef, useState } from "react";
 import { assetUrl } from "@/features/assets/urls";
 import { uploadPortalAssetAction } from "../actions";
 import { compressImageClient } from "./image-compressor";
+import { PhotoCropModal } from "./PhotoCropModal";
 import styles from "./PortalImageField.module.css";
 
 const ASSET_ID_REGEX = /^[0-9a-f-]{36}$/i;
@@ -32,6 +31,7 @@ export function PortalImageField({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ url: string; isTemp: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const resolveImageUrl = (val: string): string => {
@@ -42,21 +42,14 @@ export function PortalImageField({
     return val;
   };
 
-  const handleFile = async (file: File) => {
-    if (disabled || isUploading) return;
-    setLocalError(null);
+  const currentUrl = resolveImageUrl(value);
 
-    // Basic MIME check
-    if (!file.type.startsWith("image/")) {
-      setLocalError("Berkas yang dipilih harus berupa gambar.");
-      return;
-    }
-
+  // Directly upload a processed File (from crop modal or direct)
+  const uploadProcessedFile = async (file: File) => {
     setIsUploading(true);
+    setLocalError(null);
     try {
-      // Compress large images on client side
       const processedFile = await compressImageClient(file);
-
       const formData = new FormData();
       formData.append("file", processedFile);
 
@@ -76,17 +69,29 @@ export function PortalImageField({
     }
   };
 
+  const handleFilePicked = (file: File) => {
+    if (disabled || isUploading) return;
+    setLocalError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setLocalError("Berkas yang dipilih harus berupa gambar.");
+      return;
+    }
+
+    // Open crop & zoom modal for the picked file
+    const tempUrl = URL.createObjectURL(file);
+    setCropTarget({ url: tempUrl, isTemp: true });
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     if (disabled || isUploading) return;
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      void handleFile(file);
+      handleFilePicked(file);
     }
   };
-
-  const currentUrl = resolveImageUrl(value);
 
   return (
     <div className={styles.container}>
@@ -98,7 +103,7 @@ export function PortalImageField({
         disabled={disabled || isUploading}
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) void handleFile(file);
+          if (file) handleFilePicked(file);
         }}
       />
       <input type="hidden" id={id} name={name} value={value} />
@@ -132,8 +137,18 @@ export function PortalImageField({
               <button
                 type="button"
                 disabled={disabled}
+                onClick={() => setCropTarget({ url: currentUrl, isTemp: false })}
+                className={`${styles.btnAction} ${styles.btnGold}`}
+                title="Sesuaikan zoom, rotasi, dan posisi foto"
+              >
+                ✂️ Sesuaikan / Zoom
+              </button>
+              <button
+                type="button"
+                disabled={disabled}
                 onClick={() => fileInputRef.current?.click()}
                 className={styles.btnAction}
+                title="Pilih berkas foto baru dari perangkat"
               >
                 🔄 Ganti Foto
               </button>
@@ -142,6 +157,7 @@ export function PortalImageField({
                 disabled={disabled}
                 onClick={() => onChange("")}
                 className={`${styles.btnAction} ${styles.btnDanger}`}
+                title="Hapus foto ini"
               >
                 🗑️ Hapus
               </button>
@@ -172,13 +188,36 @@ export function PortalImageField({
           <div className={styles.dropzoneIcon}>📷</div>
           <div className={styles.dropzoneTitle}>Pilih atau Tarik Foto ke Sini</div>
           <div className={styles.dropzoneSub}>
-            Format JPG, PNG, WebP, GIF (Maks. 15MB)
+            Format JPG, PNG, WebP, GIF (Bisa zoom & sesuaikan posisi)
           </div>
         </div>
       )}
 
       {(localError || error) && (
         <span className={styles.errorText}>⚠️ {localError || error}</span>
+      )}
+
+      {/* Interactive Photo Crop & Zoom Modal */}
+      {cropTarget && (
+        <PhotoCropModal
+          isOpen={true}
+          imageSrc={cropTarget.url}
+          title={`Sesuaikan ${label}`}
+          defaultAspectRatio="1:1"
+          onClose={() => {
+            if (cropTarget.isTemp) {
+              URL.revokeObjectURL(cropTarget.url);
+            }
+            setCropTarget(null);
+          }}
+          onConfirm={async (file) => {
+            if (cropTarget.isTemp) {
+              URL.revokeObjectURL(cropTarget.url);
+            }
+            setCropTarget(null);
+            await uploadProcessedFile(file);
+          }}
+        />
       )}
     </div>
   );

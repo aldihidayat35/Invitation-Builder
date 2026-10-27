@@ -1023,7 +1023,11 @@ export async function ensureOrderInvitation(
     templateVersionId: version.id,
     slug,
     title,
-    data: { ...initialData },
+    data: {
+      ...initialData,
+      "gallery.items": [],
+      "gallery.enabled": true,
+    },
     createdBy: order.assignedTo ?? order.clientUserId ?? defaultTemplate.createdBy ?? "system",
     clientAccessToken: order.clientAccessToken ?? undefined,
   });
@@ -1058,6 +1062,7 @@ export interface ClientPortalData {
   };
   bankVerification?: BankVerificationMeta;
   galleryItems?: { assetId?: string; src?: string; alt?: string }[];
+  galleryEnabled?: boolean;
   invitationCategory?: string;
   shareMessageTemplates?: PortalShareMessageTemplate[];
   activeShareMessageTemplate?: string;
@@ -1286,40 +1291,16 @@ export async function getClientPortalDataByToken(
     }
   }
 
-  // Resolving gallery items for portal
+  // Resolving gallery items and enabled status for portal (no dummy photos for client)
   let galleryItems: { assetId?: string; src?: string; alt?: string }[] = [];
-  if (invitation && Array.isArray(invitation.data["gallery.items"])) {
-    galleryItems = (invitation.data["gallery.items"] as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
-  } else if (invitation) {
-    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
-    if (foundVersion) {
-      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
-      for (const sec of doc.sections) {
-        for (const el of sec.elements) {
-          if (el.type === "widget" && el.widgetType === "gallery" && Array.isArray(el.props?.items)) {
-            galleryItems = (el.props.items as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
-            break;
-          }
-        }
-        if (galleryItems.length > 0) break;
-      }
+  let galleryEnabled = true;
+
+  if (invitation) {
+    if (Array.isArray(invitation.data["gallery.items"])) {
+      galleryItems = (invitation.data["gallery.items"] as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
     }
-  } else if (order?.templateId) {
-    const tmpl = await findTemplateById(db, order.templateId);
-    if (tmpl && tmpl.publishedVersionNo !== null) {
-      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
-      if (ver) {
-        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
-        for (const sec of doc.sections) {
-          for (const el of sec.elements) {
-            if (el.type === "widget" && el.widgetType === "gallery" && Array.isArray(el.props?.items)) {
-              galleryItems = (el.props.items as { assetId?: string; src?: string; alt?: string }[]).slice(0, 15);
-              break;
-            }
-          }
-          if (galleryItems.length > 0) break;
-        }
-      }
+    if (invitation.data["gallery.enabled"] !== undefined) {
+      galleryEnabled = invitation.data["gallery.enabled"] !== false;
     }
   }
 
@@ -1398,6 +1379,7 @@ export async function getClientPortalDataByToken(
     },
     bankVerification,
     galleryItems,
+    galleryEnabled,
     invitationCategory,
     shareMessageTemplates,
     activeShareMessageTemplate,
@@ -1639,7 +1621,8 @@ export async function saveClientPortalGallery(
   db: Database,
   token: string,
   items: { assetId?: string; src?: string; alt?: string }[],
-): Promise<{ ok: boolean; count: number; slug?: string }> {
+  enabled?: boolean,
+): Promise<{ ok: boolean; count: number; slug?: string; enabled?: boolean }> {
   const portal = await getClientPortalDataByToken(db, token);
   if (!portal) {
     throw new Error("Token akses portal tidak valid.");
@@ -1665,6 +1648,7 @@ export async function saveClientPortalGallery(
   const updatedData: Record<string, unknown> = {
     ...invitation.data,
     "gallery.items": cleanItems,
+    ...(enabled !== undefined ? { "gallery.enabled": enabled } : {}),
   };
 
   const updatedInv = await updateInvitationData(db, {

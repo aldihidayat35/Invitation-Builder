@@ -288,6 +288,116 @@
   color: #991b1b;
 }
 
+.cropBtn {
+  color: #7b5836;
+  border-color: #d8c3b0;
+  background: #fdf8f2;
+}
+
+.cropBtn:hover {
+  background: #f6ecdf;
+  border-color: #bfa17e;
+  color: #4a341f;
+}
+
+/* Toggle Switch Bar */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #fcf9f5;
+  border: 1px solid #ebd9c8;
+  margin-top: 1rem;
+}
+
+.toggleLabelGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.toggleTitle {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #23180d;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggleSub {
+  font-size: 0.75rem;
+  color: #8c7d6f;
+}
+
+.switchWrapper {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.switchInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #d1c4b5;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 9999px;
+}
+
+.switchSlider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.switchInput:checked + .switchSlider {
+  background-color: #10b981;
+}
+
+.switchInput:checked + .switchSlider:before {
+  transform: translateX(22px);
+}
+
+/* Notice Banner */
+.noticeBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin-top: 0.75rem;
+}
+
+.noticeBannerDisabled {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
 .emptyState {
   display: flex;
   flex-direction: column;

@@ -166,6 +166,31 @@ export function resolveDocument(
           : { assetId: bg.assetId };
     }
 
+    const hasGalleryWidget = section.elements.some(
+      (el) => el.type === "widget" && el.widgetType === "gallery",
+    );
+
+    const isClientInvitation =
+      Array.isArray(data["gallery.items"]) ||
+      data["gallery.enabled"] !== undefined ||
+      Object.keys(data).some(
+        (k) =>
+          k.startsWith("couple.") ||
+          k.startsWith("event.") ||
+          k === "groom_name" ||
+          k === "groom_nickname" ||
+          k === "bride_name" ||
+          k === "bride_nickname" ||
+          k === "event_date" ||
+          k === "akad_date" ||
+          k === "resepsi_date",
+      );
+
+    const galleryDisabled = data["gallery.enabled"] === false;
+    const galleryItems = Array.isArray(data["gallery.items"]) ? data["gallery.items"] : null;
+    const galleryEmpty = galleryItems !== null ? galleryItems.length === 0 : isClientInvitation;
+    const hideSectionDueToGallery = hasGalleryWidget && (galleryDisabled || galleryEmpty);
+
     const elements: ResolvedElement[] = section.elements.map((element, ei) => {
       const path: (string | number)[] = [...sectionPath, "elements", ei];
       const where = { ...sectionWhere, elementId: element.id };
@@ -237,6 +262,8 @@ export function resolveDocument(
               Array.isArray(data["gallery.items"])
             ) {
               props[name] = structuredClone(data["gallery.items"]);
+            } else if (element.widgetType === "gallery" && name === "items" && isClientInvitation) {
+              props[name] = [];
             } else if (isBinding(value)) {
               const resolved = resolveAt(value, [...path, "props", name], where);
               if (resolved.hidden) hiddenByBinding = true;
@@ -263,6 +290,11 @@ export function resolveDocument(
               props[name] = structuredClone(value);
             }
           }
+
+          if (element.widgetType === "gallery" && hideSectionDueToGallery) {
+            hiddenByBinding = true;
+          }
+
           return {
             ...base,
             type: "widget",
@@ -281,7 +313,7 @@ export function resolveDocument(
       ...(section.name !== undefined && { name: section.name }),
       baseHeight: section.baseHeight,
       overflow: section.overflow,
-      hidden: !section.visible,
+      hidden: !section.visible || hideSectionDueToGallery,
       isOpening: Boolean(section.isOpening),
       background: {
         ...(section.background.color !== undefined && {

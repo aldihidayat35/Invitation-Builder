@@ -143,8 +143,9 @@ export async function savePortalShareMessage(
 export async function savePortalGallery(
   token: string,
   items: { assetId?: string; src?: string; alt?: string }[],
+  enabled?: boolean,
 ) {
-  return service.saveClientPortalGallery(await getDb(), token, items);
+  return service.saveClientPortalGallery(await getDb(), token, items, enabled);
 }
 
 export async function regenerateOrderClientToken(orderId: string) {

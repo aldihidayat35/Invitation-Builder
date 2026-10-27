@@ -129,6 +129,18 @@
   color: #991b1b;
 }
 
+.btnGold {
+  color: #7b5836;
+  border-color: #d8c3b0;
+  background: #fdf8f2;
+}
+
+.btnGold:hover:not(:disabled) {
+  background: #f6ecdf;
+  border-color: #bfa17e;
+  color: #4a341f;
+}
+
 .uploadingBox {
   display: flex;
   align-items: center;
