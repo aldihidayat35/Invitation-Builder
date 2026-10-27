@@ -14,6 +14,7 @@ import {
   IconGlobe,
   IconHome,
   IconInvitation,
+  IconMessageSquare,
   IconPalette,
   IconReceipt,
   IconServer,
@@ -103,6 +104,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           icon: <IconInvitation />,
           ...(activeInvitationCount !== null ? { badge: `${activeInvitationCount} Live` } : {}),
           hint: "Undangan online klien, tamu & RSVP",
+        },
+        {
+          href: "/dashboard/admin/message-templates",
+          label: "Template Pesan Undangan",
+          icon: <IconMessageSquare />,
+          badge: "Baru",
+          hint: "Format teks WhatsApp dinamis per jenis acara",
         },
         {
           href: "/dashboard/templates",

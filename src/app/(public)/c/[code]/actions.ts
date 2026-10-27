@@ -7,6 +7,7 @@ import {
   addPortalGuest,
   archivePortalGuest,
   savePortalInvitationData,
+  savePortalShareMessage,
   savePortalGallery,
   submitPortalDecision,
 } from "@/features/orders";
@@ -184,6 +185,35 @@ export async function savePortalGalleryAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Gagal menyimpan galeri foto.",
+    };
+  }
+}
+
+export async function savePortalShareMessageAction(
+  token: string,
+  templateText: string,
+): Promise<PortalActionResult> {
+  const cleanToken = token.trim();
+  if (!cleanToken) {
+    return { ok: false, error: "Token akses tidak valid." };
+  }
+
+  if (!templateText.trim()) {
+    return { ok: false, error: "Format pesan tidak boleh kosong." };
+  }
+
+  try {
+    const res = await savePortalShareMessage(cleanToken, templateText);
+    revalidatePath(`/c/${cleanToken}`);
+    revalidatePath(`/portal/${cleanToken}`);
+    return {
+      ok: true,
+      message: res.message || "Format pesan undangan berhasil disimpan.",
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Gagal menyimpan format pesan.",
     };
   }
 }

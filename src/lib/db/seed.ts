@@ -34,6 +34,7 @@ import {
   updateUserRole,
 } from "./repositories/users";
 import { createWorkspaceWithOwner, findWorkspaceBySlug } from "./repositories/workspaces";
+import { ensureMessageTemplatesTable } from "./repositories/message-templates";
 import type { Database } from "./types";
 
 export const ADMIN_USER_EMAIL = "admin@admin.com";
@@ -154,6 +155,9 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
       .values(cat)
       .onConflictDoNothing();
   }
+
+  // Ensure default message templates exist
+  await ensureMessageTemplatesTable(db);
 
   const catalogTemplatesSeed = [
     {

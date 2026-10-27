@@ -10,6 +10,8 @@ import {
 import { PortalVariableForm } from "./components/PortalVariableForm";
 import { PortalGalleryManager } from "./components/PortalGalleryManager";
 import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
+import { PortalShareMessageCard } from "./components/PortalShareMessageCard";
+import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
 import styles from "./client-portal.module.css";
 
 interface ClientPortalViewProps {
@@ -29,6 +31,10 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const [revisionNote, setRevisionNote] = useState("");
   const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [customShareMessage, setCustomShareMessage] = useState<string>(
+    data.activeShareMessageTemplate ||
+      `Halo {guestname},\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Anda untuk hadir di acara kami:\n*{event_title}*\n\nInformasi lengkap dan tautan undangan dapat dilihat di:\n{link}\n\nTerima kasih dan sampai jumpa! 🙏`,
+  );
   const [isPending, startTransition] = useTransition();
 
   const showToast = (msg: string) => {
@@ -109,9 +115,29 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const handleSendWa = (guestName: string) => {
     const url = getGuestShareUrl(guestName);
     if (!url) return;
-    const text = `Halo ${guestName},\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Anda untuk hadir di acara pernikahan kami.\n\nInformasi lengkap dan tautan undangan dapat dilihat di:\n${url}\n\nTerima kasih dan sampai jumpa! 🙏`;
+    const text = interpolateMessageTemplate(customShareMessage, {
+      guestName,
+      link: url,
+      eventTitle: coupleTitle,
+      eventDate: eventDateStr || undefined,
+      eventLocation: data.order?.eventLocation || undefined,
+    });
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, "_blank");
+  };
+
+  const handleCopyFullMessage = (guestName: string) => {
+    const url = getGuestShareUrl(guestName);
+    if (!url) return;
+    const text = interpolateMessageTemplate(customShareMessage, {
+      guestName,
+      link: url,
+      eventTitle: coupleTitle,
+      eventDate: eventDateStr || undefined,
+      eventLocation: data.order?.eventLocation || undefined,
+    });
+    navigator.clipboard.writeText(text);
+    showToast(`Teks pesan undangan untuk "${guestName}" berhasil disalin!`);
   };
 
   const handleApprove = () => {
@@ -545,108 +571,136 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
 
         {/* --- TAB 2: DAFTAR TAMU --- */}
         {activeTab === "guests" && (
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div>
-                <h2 className={styles.cardTitle}>Manajemen Daftar Tamu</h2>
-                <p className={styles.cardDesc}>
-                  Tambahkan nama tamu untuk membuat link undangan personal dan bagikan via WhatsApp
-                </p>
+          <div>
+            {/* Format Pesan WhatsApp Dinamis */}
+            <PortalShareMessageCard
+              token={token}
+              presets={data.shareMessageTemplates}
+              activeTemplate={customShareMessage}
+              eventDetails={{
+                eventTitle: coupleTitle,
+                eventDate: eventDateStr || undefined,
+                eventLocation: data.order?.eventLocation || undefined,
+              }}
+              shareableUrl={data.shareableUrl}
+              onTemplateChange={(newTmpl) => setCustomShareMessage(newTmpl)}
+              onShowToast={showToast}
+            />
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <h2 className={styles.cardTitle}>Manajemen Daftar Tamu</h2>
+                  <p className={styles.cardDesc}>
+                    Tambahkan nama tamu untuk membuat link undangan personal dan bagikan via WhatsApp
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Input Tambah Tamu */}
-            <form onSubmit={handleAddGuest} className={styles.guestInputRow}>
-              <input
-                type="text"
-                placeholder="Nama Tamu (misal: Bpk. Bambang & Keluarga)"
-                value={newGuestName}
-                onChange={(e) => setNewGuestName(e.target.value)}
-                className={styles.input}
-                required
-              />
-              <input
-                type="number"
-                min="1"
-                max="20"
-                placeholder="Pax"
-                value={newGuestPax}
-                onChange={(e) => setNewGuestPax(e.target.value)}
-                className={styles.inputPax}
-                title="Jumlah orang (pax)"
-              />
-              <button
-                type="submit"
-                disabled={isPending}
-                className={styles.btnPrimary}
-                style={{ padding: "0.65rem 1.25rem", fontSize: "0.85rem" }}
-              >
-                + Tambah Tamu
-              </button>
-            </form>
-
-            {/* Filter Search */}
-            {data.guests.length > 3 && (
-              <div style={{ marginBottom: "1rem" }}>
+              {/* Input Tambah Tamu */}
+              <form onSubmit={handleAddGuest} className={styles.guestInputRow}>
                 <input
-                  type="search"
-                  placeholder="Cari nama tamu…"
-                  value={guestSearch}
-                  onChange={(e) => setGuestSearch(e.target.value)}
+                  type="text"
+                  placeholder="Nama Tamu (misal: Bpk. Bambang & Keluarga)"
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
                   className={styles.input}
-                  style={{ width: "100%", boxSizing: "border-box" }}
+                  required
                 />
-              </div>
-            )}
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  placeholder="Pax"
+                  value={newGuestPax}
+                  onChange={(e) => setNewGuestPax(e.target.value)}
+                  className={styles.inputPax}
+                  title="Jumlah orang (pax)"
+                />
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className={styles.btnPrimary}
+                  style={{ padding: "0.65rem 1.25rem", fontSize: "0.85rem" }}
+                >
+                  + Tambah Tamu
+                </button>
+              </form>
 
-            {/* List Tamu */}
-            {filteredGuests.length === 0 ? (
-              <div className={styles.emptyBox}>
-                {data.guests.length === 0
-                  ? "Belum ada tamu yang ditambahkan. Masukkan nama tamu di atas untuk mulai membagikan undangan."
-                  : "Tidak ditemukan tamu dengan nama tersebut."}
-              </div>
-            ) : (
-              <div className={styles.guestList}>
-                {filteredGuests.map((g) => (
-                  <div key={g.id} className={styles.guestItem}>
-                    <div className={styles.guestInfo}>
-                      <span className={styles.guestName}>{g.name}</span>
-                      <span className={styles.guestSubtext}>
-                        Maks. {g.maxParty} orang (pax)
-                      </span>
-                    </div>
+              {/* Filter Search */}
+              {data.guests.length > 3 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <input
+                    type="search"
+                    placeholder="Cari nama tamu…"
+                    value={guestSearch}
+                    onChange={(e) => setGuestSearch(e.target.value)}
+                    className={styles.input}
+                    style={{ width: "100%", boxSizing: "border-box" }}
+                  />
+                </div>
+              )}
 
-                    <div className={styles.guestActions}>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyGuestLink(g.name)}
-                        className={styles.btnSecondary}
-                        style={{ fontSize: "0.75rem", padding: "0.4rem 0.75rem" }}
-                      >
-                        📋 Salin Link
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSendWa(g.name)}
-                        className={styles.btnCopyWa}
-                      >
-                        <span>💬</span>
-                        <span>Kirim WA</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteGuest(g.id, g.name)}
-                        className={styles.btnDeleteGuest}
-                        title="Hapus tamu"
-                      >
-                        ✕
-                      </button>
+              {/* List Tamu */}
+              {filteredGuests.length === 0 ? (
+                <div className={styles.emptyBox}>
+                  {data.guests.length === 0
+                    ? "Belum ada tamu yang ditambahkan. Masukkan nama tamu di atas untuk mulai membagikan undangan."
+                    : "Tidak ditemukan tamu dengan nama tersebut."}
+                </div>
+              ) : (
+                <div className={styles.guestList}>
+                  {filteredGuests.map((g) => (
+                    <div key={g.id} className={styles.guestItem}>
+                      <div className={styles.guestInfo}>
+                        <span className={styles.guestName}>{g.name}</span>
+                        <span className={styles.guestSubtext}>
+                          Maks. {g.maxParty} orang (pax)
+                        </span>
+                      </div>
+
+                      <div className={styles.guestActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyGuestLink(g.name)}
+                          className={styles.btnSecondary}
+                          style={{ fontSize: "0.75rem", padding: "0.4rem 0.75rem" }}
+                          title="Salin tautan link web undangan saja"
+                        >
+                          📋 Salin Link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyFullMessage(g.name)}
+                          className={styles.btnSecondary}
+                          style={{ fontSize: "0.75rem", padding: "0.4rem 0.75rem" }}
+                          title="Salin teks pesan lengkap beserta nama tamu dan link"
+                        >
+                          📝 Salin Pesan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendWa(g.name)}
+                          className={styles.btnCopyWa}
+                          title="Buka WhatsApp dengan pesan yang sudah terisi otomatis"
+                        >
+                          <span>💬</span>
+                          <span>Kirim WA</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGuest(g.id, g.name)}
+                          className={styles.btnDeleteGuest}
+                          title="Hapus tamu"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -11,3 +11,4 @@ export * from "./settings";
 export * from "./template-categories";
 export * from "./testimonials";
 export * from "./global-presets";
+export * from "./message-templates";

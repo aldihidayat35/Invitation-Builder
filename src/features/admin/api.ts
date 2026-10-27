@@ -29,6 +29,15 @@ import {
   type CreateTestimonialInput,
   type UpdateTestimonialInput,
 } from "@/lib/db/repositories/testimonials";
+import {
+  listAdminMessageTemplates,
+  createMessageTemplate,
+  updateMessageTemplate,
+  deleteMessageTemplate,
+  setDefaultMessageTemplate,
+  type CreateMessageTemplateInput,
+  type UpdateMessageTemplateInput,
+} from "@/lib/db/repositories/message-templates";
 import type { AppSettingRow, NewAppSettingRow } from "@/lib/db/schema";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import { transitionOrder } from "@/features/orders/service";
@@ -295,4 +304,29 @@ export async function setAdminTestimonialActive(id: string, isActive: boolean) {
 export async function removeAdminTestimonial(id: string) {
   await requireOwner();
   return deleteTestimonial(await getDb(), id);
+}
+
+export async function getAdminMessageTemplates() {
+  await requireOwner();
+  return listAdminMessageTemplates(await getDb());
+}
+
+export async function addAdminMessageTemplate(input: CreateMessageTemplateInput) {
+  await requireOwner();
+  return createMessageTemplate(await getDb(), input);
+}
+
+export async function editAdminMessageTemplate(id: string, input: UpdateMessageTemplateInput) {
+  await requireOwner();
+  return updateMessageTemplate(await getDb(), id, input);
+}
+
+export async function setAdminMessageTemplateDefault(id: string) {
+  await requireOwner();
+  return setDefaultMessageTemplate(await getDb(), id);
+}
+
+export async function removeAdminMessageTemplate(id: string) {
+  await requireOwner();
+  return deleteMessageTemplate(await getDb(), id);
 }

@@ -8,3 +8,4 @@ export * from "./ResellersManager";
 export * from "./AdminOrdersTable";
 export * from "./AppSettingsForm";
 export * from "./TestimonialsManager";
+export * from "./MessageTemplatesManager";

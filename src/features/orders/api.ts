@@ -133,6 +133,13 @@ export async function savePortalInvitationData(
   return service.saveClientPortalInvitationData(await getDb(), token, values);
 }
 
+export async function savePortalShareMessage(
+  token: string,
+  templateText: string,
+) {
+  return service.saveClientShareMessageTemplate(await getDb(), token, templateText);
+}
+
 export async function savePortalGallery(
   token: string,
   items: { assetId?: string; src?: string; alt?: string }[],
@@ -188,6 +195,7 @@ export {
 } from "./service";
 export type {
   ClientPortalData,
+  PortalShareMessageTemplate,
   ClientCustomizationWhatsAppParams,
   OrderClientVariablesSummary,
   OrderDetailModel,

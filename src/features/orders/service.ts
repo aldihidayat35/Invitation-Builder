@@ -38,6 +38,7 @@ import {
   insertTemplateVersion,
 } from "@/lib/db/repositories/templates";
 import { getAppSettings } from "@/lib/db/repositories/settings";
+import { listMessageTemplatesForCategory } from "@/lib/db/repositories/message-templates";
 import { findUserById } from "@/lib/db/repositories/users";
 import {
   ensureWorkspaceMember,
@@ -1031,6 +1032,14 @@ export async function ensureOrderInvitation(
   return newInvitation;
 }
 
+export interface PortalShareMessageTemplate {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  isDefault: boolean;
+}
+
 export interface ClientPortalData {
   order: CustomerOrder;
   invitation: InvitationRow | null;
@@ -1049,6 +1058,14 @@ export interface ClientPortalData {
   };
   bankVerification?: BankVerificationMeta;
   galleryItems?: { assetId?: string; src?: string; alt?: string }[];
+  invitationCategory?: string;
+  shareMessageTemplates?: PortalShareMessageTemplate[];
+  activeShareMessageTemplate?: string;
+  eventDetails?: {
+    eventTitle?: string;
+    eventDate?: string;
+    eventLocation?: string;
+  };
 }
 
 export async function getClientPortalDataByToken(
@@ -1314,6 +1331,55 @@ export async function getClientPortalDataByToken(
       ? `/dashboard/templates/${order.templateId}/preview`
       : null;
 
+  // Resolve template category for message templates
+  let invitationCategory = "wedding";
+  if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl?.category) invitationCategory = tmpl.category;
+  } else if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const tmpl = await findTemplateById(db, foundVersion.version.templateId);
+      if (tmpl?.category) invitationCategory = tmpl.category;
+    }
+  }
+
+  // Fetch active message templates for this category
+  const dbTemplates = await listMessageTemplatesForCategory(db, invitationCategory);
+  const shareMessageTemplates: PortalShareMessageTemplate[] = dbTemplates.map((t) => ({
+    id: t.id,
+    category: t.category,
+    title: t.title,
+    content: t.content,
+    isDefault: t.isDefault,
+  }));
+
+  const savedShareTemplate = invitation?.data?.["share_message_template"] as string | undefined;
+  const defaultTemplate =
+    shareMessageTemplates.find((t) => t.isDefault && t.category === invitationCategory) ||
+    shareMessageTemplates.find((t) => t.isDefault) ||
+    shareMessageTemplates[0];
+
+  const activeShareMessageTemplate = savedShareTemplate?.trim() || defaultTemplate?.content || "";
+
+  // Event details for interpolation
+  const coupleOrTitle =
+    order?.groomBrideNames?.trim() ||
+    (order?.customerName ? `Acara ${order.customerName}` : invitation?.title || "Undangan");
+  const eventDateFormatted = order?.eventDate
+    ? new Date(order.eventDate).toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
+  const eventLocation =
+    order?.eventLocation ||
+    (invitation?.data?.["event.location"] as string) ||
+    (invitation?.data?.["location"] as string) ||
+    "";
+
   return {
     order: order!,
     invitation: invitation ?? null,
@@ -1332,6 +1398,61 @@ export async function getClientPortalDataByToken(
     },
     bankVerification,
     galleryItems,
+    invitationCategory,
+    shareMessageTemplates,
+    activeShareMessageTemplate,
+    eventDetails: {
+      eventTitle: coupleOrTitle,
+      eventDate: eventDateFormatted,
+      eventLocation,
+    },
+  };
+}
+
+/** Saves custom message template for client invitation. */
+export async function saveClientShareMessageTemplate(
+  db: Database,
+  token: string,
+  templateText: string,
+): Promise<{ ok: boolean; message: string; template: string }> {
+  const cleanToken = token.trim();
+  if (!cleanToken) throw new Error("Token tidak valid.");
+
+  let order = await findCustomerOrderByClientToken(db, cleanToken);
+  let invitation: InvitationRow | undefined;
+
+  if (order && order.invitationId) {
+    invitation = await findInvitationById(db, order.invitationId);
+  } else if (!order) {
+    invitation = await findInvitationByClientToken(db, cleanToken);
+  }
+
+  if (!invitation && order) {
+    invitation = (await ensureOrderInvitation(db, order)) ?? undefined;
+  }
+
+  if (!invitation) {
+    throw new Error("Undangan tidak ditemukan.");
+  }
+
+  const currentData = (invitation.data || {}) as Record<string, unknown>;
+  const updatedData = {
+    ...currentData,
+    share_message_template: templateText.trim(),
+  };
+
+  await db
+    .update(invitations)
+    .set({
+      data: updatedData,
+      updatedAt: new Date(),
+    })
+    .where(eq(invitations.id, invitation.id));
+
+  return {
+    ok: true,
+    message: "Format pesan undangan berhasil disimpan.",
+    template: templateText.trim(),
   };
 }
 

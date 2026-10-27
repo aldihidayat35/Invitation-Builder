@@ -207,3 +207,10 @@ export const IconServer = () => (
     <line x1="6" x2="6.01" y1="18" y2="18" strokeWidth={2.5} />
   </Svg>
 );
+
+export const IconMessageSquare = () => (
+  <Svg size={20}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    <path d="M8 9h8M8 13h5" />
+  </Svg>
+);

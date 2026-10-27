@@ -134,6 +134,13 @@
       "when": 1792200000000,
       "tag": "0018_allow_permanent_invitation_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792300000000,
+      "tag": "0019_share_message_templates",
+      "breakpoints": true
     }
   ]
 }
