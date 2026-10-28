@@ -660,6 +660,26 @@ export const messageTemplates = pgTable(
   ],
 );
 
+export const masterBanks = pgTable(
+  "master_banks",
+  {
+    id: id(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    category: text("category").notNull().default("bank"),
+    logoUrl: text("logo_url").notNull(),
+    isActive: pgBoolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("master_banks_code_uq").on(t.code),
+    index("master_banks_sort_idx").on(t.sortOrder),
+    index("master_banks_active_idx").on(t.isActive),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type ResellerProfile = typeof resellerProfiles.$inferSelect;
@@ -692,4 +712,7 @@ export type GlobalVariablePresetRow = typeof globalVariablePresets.$inferSelect;
 export type NewGlobalVariablePresetRow = typeof globalVariablePresets.$inferInsert;
 export type MessageTemplateRow = typeof messageTemplates.$inferSelect;
 export type NewMessageTemplateRow = typeof messageTemplates.$inferInsert;
+export type MasterBankRow = typeof masterBanks.$inferSelect;
+export type NewMasterBankRow = typeof masterBanks.$inferInsert;
+
 

@@ -71,6 +71,7 @@ import {
   isGiftAccountVariableKey,
   getBankVerificationMeta,
   extractBankAccountsFromRecord,
+  resolveFallbackBankLogo,
   BANK_VERIFICATION_KEY,
   type DataIssue,
   type FormField,
@@ -1285,6 +1286,9 @@ export async function getClientPortalDataByToken(
     if (bankVerification.proposedPrimary.bank) {
       variableValues["gift.bank"] = bankVerification.proposedPrimary.bank;
       variableValues["gift.bank_name"] = bankVerification.proposedPrimary.bank;
+      variableValues["gift.bankLogo"] =
+        bankVerification.proposedPrimary.bankLogo ||
+        resolveFallbackBankLogo(bankVerification.proposedPrimary.bank);
     }
     if (bankVerification.proposedPrimary.accountNumber) {
       variableValues["gift.accountNumber"] = bankVerification.proposedPrimary.accountNumber;
@@ -1297,6 +1301,9 @@ export async function getClientPortalDataByToken(
     if (bankVerification.proposedSecondary) {
       if (bankVerification.proposedSecondary.bank) {
         variableValues["gift.bank2"] = bankVerification.proposedSecondary.bank;
+        variableValues["gift.bankLogo2"] =
+          bankVerification.proposedSecondary.bankLogo ||
+          resolveFallbackBankLogo(bankVerification.proposedSecondary.bank);
       }
       if (bankVerification.proposedSecondary.accountNumber) {
         variableValues["gift.accountNumber2"] = bankVerification.proposedSecondary.accountNumber;
@@ -1961,12 +1968,26 @@ export async function adminVerifyOrderBank(
     throw new OrderWorkflowError("Proyek undangan untuk pesanan ini belum disiapkan.");
   }
 
+  const primaryLogo =
+    input.primary.bankLogo || resolveFallbackBankLogo(input.primary.bank);
+  const secondaryLogo = input.secondary?.bank
+    ? input.secondary.bankLogo || resolveFallbackBankLogo(input.secondary.bank)
+    : null;
+
   const verifiedMeta: BankVerificationMeta = {
     status: "verified",
     verifiedAt: new Date().toISOString(),
     verifiedBy: actor.userId,
-    verifiedPrimary: input.primary,
-    verifiedSecondary: input.secondary || null,
+    verifiedPrimary: {
+      ...input.primary,
+      bankLogo: primaryLogo,
+    },
+    verifiedSecondary: input.secondary
+      ? {
+          ...input.secondary,
+          bankLogo: secondaryLogo,
+        }
+      : null,
     proposedPrimary: null,
     proposedSecondary: null,
     adminNote: input.adminNote?.trim() || null,
@@ -1976,6 +1997,7 @@ export async function adminVerifyOrderBank(
     "gift.bank": input.primary.bank,
     "gift.accountNumber": input.primary.accountNumber,
     "gift.accountName": input.primary.accountName,
+    "gift.bankLogo": primaryLogo,
     "gift.bank_name": input.primary.bank,
     "gift.account_number": input.primary.accountNumber,
     "gift.account_holder": input.primary.accountName,
@@ -1986,10 +2008,12 @@ export async function adminVerifyOrderBank(
     bankPatch["gift.bank2"] = input.secondary.bank;
     bankPatch["gift.accountNumber2"] = input.secondary.accountNumber;
     bankPatch["gift.accountName2"] = input.secondary.accountName || "";
+    bankPatch["gift.bankLogo2"] = secondaryLogo;
   } else {
     delete bankPatch["gift.bank2"];
     delete bankPatch["gift.accountNumber2"];
     delete bankPatch["gift.accountName2"];
+    delete bankPatch["gift.bankLogo2"];
   }
 
   const updatedInv = await updateInvitationData(db, {

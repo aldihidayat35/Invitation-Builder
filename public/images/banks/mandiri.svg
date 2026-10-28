@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <!-- Mandiri Ribbon Emblem -->
+  <g transform="translate(12, 10)">
+    <path d="M 0,16 Q 10,4 20,12 Q 28,18 36,8 Q 30,22 18,18 Q 8,15 0,26 Z" fill="#F58220"/>
+    <path d="M 6,10 Q 14,0 24,6 Q 32,11 38,4 Q 32,15 22,12 Q 13,10 6,17 Z" fill="#FFB81C" opacity="0.9"/>
+  </g>
+  <!-- Mandiri Letters -->
+  <text x="56" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="800" fill="#003366" letter-spacing="-0.5">mandırı</text>
+</svg>

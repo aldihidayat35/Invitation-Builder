@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <!-- QR Finder Glyph -->
+  <g transform="translate(14, 11)">
+    <rect width="28" height="28" rx="4" fill="#ED1C24"/>
+    <rect x="5" y="5" width="18" height="18" rx="2" fill="#FFFFFF"/>
+    <rect x="9" y="9" width="10" height="10" rx="1" fill="#ED1C24"/>
+  </g>
+  <text x="50" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="900" fill="#1A1A1A" letter-spacing="1">QRIS</text>
+  <text x="114" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="7" font-weight="700" fill="#ED1C24" letter-spacing="0.3">PEMBAYARAN</text>
+  <text x="114" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="7" font-weight="700" fill="#666666" letter-spacing="0.3">NASIONAL</text>
+</svg>

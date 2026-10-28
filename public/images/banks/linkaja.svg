@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#ED1C24"/>
+  <!-- LinkAja Ribbon/Loop -->
+  <g transform="translate(16, 12)">
+    <circle cx="13" cy="13" r="11" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+    <path d="M 8,8 L 18,18" stroke="#FFD100" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="48" y="33" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF" letter-spacing="-0.3">Link<tspan fill="#FFD100">Aja!</tspan></text>
+</svg>

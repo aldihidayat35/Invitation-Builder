@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <g transform="translate(14, 9)">
+    <rect width="32" height="32" rx="7" fill="#00529C"/>
+    <path d="M 6,24 Q 16,10 26,10" stroke="#F37024" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <circle cx="25" cy="11" r="2.5" fill="#F37024"/>
+  </g>
+  <text x="56" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#00529C" letter-spacing="1.5">BRI</text>
+  <text x="110" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="9" font-weight="700" fill="#F37024" letter-spacing="0.5">BANK</text>
+</svg>

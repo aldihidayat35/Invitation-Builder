@@ -33,6 +33,11 @@ const ownerOnly = [
   "deleteUserAction",
   "fetchUsersListAction",
   "adminVerifyOrderBankAction",
+  "createMasterBankAction",
+  "updateMasterBankAction",
+  "toggleMasterBankAction",
+  "deleteMasterBankAction",
+  "resetMasterBanksAction",
 ] as const;
 
 const authenticated = [

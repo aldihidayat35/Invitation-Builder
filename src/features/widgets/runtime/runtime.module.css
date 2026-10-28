@@ -325,6 +325,7 @@
 .greetingMonogram,
 .greetingOrnament,
 .bankBadge,
+.bankLogoBadge,
 .copyIcon {
   display: none;
 }
@@ -1267,6 +1268,62 @@
     [data-variant="gold-ornament"],
     [data-variant="qr-showcase"]
   )
+  .bankLogoBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 32px;
+  flex: 0 0 50px;
+  border-radius: 7px;
+  background: #ffffff;
+  padding: 3px 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.bankLogoImg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.inlineBankLogo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 20px;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 1px 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.inlineBankLogoImg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.widget[data-widget="gift"]:is(
+    [data-variant="bank-card"],
+    [data-variant="stacked-slips"],
+    [data-variant="wallet-panel"],
+    [data-variant="compact-list"],
+    [data-variant="heritage-frame"],
+    [data-variant="minimalist-clean"],
+    [data-variant="envelope-tuck"],
+    [data-variant="glass-card"],
+    [data-variant="gold-ornament"],
+    [data-variant="qr-showcase"]
+  )
   .copyIcon {
   display: block;
   margin: 0;
@@ -1389,6 +1446,13 @@
 
 .widget[data-widget="gift"][data-variant="compact-list"] .bankBadge {
   display: none;
+}
+
+.widget[data-widget="gift"][data-variant="compact-list"] .bankLogoBadge {
+  width: 38px;
+  height: 24px;
+  flex: 0 0 38px;
+  padding: 2px 4px;
 }
 
 .widget[data-widget="gift"][data-variant="compact-list"] .giftOwner,

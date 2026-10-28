@@ -10,6 +10,7 @@ import {
   IconAnalytics,
   IconBook,
   IconComponentStudio,
+  IconCreditCard,
   IconFlask,
   IconGlobe,
   IconHome,
@@ -160,6 +161,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           label: "Pengaturan Umum",
           icon: <IconSettings />,
           hint: "Identitas aplikasi, logo, kontak & alamat",
+        },
+        {
+          href: "/dashboard/admin/banks",
+          label: "Master Bank & E-Wallet",
+          icon: <IconCreditCard />,
+          badge: "Baru",
+          hint: "Katalog rekening & logo amplop digital",
         },
         {
           href: "/dashboard/admin/storage",

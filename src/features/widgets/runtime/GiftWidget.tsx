@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { copyTextToClipboard } from "@/lib/browser/clipboard";
+import { resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 import { CheckIcon, CopyIcon, QrIcon } from "./WidgetIcons";
@@ -12,9 +13,11 @@ export interface GiftWidgetProps {
   readonly bank?: unknown;
   readonly accountNumber?: unknown;
   readonly accountName?: unknown;
+  readonly bankLogo?: unknown;
   readonly bank2?: unknown;
   readonly accountNumber2?: unknown;
   readonly accountName2?: unknown;
+  readonly bankLogo2?: unknown;
   readonly style?: WidgetStyleProps | undefined;
 }
 
@@ -22,15 +25,18 @@ export interface GiftExtraProps {
   readonly bank?: unknown;
   readonly accountNumber?: unknown;
   readonly accountName?: unknown;
+  readonly bankLogo?: unknown;
   readonly bank2?: unknown;
   readonly accountNumber2?: unknown;
   readonly accountName2?: unknown;
+  readonly bankLogo2?: unknown;
 }
 
 export interface GiftAccount {
   readonly bank: string;
   readonly accountNumber: string;
   readonly accountName: string;
+  readonly bankLogo?: string;
 }
 
 const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -42,20 +48,26 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
   // 1. Cek rekening utama dari variabel auto-binding
   const mainAccNo = s(extraProps?.accountNumber);
   if (mainAccNo) {
+    const bankName = s(extraProps?.bank) || "BCA";
+    const logo = s(extraProps?.bankLogo) || resolveFallbackBankLogo(bankName);
     out.push({
-      bank: s(extraProps?.bank) || "BCA",
+      bank: bankName,
       accountNumber: mainAccNo,
       accountName: s(extraProps?.accountName) || "Nama Mempelai",
+      bankLogo: logo,
     });
   }
 
   // 2. Cek rekening kedua (opsional)
   const secAccNo = s(extraProps?.accountNumber2);
   if (secAccNo) {
+    const bankName2 = s(extraProps?.bank2) || "Mandiri";
+    const logo2 = s(extraProps?.bankLogo2) || resolveFallbackBankLogo(bankName2);
     out.push({
-      bank: s(extraProps?.bank2) || "Mandiri",
+      bank: bankName2,
       accountNumber: secAccNo,
       accountName: s(extraProps?.accountName2) || "Nama Mempelai",
+      bankLogo: logo2,
     });
   }
 
@@ -67,7 +79,14 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
       const accountNumber = s(rec.accountNumber);
       if (!accountNumber) continue;
       if (!out.some((a) => a.accountNumber === accountNumber)) {
-        out.push({ bank: s(rec.bank), accountNumber, accountName: s(rec.accountName) });
+        const b = s(rec.bank);
+        const l = s(rec.bankLogo || rec.logoUrl || rec.logo) || resolveFallbackBankLogo(b);
+        out.push({
+          bank: b,
+          accountNumber,
+          accountName: s(rec.accountName),
+          bankLogo: l,
+        });
       }
     }
   }
@@ -82,24 +101,33 @@ export function GiftWidget({
   bank,
   accountNumber,
   accountName,
+  bankLogo,
   bank2,
   accountNumber2,
   accountName2,
+  bankLogo2,
   style,
 }: GiftWidgetProps) {
   const parsed = parseGiftAccounts(accounts, {
     bank,
     accountNumber,
     accountName,
+    bankLogo,
     bank2,
     accountNumber2,
     accountName2,
+    bankLogo2,
   });
   const list =
     parsed.length > 0
       ? parsed
       : [
-          { bank: "BCA", accountNumber: "1234567890", accountName: "Nama Mempelai" },
+          {
+            bank: "BCA",
+            accountNumber: "1234567890",
+            accountName: "Nama Mempelai",
+            bankLogo: resolveFallbackBankLogo("BCA"),
+          },
         ];
   const [feedback, setFeedback] = useState<{ index: number; ok: boolean } | null>(null);
   const heading = s(title) || "Kirim Hadiah";
@@ -154,6 +182,16 @@ export function GiftWidget({
                   <span className={styles.qrBadge} aria-hidden="true">
                     <QrIcon className={styles.qrIcon} />
                   </span>
+                ) : account.bankLogo ? (
+                  <span className={styles.bankLogoBadge} aria-hidden="true">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={account.bankLogo}
+                      alt={account.bank}
+                      className={styles.bankLogoImg}
+                      loading="lazy"
+                    />
+                  </span>
                 ) : (
                   <span className={styles.bankBadge} aria-hidden="true">
                     {(account.bank || "$").slice(0, 4).toLocaleUpperCase()}
@@ -161,7 +199,19 @@ export function GiftWidget({
                 )}
 
                 <span className={styles.giftAccount}>
-                  <strong className={styles.giftBank}>{account.bank}</strong>
+                  <strong className={styles.giftBank}>
+                    {isQr && account.bankLogo ? (
+                      <span className={styles.inlineBankLogo} aria-hidden="true">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={account.bankLogo}
+                          alt=""
+                          className={styles.inlineBankLogoImg}
+                        />
+                      </span>
+                    ) : null}
+                    <span>{account.bank}</span>
+                  </strong>
                   <span className={styles.giftNumber} data-testid="gift-number">
                     {account.accountNumber}
                   </span>

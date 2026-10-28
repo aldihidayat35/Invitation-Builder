@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <rect x="12" y="8" width="34" height="34" rx="8" fill="#EE4D2D"/>
+  <!-- Shopping Bag / Wallet S -->
+  <path d="M 23,17 Q 29,13 35,17" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+  <text x="29" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="900" fill="#FFFFFF" text-anchor="middle">S</text>
+  <text x="52" y="33" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="800" fill="#EE4D2D" letter-spacing="-0.3">Shopee<tspan fill="#333333">Pay</tspan></text>
+</svg>

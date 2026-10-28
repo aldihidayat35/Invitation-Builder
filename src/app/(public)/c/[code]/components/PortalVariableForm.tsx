@@ -2,7 +2,12 @@
 
 import React, { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { FormGroup } from "@/lib/engine";
-import { isGiftAccountVariableKey, type BankVerificationMeta } from "@/lib/engine";
+import {
+  isGiftAccountVariableKey,
+  MASTER_BANKS_DEFAULT,
+  resolveFallbackBankLogo,
+  type BankVerificationMeta,
+} from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
 import { PortalImageField } from "./PortalImageField";
 import {
@@ -322,6 +327,145 @@ export function PortalVariableForm({
                           onChange={(newVal) => handleChange(field.key, newVal)}
                           error={err}
                         />
+                      ) : isBankField &&
+                        (field.key === "gift.bank" ||
+                          field.key === "gift.bank2" ||
+                          field.key === "gift.bank_name" ||
+                          field.key === "gift.bank_name2" ||
+                          field.key === "bank" ||
+                          field.key === "bank2") ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {val ? (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "48px",
+                                  height: "36px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #e5e0dc",
+                                  backgroundColor: "#ffffff",
+                                  padding: "2px 4px",
+                                  flexShrink: 0,
+                                }}
+                                title={val}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={resolveFallbackBankLogo(val)}
+                                  alt={val}
+                                  style={{
+                                    maxWidth: "100%",
+                                    maxHeight: "100%",
+                                    objectFit: "contain",
+                                  }}
+                                />
+                              </div>
+                            ) : null}
+                            <select
+                              id={fieldId}
+                              name={field.key}
+                              disabled={isFieldLocked}
+                              value={
+                                MASTER_BANKS_DEFAULT.some(
+                                  (b) =>
+                                    b.name.toLowerCase() === val.toLowerCase() ||
+                                    b.code.toLowerCase() === val.toLowerCase(),
+                                )
+                                  ? MASTER_BANKS_DEFAULT.find(
+                                      (b) =>
+                                        b.name.toLowerCase() === val.toLowerCase() ||
+                                        b.code.toLowerCase() === val.toLowerCase(),
+                                    )?.code
+                                  : val
+                                    ? "__custom__"
+                                    : ""
+                              }
+                              onChange={(e) => {
+                                const selectedCode = e.target.value;
+                                if (selectedCode === "__custom__") {
+                                  // Client chose custom, input below will be used
+                                } else {
+                                  const found = MASTER_BANKS_DEFAULT.find(
+                                    (b) => b.code === selectedCode,
+                                  );
+                                  if (found) {
+                                    handleChange(field.key, found.name);
+                                    if (
+                                      field.key === "gift.bank" ||
+                                      field.key === "gift.bank_name" ||
+                                      field.key === "bank"
+                                    ) {
+                                      handleChange("gift.bankLogo", found.logoUrl);
+                                    } else if (
+                                      field.key === "gift.bank2" ||
+                                      field.key === "bank2"
+                                    ) {
+                                      handleChange("gift.bankLogo2", found.logoUrl);
+                                    }
+                                  } else {
+                                    handleChange(field.key, "");
+                                  }
+                                }
+                              }}
+                              className={`${styles.input} ${err ? styles.inputError : ""}`}
+                              style={{ flex: 1 }}
+                            >
+                              <option value="">- Pilih Bank / E-Wallet -</option>
+                              <optgroup label="Bank Populer">
+                                {MASTER_BANKS_DEFAULT.filter((b) => b.category === "bank").map(
+                                  (b) => (
+                                    <option key={b.code} value={b.code}>
+                                      {b.name}
+                                    </option>
+                                  ),
+                                )}
+                              </optgroup>
+                              <optgroup label="Dompet Digital & QRIS">
+                                {MASTER_BANKS_DEFAULT.filter((b) => b.category !== "bank").map(
+                                  (b) => (
+                                    <option key={b.code} value={b.code}>
+                                      {b.name}
+                                    </option>
+                                  ),
+                                )}
+                              </optgroup>
+                              <option value="__custom__">Bank Lainnya (Input Manual)...</option>
+                            </select>
+                          </div>
+                          {(!val ||
+                            !MASTER_BANKS_DEFAULT.some(
+                              (b) =>
+                                b.name.toLowerCase() === val.toLowerCase() ||
+                                b.code.toLowerCase() === val.toLowerCase(),
+                            )) && (
+                            <input
+                              type="text"
+                              disabled={isFieldLocked}
+                              value={val}
+                              onChange={(e) => {
+                                handleChange(field.key, e.target.value);
+                                const autoLogo = resolveFallbackBankLogo(e.target.value);
+                                if (
+                                  field.key === "gift.bank" ||
+                                  field.key === "gift.bank_name" ||
+                                  field.key === "bank"
+                                ) {
+                                  handleChange("gift.bankLogo", autoLogo);
+                                } else if (
+                                  field.key === "gift.bank2" ||
+                                  field.key === "bank2"
+                                ) {
+                                  handleChange("gift.bankLogo2", autoLogo);
+                                }
+                              }}
+                              className={`${styles.input} ${err ? styles.inputError : ""}`}
+                              placeholder="Ketik nama bank lainnya di sini…"
+                            />
+                          )}
+                        </div>
                       ) : (
                         <input
                           id={fieldId}

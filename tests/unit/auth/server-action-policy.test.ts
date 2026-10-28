@@ -18,6 +18,7 @@ const actionFiles = [
   "src/app/(dashboard)/dashboard/templates/categories/actions.ts",
   "src/app/(dashboard)/dashboard/invitations/actions.ts",
   "src/app/(dashboard)/dashboard/admin/orders/actions.ts",
+  "src/app/(dashboard)/dashboard/admin/banks/actions.ts",
   "src/app/(dashboard)/dashboard/admin/resellers/actions.ts",
   "src/app/(dashboard)/dashboard/admin/operations/actions.ts",
   "src/app/(dashboard)/dashboard/reseller/orders/actions.ts",

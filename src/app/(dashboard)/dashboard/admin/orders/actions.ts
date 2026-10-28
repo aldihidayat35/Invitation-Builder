@@ -93,9 +93,11 @@ export async function adminVerifyOrderBankAction(
     const bank = textField(formData, "bank");
     const accountNumber = textField(formData, "accountNumber");
     const accountName = textField(formData, "accountName");
+    const bankLogo = textField(formData, "bankLogo");
     const bank2 = textField(formData, "bank2");
     const accountNumber2 = textField(formData, "accountNumber2");
     const accountName2 = textField(formData, "accountName2");
+    const bankLogo2 = textField(formData, "bankLogo2");
     const adminNote = textField(formData, "adminNote");
     const confirmOrderAccepted = formData.get("confirmOrderAccepted") === "true";
 
@@ -108,10 +110,15 @@ export async function adminVerifyOrderBankAction(
 
     await adminVerifyOrderBank({
       orderId,
-      primary: { bank, accountNumber, accountName },
+      primary: { bank, accountNumber, accountName, bankLogo: bankLogo || undefined },
       secondary:
         bank2 && accountNumber2
-          ? { bank: bank2, accountNumber: accountNumber2, accountName: accountName2 }
+          ? {
+              bank: bank2,
+              accountNumber: accountNumber2,
+              accountName: accountName2,
+              bankLogo: bankLogo2 || undefined,
+            }
           : null,
       adminNote: adminNote || undefined,
       confirmOrderAccepted,

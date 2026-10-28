@@ -12,3 +12,4 @@ export * from "./template-categories";
 export * from "./testimonials";
 export * from "./global-presets";
 export * from "./message-templates";
+export * from "./master-banks";

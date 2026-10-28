@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <g transform="translate(14, 11)">
+    <!-- BCA Diamond / Chevron Emblem -->
+    <path d="M 0,14 L 10,0 L 17,0 L 7,14 Z" fill="#003882"/>
+    <path d="M 9,14 L 19,0 L 26,0 L 16,14 Z" fill="#003882"/>
+    <path d="M 0,15 L 7,15 L 17,28 L 10,28 Z" fill="#003882"/>
+    <path d="M 9,15 L 16,15 L 26,28 L 19,28 Z" fill="#003882"/>
+  </g>
+  <!-- BCA Letters -->
+  <text x="52" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#003882" letter-spacing="1.5">BCA</text>
+</svg>

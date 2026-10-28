@@ -1145,6 +1145,66 @@ function RsvpVisual({ element, tokens }: { element: WidgetElement; tokens?: Them
   );
 }
 
+function CanvasBankLogoBadge({
+  logoUrl,
+  fallbackText,
+  x,
+  y,
+  width = 38,
+  height = 24,
+  color,
+  surface,
+}: {
+  logoUrl?: string;
+  fallbackText: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  color: string;
+  surface?: string;
+}) {
+  const image = useCanvasImage(logoUrl || null);
+
+  return (
+    <Group x={x} y={y}>
+      <Rect
+        width={width}
+        height={height}
+        cornerRadius={5}
+        fill={surface || "#ffffff"}
+        stroke={color}
+        strokeWidth={0.8}
+        opacity={0.96}
+        shadowColor="#000"
+        shadowBlur={2}
+        shadowOpacity={0.06}
+      />
+      {image ? (
+        <KonvaImage
+          image={image}
+          x={2}
+          y={2}
+          width={width - 4}
+          height={height - 4}
+          listening={false}
+        />
+      ) : (
+        <Text
+          x={0}
+          y={(height - 9) / 2}
+          width={width}
+          text={fallbackText}
+          fontSize={8.5}
+          fontStyle="bold"
+          fill="#333333"
+          align="center"
+        />
+      )}
+    </Group>
+  );
+}
+
 function GiftVisual({
   element,
   tokens,
@@ -1166,9 +1226,11 @@ function GiftVisual({
     bank: resolveCanvasBoundValue(props.bank, variables),
     accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
     accountName: resolveCanvasBoundValue(props.accountName, variables),
+    bankLogo: resolveCanvasBoundValue(props.bankLogo, variables),
     bank2: resolveCanvasBoundValue(props.bank2, variables),
     accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
     accountName2: resolveCanvasBoundValue(props.accountName2, variables),
+    bankLogo2: resolveCanvasBoundValue(props.bankLogo2, variables),
   };
   const accounts = parseGiftAccounts(props.accounts, resolvedExtra);
   const list = accounts.length
@@ -1400,44 +1462,66 @@ function GiftVisual({
               </Group>
             ) : null}
 
-            {/* Bank Badge Monogram (when not BankCard or QR or Compact) */}
-            {!isCompact && !isBankCard && !isQr ? (
-              <Group>
-                <Rect
-                  x={cardX + 8}
-                  y={y + (itemH - 28) / 2}
-                  width={32}
-                  height={28}
-                  cornerRadius={6}
-                  fill={color}
-                  opacity={0.12}
-                />
-                <Text
-                  x={cardX + 8}
-                  y={y + (itemH - 28) / 2 + 8}
-                  width={32}
-                  text={(account.bank || "$").slice(0, 3).toUpperCase()}
-                  fontSize={9}
-                  fontStyle="bold"
-                  fill={color}
-                  align="center"
-                />
-              </Group>
-            ) : null}
+            {/* Bank Logo / Badge for all variants */}
+            {isBankCard ? (
+              <CanvasBankLogoBadge
+                logoUrl={account.bankLogo}
+                fallbackText={(account.bank || "$").slice(0, 3).toUpperCase()}
+                x={cardX + cardW - 48}
+                y={y + 8}
+                width={40}
+                height={22}
+                color={surface}
+                surface={surface}
+              />
+            ) : isQr ? (
+              <CanvasBankLogoBadge
+                logoUrl={account.bankLogo}
+                fallbackText={(account.bank || "$").slice(0, 3).toUpperCase()}
+                x={cardX + 48}
+                y={y + 7}
+                width={34}
+                height={20}
+                color={color}
+                surface={surface}
+              />
+            ) : isCompact ? (
+              <CanvasBankLogoBadge
+                logoUrl={account.bankLogo}
+                fallbackText={(account.bank || "$").slice(0, 3).toUpperCase()}
+                x={14}
+                y={y + (itemH - 22) / 2}
+                width={32}
+                height={20}
+                color={color}
+                surface={surface}
+              />
+            ) : (
+              <CanvasBankLogoBadge
+                logoUrl={account.bankLogo}
+                fallbackText={(account.bank || "$").slice(0, 3).toUpperCase()}
+                x={cardX + 8}
+                y={y + (itemH - 26) / 2}
+                width={38}
+                height={26}
+                color={color}
+                surface={surface}
+              />
+            )}
 
             {/* Bank Name */}
             <Text
               x={
                 isCompact
-                  ? 14
+                  ? 52
                   : isBankCard
                     ? cardX + 42
                     : isQr
-                      ? cardX + 48
-                      : cardX + 46
+                      ? cardX + 86
+                      : cardX + 52
               }
               y={y + (isCompact ? 6 : isBankCard ? 11 : isMinimal ? 8 : 10)}
-              width={cardW - 100}
+              width={cardW - (isCompact ? 110 : isBankCard ? 100 : isQr ? 140 : 100)}
               text={account.bank || "BANK"}
               fontSize={10}
               fontStyle="bold"
@@ -1448,12 +1532,12 @@ function GiftVisual({
             <Text
               x={
                 isCompact
-                  ? 14
+                  ? 52
                   : isBankCard
                     ? cardX + 12
                     : isQr
                       ? cardX + 48
-                      : cardX + 46
+                      : cardX + 52
               }
               y={y + (isCompact ? 22 : isBankCard ? 36 : isMinimal ? 22 : 25)}
               width={cardW - 90}

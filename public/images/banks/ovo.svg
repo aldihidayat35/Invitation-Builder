@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#4C2A86"/>
+  <!-- OVO Emblem -->
+  <g transform="translate(18, 12)">
+    <circle cx="13" cy="13" r="12" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+    <circle cx="13" cy="13" r="5" fill="#FFFFFF"/>
+  </g>
+  <text x="54" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF" letter-spacing="2">OVO</text>
+</svg>

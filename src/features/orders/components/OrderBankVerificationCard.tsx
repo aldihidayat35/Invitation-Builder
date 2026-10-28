@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import type { BankVerificationMeta, BankAccountDetails } from "@/lib/engine";
+import type { BankVerificationMeta, MasterBankItem } from "@/lib/engine";
+import { MASTER_BANKS_DEFAULT, resolveFallbackBankLogo } from "@/lib/engine";
 import type { CustomerOrderStatus } from "@/lib/schema/domain";
 import {
   IconCreditCard,
@@ -17,6 +18,7 @@ interface OrderBankVerificationCardProps {
   orderStatus: CustomerOrderStatus;
   bankVerification?: BankVerificationMeta | null;
   verifyAction: (formData: FormData) => Promise<{ ok: boolean; message?: string; error?: string }>;
+  masterBanks?: readonly MasterBankItem[];
 }
 
 export function OrderBankVerificationCard({
@@ -24,6 +26,7 @@ export function OrderBankVerificationCard({
   orderStatus,
   bankVerification,
   verifyAction,
+  masterBanks = MASTER_BANKS_DEFAULT,
 }: OrderBankVerificationCardProps) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -34,8 +37,26 @@ export function OrderBankVerificationCard({
   const proposedPrimary = bankVerification?.proposedPrimary;
   const proposedSecondary = bankVerification?.proposedSecondary;
 
-  // Initial field states pre-filled with verified or proposed
-  const [bank, setBank] = useState(verifiedPrimary?.bank || proposedPrimary?.bank || "BCA");
+  const initialBank = verifiedPrimary?.bank || proposedPrimary?.bank || "BCA";
+  const initialLogo =
+    verifiedPrimary?.bankLogo ||
+    proposedPrimary?.bankLogo ||
+    resolveFallbackBankLogo(initialBank);
+
+  const [bank, setBank] = useState(initialBank);
+  const [bankLogo, setBankLogo] = useState(initialLogo);
+
+  // Match initial preset
+  const findPreset = (nameOrCode: string) => {
+    const norm = nameOrCode.toLowerCase().trim();
+    return masterBanks.find(
+      (b) => b.name.toLowerCase() === norm || b.code.toLowerCase() === norm,
+    );
+  };
+
+  const initialMatch1 = findPreset(initialBank);
+  const [preset1, setPreset1] = useState<string>(initialMatch1 ? initialMatch1.code : "custom");
+
   const [accountNumber, setAccountNumber] = useState(
     verifiedPrimary?.accountNumber || proposedPrimary?.accountNumber || "",
   );
@@ -46,7 +67,21 @@ export function OrderBankVerificationCard({
   const [hasSecondary, setHasSecondary] = useState(
     Boolean(verifiedSecondary?.bank || proposedSecondary?.bank),
   );
-  const [bank2, setBank2] = useState(verifiedSecondary?.bank || proposedSecondary?.bank || "");
+
+  const initialBank2 = verifiedSecondary?.bank || proposedSecondary?.bank || "";
+  const initialLogo2 =
+    verifiedSecondary?.bankLogo ||
+    proposedSecondary?.bankLogo ||
+    (initialBank2 ? resolveFallbackBankLogo(initialBank2) : "");
+
+  const [bank2, setBank2] = useState(initialBank2);
+  const [bankLogo2, setBankLogo2] = useState(initialLogo2);
+
+  const initialMatch2 = initialBank2 ? findPreset(initialBank2) : null;
+  const [preset2, setPreset2] = useState<string>(
+    initialMatch2 ? initialMatch2.code : initialBank2 ? "custom" : "mandiri",
+  );
+
   const [accountNumber2, setAccountNumber2] = useState(
     verifiedSecondary?.accountNumber || proposedSecondary?.accountNumber || "",
   );
@@ -59,15 +94,55 @@ export function OrderBankVerificationCard({
     orderStatus === "new" || orderStatus === "qualified",
   );
 
+  const handleBankSelect1 = (code: string) => {
+    setPreset1(code);
+    if (code === "custom") {
+      setBankLogo("/images/banks/generic.svg");
+    } else {
+      const found = masterBanks.find((b) => b.code === code);
+      if (found) {
+        setBank(found.name);
+        setBankLogo(found.logoUrl);
+      }
+    }
+  };
+
+  const handleBankSelect2 = (code: string) => {
+    setPreset2(code);
+    if (code === "custom") {
+      setBankLogo2("/images/banks/generic.svg");
+    } else {
+      const found = masterBanks.find((b) => b.code === code);
+      if (found) {
+        setBank2(found.name);
+        setBankLogo2(found.logoUrl);
+      }
+    }
+  };
+
   const applyProposedToForm = () => {
     if (proposedPrimary) {
-      if (proposedPrimary.bank) setBank(proposedPrimary.bank);
+      if (proposedPrimary.bank) {
+        setBank(proposedPrimary.bank);
+        const logo =
+          proposedPrimary.bankLogo || resolveFallbackBankLogo(proposedPrimary.bank);
+        setBankLogo(logo);
+        const match = findPreset(proposedPrimary.bank);
+        setPreset1(match ? match.code : "custom");
+      }
       if (proposedPrimary.accountNumber) setAccountNumber(proposedPrimary.accountNumber);
       if (proposedPrimary.accountName) setAccountName(proposedPrimary.accountName);
     }
     if (proposedSecondary) {
       setHasSecondary(true);
-      if (proposedSecondary.bank) setBank2(proposedSecondary.bank);
+      if (proposedSecondary.bank) {
+        setBank2(proposedSecondary.bank);
+        const logo2 =
+          proposedSecondary.bankLogo || resolveFallbackBankLogo(proposedSecondary.bank);
+        setBankLogo2(logo2);
+        const match = findPreset(proposedSecondary.bank);
+        setPreset2(match ? match.code : "custom");
+      }
       if (proposedSecondary.accountNumber) setAccountNumber2(proposedSecondary.accountNumber);
       if (proposedSecondary.accountName) setAccountName2(proposedSecondary.accountName);
     }
@@ -80,10 +155,12 @@ export function OrderBankVerificationCard({
     const formData = new FormData();
     formData.set("orderId", orderId);
     formData.set("bank", bank);
+    formData.set("bankLogo", bankLogo || resolveFallbackBankLogo(bank));
     formData.set("accountNumber", accountNumber);
     formData.set("accountName", accountName);
     if (hasSecondary && bank2 && accountNumber2) {
       formData.set("bank2", bank2);
+      formData.set("bankLogo2", bankLogo2 || resolveFallbackBankLogo(bank2));
       formData.set("accountNumber2", accountNumber2);
       formData.set("accountName2", accountName2);
     }
@@ -147,16 +224,36 @@ export function OrderBankVerificationCard({
                   Usulan Rekening Baru dari Klien (Portal Mandiri):
                 </h4>
                 <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-amber-950 font-mono text-[11px]">
-                  <div className="rounded bg-white/80 p-2 border border-amber-200/60">
-                    <span className="text-stone-500 block text-[9px] uppercase font-sans">Rekening Utama:</span>
-                    <strong>{proposedPrimary.bank}</strong> — {proposedPrimary.accountNumber}
-                    <span className="block text-stone-600 font-sans">a/n {proposedPrimary.accountName}</span>
+                  <div className="rounded bg-white/80 p-2 border border-amber-200/60 flex items-center gap-2.5">
+                    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded bg-white p-1 border border-stone-200 shadow-2xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={proposedPrimary.bankLogo || resolveFallbackBankLogo(proposedPrimary.bank)}
+                        alt={proposedPrimary.bank}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-stone-500 block text-[9px] uppercase font-sans">Rekening Utama:</span>
+                      <strong>{proposedPrimary.bank}</strong> — {proposedPrimary.accountNumber}
+                      <span className="block text-stone-600 font-sans">a/n {proposedPrimary.accountName}</span>
+                    </div>
                   </div>
                   {proposedSecondary && proposedSecondary.bank && proposedSecondary.accountNumber && (
-                    <div className="rounded bg-white/80 p-2 border border-amber-200/60">
-                      <span className="text-stone-500 block text-[9px] uppercase font-sans">Rekening Kedua:</span>
-                      <strong>{proposedSecondary.bank}</strong> — {proposedSecondary.accountNumber}
-                      <span className="block text-stone-600 font-sans">a/n {proposedSecondary.accountName}</span>
+                    <div className="rounded bg-white/80 p-2 border border-amber-200/60 flex items-center gap-2.5">
+                      <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded bg-white p-1 border border-stone-200 shadow-2xs">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={proposedSecondary.bankLogo || resolveFallbackBankLogo(proposedSecondary.bank)}
+                          alt={proposedSecondary.bank}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-stone-500 block text-[9px] uppercase font-sans">Rekening Kedua:</span>
+                        <strong>{proposedSecondary.bank}</strong> — {proposedSecondary.accountNumber}
+                        <span className="block text-stone-600 font-sans">a/n {proposedSecondary.accountName}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -205,15 +302,73 @@ export function OrderBankVerificationCard({
               <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                 Bank / Dompet Digital
               </label>
-              <input
-                type="text"
-                required
-                value={bank}
-                onChange={(e) => setBank(e.target.value)}
-                placeholder="Contoh: BCA, Mandiri, DANA"
-                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-800 outline-none focus:border-[#84633F]"
-                data-testid="admin-bank-input"
-              />
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white p-1 shadow-2xs"
+                  title={bank}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={bankLogo || resolveFallbackBankLogo(bank)}
+                    alt={bank}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+                <select
+                  value={preset1}
+                  onChange={(e) => handleBankSelect1(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 bg-white px-2 py-1.5 text-xs text-stone-800 outline-none focus:border-[#84633F]"
+                  data-testid="admin-bank-select"
+                >
+                  <optgroup label="Bank Populer">
+                    {masterBanks
+                      .filter((b) => b.category === "bank")
+                      .map((b) => (
+                        <option key={b.code} value={b.code}>
+                          {b.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="E-Wallet & QRIS">
+                    {masterBanks
+                      .filter((b) => b.category !== "bank")
+                      .map((b) => (
+                        <option key={b.code} value={b.code}>
+                          {b.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <option value="custom">Kustom / Bank Lain…</option>
+                </select>
+              </div>
+              {preset1 === "custom" && (
+                <div className="mt-2 space-y-1">
+                  <input
+                    type="text"
+                    required
+                    value={bank}
+                    onChange={(e) => setBank(e.target.value)}
+                    placeholder="Nama Bank / E-Wallet Kustom"
+                    className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-800 outline-none focus:border-[#84633F]"
+                    data-testid="admin-bank-input"
+                  />
+                  <input
+                    type="text"
+                    value={bankLogo}
+                    onChange={(e) => setBankLogo(e.target.value)}
+                    placeholder="URL / Path Logo (opsional, cth: /images/banks/bca.svg)"
+                    className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[10px] text-stone-500 outline-none focus:border-[#84633F]"
+                  />
+                </div>
+              )}
+              {preset1 !== "custom" && (
+                <input
+                  type="hidden"
+                  value={bank}
+                  data-testid="admin-bank-input"
+                  readOnly
+                />
+              )}
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-stone-600 mb-1">
@@ -269,13 +424,62 @@ export function OrderBankVerificationCard({
                 <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                   Bank / E-Wallet 2
                 </label>
-                <input
-                  type="text"
-                  value={bank2}
-                  onChange={(e) => setBank2(e.target.value)}
-                  placeholder="Contoh: BRI, GoPay"
-                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-800 outline-none focus:border-[#84633F]"
-                />
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white p-1 shadow-2xs"
+                    title={bank2}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={bankLogo2 || (bank2 ? resolveFallbackBankLogo(bank2) : "/images/banks/generic.svg")}
+                      alt={bank2 || "Bank 2"}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                  <select
+                    value={preset2}
+                    onChange={(e) => handleBankSelect2(e.target.value)}
+                    className="w-full rounded-lg border border-stone-200 bg-white px-2 py-1.5 text-xs text-stone-800 outline-none focus:border-[#84633F]"
+                  >
+                    <optgroup label="Bank Populer">
+                      {masterBanks
+                        .filter((b) => b.category === "bank")
+                        .map((b) => (
+                          <option key={b.code} value={b.code}>
+                            {b.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                    <optgroup label="E-Wallet & QRIS">
+                      {masterBanks
+                        .filter((b) => b.category !== "bank")
+                        .map((b) => (
+                          <option key={b.code} value={b.code}>
+                            {b.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                    <option value="custom">Kustom / Bank Lain…</option>
+                  </select>
+                </div>
+                {preset2 === "custom" && (
+                  <div className="mt-2 space-y-1">
+                    <input
+                      type="text"
+                      value={bank2}
+                      onChange={(e) => setBank2(e.target.value)}
+                      placeholder="Contoh: BRI, GoPay"
+                      className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-800 outline-none focus:border-[#84633F]"
+                    />
+                    <input
+                      type="text"
+                      value={bankLogo2}
+                      onChange={(e) => setBankLogo2(e.target.value)}
+                      placeholder="URL / Path Logo 2 (opsional)"
+                      className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[10px] text-stone-500 outline-none focus:border-[#84633F]"
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-stone-600 mb-1">

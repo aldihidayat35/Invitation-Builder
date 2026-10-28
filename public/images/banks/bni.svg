@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" width="180" height="50">
+  <rect width="180" height="50" rx="8" fill="#FFFFFF"/>
+  <text x="16" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="27" font-weight="900" fill="#005E6A" letter-spacing="1.5">BNI</text>
+  <g transform="translate(85, 11)">
+    <rect width="28" height="28" rx="6" fill="#F15A24"/>
+    <text x="5" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" letter-spacing="-0.5">46</text>
+  </g>
+</svg>

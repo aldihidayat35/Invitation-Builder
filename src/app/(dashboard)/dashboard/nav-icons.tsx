@@ -214,3 +214,11 @@ export const IconMessageSquare = () => (
     <path d="M8 9h8M8 13h5" />
   </Svg>
 );
+
+export const IconCreditCard = () => (
+  <Svg size={20}>
+    <rect width="20" height="14" x="2" y="5" rx="2" />
+    <line x1="2" x2="22" y1="10" />
+    <line x1="6" x2="10" y1="15" />
+  </Svg>
+);
