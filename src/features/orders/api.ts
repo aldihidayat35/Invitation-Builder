@@ -155,6 +155,13 @@ export async function savePortalAudio(
   return service.saveClientPortalAudio(await getDb(), token, audioSettings);
 }
 
+export async function savePortalSections(
+  token: string,
+  disabledSectionIds: string[],
+) {
+  return service.saveClientPortalSections(await getDb(), token, disabledSectionIds);
+}
+
 export async function regenerateOrderClientToken(orderId: string) {
   const user = await requireUser();
   return service.regenerateOrderClientToken(await getDb(), actorOf(user), orderId);

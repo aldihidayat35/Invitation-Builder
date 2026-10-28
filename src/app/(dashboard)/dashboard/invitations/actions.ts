@@ -18,6 +18,7 @@ import {
   restore,
   rollback,
   saveData,
+  saveSections,
   toggleClosure,
 } from "@/features/invitations/api";
 import type {
@@ -338,3 +339,32 @@ export async function adminSendOrderToReviewAction(
     return failure(error);
   }
 }
+
+export async function saveInvitationSectionsAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireOwner();
+  const invitationId = idSchema.safeParse(field(formData, "invitationId"));
+  if (!invitationId.success) return { error: "ID undangan tidak valid." };
+
+  const disabledRaw = field(formData, "disabledSections");
+  let disabledSections: string[] = [];
+  try {
+    const parsed = JSON.parse(disabledRaw || "[]");
+    if (Array.isArray(parsed)) {
+      disabledSections = parsed.filter((id) => typeof id === "string" && id.trim().length > 0);
+    }
+  } catch {
+    disabledSections = [];
+  }
+
+  try {
+    await saveSections(invitationId.data, disabledSections);
+    revalidatePath(`${LIST}/${invitationId.data}`);
+    return { ok: true, message: "Pengaturan section berhasil diperbarui." };
+  } catch (error) {
+    return failure(error);
+  }
+}
+

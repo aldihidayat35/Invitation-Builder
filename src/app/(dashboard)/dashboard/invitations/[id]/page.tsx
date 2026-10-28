@@ -13,12 +13,14 @@ import {
 import { DataModeForm } from "@/features/invitations/components/DataModeForm";
 import { GuestImport } from "@/features/invitations/components/GuestImport";
 import { GuestPanel } from "@/features/invitations/components/GuestPanel";
+import { AdminSectionManager } from "@/features/invitations/components/AdminSectionManager";
 import { PublishPanel } from "@/features/invitations/components/PublishPanel";
 import styles from "@/features/invitations/components/invitations.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import { getOrderByInvitationId } from "@/features/orders/api";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
+import { classifyAllSections } from "@/features/invitations/sections-classifier";
 import {
   addGuestAction,
   adminApproveOrderProductionAction,
@@ -29,6 +31,7 @@ import {
   publishInvitationAction,
   rollbackInvitationAction,
   saveInvitationDataAction,
+  saveInvitationSectionsAction,
   toggleInvitationClosureAction,
 } from "../actions";
 
@@ -72,6 +75,15 @@ export default async function InvitationDataPage({
   const imageAssets = assets.filter((asset) => asset.mimeType.startsWith("image/"));
   const imageOptions = imageAssets.map((asset) => ({ id: asset.id, label: asset.filename }));
   const archived = invitation.status === "archived";
+
+  const rawDisabled = Array.isArray(invitation.data["sections.disabled"])
+    ? (invitation.data["sections.disabled"] as string[])
+    : [];
+  const disabledSections = rawDisabled.filter((s) => typeof s === "string" && s.trim().length > 0);
+  const classifiedSections = classifyAllSections(
+    invitation.document.sections,
+    disabledSections,
+  );
 
   return (
     <main className={styles.page}>
@@ -127,6 +139,15 @@ export default async function InvitationDataPage({
           )}
         </div>
         <aside aria-label="Status dan tamu">
+          {classifiedSections.length > 0 && (
+            <AdminSectionManager
+              invitationId={invitation.id}
+              sections={classifiedSections}
+              disabledSections={disabledSections}
+              canWrite={permissions.write && !archived}
+              saveAction={saveInvitationSectionsAction}
+            />
+          )}
           <section className={styles.panel} aria-labelledby="readiness-title">
             <h2 id="readiness-title" className={styles.panelTitle}>
               Kesiapan publish

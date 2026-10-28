@@ -554,6 +554,46 @@ export async function saveInvitationData(
   return { invitation: toSummary(updated), issues };
 }
 
+export async function saveInvitationSections(
+  db: Database,
+  actor: Actor,
+  input: {
+    invitationId: string;
+    disabledSections: string[];
+  },
+): Promise<InvitationSummary> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
+  assertWritable(row);
+  await assertInvitationWorkflowMutable(db, row.id);
+
+  const disabledClean = Array.isArray(input.disabledSections)
+    ? input.disabledSections.filter((id) => typeof id === "string" && id.trim().length > 0)
+    : [];
+
+  const updatedData: Record<string, unknown> = {
+    ...row.data,
+    "sections.disabled": disabledClean,
+  };
+
+  const updated = await updateInvitationData(db, {
+    invitationId: row.id,
+    data: updatedData,
+  });
+  if (!updated) throw new InvitationArchivedError();
+
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "invitation.sections_update",
+    entityType: "invitation",
+    entityId: row.id,
+    metadata: { disabled: disabledClean },
+  });
+
+  return toSummary(updated);
+}
+
+
 /** Required-field validation used as the publish gate (groundwork for FR-INV-004 in F9). */
 export async function getInvitationReadiness(
   db: Database,

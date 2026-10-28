@@ -10,6 +10,7 @@ import {
   savePortalShareMessage,
   savePortalGallery,
   savePortalAudio,
+  savePortalSections,
   submitPortalDecision,
 } from "@/features/orders";
 import {
@@ -462,6 +463,34 @@ export async function uploadPortalAudioAssetAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Gagal mengunggah berkas audio.",
+    };
+  }
+}
+
+export async function savePortalSectionsAction(
+  token: string,
+  disabledSectionIds: string[],
+): Promise<PortalActionResult> {
+  const cleanToken = token.trim();
+  if (!cleanToken) {
+    return { ok: false, error: "Token akses portal tidak valid." };
+  }
+
+  try {
+    const res = await savePortalSections(cleanToken, disabledSectionIds);
+    revalidatePath(`/c/${cleanToken}`);
+    revalidatePath(`/portal/${cleanToken}`);
+    if (res.slug) {
+      revalidatePath(`/i/${res.slug}`);
+    }
+    return {
+      ok: true,
+      message: "Pengaturan section undangan berhasil disimpan.",
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Gagal menyimpan pengaturan section.",
     };
   }
 }

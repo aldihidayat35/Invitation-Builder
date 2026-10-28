@@ -117,6 +117,7 @@ export const AUDIT_ACTIONS = [
   "invitation.extend_expiry",
   "invitation.close",
   "invitation.reopen",
+  "invitation.sections_update",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

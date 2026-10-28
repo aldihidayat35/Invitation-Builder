@@ -57,6 +57,10 @@ import type { Database } from "@/lib/db/types";
 import type { CustomerOrderStatus, PaymentStatus, ProductionStatus } from "@/lib/schema/domain";
 import { createEmptyDocument, migrateDocument, parseDocumentOrThrow } from "@/lib/schema";
 import {
+  type ClassifiedSection,
+  classifyAllSections,
+} from "@/features/invitations/sections-classifier";
+import {
   applyDefaults,
   buildFormFields,
   createVariableRegistry,
@@ -1073,6 +1077,8 @@ export interface ClientPortalData {
   galleryItems?: { assetId?: string; src?: string; alt?: string }[];
   galleryEnabled?: boolean;
   audioSettings?: PortalAudioSettings;
+  sections?: ClassifiedSection[];
+  disabledSections?: string[];
   invitationCategory?: string;
   shareMessageTemplates?: PortalShareMessageTemplate[];
   activeShareMessageTemplate?: string;
@@ -1402,6 +1408,30 @@ export async function getClientPortalDataByToken(
 
   const activeShareMessageTemplate = savedShareTemplate?.trim() || defaultTemplate?.content || "";
 
+  // Resolving sections and disabled status for portal
+  let portalSections: ClassifiedSection[] = [];
+  const rawDisabled = Array.isArray(invitation?.data?.["sections.disabled"])
+    ? (invitation?.data?.["sections.disabled"] as string[])
+    : [];
+  const disabledSections = rawDisabled.filter((s) => typeof s === "string" && s.trim().length > 0);
+
+  if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
+      portalSections = classifyAllSections(doc.sections, disabledSections);
+    }
+  } else if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl && tmpl.publishedVersionNo !== null) {
+      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
+      if (ver) {
+        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
+        portalSections = classifyAllSections(doc.sections, disabledSections);
+      }
+    }
+  }
+
   // Event details for interpolation
   const coupleOrTitle =
     order?.groomBrideNames?.trim() ||
@@ -1440,6 +1470,8 @@ export async function getClientPortalDataByToken(
     galleryItems,
     galleryEnabled,
     audioSettings,
+    sections: portalSections,
+    disabledSections,
     invitationCategory,
     shareMessageTemplates,
     activeShareMessageTemplate,
@@ -1798,6 +1830,65 @@ export async function saveClientPortalAudio(
 
   return { ok: true, slug: invitation.slug, audio: audioSettings };
 }
+
+export async function saveClientPortalSections(
+  db: Database,
+  token: string,
+  disabledSectionIds: string[],
+): Promise<{ ok: boolean; slug?: string; disabledSections: string[] }> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal) {
+    throw new Error("Token akses portal tidak valid.");
+  }
+
+  let invitation = portal.invitation;
+  if (!invitation) {
+    if (portal.order?.templateId) {
+      invitation = await ensureOrderInvitation(db, portal.order);
+    }
+    if (!invitation) {
+      throw new Error("Proyek undangan belum siap atau template belum ditentukan.");
+    }
+  }
+
+  const disabledClean = Array.isArray(disabledSectionIds)
+    ? disabledSectionIds.filter((id) => typeof id === "string" && id.trim().length > 0)
+    : [];
+
+  const updatedData: Record<string, unknown> = {
+    ...invitation.data,
+    "sections.disabled": disabledClean,
+  };
+
+  const updatedInv = await updateInvitationData(db, {
+    invitationId: invitation.id,
+    data: updatedData,
+  });
+  if (!updatedInv) throw new Error("Gagal menyimpan pengaturan section undangan.");
+
+  await insertAuditLog(db, {
+    workspaceId: invitation.workspaceId,
+    actorId: null,
+    action: "order.portal_data_update",
+    entityType: "invitation",
+    entityId: invitation.id,
+    metadata: { token, type: "sections", disabled: disabledClean },
+  });
+
+  const isRealOrder = portal.order && portal.order.id !== invitation.id;
+  if (isRealOrder) {
+    await insertOrderWorkflowEvent(db, {
+      orderId: portal.order.id,
+      actorId: null,
+      eventType: "portal_data_update",
+      note: `Klien memperbarui section undangan (${disabledClean.length} section dinonaktifkan).`,
+      metadata: { token, type: "sections", disabled: disabledClean },
+    });
+  }
+
+  return { ok: true, slug: invitation.slug, disabledSections: disabledClean };
+}
+
 
 export async function addGuestByClientToken(
   db: Database,

@@ -153,6 +153,13 @@ export function resolveDocument(
     return resolved;
   };
 
+  const rawDisabledSections = Array.isArray(data["sections.disabled"])
+    ? (data["sections.disabled"] as unknown[])
+    : [];
+  const disabledSectionIds = new Set<string>(
+    rawDisabledSections.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+  );
+
   const sections: ResolvedSection[] = document.sections.map((section, si) => {
     const sectionPath: (string | number)[] = ["sections", si];
     const sectionWhere = { sectionId: section.id };
@@ -308,12 +315,14 @@ export function resolveDocument(
       }
     });
 
+    const isSectionDisabled = disabledSectionIds.has(section.id) && !section.isOpening;
+
     return {
       id: section.id,
       ...(section.name !== undefined && { name: section.name }),
       baseHeight: section.baseHeight,
       overflow: section.overflow,
-      hidden: !section.visible || hideSectionDueToGallery,
+      hidden: !section.visible || hideSectionDueToGallery || isSectionDisabled,
       isOpening: Boolean(section.isOpening),
       background: {
         ...(section.background.color !== undefined && {

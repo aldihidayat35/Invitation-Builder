@@ -9,6 +9,7 @@ export { CreateInvitationForm } from "./components/CreateInvitationForm";
 export type { PublishedTemplateOption } from "./components/CreateInvitationForm";
 export { DataModeForm } from "./components/DataModeForm";
 export { GuestPanel } from "./components/GuestPanel";
+export { AdminSectionManager } from "./components/AdminSectionManager";
 export { InvitationList } from "./components/InvitationList";
 export { InvitationsView } from "./components/InvitationsView";
 export type {

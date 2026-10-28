@@ -82,6 +82,14 @@ export async function saveData(
   });
 }
 
+export async function saveSections(invitationId: string, disabledSections: string[]) {
+  const { db, actor } = await context();
+  return service.saveInvitationSections(db, actor, {
+    invitationId,
+    disabledSections,
+  });
+}
+
 export async function readiness(invitationId: string) {
   const { db, actor } = await context();
   return service.getInvitationReadiness(db, actor, invitationId);

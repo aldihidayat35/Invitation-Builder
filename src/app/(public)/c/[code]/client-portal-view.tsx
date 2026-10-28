@@ -10,6 +10,7 @@ import {
 import { PortalVariableForm } from "./components/PortalVariableForm";
 import { PortalGalleryManager } from "./components/PortalGalleryManager";
 import { PortalBacksoundManager } from "./components/PortalBacksoundManager";
+import { PortalSectionManager } from "./components/PortalSectionManager";
 import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
 import { PortalShareMessageCard } from "./components/PortalShareMessageCard";
 import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
@@ -21,7 +22,7 @@ interface ClientPortalViewProps {
 }
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
-  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "audio" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "audio" | "sections" | "review" | "guests" | "rsvp" | "wishes">("data");
   const [galleryItems, setGalleryItems] = useState(data.galleryItems || []);
   const [audioSettings, setAudioSettings] = useState(data.audioSettings);
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
@@ -311,6 +312,19 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("sections")}
+            className={`${styles.tabBtn} ${activeTab === "sections" ? styles.tabBtnActive : ""}`}
+          >
+            <span>📑</span>
+            <span>Atur Section</span>
+            {data.sections && data.sections.length > 0 && (
+              <span className={styles.tabCount}>
+                {data.sections.length - (data.disabledSections?.length || 0)}/{data.sections.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("review")}
             className={`${styles.tabBtn} ${activeTab === "review" ? styles.tabBtnActive : ""}`}
           >
@@ -463,6 +477,16 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                   : "Musik latar berhasil dinonaktifkan.",
               );
             }}
+          />
+        )}
+
+        {/* --- TAB 0.8: ATUR SECTION UNDANGAN --- */}
+        {activeTab === "sections" && (
+          <PortalSectionManager
+            token={token}
+            sections={data.sections || []}
+            disabledSections={data.disabledSections || []}
+            onNotification={(msg) => showToast(msg)}
           />
         )}
 
