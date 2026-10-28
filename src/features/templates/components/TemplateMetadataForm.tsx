@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import type {
+  TemplateColorSwatch,
   TemplateDetail,
   TemplateExtendedMetadata,
   TemplateSupportedFeature,
@@ -9,6 +10,78 @@ import type {
 import type { ActionState } from "./action-state";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
+
+export interface PalettePreset {
+  name: string;
+  swatches: Array<{ hex: string; name: string; isPrimary?: boolean }>;
+}
+
+export const PRESET_PALETTES: PalettePreset[] = [
+  {
+    name: "Sage Natural",
+    swatches: [
+      { hex: "#8A9A86", name: "Sage Green", isPrimary: true },
+      { hex: "#F4F1EA", name: "Ivory Warm" },
+      { hex: "#4A5847", name: "Forest Green" },
+    ],
+  },
+  {
+    name: "Gold Mewah",
+    swatches: [
+      { hex: "#D4AF37", name: "Gold Kencana", isPrimary: true },
+      { hex: "#2C221E", name: "Dark Walnut" },
+      { hex: "#FFFDF9", name: "Ivory Silk" },
+    ],
+  },
+  {
+    name: "Terracotta Boho",
+    swatches: [
+      { hex: "#C86D51", name: "Terracotta", isPrimary: true },
+      { hex: "#F7F2EE", name: "Sand Cream" },
+      { hex: "#583B2B", name: "Mocha Ink" },
+    ],
+  },
+  {
+    name: "Mawar Romantis",
+    swatches: [
+      { hex: "#AD2458", name: "Rose Pink", isPrimary: true },
+      { hex: "#FFF3F7", name: "Soft Blush" },
+      { hex: "#664624", name: "Warm Bronze" },
+    ],
+  },
+  {
+    name: "Deep Navy",
+    swatches: [
+      { hex: "#243D73", name: "Royal Navy", isPrimary: true },
+      { hex: "#F2F5FB", name: "Soft Blue" },
+      { hex: "#D4AF37", name: "Gold Accent" },
+    ],
+  },
+  {
+    name: "Charcoal Modern",
+    swatches: [
+      { hex: "#273244", name: "Charcoal", isPrimary: true },
+      { hex: "#F7F8FA", name: "Cool White" },
+      { hex: "#C7A080", name: "Warm Muted" },
+    ],
+  },
+  {
+    name: "Lilac Lavender",
+    swatches: [
+      { hex: "#8E7DBE", name: "Soft Lilac", isPrimary: true },
+      { hex: "#FAF8FD", name: "Lavender Tint" },
+      { hex: "#4A3E6B", name: "Deep Plum" },
+    ],
+  },
+  {
+    name: "Emerald Royal",
+    swatches: [
+      { hex: "#2D5A46", name: "Emerald Green", isPrimary: true },
+      { hex: "#F5F8F6", name: "Pale Mint" },
+      { hex: "#D4AF37", name: "Gold Foil" },
+    ],
+  },
+];
 
 interface TemplateMetadataFormProps {
   template: TemplateDetail;
@@ -107,6 +180,47 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
       setUploadingVideo(false);
       if (videoInputRef.current) videoInputRef.current.value = "";
     }
+  };
+
+  // Color palette state & handlers
+  const initialPalette: TemplateColorSwatch[] =
+    meta.colorPalette && meta.colorPalette.length > 0
+      ? meta.colorPalette
+      : (PRESET_PALETTES[0]?.swatches || []);
+
+  const [colorPalette, setColorPalette] = useState<TemplateColorSwatch[]>(initialPalette);
+
+  const updateSwatch = (index: number, partial: Partial<TemplateColorSwatch>) => {
+    setColorPalette((prev) =>
+      prev.map((s, idx) => (idx === index ? { ...s, ...partial } : s)),
+    );
+  };
+
+  const removeSwatch = (index: number) => {
+    setColorPalette((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== index);
+      if (filtered.length > 0 && !filtered.some((s) => s.isPrimary)) {
+        const first = filtered[0];
+        if (first) {
+          filtered[0] = { hex: first.hex, name: first.name, isPrimary: true };
+        }
+      }
+      return filtered;
+    });
+  };
+
+  const setPrimarySwatch = (index: number) => {
+    setColorPalette((prev) =>
+      prev.map((s, idx) => ({ ...s, isPrimary: idx === index })),
+    );
+  };
+
+  const addCustomSwatch = () => {
+    if (colorPalette.length >= 10) return;
+    setColorPalette((prev) => [
+      ...prev,
+      { hex: "#D4AF37", name: "Warna Aksen", isPrimary: prev.length === 0 },
+    ]);
   };
 
   return (
@@ -434,6 +548,143 @@ export function TemplateMetadataForm({ template, action, categories = [] }: Temp
               )}
             </div>
           </div>
+        </div>
+
+        {/* Palet Warna Template (Katalog & Showcase) */}
+        <div className="border-t border-[#EBE3D5] pt-5 space-y-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-[#2C221E] uppercase tracking-wider">
+                Palet Warna Tema Template
+              </h4>
+              <span className="text-[11px] font-semibold text-[#84633F] bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
+                {colorPalette.length} / 10 Warna
+              </span>
+            </div>
+            <p className="mt-0.5 text-[11px] text-[#8A7A70]">
+              Tentukan warna tema template ini. Pengunjung katalog web dapat memilih warna favorit dari palet ini saat melihat atau memesan undangan.
+            </p>
+          </div>
+
+          {/* Quick Preset Buttons */}
+          <div>
+            <span className="block text-[11px] font-semibold text-[#5A4D44] mb-2">
+              Pilihan Preset Cepat (1-Klik Terapkan):
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {PRESET_PALETTES.map((preset) => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  onClick={() => setColorPalette([...preset.swatches])}
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#D9CFC4] bg-white hover:bg-[#FAF8F5] px-3 py-1.5 text-xs text-[#423630] font-medium transition cursor-pointer shadow-2xs hover:border-[#D4AF37]"
+                >
+                  <span className="flex -space-x-1">
+                    {preset.swatches.map((sw, idx) => (
+                      <span
+                        key={idx}
+                        className="h-3.5 w-3.5 rounded-full border border-white shadow-2xs shrink-0"
+                        style={{ backgroundColor: sw.hex }}
+                      />
+                    ))}
+                  </span>
+                  <span>{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Swatches Editor */}
+          <div className="space-y-3">
+            <span className="block text-[11px] font-semibold text-[#5A4D44]">
+              Daftar Swatch Warna Tema Aktif:
+            </span>
+
+            {colorPalette.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-[#D9CFC4] bg-[#FAF8F5] p-4 text-center text-xs text-[#8A7A70]">
+                Belum ada warna palet. Pilih preset di atas atau klik &quot;Tambah Warna Kustom&quot; di bawah.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {colorPalette.map((swatch, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-[#E3DACD] bg-white p-3 space-y-2.5 shadow-2xs relative"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={swatch.hex.length === 7 ? swatch.hex : "#8A9A86"}
+                        onChange={(e) => updateSwatch(idx, { hex: e.target.value })}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-[#D9CFC4] p-0.5 bg-white shrink-0"
+                        title="Pilih warna HEX"
+                      />
+                      <input
+                        type="text"
+                        value={swatch.hex}
+                        onChange={(e) => updateSwatch(idx, { hex: e.target.value })}
+                        placeholder="#8A9A86"
+                        maxLength={7}
+                        className="w-24 rounded-lg border border-[#D9CFC4] bg-[#FAF8F5] px-2 py-1 font-mono text-xs text-[#2C221E] uppercase"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSwatch(idx)}
+                        className="ml-auto text-rose-500 hover:text-rose-700 text-xs p-1 rounded hover:bg-rose-50 cursor-pointer"
+                        title="Hapus swatch"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#7D6B5D] mb-0.5">
+                        Nama Warna
+                      </label>
+                      <input
+                        type="text"
+                        value={swatch.name}
+                        onChange={(e) => updateSwatch(idx, { name: e.target.value })}
+                        placeholder="mis. Sage Green, Gold Kencana"
+                        maxLength={40}
+                        className="w-full rounded-lg border border-[#D9CFC4] bg-white px-2.5 py-1 text-xs text-[#2C221E] outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer pt-0.5">
+                      <input
+                        type="radio"
+                        name="primarySwatchRadio"
+                        checked={swatch.isPrimary ?? false}
+                        onChange={() => setPrimarySwatch(idx)}
+                        className="text-[#D4AF37] focus:ring-[#D4AF37]"
+                      />
+                      <span className="text-[10px] text-[#8A7A70] font-medium">
+                        {swatch.isPrimary ? "Warna Utama (Default Terpilih)" : "Jadikan Warna Utama"}
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {colorPalette.length < 10 && (
+              <button
+                type="button"
+                onClick={addCustomSwatch}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[#D4AF37] bg-[#FAF8F5] hover:bg-[#F7F4EE] px-4 py-2 text-xs font-semibold text-[#84633F] cursor-pointer transition shadow-2xs"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span>Tambah Warna Kustom</span>
+              </button>
+            )}
+          </div>
+
+          <input type="hidden" name="colorPaletteJson" value={JSON.stringify(colorPalette)} />
         </div>
 
         {/* Features / Badges */}

@@ -19,6 +19,7 @@ const platformOrderSchema = z.object({
   templateTitle: z.string().optional().or(z.literal("")),
   eventDate: z.string().trim().max(32).optional(),
   eventLocation: z.string().trim().max(240).optional(),
+  selectedColor: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2_000).optional(),
 });
 
@@ -51,6 +52,7 @@ export async function submitPlatformOrderAction(
     templateTitle: field(formData, "templateTitle"),
     eventDate: field(formData, "eventDate"),
     eventLocation: field(formData, "eventLocation"),
+    selectedColor: field(formData, "selectedColor"),
     notes: field(formData, "notes"),
   });
 
@@ -78,6 +80,7 @@ export async function submitPlatformOrderAction(
       templateTitle: data.templateTitle || undefined,
       eventDate: data.eventDate || undefined,
       eventLocation: data.eventLocation || undefined,
+      selectedColor: data.selectedColor || undefined,
       notes: data.notes || undefined,
     });
 

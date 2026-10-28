@@ -13,6 +13,7 @@ import {
 } from "@/features/templates/api";
 import type { ActionState } from "@/features/templates/components";
 import type {
+  TemplateColorSwatch,
   TemplateSupportedFeature,
 } from "@/features/templates/types";
 import type { TemplateCategory, TemplateStyle, TemplateTier } from "@/lib/schema/domain";
@@ -162,6 +163,25 @@ export async function updateTemplateCatalogAction(
     const previewVideoUrl = field(formData, "previewVideoUrl").trim() || null;
     const previewMockupUrl = field(formData, "previewMockupUrl").trim() || previewVideoUrl;
 
+    const rawPaletteJson = field(formData, "colorPaletteJson").trim();
+    let colorPalette: TemplateColorSwatch[] = [];
+    if (rawPaletteJson) {
+      try {
+        const parsed = JSON.parse(rawPaletteJson);
+        if (Array.isArray(parsed)) {
+          colorPalette = parsed
+            .filter((item) => item && typeof item.hex === "string" && typeof item.name === "string")
+            .map((item) => ({
+              hex: String(item.hex).trim(),
+              name: String(item.name).trim(),
+              isPrimary: Boolean(item.isPrimary),
+            }));
+        }
+      } catch (err) {
+        console.warn("[updateTemplateCatalogAction] Failed to parse colorPaletteJson", err);
+      }
+    }
+
     const { updateCatalogMetadata } = await import("@/features/templates/api");
     const demoInvitationSlug = field(formData, "demoInvitationSlug").trim() || null;
     await updateCatalogMetadata(id.data, {
@@ -177,12 +197,14 @@ export async function updateTemplateCatalogAction(
       previewMockupUrl,
       previewVideoUrl,
       tags,
+      colorPalette,
       supportedFeatures: rawFeatures as TemplateSupportedFeature[],
       demoInvitationSlug,
       metadata: {
         supportedFeatures: rawFeatures as TemplateSupportedFeature[],
         demoInvitationSlug: demoInvitationSlug || undefined,
         previewVideoUrl: previewVideoUrl || undefined,
+        colorPalette,
       },
     });
 

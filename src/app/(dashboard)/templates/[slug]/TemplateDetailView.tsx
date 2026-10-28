@@ -15,7 +15,7 @@ export interface PublicTemplateDetail {
   thumbnailUrl: string;
   previewUrl?: string;
   features: string[];
-  palette: Array<{ name: string; hex: string }>;
+  palette: Array<{ name: string; hex: string; isPrimary?: boolean }>;
 }
 
 interface TemplateDetailViewProps {
@@ -174,6 +174,14 @@ export function TemplateDetailView({
 }: TemplateDetailViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(autoOpenOrder);
   const [orderSuccess, setOrderSuccess] = useState<PlatformOrderActionState | null>(null);
+
+  const defaultColor =
+    template.palette?.find((p) => p.isPrimary) || template.palette?.[0] || null;
+  const [selectedColor, setSelectedColor] = useState<{
+    name: string;
+    hex: string;
+    isPrimary?: boolean;
+  } | null>(defaultColor);
 
   const [state, formAction, isPending] = useActionState<PlatformOrderActionState, FormData>(
     async (prev, formData) => {
@@ -389,26 +397,57 @@ export function TemplateDetailView({
               </ul>
             </div>
 
-            {/* Color Palette Chips */}
+            {/* Color Palette Chips (Interactive Selector) */}
             {template.palette && template.palette.length > 0 && (
               <div className="rounded-2xl border border-[#EFE7DC] bg-white p-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#8F7D6D] mb-2.5">
-                  Palet Warna Tema:
-                </h4>
-                <div className="flex flex-wrap items-center gap-3">
-                  {template.palette.map((c, i) => (
-                    <div
-                      key={i}
-                      className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50/80 px-2.5 py-1.5 text-xs text-[#6B5A4B]"
-                    >
-                      <span
-                        className="h-4 w-4 rounded-full border border-black/10 shadow-2xs"
-                        style={{ backgroundColor: c.hex }}
-                      />
-                      <span className="font-medium">{c.name}</span>
-                      <span className="font-mono text-[10px] text-stone-400 uppercase">{c.hex}</span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-2.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#8F7D6D]">
+                    Pilih Palet Warna Tema:
+                  </h4>
+                  {selectedColor && (
+                    <span className="text-[11px] font-semibold text-[#84633F] bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+                      Dipilih: {selectedColor.name}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500 mb-3">
+                  Klik warna di bawah untuk memilih variasi tema yang Anda sukai untuk undangan ini.
+                </p>
+                <div className="flex flex-wrap items-center gap-2.5" role="group" aria-label="Pilihan palet warna tema">
+                  {template.palette.map((c, i) => {
+                    const isSelected =
+                      selectedColor?.name === c.name ||
+                      (!selectedColor && i === 0);
+                    return (
+                      <button
+                        type="button"
+                        key={i}
+                        onClick={() => setSelectedColor(c)}
+                        aria-pressed={isSelected}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs transition cursor-pointer ${
+                          isSelected
+                            ? "border-[#84633F] bg-[#FAF4EC] text-[#2C221E] shadow-xs ring-2 ring-[#84633F]/25 font-bold"
+                            : "border-stone-200 bg-stone-50/80 text-[#6B5A4B] hover:border-stone-300 hover:bg-stone-100"
+                        }`}
+                      >
+                        <span
+                          className="h-4 w-4 rounded-full border border-black/15 shadow-2xs shrink-0 flex items-center justify-center"
+                          style={{ backgroundColor: c.hex }}
+                        >
+                          {isSelected && (
+                            <span className="block h-1.5 w-1.5 rounded-full bg-white shadow-xs" />
+                          )}
+                        </span>
+                        <span>{c.name}</span>
+                        <span className="font-mono text-[10px] text-stone-400 uppercase">{c.hex}</span>
+                        {c.isPrimary && (
+                          <span className="text-[9px] uppercase font-bold text-[#84633F] bg-amber-100/70 px-1.5 py-0.5 rounded">
+                            Utama
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -568,6 +607,72 @@ export function TemplateDetailView({
                   <input type="hidden" name="templateId" value={template.id.startsWith("preset-") ? "" : template.id} />
                   <input type="hidden" name="templateSlug" value={template.slug} />
                   <input type="hidden" name="templateTitle" value={template.name} />
+                  <input
+                    type="hidden"
+                    name="selectedColor"
+                    value={selectedColor ? `${selectedColor.name} (${selectedColor.hex})` : ""}
+                  />
+
+                  {/* Selected Color Theme Preview inside modal */}
+                  {selectedColor && (
+                    <div className="rounded-xl border border-amber-200/90 bg-amber-50/60 p-3 text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="h-5 w-5 rounded-full border border-black/15 shadow-xs shrink-0"
+                            style={{ backgroundColor: selectedColor.hex }}
+                          />
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#84633F] block">
+                              Palet Warna Pilihan
+                            </span>
+                            <span className="font-bold text-[#2C221E]">
+                              {selectedColor.name}{" "}
+                              <span className="font-mono text-[11px] font-normal text-stone-500 uppercase">
+                                {selectedColor.hex}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                          Terpilih
+                        </span>
+                      </div>
+
+                      {template.palette && template.palette.length > 1 && (
+                        <div className="pt-1.5 border-t border-amber-200/50">
+                          <span className="block text-[10px] font-semibold text-stone-500 mb-1.5">
+                            Ganti warna:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {template.palette.map((swatch, idx) => {
+                              const isChosen =
+                                selectedColor?.name === swatch.name &&
+                                selectedColor?.hex === swatch.hex;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setSelectedColor(swatch)}
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition cursor-pointer ${
+                                    isChosen
+                                      ? "border-[#84633F] bg-white text-[#2C221E] font-bold shadow-2xs ring-1 ring-[#84633F]"
+                                      : "border-stone-200 bg-white/70 text-stone-600 hover:bg-white"
+                                  }`}
+                                >
+                                  <span
+                                    className="h-3 w-3 rounded-full border border-black/15 shrink-0"
+                                    style={{ backgroundColor: swatch.hex }}
+                                  />
+                                  <span>{swatch.name}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {state?.error && (
                     <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-800">

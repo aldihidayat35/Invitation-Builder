@@ -272,9 +272,13 @@ export default async function TemplateDetailPage({ params, searchParams }: PageP
     ],
     palette:
       dbTemplate?.colorPalette?.length
-        ? dbTemplate.colorPalette.map((c) => ({ name: c.name, hex: c.hex }))
+        ? dbTemplate.colorPalette.map((c) => ({
+            name: c.name,
+            hex: c.hex,
+            isPrimary: c.isPrimary,
+          }))
         : fallback?.palette || [
-            { name: "Gold Aksen", hex: "#D4AF37" },
+            { name: "Gold Aksen", hex: "#D4AF37", isPrimary: true },
             { name: "Warm Walnut", hex: "#2C221E" },
             { name: "Ivory", hex: "#FDFBF7" },
           ],

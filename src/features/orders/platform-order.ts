@@ -160,6 +160,7 @@ export async function createPlatformOrder(
       groomBrideNames: data.groomBrideNames,
       eventDate: data.eventDate,
       eventLocation: data.eventLocation,
+      selectedColor: data.selectedColor,
       notes: data.notes,
     });
 
@@ -178,6 +179,13 @@ export async function createPlatformOrder(
   const parsedDate = data.eventDate ? new Date(data.eventDate) : null;
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : null;
 
+  const formattedNotes = [
+    data.selectedColor?.trim() ? `[Warna Tema: ${data.selectedColor.trim()}]` : null,
+    data.notes?.trim() || null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
   try {
     const created = await createCustomerOrder(db, {
       sellerId: null,
@@ -189,7 +197,7 @@ export async function createPlatformOrder(
       groomBrideNames: data.groomBrideNames?.trim() || null,
       eventDate: validDate,
       eventLocation: data.eventLocation?.trim() || null,
-      notes: data.notes?.trim() || null,
+      notes: formattedNotes || null,
     });
 
     await insertAuditLog(db, {

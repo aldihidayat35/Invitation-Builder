@@ -81,4 +81,31 @@ describe("Public Template Detail View & Order Form", () => {
     expect(screen.getByRole("dialog")).toBeDefined();
     expect(screen.getByText(/Pesan Tema: Classic Floral Botanical/i)).toBeDefined();
   });
+
+  it("allows selecting a color palette swatch and reflects it in the order form", () => {
+    const { container } = render(
+      <TemplateDetailView template={mockTemplate} appSettings={mockSettings} autoOpenOrder={true} />,
+    );
+
+    // Initial selected should be Sage Green
+    expect(screen.getAllByText(/Sage Green/i).length).toBeGreaterThan(0);
+
+    // Find Warm Ivory button and click it
+    const warmIvoryBtns = screen.getAllByRole("button", { name: /Warm Ivory/i });
+    expect(warmIvoryBtns.length).toBeGreaterThan(0);
+    const targetBtn = warmIvoryBtns[0];
+    expect(targetBtn).toBeDefined();
+    if (targetBtn) {
+      fireEvent.click(targetBtn);
+    }
+
+    // Selected indicator should update
+    expect(screen.getByText(/Dipilih: Warm Ivory/i)).toBeDefined();
+
+    // Check hidden input in order form
+    const colorInput = container.querySelector('input[name="selectedColor"]') as HTMLInputElement;
+    expect(colorInput).toBeDefined();
+    expect(colorInput.value).toContain("Warm Ivory");
+    expect(colorInput.value).toContain("#F4F1EA");
+  });
 });
