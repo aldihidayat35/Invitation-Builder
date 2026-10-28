@@ -1,6 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CropIcon,
+  XIcon,
+  MoveIcon,
+  MinusIcon,
+  PlusIcon,
+  RotateCwIcon,
+  RotateCcwIcon,
+  CheckIcon,
+} from "./PortalIcons";
 import styles from "./PhotoCropModal.module.css";
 
 export type AspectRatioType = "1:1" | "3:4" | "4:3" | "free";
@@ -391,7 +401,9 @@ export function PhotoCropModal({
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.titleArea}>
-            <span className={styles.headerIcon}>✂️</span>
+            <span className={styles.headerIcon}>
+              <CropIcon size={20} />
+            </span>
             <h3 className={styles.title}>{title}</h3>
           </div>
           <button
@@ -401,7 +413,7 @@ export function PhotoCropModal({
             disabled={isProcessing}
             aria-label="Tutup"
           >
-            ✕
+            <XIcon size={18} />
           </button>
         </div>
 
@@ -424,7 +436,8 @@ export function PhotoCropModal({
               onTouchEnd={handleTouchEnd}
             />
             <div className={styles.canvasOverlayHelp}>
-              👆 Tarik / geser untuk atur posisi • Scroll / pinch untuk zoom
+              <MoveIcon size={13} />
+              <span>Tarik / geser untuk atur posisi • Scroll / pinch untuk zoom</span>
             </div>
           </div>
 
@@ -471,8 +484,9 @@ export function PhotoCropModal({
                 className={styles.iconBtnSmall}
                 title="Perkecil Zoom"
                 onClick={() => setZoom((z) => Math.max(1, +(z - 0.1).toFixed(2)))}
+                aria-label="Perkecil Zoom"
               >
-                －
+                <MinusIcon size={15} />
               </button>
               <input
                 type="range"
@@ -489,20 +503,21 @@ export function PhotoCropModal({
                 className={styles.iconBtnSmall}
                 title="Perbesar Zoom"
                 onClick={() => setZoom((z) => Math.min(3, +(z + 0.1).toFixed(2)))}
+                aria-label="Perbesar Zoom"
               >
-                ＋
+                <PlusIcon size={15} />
               </button>
               <span className={styles.zoomValue}>{Math.round(zoom * 100)}%</span>
             </div>
 
             <div className={styles.toolActionsRow}>
               <button type="button" className={styles.secondaryBtn} onClick={handleRotate}>
-                <span>🔄</span>
+                <RotateCwIcon size={14} />
                 <span>Putar 90°</span>
               </button>
 
               <button type="button" className={styles.secondaryBtn} onClick={handleReset}>
-                <span>↩️</span>
+                <RotateCcwIcon size={14} />
                 <span>Reset Posisi</span>
               </button>
             </div>
@@ -532,7 +547,7 @@ export function PhotoCropModal({
               </>
             ) : (
               <>
-                <span>✓</span>
+                <CheckIcon size={16} />
                 <span>Terapkan & Simpan</span>
               </>
             )}

@@ -5,6 +5,20 @@ import type { FormGroup } from "@/lib/engine";
 import { isGiftAccountVariableKey, type BankVerificationMeta } from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
 import { PortalImageField } from "./PortalImageField";
+import {
+  VariableGroupIcon,
+  ClockIcon,
+  CheckIcon,
+  Edit3Icon,
+  AlertTriangleIcon,
+  SaveIcon,
+  ExternalLinkIcon,
+  ShieldCheckIcon,
+  RefreshCwIcon,
+  XIcon,
+  LightbulbIcon,
+  WhatsAppIcon,
+} from "./PortalIcons";
 import styles from "../client-portal.module.css";
 
 interface PortalVariableFormProps {
@@ -19,18 +33,6 @@ interface PortalVariableFormProps {
 }
 
 type SaveStatus = "saved" | "dirty" | "saving" | "error";
-
-function getGroupIcon(groupName: string, label: string): string {
-  const g = `${groupName} ${label}`.toLowerCase();
-  if (g.includes("mempelai") || g.includes("pengantin") || g.includes("couple")) return "💍";
-  if (g.includes("akad") || g.includes("pemberkatan") || g.includes("nikah")) return "🕌";
-  if (g.includes("resepsi") || g.includes("acara") || g.includes("jadwal")) return "🎊";
-  if (g.includes("lokasi") || g.includes("tempat") || g.includes("venue") || g.includes("peta")) return "📍";
-  if (g.includes("rekening") || g.includes("hadiah") || g.includes("amplop") || g.includes("gift") || g.includes("bank")) return "🎁";
-  if (g.includes("doa") || g.includes("ucapan") || g.includes("cerita") || g.includes("quote")) return "💌";
-  if (g.includes("foto") || g.includes("galeri") || g.includes("media")) return "🖼️";
-  return "✍️";
-}
 
 export function PortalVariableForm({
   token,
@@ -162,10 +164,30 @@ export function PortalVariableForm({
                     : styles.badgeSaved
             }`}
           >
-            {saveStatus === "saving" && "⏳ Menyimpan…"}
-            {saveStatus === "saved" && "✓ Tersimpan"}
-            {saveStatus === "dirty" && "✏️ Belum disimpan"}
-            {saveStatus === "error" && "⚠️ Gagal menyimpan"}
+            {saveStatus === "saving" && (
+              <>
+                <ClockIcon size={14} />
+                <span>Menyimpan…</span>
+              </>
+            )}
+            {saveStatus === "saved" && (
+              <>
+                <CheckIcon size={14} />
+                <span>Tersimpan</span>
+              </>
+            )}
+            {saveStatus === "dirty" && (
+              <>
+                <Edit3Icon size={14} />
+                <span>Belum disimpan</span>
+              </>
+            )}
+            {saveStatus === "error" && (
+              <>
+                <AlertTriangleIcon size={14} />
+                <span>Gagal menyimpan</span>
+              </>
+            )}
           </span>
           {statusMessage && <span className={styles.varStatusDesc}>{statusMessage}</span>}
         </div>
@@ -177,7 +199,8 @@ export function PortalVariableForm({
             className={styles.btnPrimary}
             style={{ fontSize: "0.85rem", padding: "0.55rem 1.15rem" }}
           >
-            {isPending || saveStatus === "saving" ? "Menyimpan…" : "💾 Simpan Perubahan"}
+            <SaveIcon size={16} />
+            <span>{isPending || saveStatus === "saving" ? "Menyimpan…" : "Simpan Perubahan"}</span>
           </button>
           {previewUrl && (
             <a
@@ -187,7 +210,8 @@ export function PortalVariableForm({
               className={styles.btnSecondary}
               style={{ fontSize: "0.85rem", padding: "0.55rem 1rem" }}
             >
-              Lihat Pratinjau ↗
+              <span>Lihat Pratinjau</span>
+              <ExternalLinkIcon size={14} />
             </a>
           )}
         </div>
@@ -196,13 +220,14 @@ export function PortalVariableForm({
       {/* Field Groups */}
       <div className={styles.varGroupsList}>
         {groups.map((group) => {
-          const icon = getGroupIcon(group.group, group.label);
           const hasBankFields = group.fields.some((f) => isGiftAccountVariableKey(f.key));
 
           return (
             <fieldset key={group.group} className={styles.varGroupCard}>
               <legend className={styles.varGroupLegend}>
-                <span className={styles.varGroupIcon}>{icon}</span>
+                <span className={styles.varGroupIcon}>
+                  <VariableGroupIcon groupName={group.group} label={group.label} size={20} />
+                </span>
                 <span>{group.label}</span>
               </legend>
 
@@ -222,7 +247,7 @@ export function PortalVariableForm({
                       }`}
                     >
                       <label htmlFor={fieldId} className={styles.varLabel}>
-                        {field.label}
+                        <span>{field.label}</span>
                         {field.required && (
                           <span className={styles.varRequired} title="Wajib diisi">
                             {" "}
@@ -234,7 +259,8 @@ export function PortalVariableForm({
                             className={styles.bankVerifiedTag}
                             title="Terkunci demi keamanan, telah diverifikasi resmi oleh Admin"
                           >
-                            🔒 Terverifikasi Admin
+                            <ShieldCheckIcon size={12} />
+                            <span>Terverifikasi Admin</span>
                           </span>
                         )}
                         {isBankField && isRequestingBankChange && (
@@ -242,7 +268,8 @@ export function PortalVariableForm({
                             className={styles.bankProposalTag}
                             title="Usulan rekening ini akan ditinjau dan diverifikasi oleh Admin"
                           >
-                            ✏️ Usulan Baru
+                            <Edit3Icon size={12} />
+                            <span>Usulan Baru</span>
                           </span>
                         )}
                         {isBankField && !isBankVerified && !isRequestingBankChange && (
@@ -250,7 +277,8 @@ export function PortalVariableForm({
                             className={styles.bankPendingTag}
                             title="Rekening akan diverifikasi oleh Admin sebelum terbit"
                           >
-                            ⏳ Usulan Rekening
+                            <ClockIcon size={12} />
+                            <span>Usulan Rekening</span>
                           </span>
                         )}
                       </label>
@@ -333,7 +361,12 @@ export function PortalVariableForm({
                         </div>
                       )}
 
-                      {err && <span className={styles.varErrorText}>⚠️ {err}</span>}
+                      {err && (
+                        <span className={styles.varErrorText}>
+                          <AlertTriangleIcon size={13} />
+                          <span>{err}</span>
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -346,8 +379,9 @@ export function PortalVariableForm({
                     !isRequestingBankChange ? (
                       <div className={styles.bankNoticeBox}>
                         <div className={styles.bankNoticeHeader}>
-                          <span>
-                            🔒 <strong>Rekening Resmi Terkunci</strong>
+                          <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <ShieldCheckIcon size={16} />
+                            <strong>Rekening Resmi Terkunci</strong>
                           </span>
                           {bankVerification?.verifiedAt && (
                             <span className={styles.bankNoticeDate}>
@@ -362,7 +396,10 @@ export function PortalVariableForm({
                         </p>
                         {bankVerification?.proposedPrimary && (
                           <div className={styles.bankPendingAlert}>
-                            ⏳ <strong>Permohonan perubahan rekening sedang ditinjau Admin:</strong>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: 700 }}>
+                              <ClockIcon size={14} />
+                              <span>Permohonan perubahan rekening sedang ditinjau Admin:</span>
+                            </div>
                             <div style={{ marginTop: "0.25rem" }}>
                               {bankVerification.proposedPrimary.bank} -{" "}
                               {bankVerification.proposedPrimary.accountNumber} a/n{" "}
@@ -384,23 +421,27 @@ export function PortalVariableForm({
                             fontSize: "0.8rem",
                             padding: "0.45rem 0.85rem",
                             marginTop: "0.25rem",
+                            minHeight: "38px",
                           }}
                         >
-                          🔄 Ajukan Perubahan Rekening
+                          <RefreshCwIcon size={14} />
+                          <span>Ajukan Perubahan Rekening</span>
                         </button>
                       </div>
                     ) : (
                       <div className={styles.bankChangeRequestBox}>
                         <div className={styles.bankNoticeHeader}>
-                          <span style={{ color: "#92400e" }}>
-                            ✏️ <strong>Form Pengajuan Perubahan Rekening</strong>
+                          <span style={{ color: "#92400e", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <Edit3Icon size={16} />
+                            <strong>Form Pengajuan Perubahan Rekening</strong>
                           </span>
                           <button
                             type="button"
                             onClick={() => setIsRequestingBankChange(false)}
                             className={styles.bankCancelBtn}
                           >
-                            ✕ Batal
+                            <XIcon size={14} />
+                            <span>Batal</span>
                           </button>
                         </div>
                         <p className={styles.bankNoticeText}>
@@ -434,16 +475,18 @@ export function PortalVariableForm({
                     )
                   ) : (
                     <div className={styles.bankUnverifiedNotice}>
-                      <span style={{ fontSize: "0.85rem", color: "#23180d" }}>
-                        🛡️ <strong>Verifikasi Keamanan Rekening</strong>
+                      <span style={{ fontSize: "0.85rem", color: "#2c2523", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                        <ShieldCheckIcon size={16} />
+                        <strong>Verifikasi Keamanan Rekening</strong>
                       </span>
                       <p style={{ margin: "0.15rem 0 0", fontSize: "0.8rem", color: "#786b5e" }}>
                         Rekening yang Anda isikan di atas merupakan <strong>usulan awal</strong>. Tim Admin
                         akan memeriksa dan memverifikasi rekening Anda sebelum menguncinya secara resmi pada undangan live.
                       </p>
                       {bankVerification?.status === "pending_review" && (
-                        <div className={styles.bankPendingAlert} style={{ marginTop: "0.5rem" }}>
-                          ⏳ Usulan rekening Anda sedang menunggu verifikasi oleh tim Admin.
+                        <div className={styles.bankPendingAlert} style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                          <ClockIcon size={14} />
+                          <span>Usulan rekening Anda sedang menunggu verifikasi oleh tim Admin.</span>
                         </div>
                       )}
                     </div>
@@ -458,7 +501,9 @@ export function PortalVariableForm({
       {/* Assistance Switcher Banner */}
       <div className={styles.switcherNoticeCard}>
         <div className={styles.switcherNoticeContent}>
-          <span className={styles.switcherNoticeIcon}>💡</span>
+          <span className={styles.switcherNoticeIcon}>
+            <LightbulbIcon size={20} />
+          </span>
           <div>
             <strong>Merasa repot mengisi banyak kolom formulir?</strong>
             <p style={{ margin: "0.2rem 0 0", fontSize: "0.825rem", color: "#786b5e" }}>
@@ -472,9 +517,10 @@ export function PortalVariableForm({
             type="button"
             onClick={onSwitchToAdmin}
             className={styles.btnSecondary}
-            style={{ whiteSpace: "nowrap", alignSelf: "center" }}
+            style={{ whiteSpace: "nowrap", alignSelf: "center", minHeight: "42px" }}
           >
-            💬 Minta Bantuan Admin via WA
+            <WhatsAppIcon size={16} />
+            <span>Minta Bantuan Admin via WA</span>
           </button>
         )}
       </div>

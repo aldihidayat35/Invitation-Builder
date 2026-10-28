@@ -1,10 +1,24 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { assetUrl } from "@/features/assets/urls";
 import { savePortalGalleryAction, uploadPortalAssetAction } from "../actions";
 import { compressImageClient } from "./image-compressor";
 import { PhotoCropModal } from "./PhotoCropModal";
+import {
+  EyeIcon,
+  PlusIcon,
+  CheckIcon,
+  AlertTriangleIcon,
+  LightbulbIcon,
+  Edit3Icon,
+  UploadCloudIcon,
+  CameraIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CropIcon,
+  Trash2Icon,
+} from "./PortalIcons";
 import styles from "./PortalGalleryManager.module.css";
 
 const MAX_GALLERY_PHOTOS = 15;
@@ -281,7 +295,7 @@ export function PortalGalleryManager({
                 rel="noreferrer"
                 className={styles.btnSecondary}
               >
-                <span>👁️</span>
+                <EyeIcon size={16} />
                 <span>Buka Preview</span>
               </a>
             )}
@@ -291,7 +305,7 @@ export function PortalGalleryManager({
               onClick={() => fileInputRef.current?.click()}
               className={styles.btnPrimary}
             >
-              <span>➕</span>
+              <PlusIcon size={16} />
               <span>Tambah Foto</span>
             </button>
           </div>
@@ -312,9 +326,10 @@ export function PortalGalleryManager({
                   fontSize: "0.75rem",
                   padding: "0.15rem 0.55rem",
                   borderRadius: "9999px",
-                  background: isEnabled ? "#d1fae5" : "#fee2e2",
-                  color: isEnabled ? "#065f46" : "#991b1b",
+                  background: isEnabled ? "#ecfdf5" : "#fff1f2",
+                  color: isEnabled ? "#065f46" : "#dc2626",
                   fontWeight: 700,
+                  border: `1px solid ${isEnabled ? "#a7f3d0" : "#fecdd3"}`,
                 }}
               >
                 {isEnabled ? "Aktif" : "Nonaktif"}
@@ -343,14 +358,18 @@ export function PortalGalleryManager({
         {/* Notice Status */}
         {!isEnabled ? (
           <div className={`${styles.noticeBanner} ${styles.noticeBannerDisabled}`}>
-            <span>⚠️</span>
+            <span style={{ color: "#dc2626", display: "inline-flex" }}>
+              <AlertTriangleIcon size={16} />
+            </span>
             <span>
               Galeri foto saat ini <strong>dinonaktifkan</strong>. Bagian galeri tidak akan ditampilkan pada undangan pernikahan Anda.
             </span>
           </div>
         ) : items.length === 0 ? (
           <div className={styles.noticeBanner}>
-            <span>💡</span>
+            <span style={{ color: "#c59b27", display: "inline-flex" }}>
+              <LightbulbIcon size={16} />
+            </span>
             <span>
               Belum ada foto galeri yang diunggah. Bagian galeri <strong>otomatis disembunyikan</strong> di undangan pernikahan hingga Anda menambahkan foto.
             </span>
@@ -360,7 +379,9 @@ export function PortalGalleryManager({
             className={styles.noticeBanner}
             style={{ background: "#ecfdf5", borderColor: "#a7f3d0", color: "#065f46" }}
           >
-            <span>✓</span>
+            <span style={{ color: "#059669", display: "inline-flex" }}>
+              <CheckIcon size={16} />
+            </span>
             <span>
               Galeri aktif dan akan ditampilkan di undangan digital Anda dengan <strong>{items.length} foto</strong>.
             </span>
@@ -378,15 +399,29 @@ export function PortalGalleryManager({
             )}
             {saveStatus === "saved" && (
               <>
-                <span>✓</span>
+                <span style={{ color: "#059669", display: "inline-flex" }}>
+                  <CheckIcon size={16} />
+                </span>
                 <span className={styles.saveStatusSuccess}>
                   {statusMessage || "Semua perubahan galeri tersimpan."}
                 </span>
               </>
             )}
-            {saveStatus === "dirty" && <span>✏️ Ada perubahan belum tersimpan…</span>}
+            {saveStatus === "dirty" && (
+              <>
+                <span style={{ color: "#c59b27", display: "inline-flex" }}>
+                  <Edit3Icon size={16} />
+                </span>
+                <span>Ada perubahan belum tersimpan…</span>
+              </>
+            )}
             {saveStatus === "error" && (
-              <span style={{ color: "#dc2626" }}>⚠️ {statusMessage || "Gagal menyimpan."}</span>
+              <>
+                <span style={{ color: "#dc2626", display: "inline-flex" }}>
+                  <AlertTriangleIcon size={16} />
+                </span>
+                <span style={{ color: "#dc2626" }}>{statusMessage || "Gagal menyimpan."}</span>
+              </>
             )}
           </div>
 
@@ -395,7 +430,7 @@ export function PortalGalleryManager({
               type="button"
               onClick={() => void saveGallery(items)}
               className={styles.btnPrimary}
-              style={{ padding: "0.45rem 0.85rem", fontSize: "0.8rem" }}
+              style={{ padding: "0.45rem 0.85rem", fontSize: "0.8rem", minHeight: "38px" }}
             >
               Simpan Sekarang
             </button>
@@ -408,10 +443,10 @@ export function PortalGalleryManager({
         <div className={styles.uploadProgressBox}>
           <div className={styles.spinner} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#23180d" }}>
+            <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#2c2523" }}>
               {uploadText || "Mengunggah foto…"}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "#8c7d6f" }}>
+            <div style={{ fontSize: "0.75rem", color: "#786b65" }}>
               Gambar otomatis dikompres untuk menghemat kuota dan mempercepat tampilan tamu.
             </div>
           </div>
@@ -440,7 +475,9 @@ export function PortalGalleryManager({
             isUploading ? styles.dropzoneDisabled : ""
           }`}
         >
-          <div className={styles.dropzoneIcon}>🖼️</div>
+          <div className={styles.dropzoneIcon}>
+            <UploadCloudIcon size={40} />
+          </div>
           <div className={styles.dropzoneTitle}>Tarik & Letakkan Foto Anda di Sini</div>
           <div className={styles.dropzoneSubtitle}>
             Bisa pilih beberapa foto sekaligus • Format JPG, PNG, WebP (Maks. 15MB per foto)
@@ -451,7 +488,9 @@ export function PortalGalleryManager({
       {/* Gallery Items Grid */}
       {items.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📷</div>
+          <div className={styles.emptyIcon}>
+            <CameraIcon size={44} />
+          </div>
           <h3 className={styles.emptyTitle}>Belum Ada Foto Galeri</h3>
           <p className={styles.emptyDesc}>
             Klik tombol &quot;Tambah Foto&quot; di atas untuk mulai menambahkan foto momen bahagia Anda
@@ -462,7 +501,8 @@ export function PortalGalleryManager({
             onClick={() => fileInputRef.current?.click()}
             className={styles.btnPrimary}
           >
-            Pilih Foto Pertama
+            <PlusIcon size={16} />
+            <span>Pilih Foto Pertama</span>
           </button>
         </div>
       ) : (
@@ -502,8 +542,9 @@ export function PortalGalleryManager({
                         title="Geser ke kiri / urutan sebelumnya"
                         onClick={() => handleMove(idx, -1)}
                         className={styles.iconBtn}
+                        aria-label="Geser ke kiri"
                       >
-                        ◀
+                        <ChevronLeftIcon size={14} />
                       </button>
                       <button
                         type="button"
@@ -511,12 +552,13 @@ export function PortalGalleryManager({
                         title="Geser ke kanan / urutan berikutnya"
                         onClick={() => handleMove(idx, 1)}
                         className={styles.iconBtn}
+                        aria-label="Geser ke kanan"
                       >
-                        ▶
+                        <ChevronRightIcon size={14} />
                       </button>
                     </div>
 
-                    <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "0.35rem", alignItems: "center" }}>
                       <button
                         type="button"
                         title="Sesuaikan zoom, rotasi, & posisi foto"
@@ -524,16 +566,18 @@ export function PortalGalleryManager({
                           setCropTarget({ itemIndex: idx, url, isTemp: false })
                         }
                         className={`${styles.iconBtn} ${styles.cropBtn}`}
+                        aria-label="Sesuaikan foto"
                       >
-                        ✂️
+                        <CropIcon size={15} />
                       </button>
                       <button
                         type="button"
                         title="Hapus foto ini"
                         onClick={() => handleRemove(idx)}
                         className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                        aria-label="Hapus foto"
                       >
-                        🗑️
+                        <Trash2Icon size={15} />
                       </button>
                     </div>
                   </div>

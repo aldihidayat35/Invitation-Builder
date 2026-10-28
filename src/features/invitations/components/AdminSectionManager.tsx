@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { ClassifiedSection } from "@/features/invitations/sections-classifier";
+import { SectionCategoryIcon, LayersIcon } from "@/app/(public)/c/[code]/components/PortalIcons";
 import type { ActionState, InvitationAction } from "./action-state";
 import styles from "./invitations.module.css";
 
@@ -62,8 +63,9 @@ export function AdminSectionManager({
     <section className={styles.panel} aria-labelledby="section-manager-title">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
         <div>
-          <h2 id="section-manager-title" className={styles.panelTitle} style={{ margin: 0 }}>
-            📑 Kelola Section Undangan
+          <h2 id="section-manager-title" className={styles.panelTitle} style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+            <LayersIcon size={18} />
+            <span>Kelola Section Undangan</span>
           </h2>
           <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "var(--dash-muted)" }}>
             Atur section yang tampil di halaman undangan sebelum dipublikasikan.
@@ -143,7 +145,9 @@ export function AdminSectionManager({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                  <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>{section.icon}</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#92400e" }}>
+                    <SectionCategoryIcon category={section.category} iconKey={section.icon} size={18} />
+                  </span>
                   <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <span

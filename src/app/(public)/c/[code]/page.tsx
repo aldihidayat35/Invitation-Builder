@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getClientPortal } from "@/features/orders";
 import { ClientPortalView } from "./client-portal-view";
+import { LockIcon } from "./components/PortalIcons";
 import styles from "./client-portal.module.css";
 
 interface ClientPortalPageProps {
@@ -43,13 +44,15 @@ export default async function ClientPortalPage({ params }: ClientPortalPageProps
       <main className={styles.portalContainer}>
         <div className={styles.portalShell}>
           <div className={styles.emptyCard} style={{ margin: "4rem auto", maxWidth: "480px" }}>
-            <div className={styles.emptyIcon}>🔒</div>
+            <div className={styles.emptyIcon}>
+              <LockIcon size={28} />
+            </div>
             <h2 className={styles.emptyTitle}>Tautan Tidak Valid atau Sudah Kadaluarsa</h2>
             <p className={styles.emptyDesc}>
               Tautan portal klien dengan kode unik ini tidak ditemukan, atau tautan telah diperbarui oleh tim produksi.
             </p>
             <div style={{ marginTop: "1.5rem" }}>
-              <Link href="/" className={styles.primaryBtn} style={{ textDecoration: "none", display: "inline-block" }}>
+              <Link href="/" className={styles.btnPrimary} style={{ textDecoration: "none", display: "inline-block" }}>
                 Kembali ke Beranda
               </Link>
             </div>

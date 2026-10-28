@@ -4,6 +4,19 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BACKSOUND_PRESETS, type BacksoundPreset } from "@/features/audio";
 import { savePortalAudioAction, uploadPortalAudioAssetAction } from "../actions";
 import type { PortalAudioSettings } from "@/features/orders/service";
+import {
+  MusicIcon,
+  CheckIcon,
+  XIcon,
+  EyeIcon,
+  PlayIcon,
+  PauseIcon,
+  DiscIcon,
+  UploadCloudIcon,
+  HeadphonesIcon,
+  AlertTriangleIcon,
+  Edit3Icon,
+} from "./PortalIcons";
 import styles from "./PortalBacksoundManager.module.css";
 
 interface PortalBacksoundManagerProps {
@@ -219,16 +232,29 @@ export function PortalBacksoundManager({
       <div className={styles.headerCard}>
         <div className={styles.topRow}>
           <div className={styles.titleArea}>
-            <span style={{ fontSize: "1.35rem" }}>🎵</span>
+            <span className={styles.titleIcon}>
+              <MusicIcon size={22} />
+            </span>
             <h2 className={styles.title}>Musik Latar & Backsound Undangan</h2>
             <span
               className={styles.counterBadge}
               style={{
-                background: audio.enabled ? "#d1fae5" : "#fee2e2",
-                color: audio.enabled ? "#065f46" : "#991b1b",
+                background: audio.enabled ? "#ecfdf5" : "#fff1f2",
+                color: audio.enabled ? "#065f46" : "#dc2626",
+                borderColor: audio.enabled ? "#a7f3d0" : "#fecdd3",
               }}
             >
-              {audio.enabled ? "✓ Musik Aktif" : "✕ Nonaktif"}
+              {audio.enabled ? (
+                <>
+                  <CheckIcon size={14} />
+                  <span>Musik Aktif</span>
+                </>
+              ) : (
+                <>
+                  <XIcon size={14} />
+                  <span>Nonaktif</span>
+                </>
+              )}
             </span>
           </div>
 
@@ -240,7 +266,7 @@ export function PortalBacksoundManager({
                 rel="noreferrer"
                 className={styles.btnSecondary}
               >
-                <span>👁️</span>
+                <EyeIcon size={16} />
                 <span>Buka Preview Undangan</span>
               </a>
             )}
@@ -263,9 +289,10 @@ export function PortalBacksoundManager({
                   fontSize: "0.75rem",
                   padding: "0.15rem 0.55rem",
                   borderRadius: "9999px",
-                  background: audio.enabled ? "#d1fae5" : "#fee2e2",
-                  color: audio.enabled ? "#065f46" : "#991b1b",
+                  background: audio.enabled ? "#ecfdf5" : "#fff1f2",
+                  color: audio.enabled ? "#065f46" : "#dc2626",
                   fontWeight: 700,
+                  border: `1px solid ${audio.enabled ? "#a7f3d0" : "#fecdd3"}`,
                 }}
               >
                 {audio.enabled ? "Aktif" : "Mati"}
@@ -298,32 +325,47 @@ export function PortalBacksoundManager({
             )}
             {saveStatus === "saved" && (
               <>
-                <span>✓</span>
+                <span style={{ color: "#059669", display: "inline-flex" }}>
+                  <CheckIcon size={16} />
+                </span>
                 <span className={styles.saveStatusSuccess}>
                   {statusMessage || "Pengaturan musik tersimpan otomatis."}
                 </span>
               </>
             )}
-            {saveStatus === "dirty" && <span>✏️ Ada perubahan belum tersimpan…</span>}
+            {saveStatus === "dirty" && (
+              <>
+                <span style={{ color: "#c59b27", display: "inline-flex" }}>
+                  <Edit3Icon size={16} />
+                </span>
+                <span>Ada perubahan belum tersimpan…</span>
+              </>
+            )}
             {saveStatus === "error" && (
-              <span style={{ color: "#dc2626" }}>⚠️ {statusMessage || "Gagal menyimpan."}</span>
+              <>
+                <span style={{ color: "#dc2626", display: "inline-flex" }}>
+                  <AlertTriangleIcon size={16} />
+                </span>
+                <span style={{ color: "#dc2626" }}>{statusMessage || "Gagal menyimpan."}</span>
+              </>
             )}
           </div>
         </div>
       </div>
 
-      {/* Currently Active Track Luxury Card */}
+      {/* Currently Active Track Soft Luxury Card */}
       {audio.enabled && (
         <div className={styles.activeTrackCard}>
           <div className={styles.activeTrackLeft}>
             <div
               className={`${styles.vinylDisc} ${isCurrentAudioPlaying ? styles.vinylSpinning : ""}`}
             >
-              <div className={styles.vinylCenter}>♪</div>
+              <MusicIcon size={20} />
             </div>
             <div className={styles.trackInfo}>
               <span className={styles.trackBadgeActive}>
-                {audio.assetId ? "✦ Musik Kustom Anda" : "✦ Lagu Latar Terpilih"}
+                <DiscIcon size={13} />
+                <span>{audio.assetId ? "Musik Kustom Anda" : "Lagu Latar Terpilih"}</span>
               </span>
               <h3 className={styles.trackTitle}>{audio.title || "Lagu Pernikahan"}</h3>
               <p className={styles.trackArtist}>{audio.artist || "Artis Pilihan"}</p>
@@ -337,8 +379,9 @@ export function PortalBacksoundManager({
                 onClick={() => handlePlayPreview(audio.src!)}
                 className={styles.playToggleBtn}
                 title={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik Sekarang"}
+                aria-label={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik"}
               >
-                {isCurrentAudioPlaying ? "⏸" : "▶"}
+                {isCurrentAudioPlaying ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
               </button>
             )}
           </div>
@@ -354,7 +397,7 @@ export function PortalBacksoundManager({
             sourceTab === "presets" ? styles.sourceTabBtnActive : ""
           }`}
         >
-          <span>🎼</span>
+          <DiscIcon size={16} />
           <span>Pilih dari Katalog Lagu</span>
         </button>
         <button
@@ -364,7 +407,7 @@ export function PortalBacksoundManager({
             sourceTab === "upload" ? styles.sourceTabBtnActive : ""
           }`}
         >
-          <span>📤</span>
+          <UploadCloudIcon size={16} />
           <span>Unggah Musik Sendiri (MP3)</span>
         </button>
       </div>
@@ -408,16 +451,20 @@ export function PortalBacksoundManager({
                     {isSelected && (
                       <span
                         style={{
-                          fontSize: "0.7rem",
-                          background: "#d4af37",
-                          color: "#1a140d",
-                          padding: "0.2rem 0.5rem",
+                          fontSize: "0.72rem",
+                          background: "#c59b27",
+                          color: "#ffffff",
+                          padding: "0.2rem 0.6rem",
                           borderRadius: "9999px",
                           fontWeight: 700,
                           flexShrink: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.3rem",
                         }}
                       >
-                        ✓ Aktif
+                        <CheckIcon size={12} />
+                        <span>Aktif</span>
                       </span>
                     )}
                   </div>
@@ -435,7 +482,7 @@ export function PortalBacksoundManager({
                       }`}
                       title="Dengarkan cuplikan lagu"
                     >
-                      <span>{isPlayingThis ? "⏸" : "▶"}</span>
+                      {isPlayingThis ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
                       <span>{isPlayingThis ? "Jeda" : "Dengarkan"}</span>
                     </button>
 
@@ -447,7 +494,14 @@ export function PortalBacksoundManager({
                         isSelected ? styles.btnSelectSongActive : ""
                       }`}
                     >
-                      {isSelected ? "✓ Digunakan" : "Pilih Lagu"}
+                      {isSelected ? (
+                        <>
+                          <CheckIcon size={14} />
+                          <span>Digunakan</span>
+                        </>
+                      ) : (
+                        "Pilih Lagu"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -461,10 +515,10 @@ export function PortalBacksoundManager({
       {sourceTab === "upload" && (
         <div className={styles.uploadPanel}>
           <div>
-            <h3 style={{ margin: "0 0 0.35rem 0", fontSize: "1.1rem", color: "#23180d" }}>
+            <h3 style={{ margin: "0 0 0.35rem 0", fontSize: "1.1rem", color: "#2c2523", fontWeight: 700 }}>
               Unggah Berkas Musik Anda Sendiri
             </h3>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "#6a5d50" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#786b65", lineHeight: 1.5 }}>
               Punya lagu spesial atau rekaman suara sendiri? Unggah berkas audio Anda di sini.
               Mendukung format MP3, WAV, M4A, AAC, atau OGG (maksimal 20MB).
             </p>
@@ -475,10 +529,10 @@ export function PortalBacksoundManager({
             <div className={styles.uploadingBox}>
               <div className={styles.spinner} />
               <div>
-                <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#23180d" }}>
+                <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#2c2523" }}>
                   {uploadText || "Mengunggah berkas audio…"}
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "#8c7d6f" }}>
+                <div style={{ fontSize: "0.75rem", color: "#786b65" }}>
                   Mohon tunggu hingga proses unggah selesai.
                 </div>
               </div>
@@ -506,7 +560,9 @@ export function PortalBacksoundManager({
               isUploading ? styles.dropzoneDisabled : ""
             }`}
           >
-            <div className={styles.dropzoneIcon}>🎵</div>
+            <div className={styles.dropzoneIcon}>
+              <UploadCloudIcon size={40} />
+            </div>
             <div className={styles.dropzoneTitle}>Pilih atau Tarik Berkas Audio ke Sini</div>
             <div className={styles.dropzoneSubtitle}>
               Format MP3, WAV, M4A, AAC, OGG (Maks. 20MB per berkas)
@@ -520,20 +576,25 @@ export function PortalBacksoundManager({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: "0.9rem 1.15rem",
-                borderRadius: "12px",
-                background: "#fdfbf8",
-                border: "1px solid #ebd9c8",
+                padding: "1rem 1.25rem",
+                borderRadius: "14px",
+                background: "#fbf9f6",
+                border: "1px solid #eae3d9",
+                flexWrap: "wrap",
+                gap: "0.75rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "1.5rem" }}>🎧</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                <span style={{ color: "#8c6d37", display: "inline-flex" }}>
+                  <HeadphonesIcon size={24} />
+                </span>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#23180d" }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#2c2523" }}>
                     {audio.title}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#065f46", fontWeight: 600 }}>
-                    ✓ Berkas musik kustom Anda sedang aktif digunakan di undangan
+                  <div style={{ fontSize: "0.78rem", color: "#065f46", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                    <CheckIcon size={13} />
+                    <span>Berkas musik kustom Anda sedang aktif digunakan di undangan</span>
                   </div>
                 </div>
               </div>
@@ -546,7 +607,7 @@ export function PortalBacksoundManager({
                     className={styles.btnSecondary}
                     style={{ fontSize: "0.8rem", padding: "0.45rem 0.85rem" }}
                   >
-                    <span>{isCurrentAudioPlaying ? "⏸" : "▶"}</span>
+                    {isCurrentAudioPlaying ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
                     <span>{isCurrentAudioPlaying ? "Jeda" : "Dengarkan"}</span>
                   </button>
                 )}

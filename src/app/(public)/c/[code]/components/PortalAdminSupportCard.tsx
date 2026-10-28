@@ -2,6 +2,15 @@
 
 import React, { useState } from "react";
 import type { CustomerOrder } from "@/lib/db/schema";
+import {
+  MessageCircleIcon,
+  WhatsAppIcon,
+  ExternalLinkIcon,
+  CopyIcon,
+  CheckIcon,
+  ZapIcon,
+  LightbulbIcon,
+} from "./PortalIcons";
 import styles from "../client-portal.module.css";
 
 interface PortalAdminSupportCardProps {
@@ -61,13 +70,14 @@ export function PortalAdminSupportCard({
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const coupleNames = order?.groomBrideNames || order?.customerName || "Pengantin";
-
   return (
     <div className={styles.supportCardContainer}>
       <div className={styles.supportHeroCard}>
         <div className={styles.supportBadgeRow}>
-          <span className={styles.supportWaBadge}>💬 Layanan Asistensi Personal</span>
+          <span className={styles.supportWaBadge}>
+            <MessageCircleIcon size={14} />
+            <span>Layanan Asistensi Personal</span>
+          </span>
           <span className={styles.supportTargetBadge}>{supportContact.name}</span>
         </div>
 
@@ -86,16 +96,20 @@ export function PortalAdminSupportCard({
             rel="noopener noreferrer"
             className={styles.waButtonLarge}
           >
-            <span className={styles.waIcon}>💬</span>
+            <span className={styles.waIcon}>
+              <WhatsAppIcon size={26} />
+            </span>
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: "1rem", fontWeight: 700 }}>
                 Hubungi Admin via WhatsApp
               </div>
-              <div style={{ fontSize: "0.75rem", opacity: 0.9 }}>
+              <div style={{ fontSize: "0.78rem", opacity: 0.9 }}>
                 +{supportContact.phone} · {supportContact.name}
               </div>
             </div>
-            <span style={{ marginLeft: "auto", fontSize: "1.2rem" }}>↗</span>
+            <span style={{ marginLeft: "auto", display: "flex" }}>
+              <ExternalLinkIcon size={18} />
+            </span>
           </a>
         </div>
 
@@ -138,9 +152,19 @@ export function PortalAdminSupportCard({
             type="button"
             onClick={handleCopyFormat}
             className={copied ? styles.btnCopySuccess : styles.btnSecondary}
-            style={{ fontSize: "0.8rem", padding: "0.5rem 1rem" }}
+            style={{ fontSize: "0.825rem", padding: "0.5rem 1rem", minHeight: "40px" }}
           >
-            {copied ? "✓ Tersalin ke Clipboard!" : "📋 Salin Format Teks"}
+            {copied ? (
+              <>
+                <CheckIcon size={15} />
+                <span>Tersalin ke Clipboard!</span>
+              </>
+            ) : (
+              <>
+                <CopyIcon size={15} />
+                <span>Salin Format Teks</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -152,10 +176,12 @@ export function PortalAdminSupportCard({
       {/* Switch to Self-Service Notice */}
       <div className={styles.switcherNoticeCard}>
         <div className={styles.switcherNoticeContent}>
-          <span className={styles.switcherNoticeIcon}>⚡</span>
+          <span className={styles.switcherNoticeIcon}>
+            <LightbulbIcon size={20} />
+          </span>
           <div>
             <strong>Ingin mencoba mengisi sendiri secara langsung?</strong>
-            <p style={{ margin: "0.2rem 0 0", fontSize: "0.825rem", color: "#786b5e" }}>
+            <p style={{ margin: "0.2rem 0 0", fontSize: "0.825rem", color: "#786b65" }}>
               Anda juga dapat beralih ke mode mandiri kapan saja untuk mengisi teks dan melihat pratinjau
               berubah seketika.
             </p>
@@ -166,9 +192,10 @@ export function PortalAdminSupportCard({
             type="button"
             onClick={onSwitchToSelfService}
             className={styles.btnSecondary}
-            style={{ whiteSpace: "nowrap", alignSelf: "center" }}
+            style={{ whiteSpace: "nowrap", alignSelf: "center", minHeight: "42px" }}
           >
-            ⚡ Beralih ke Isi Mandiri
+            <ZapIcon size={16} />
+            <span>Beralih ke Isi Mandiri</span>
           </button>
         )}
       </div>

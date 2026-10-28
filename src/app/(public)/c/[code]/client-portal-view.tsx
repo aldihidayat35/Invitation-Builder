@@ -13,6 +13,32 @@ import { PortalBacksoundManager } from "./components/PortalBacksoundManager";
 import { PortalSectionManager } from "./components/PortalSectionManager";
 import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
 import { PortalShareMessageCard } from "./components/PortalShareMessageCard";
+import {
+  FileTextIcon,
+  ImageIcon,
+  MusicIcon,
+  LayersIcon,
+  EyeIcon,
+  UsersIcon,
+  CheckSquareIcon,
+  MessageSquareHeartIcon,
+  ClockIcon,
+  CheckCircle2Icon,
+  GlobeIcon,
+  Edit3Icon,
+  SparklesIcon,
+  ZapIcon,
+  MessageCircleIcon,
+  LightbulbIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  LinkIcon,
+  CopyIcon,
+  WhatsAppIcon,
+  Trash2Icon,
+  UserPlusIcon,
+  SearchIcon,
+} from "./components/PortalIcons";
 import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
 import styles from "./client-portal.module.css";
 
@@ -22,7 +48,9 @@ interface ClientPortalViewProps {
 }
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
-  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "audio" | "sections" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [activeTab, setActiveTab] = useState<
+    "data" | "gallery" | "audio" | "sections" | "review" | "guests" | "rsvp" | "wishes"
+  >("data");
   const [galleryItems, setGalleryItems] = useState(data.galleryItems || []);
   const [audioSettings, setAudioSettings] = useState(data.audioSettings);
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
@@ -36,7 +64,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [customShareMessage, setCustomShareMessage] = useState<string>(
     data.activeShareMessageTemplate ||
-      `Halo {guestname},\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Anda untuk hadir di acara kami:\n*{event_title}*\n\nInformasi lengkap dan tautan undangan dapat dilihat di:\n{link}\n\nTerima kasih dan sampai jumpa! 🙏`,
+      `Halo {guestname},\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Anda untuk hadir di acara kami:\n*{event_title}*\n\nInformasi lengkap dan tautan undangan dapat dilihat di:\n{link}\n\nTerima kasih dan sampai jumpa!`,
   );
   const [isPending, startTransition] = useTransition();
 
@@ -223,14 +251,14 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             bottom: "2rem",
             left: "50%",
             transform: "translateX(-50%)",
-            backgroundColor: "#23180d",
-            color: "#faf6f0",
-            padding: "0.75rem 1.25rem",
+            backgroundColor: "#2c2523",
+            color: "#faf8f5",
+            padding: "0.75rem 1.35rem",
             borderRadius: "9999px",
             fontSize: "0.85rem",
             fontWeight: 600,
             zIndex: 9999,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+            boxShadow: "0 10px 25px rgba(44, 34, 30, 0.25)",
             animation: "fadeIn 0.2s ease-out",
           }}
         >
@@ -242,25 +270,32 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
       <header className={styles.heroHeader}>
         <div className={styles.heroContent}>
           <div className={styles.heroTopRow}>
-            <span className={styles.portalBadge}>Portal Klien Mandiri</span>
+            <span className={styles.portalBadge}>
+              <SparklesIcon size={14} />
+              <span>Portal Klien Mandiri</span>
+            </span>
             {orderProductionStatus === "client_review" && (
               <span className={`${styles.portalBadge} ${styles.statusReview}`}>
-                ⏳ Menunggu Persetujuan Anda
+                <ClockIcon size={14} />
+                <span>Menunggu Persetujuan Anda</span>
               </span>
             )}
             {orderProductionStatus === "approved" && (
               <span className={`${styles.portalBadge} ${styles.statusApproved}`}>
-                ✓ Disetujui
+                <CheckCircle2Icon size={14} />
+                <span>Disetujui</span>
               </span>
             )}
             {orderProductionStatus === "published" && (
               <span className={`${styles.portalBadge} ${styles.statusPublished}`}>
-                🌐 Undangan Terbit
+                <GlobeIcon size={14} />
+                <span>Undangan Terbit</span>
               </span>
             )}
             {orderProductionStatus === "revision_requested" && (
               <span className={`${styles.portalBadge} ${styles.statusRevision}`}>
-                ✏️ Dalam Proses Revisi
+                <Edit3Icon size={14} />
+                <span>Dalam Proses Revisi</span>
               </span>
             )}
           </div>
@@ -273,7 +308,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         </div>
       </header>
 
-      {/* Sticky Tab Navigation */}
+      {/* Sticky Tab Navigation (Capsule Pills) */}
       <nav className={styles.tabsWrapper}>
         <div className={styles.tabsList}>
           <button
@@ -281,7 +316,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("data")}
             className={`${styles.tabBtn} ${activeTab === "data" ? styles.tabBtnActive : ""}`}
           >
-            <span>✍️</span>
+            <FileTextIcon size={17} />
             <span>Data Undangan</span>
           </button>
           <button
@@ -289,7 +324,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("gallery")}
             className={`${styles.tabBtn} ${activeTab === "gallery" ? styles.tabBtnActive : ""}`}
           >
-            <span>🖼️</span>
+            <ImageIcon size={17} />
             <span>Galeri Foto</span>
             <span className={styles.tabCount}>{galleryItems.length}</span>
           </button>
@@ -298,7 +333,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("audio")}
             className={`${styles.tabBtn} ${activeTab === "audio" ? styles.tabBtnActive : ""}`}
           >
-            <span>🎵</span>
+            <MusicIcon size={17} />
             <span>Musik Undangan</span>
             <span
               className={styles.tabCount}
@@ -315,7 +350,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("sections")}
             className={`${styles.tabBtn} ${activeTab === "sections" ? styles.tabBtnActive : ""}`}
           >
-            <span>📑</span>
+            <LayersIcon size={17} />
             <span>Atur Section</span>
             {data.sections && data.sections.length > 0 && (
               <span className={styles.tabCount}>
@@ -328,7 +363,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("review")}
             className={`${styles.tabBtn} ${activeTab === "review" ? styles.tabBtnActive : ""}`}
           >
-            <span>👁️</span>
+            <EyeIcon size={17} />
             <span>Review Undangan</span>
           </button>
           <button
@@ -336,7 +371,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("guests")}
             className={`${styles.tabBtn} ${activeTab === "guests" ? styles.tabBtnActive : ""}`}
           >
-            <span>👥</span>
+            <UsersIcon size={17} />
             <span>Daftar Tamu</span>
             <span className={styles.tabCount}>{data.guests.length}</span>
           </button>
@@ -345,7 +380,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("rsvp")}
             className={`${styles.tabBtn} ${activeTab === "rsvp" ? styles.tabBtnActive : ""}`}
           >
-            <span>📊</span>
+            <CheckSquareIcon size={17} />
             <span>Konfirmasi RSVP</span>
             <span className={styles.tabCount}>{data.rsvps.length}</span>
           </button>
@@ -354,7 +389,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
             onClick={() => setActiveTab("wishes")}
             className={`${styles.tabBtn} ${activeTab === "wishes" ? styles.tabBtnActive : ""}`}
           >
-            <span>💌</span>
+            <MessageSquareHeartIcon size={17} />
             <span>Buku Doa / Ucapan</span>
             <span className={styles.tabCount}>{wishesList.length}</span>
           </button>
@@ -366,7 +401,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         {/* --- TAB 0: DATA UNDANGAN (DUAL MODE: MANDIRI vs BANTUAN WA ADMIN) --- */}
         {activeTab === "data" && (
           <div>
-            <div className={styles.cardHeader} style={{ marginBottom: "1rem" }}>
+            <div className={styles.cardHeader} style={{ marginBottom: "1.25rem" }}>
               <div>
                 <h2 className={styles.cardTitle}>Pengaturan & Pengisian Data Undangan</h2>
                 <p className={styles.cardDesc}>
@@ -386,7 +421,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 }`}
               >
                 <div className={styles.modeOptionTop}>
-                  <div className={styles.modeIconBox}>⚡</div>
+                  <div className={styles.modeIconBox}>
+                    <ZapIcon size={22} />
+                  </div>
                   <span className={styles.modeSelectionBadge}>
                     {dataMode === "self_service" ? "Aktif Dipilih" : "Pilihan 1"}
                   </span>
@@ -406,7 +443,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 }`}
               >
                 <div className={styles.modeOptionTop}>
-                  <div className={styles.modeIconBox}>💬</div>
+                  <div className={styles.modeIconBox}>
+                    <MessageCircleIcon size={22} />
+                  </div>
                   <span className={styles.modeSelectionBadge}>
                     {dataMode === "admin_assisted" ? "Aktif Dipilih" : "Pilihan 2"}
                   </span>
@@ -498,32 +537,45 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                background: "#fcfaf7",
-                border: "1px solid #ebd9c8",
-                borderRadius: "12px",
-                padding: "0.75rem 1rem",
-                marginBottom: "1rem",
+                background: "#ffffff",
+                border: "1px solid #eae3d9",
+                borderRadius: "14px",
+                padding: "0.85rem 1.15rem",
+                marginBottom: "1.25rem",
                 flexWrap: "wrap",
-                gap: "0.5rem",
+                gap: "0.75rem",
+                boxShadow: "0 2px 8px rgba(44, 34, 30, 0.02)",
               }}
             >
-              <div style={{ fontSize: "0.825rem", color: "#6a5d50" }}>
-                💡 Ingin memperbarui nama pengantin, waktu, atau lokasi acara?
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#63554f",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <span style={{ color: "#c59b27" }}>
+                  <LightbulbIcon size={18} />
+                </span>
+                <span>Ingin memperbarui nama pengantin, waktu, atau lokasi acara?</span>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveTab("data")}
                 className={styles.btnSecondary}
-                style={{ fontSize: "0.75rem", padding: "0.35rem 0.75rem" }}
+                style={{ fontSize: "0.8rem", padding: "0.45rem 0.95rem", minHeight: "38px" }}
               >
-                ✍️ Ubah Data Undangan
+                <FileTextIcon size={14} />
+                <span>Ubah Data Undangan</span>
               </button>
             </div>
 
             {orderProductionStatus === "client_review" && (
               <div className={styles.reviewNotice}>
                 <strong>Mohon Periksa Undangan Anda:</strong>
-                <p style={{ margin: "0.25rem 0 0" }}>
+                <p style={{ margin: "0.35rem 0 0" }}>
                   Periksa nama mempelai, gelar, tanggal, jam akad/resepsi, dan peta lokasi di bawah.
                   Jika sudah sempurna, klik <strong>&ldquo;Setujui Undangan&rdquo;</strong>. Jika ada yang ingin diperbaiki,
                   klik <strong>&ldquo;Ajukan Catatan Revisi&rdquo;</strong>.
@@ -543,9 +595,10 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                     target="_blank"
                     rel="noreferrer"
                     className={styles.btnSecondary}
-                    style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}
+                    style={{ fontSize: "0.8rem", padding: "0.45rem 0.95rem", minHeight: "38px" }}
                   >
-                    Buka Halaman Penuh ↗
+                    <span>Buka Halaman Penuh</span>
+                    <ExternalLinkIcon size={14} />
                   </a>
                 )}
               </div>
@@ -568,24 +621,26 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 {orderProductionStatus === "client_review" && (
                   <div className={styles.reviewActions}>
                     {!showRevisionForm ? (
-                      <div style={{ display: "flex", gap: "0.75rem", width: "100%" }}>
+                      <div style={{ display: "flex", gap: "0.75rem", width: "100%", flexWrap: "wrap" }}>
                         <button
                           type="button"
                           onClick={handleApprove}
                           disabled={isPending}
                           className={`${styles.btnPrimary} ${styles.btnApprove}`}
-                          style={{ flex: 1 }}
+                          style={{ flex: 1, minWidth: "160px" }}
                         >
-                          ✓ Setujui Undangan
+                          <CheckIcon size={18} />
+                          <span>Setujui Undangan</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowRevisionForm(true)}
                           disabled={isPending}
                           className={`${styles.btnSecondary} ${styles.btnRevision}`}
-                          style={{ flex: 1 }}
+                          style={{ flex: 1, minWidth: "160px" }}
                         >
-                          ✏️ Ajukan Catatan Revisi
+                          <Edit3Icon size={16} />
+                          <span>Ajukan Catatan Revisi</span>
                         </button>
                       </div>
                     ) : (
@@ -596,6 +651,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                             fontSize: "0.85rem",
                             fontWeight: 700,
                             marginBottom: "0.5rem",
+                            color: "#2c2523",
                           }}
                         >
                           Tuliskan catatan perbaikan secara spesifik:
@@ -686,23 +742,38 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                   type="submit"
                   disabled={isPending}
                   className={styles.btnPrimary}
-                  style={{ padding: "0.65rem 1.25rem", fontSize: "0.85rem" }}
                 >
-                  + Tambah Tamu
+                  <UserPlusIcon size={16} />
+                  <span>Tambah Tamu</span>
                 </button>
               </form>
 
               {/* Filter Search */}
               {data.guests.length > 3 && (
                 <div style={{ marginBottom: "1rem" }}>
-                  <input
-                    type="search"
-                    placeholder="Cari nama tamu…"
-                    value={guestSearch}
-                    onChange={(e) => setGuestSearch(e.target.value)}
-                    className={styles.input}
-                    style={{ width: "100%", boxSizing: "border-box" }}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="search"
+                      placeholder="Cari nama tamu…"
+                      value={guestSearch}
+                      onChange={(e) => setGuestSearch(e.target.value)}
+                      className={styles.input}
+                      style={{ width: "100%", paddingLeft: "2.4rem" }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "0.85rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#8c7d6f",
+                        pointerEvents: "none",
+                        display: "flex",
+                      }}
+                    >
+                      <SearchIcon size={16} />
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -729,19 +800,21 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                           type="button"
                           onClick={() => handleCopyGuestLink(g.name)}
                           className={styles.btnSecondary}
-                          style={{ fontSize: "0.75rem", padding: "0.4rem 0.75rem" }}
+                          style={{ fontSize: "0.78rem", padding: "0.45rem 0.8rem", minHeight: "38px" }}
                           title="Salin tautan link web undangan saja"
                         >
-                          📋 Salin Link
+                          <LinkIcon size={14} />
+                          <span>Salin Link</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleCopyFullMessage(g.name)}
                           className={styles.btnSecondary}
-                          style={{ fontSize: "0.75rem", padding: "0.4rem 0.75rem" }}
+                          style={{ fontSize: "0.78rem", padding: "0.45rem 0.8rem", minHeight: "38px" }}
                           title="Salin teks pesan lengkap beserta nama tamu dan link"
                         >
-                          📝 Salin Pesan
+                          <CopyIcon size={14} />
+                          <span>Salin Pesan</span>
                         </button>
                         <button
                           type="button"
@@ -749,7 +822,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                           className={styles.btnCopyWa}
                           title="Buka WhatsApp dengan pesan yang sudah terisi otomatis"
                         >
-                          <span>💬</span>
+                          <WhatsAppIcon size={15} />
                           <span>Kirim WA</span>
                         </button>
                         <button
@@ -758,7 +831,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                           className={styles.btnDeleteGuest}
                           title="Hapus tamu"
                         >
-                          ✕
+                          <Trash2Icon size={15} />
                         </button>
                       </div>
                     </div>
@@ -790,7 +863,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 <div className={styles.statLabel}>Berhalangan</div>
               </div>
               <div className={styles.statCard}>
-                <div className={styles.statNumber} style={{ color: "#7c3aed" }}>
+                <div className={styles.statNumber} style={{ color: "#8c6d37" }}>
                   {totalPaxAttending}
                 </div>
                 <div className={styles.statLabel}>Total Orang (Pax)</div>
@@ -815,13 +888,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                     onClick={() => setRsvpFilter("all")}
                     className={styles.tabBtn}
                     style={{
-                      padding: "0.35rem 0.65rem",
-                      fontSize: "0.78rem",
-                      borderRadius: "6px",
-                      background: rsvpFilter === "all" ? "#f4ece4" : "#ffffff",
-                      borderColor: rsvpFilter === "all" ? "#7b5836" : "#e5e7eb",
-                      color: rsvpFilter === "all" ? "#7b5836" : "#4b5563",
+                      padding: "0.4rem 0.8rem",
+                      fontSize: "0.8rem",
+                      borderRadius: "9999px",
+                      minHeight: "38px",
+                      background: rsvpFilter === "all" ? "#2c2523" : "#ffffff",
+                      borderColor: rsvpFilter === "all" ? "#2c2523" : "#eae3d9",
+                      color: rsvpFilter === "all" ? "#faf8f5" : "#63554f",
                       fontWeight: rsvpFilter === "all" ? 700 : 500,
+                      border: "1px solid",
                     }}
                   >
                     Semua ({data.rsvps.length})
@@ -831,13 +906,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                     onClick={() => setRsvpFilter("attending")}
                     className={styles.tabBtn}
                     style={{
-                      padding: "0.35rem 0.65rem",
-                      fontSize: "0.78rem",
-                      borderRadius: "6px",
+                      padding: "0.4rem 0.8rem",
+                      fontSize: "0.8rem",
+                      borderRadius: "9999px",
+                      minHeight: "38px",
                       background: rsvpFilter === "attending" ? "#ecfdf5" : "#ffffff",
-                      borderColor: rsvpFilter === "attending" ? "#059669" : "#e5e7eb",
-                      color: rsvpFilter === "attending" ? "#065f46" : "#4b5563",
+                      borderColor: rsvpFilter === "attending" ? "#059669" : "#eae3d9",
+                      color: rsvpFilter === "attending" ? "#065f46" : "#63554f",
                       fontWeight: rsvpFilter === "attending" ? 700 : 500,
+                      border: "1px solid",
                     }}
                   >
                     Hadir ({attendingRsvps.length})
@@ -847,13 +924,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                     onClick={() => setRsvpFilter("not_attending")}
                     className={styles.tabBtn}
                     style={{
-                      padding: "0.35rem 0.65rem",
-                      fontSize: "0.78rem",
-                      borderRadius: "6px",
-                      background: rsvpFilter === "not_attending" ? "#fef2f2" : "#ffffff",
-                      borderColor: rsvpFilter === "not_attending" ? "#dc2626" : "#e5e7eb",
-                      color: rsvpFilter === "not_attending" ? "#dc2626" : "#4b5563",
+                      padding: "0.4rem 0.8rem",
+                      fontSize: "0.8rem",
+                      borderRadius: "9999px",
+                      minHeight: "38px",
+                      background: rsvpFilter === "not_attending" ? "#fff1f2" : "#ffffff",
+                      borderColor: rsvpFilter === "not_attending" ? "#dc2626" : "#eae3d9",
+                      color: rsvpFilter === "not_attending" ? "#dc2626" : "#63554f",
                       fontWeight: rsvpFilter === "not_attending" ? 700 : 500,
+                      border: "1px solid",
                     }}
                   >
                     Berhalangan ({notAttendingRsvps.length})
@@ -863,15 +942,28 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
 
               {/* Search bar */}
               {data.rsvps.length > 2 && (
-                <div style={{ marginBottom: "1rem" }}>
+                <div style={{ marginBottom: "1rem", position: "relative" }}>
                   <input
                     type="search"
                     placeholder="Cari nama tamu atau pesan RSVP..."
                     value={rsvpSearch}
                     onChange={(e) => setRsvpSearch(e.target.value)}
                     className={styles.input}
-                    style={{ width: "100%", boxSizing: "border-box" }}
+                    style={{ width: "100%", paddingLeft: "2.4rem" }}
                   />
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "0.85rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#8c7d6f",
+                      pointerEvents: "none",
+                      display: "flex",
+                    }}
+                  >
+                    <SearchIcon size={16} />
+                  </span>
                 </div>
               )}
 
@@ -889,7 +981,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                           <span className={styles.wishAuthor}>{r.name}</span>
                           {r.createdAt && (
-                            <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                            <span style={{ fontSize: "0.72rem", color: "#8c7d6f" }}>
                               {formatRsvpDate(r.createdAt)}
                             </span>
                           )}
@@ -897,7 +989,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                         <span
                           className={styles.portalBadge}
                           style={{
-                            backgroundColor: r.response === "attending" ? "#ecfdf5" : "#fef2f2",
+                            backgroundColor: r.response === "attending" ? "#ecfdf5" : "#fff1f2",
                             color: r.response === "attending" ? "#065f46" : "#dc2626",
                             borderColor: r.response === "attending" ? "#a7f3d0" : "#fecdd3",
                           }}

@@ -27,6 +27,7 @@ export interface PlatformOrderInput {
   templateTitle?: string;
   eventDate?: string;
   eventLocation?: string;
+  selectedColor?: string;
   notes?: string;
 }
 
@@ -40,6 +41,7 @@ export interface BuildPlatformOrderWhatsAppUrlParams {
   groomBrideNames?: string;
   eventDate?: string;
   eventLocation?: string;
+  selectedColor?: string;
   notes?: string;
 }
 
@@ -79,6 +81,10 @@ export function buildPlatformOrderWhatsAppUrl(
 
   if (params.templateTitle?.trim()) {
     lines.push(`• Tema / Desain: ${params.templateTitle.trim()}`);
+  }
+
+  if (params.selectedColor?.trim()) {
+    lines.push(`• Pilihan Warna Tema: ${params.selectedColor.trim()}`);
   }
 
   if (params.eventDate?.trim()) {

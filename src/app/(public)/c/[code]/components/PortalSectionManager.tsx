@@ -3,6 +3,14 @@
 import React, { useState, useTransition } from "react";
 import type { ClassifiedSection } from "@/features/invitations/sections-classifier";
 import { savePortalSectionsAction } from "../actions";
+import {
+  LayersIcon,
+  CheckIcon,
+  XIcon,
+  AlertTriangleIcon,
+  SaveIcon,
+  SectionCategoryIcon,
+} from "./PortalIcons";
 import styles from "./PortalSectionManager.module.css";
 
 interface PortalSectionManagerProps {
@@ -83,7 +91,9 @@ export function PortalSectionManager({
         <div className={styles.titleRow}>
           <div className={styles.titleGroup}>
             <h2 className={styles.title}>
-              <span>📑</span>
+              <span className={styles.titleIcon}>
+                <LayersIcon size={22} />
+              </span>
               <span>Pilih Section yang Ditampilkan</span>
             </h2>
             <p className={styles.subtitle}>
@@ -95,17 +105,17 @@ export function PortalSectionManager({
 
         <div className={styles.statsBar}>
           <div className={`${styles.statBadge} ${styles.statBadgeActive}`}>
-            <span>✓</span>
+            <CheckIcon size={14} />
             <span>{activeCount} Section Aktif</span>
           </div>
           {disabledCount > 0 && (
             <div className={`${styles.statBadge} ${styles.statBadgeDisabled}`}>
-              <span>✕</span>
+              <XIcon size={14} />
               <span>{disabledCount} Section Dinonaktifkan</span>
             </div>
           )}
           <div className={styles.statBadge}>
-            <span>📋</span>
+            <LayersIcon size={14} />
             <span>Total {totalCount} Section dalam Tema</span>
           </div>
         </div>
@@ -123,7 +133,13 @@ export function PortalSectionManager({
               className={`${styles.sectionCard} ${isOff ? styles.sectionCardDisabled : ""}`}
             >
               <div className={styles.sectionLeft}>
-                <div className={styles.iconWrapper}>{section.icon}</div>
+                <div className={styles.iconWrapper}>
+                  <SectionCategoryIcon
+                    category={section.category}
+                    iconKey={section.icon}
+                    size={22}
+                  />
+                </div>
                 <div className={styles.sectionInfo}>
                   <div className={styles.sectionTitleRow}>
                     <h3 className={styles.sectionName}>{section.name}</h3>
@@ -182,12 +198,16 @@ export function PortalSectionManager({
           <div className={styles.saveBarText}>
             {savedSuccess ? (
               <>
-                <span style={{ color: "#34d399", fontSize: "1.1rem" }}>✓</span>
+                <span style={{ color: "#059669", display: "inline-flex" }}>
+                  <CheckIcon size={18} />
+                </span>
                 <span>Perubahan berhasil disimpan! Undangan Anda telah diperbarui.</span>
               </>
             ) : (
               <>
-                <span>⚠️</span>
+                <span style={{ color: "#c59b27", display: "inline-flex" }}>
+                  <AlertTriangleIcon size={18} />
+                </span>
                 <span>Ada perubahan section yang belum disimpan.</span>
               </>
             )}
@@ -198,7 +218,8 @@ export function PortalSectionManager({
             onClick={handleSave}
             disabled={!hasChanges || isPending}
           >
-            {isPending ? "Menyimpan..." : "Simpan Pengaturan Section"}
+            <SaveIcon size={16} />
+            <span>{isPending ? "Menyimpan..." : "Simpan Pengaturan Section"}</span>
           </button>
         </div>
       )}

@@ -4,6 +4,18 @@ import React, { useState, useRef, useTransition } from "react";
 import type { PortalShareMessageTemplate } from "@/features/orders";
 import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
 import { savePortalShareMessageAction } from "../actions";
+import {
+  MessageCircleIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  SparklesIcon,
+  StarIcon,
+  TagIcon,
+  Edit3Icon,
+  SmartphoneIcon,
+  RotateCcwIcon,
+  SaveIcon,
+} from "./PortalIcons";
 import styles from "./PortalShareMessageCard.module.css";
 
 interface PortalShareMessageCardProps {
@@ -109,7 +121,9 @@ export function PortalShareMessageCard({
       {/* Clickable Header */}
       <div className={styles.header} onClick={() => setIsOpen((prev) => !prev)}>
         <div className={styles.titleArea}>
-          <div className={styles.iconBadge}>💬</div>
+          <div className={styles.iconBadge}>
+            <MessageCircleIcon size={20} />
+          </div>
           <div>
             <h3 className={styles.titleText}>Format Teks Pesan WhatsApp</h3>
             <p className={styles.subText}>
@@ -124,9 +138,10 @@ export function PortalShareMessageCard({
             e.stopPropagation();
             setIsOpen((prev) => !prev);
           }}
+          aria-label={isOpen ? "Tutup Editor" : "Buka Editor"}
         >
           <span>{isOpen ? "Tutup Editor" : "Atur Format Pesan"}</span>
-          <span>{isOpen ? "▲" : "▼"}</span>
+          {isOpen ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
         </button>
       </div>
 
@@ -137,7 +152,8 @@ export function PortalShareMessageCard({
           {presets.length > 0 && (
             <div className={styles.presetsSection}>
               <div className={styles.sectionLabel}>
-                <span>✨ Pilihan Template Sekali Klik:</span>
+                <SparklesIcon size={14} />
+                <span>Pilihan Template Sekali Klik:</span>
               </div>
               <div className={styles.presetPills}>
                 {presets.map((preset) => {
@@ -151,7 +167,8 @@ export function PortalShareMessageCard({
                       onClick={() => handleSelectPreset(preset)}
                       className={`${styles.presetBtn} ${isCurrent ? styles.presetBtnActive : ""}`}
                     >
-                      <span>{preset.isDefault ? "⭐ " : ""}{preset.title}</span>
+                      {preset.isDefault && <StarIcon size={12} />}
+                      <span>{preset.title}</span>
                     </button>
                   );
                 })}
@@ -162,7 +179,8 @@ export function PortalShareMessageCard({
           {/* Quick Variable Tag Insertion */}
           <div className={styles.tagsSection}>
             <div className={styles.sectionLabel}>
-              <span>🏷️ Sisipkan Variabel Dinamis (Klik untuk Tambah):</span>
+              <TagIcon size={14} />
+              <span>Sisipkan Variabel Dinamis (Klik untuk Tambah):</span>
             </div>
             <div className={styles.tagChips}>
               {VARIABLE_TAGS.map((t) => (
@@ -183,7 +201,8 @@ export function PortalShareMessageCard({
           {/* Text Editor */}
           <div className={styles.editorWrapper}>
             <div className={styles.sectionLabel}>
-              <span>📝 Teks Pesan Undangan:</span>
+              <Edit3Icon size={14} />
+              <span>Teks Pesan Undangan:</span>
             </div>
             <textarea
               ref={textareaRef}
@@ -199,8 +218,11 @@ export function PortalShareMessageCard({
           {/* Live Simulated WhatsApp Preview */}
           <div className={styles.previewBox}>
             <div className={styles.previewHeader}>
-              <span>📱 Simulasi Pesan WhatsApp Tamu</span>
-              <span style={{ fontFamily: "monospace", fontSize: "0.68rem" }}>09:41</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <SmartphoneIcon size={14} />
+                <span>Simulasi Pesan WhatsApp Tamu</span>
+              </div>
+              <span style={{ fontFamily: "monospace", fontSize: "0.72rem" }}>09:41</span>
             </div>
             <div className={styles.previewBubble}>{previewText}</div>
           </div>
@@ -217,7 +239,8 @@ export function PortalShareMessageCard({
               }}
               className={styles.resetBtn}
             >
-              Kembalikan ke Default
+              <RotateCcwIcon size={14} />
+              <span>Kembalikan ke Default</span>
             </button>
             <button
               type="button"
@@ -225,7 +248,7 @@ export function PortalShareMessageCard({
               onClick={handleSave}
               className={styles.saveBtn}
             >
-              <span>💾</span>
+              <SaveIcon size={15} />
               <span>{isPending ? "Menyimpan..." : "Simpan Format Pesan"}</span>
             </button>
           </div>
