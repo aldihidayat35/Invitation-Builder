@@ -152,7 +152,7 @@ export function PortalAdminSupportCard({
             type="button"
             onClick={handleCopyFormat}
             className={copied ? styles.btnCopySuccess : styles.btnSecondary}
-            style={{ fontSize: "0.825rem", padding: "0.5rem 1rem", minHeight: "40px" }}
+            style={{ fontSize: "0.825rem", padding: "0.55rem 1.1rem", minHeight: "44px" }}
           >
             {copied ? (
               <>

@@ -418,13 +418,13 @@ export function PortalVariableForm({
                           className={styles.btnSecondary}
                           style={{
                             alignSelf: "flex-start",
-                            fontSize: "0.8rem",
-                            padding: "0.45rem 0.85rem",
-                            marginTop: "0.25rem",
-                            minHeight: "38px",
+                            fontSize: "0.825rem",
+                            padding: "0.55rem 1rem",
+                            marginTop: "0.35rem",
+                            minHeight: "44px",
                           }}
                         >
-                          <RefreshCwIcon size={14} />
+                          <RefreshCwIcon size={15} />
                           <span>Ajukan Perubahan Rekening</span>
                         </button>
                       </div>
@@ -517,7 +517,7 @@ export function PortalVariableForm({
             type="button"
             onClick={onSwitchToAdmin}
             className={styles.btnSecondary}
-            style={{ whiteSpace: "nowrap", alignSelf: "center", minHeight: "42px" }}
+            style={{ whiteSpace: "nowrap", alignSelf: "center", minHeight: "44px" }}
           >
             <WhatsAppIcon size={16} />
             <span>Minta Bantuan Admin via WA</span>

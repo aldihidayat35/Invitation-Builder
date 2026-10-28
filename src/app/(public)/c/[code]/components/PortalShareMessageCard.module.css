@@ -55,16 +55,16 @@
 .toggleBtn {
   background: #faf8f5;
   border: 1px solid #eae3d9;
-  border-radius: 10px;
-  min-height: 38px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.78rem;
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  font-size: 0.825rem;
   font-weight: 600;
   color: #63554f;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   transition: all 0.15s ease;
   touch-action: manipulation;
 }
@@ -112,16 +112,16 @@
   background: #faf8f5;
   border: 1px solid #eae3d9;
   border-radius: 9999px;
-  min-height: 38px;
-  padding: 0.4rem 0.95rem;
-  font-size: 0.78rem;
+  min-height: 44px;
+  padding: 0.5rem 1.05rem;
+  font-size: 0.825rem;
   font-weight: 600;
   color: #63554f;
   cursor: pointer;
   transition: all 0.15s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   touch-action: manipulation;
 }
 
@@ -132,9 +132,10 @@
 }
 
 .presetBtnActive {
-  background: #2c2523;
-  border-color: #2c2523;
-  color: #faf8f5;
+  background: linear-gradient(135deg, #c59b27 0%, #b38728 100%);
+  border-color: #b38728;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(197, 155, 39, 0.28);
 }
 
 /* Variable Tag Chips */
@@ -153,18 +154,18 @@
 .tagChip {
   background: #faf8f5;
   border: 1px solid #eae3d9;
-  border-radius: 8px;
-  min-height: 36px;
-  padding: 0.35rem 0.65rem;
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 0.45rem 0.85rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #8c6d37;
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   touch-action: manipulation;
 }
 

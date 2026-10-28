@@ -52,7 +52,7 @@ export default async function ClientPortalPage({ params }: ClientPortalPageProps
               Tautan portal klien dengan kode unik ini tidak ditemukan, atau tautan telah diperbarui oleh tim produksi.
             </p>
             <div style={{ marginTop: "1.5rem" }}>
-              <Link href="/" className={styles.btnPrimary} style={{ textDecoration: "none", display: "inline-block" }}>
+              <Link href="/" className={styles.btnPrimary} style={{ textDecoration: "none" }}>
                 Kembali ke Beranda
               </Link>
             </div>

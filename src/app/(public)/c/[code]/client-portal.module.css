@@ -171,10 +171,10 @@
 }
 
 .tabBtnActive {
-  background: #2c2523 !important;
-  color: #faf8f5 !important;
-  border-color: #2c2523 !important;
-  box-shadow: 0 4px 14px rgba(44, 37, 35, 0.18);
+  background: linear-gradient(135deg, #c59b27 0%, #b38728 100%) !important;
+  color: #ffffff !important;
+  border-color: #b38728 !important;
+  box-shadow: 0 4px 16px rgba(197, 155, 39, 0.32) !important;
 }
 
 .tabCount {
@@ -192,6 +192,11 @@
 .tabBtn:not(.tabBtnActive) .tabCount {
   background: #eae3d9;
   color: #63554f;
+}
+
+.tabBtnActive .tabCount {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
 }
 
 /* --- Main Content Layout --- */
@@ -400,6 +405,34 @@
   border: none;
 }
 
+.reviewBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #eae3d9;
+  border-radius: 16px;
+  padding: 0.95rem 1.25rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(44, 34, 30, 0.02);
+}
+
+.reviewBannerText {
+  font-size: 0.85rem;
+  color: #63554f;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goldIcon {
+  color: #c59b27;
+  display: inline-flex;
+  align-items: center;
+}
+
 .reviewNotice {
   background: #fffdf5;
   border: 1px solid #fef3c7;
@@ -474,49 +507,102 @@
 .guestActions {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
+}
+
+.btnGuestAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 0.95rem;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #63554f;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: 1px solid #ded5c7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.btnGuestAction:hover {
+  background: #f7f3ed;
+  color: #2c2523;
+  border-color: #cbbead;
 }
 
 .btnCopyWa {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  min-height: 38px;
-  padding: 0.45rem 0.85rem;
-  border-radius: 10px;
+  min-height: 44px;
+  padding: 0.5rem 0.95rem;
+  border-radius: 12px;
   background: #25d366;
   color: #ffffff;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   border: none;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.15s ease;
   touch-action: manipulation;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.2);
 }
 
 .btnCopyWa:hover {
   background: #20bd5a;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }
 
 .btnDeleteGuest {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 12px;
   border: 1px solid #fecdd3;
   background: #ffffff;
   color: #e11d48;
   cursor: pointer;
   transition: all 0.15s ease;
+  touch-action: manipulation;
 }
 
 .btnDeleteGuest:hover {
   background: #ffe4e6;
+  border-color: #fda4af;
+}
+
+@media (max-width: 640px) {
+  .guestItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .guestActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .guestActions .btnGuestAction,
+  .guestActions .btnCopyWa {
+    padding: 0.45rem 0.35rem;
+    font-size: 0.74rem;
+    text-align: center;
+  }
 }
 
 /* --- Stats Grid --- */
@@ -554,6 +640,61 @@
   font-size: 0.78rem;
   color: #786b65;
   font-weight: 600;
+}
+
+/* --- RSVP Filter Pills --- */
+.rsvpFilterRow {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid #eae3d9;
+  background: #ffffff;
+  color: #63554f;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.filterPill:hover {
+  background: #f7f3ed;
+  border-color: #cbbead;
+  color: #2c2523;
+}
+
+.filterPillAllActive {
+  background: linear-gradient(135deg, #c59b27 0%, #b38728 100%) !important;
+  border-color: #b38728 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(197, 155, 39, 0.28) !important;
+}
+
+.filterPillAttendingActive {
+  background: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #065f46 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15) !important;
+}
+
+.filterPillNotAttendingActive {
+  background: #fff1f2 !important;
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
 }
 
 /* --- Wishes Feed --- */

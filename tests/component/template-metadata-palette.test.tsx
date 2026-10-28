@@ -23,13 +23,22 @@ const mockTemplate: TemplateDetail = {
   tags: ["jawa", "royal"],
   useCount: 10,
   publishedVersionNo: 1,
-  publishedAt: new Date(),
-  createdAt: new Date(),
+  lifecycle: "published",
+  revision: 1,
+  hasUnpublishedChanges: false,
   updatedAt: new Date(),
   versions: [],
   document: {
     schemaVersion: 1,
-    page: { width: 430, height: 932, background: "#ffffff" },
+    design: {
+      baseWidth: 390,
+      tokens: {
+        colors: {},
+        fonts: {},
+        spacing: {},
+      },
+    },
+    variables: [],
     sections: [],
   },
   metadata: {
@@ -96,3 +105,4 @@ describe("TemplateMetadataForm Color Palette Management", () => {
     expect(parsed.length).toBe(2);
   });
 });
+

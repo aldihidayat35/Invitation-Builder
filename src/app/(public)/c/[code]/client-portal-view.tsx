@@ -532,31 +532,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         {/* --- TAB 1: REVIEW UNDANGAN --- */}
         {activeTab === "review" && (
           <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                background: "#ffffff",
-                border: "1px solid #eae3d9",
-                borderRadius: "14px",
-                padding: "0.85rem 1.15rem",
-                marginBottom: "1.25rem",
-                flexWrap: "wrap",
-                gap: "0.75rem",
-                boxShadow: "0 2px 8px rgba(44, 34, 30, 0.02)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#63554f",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <span style={{ color: "#c59b27" }}>
+            <div className={styles.reviewBanner}>
+              <div className={styles.reviewBannerText}>
+                <span className={styles.goldIcon}>
                   <LightbulbIcon size={18} />
                 </span>
                 <span>Ingin memperbarui nama pengantin, waktu, atau lokasi acara?</span>
@@ -565,9 +543,8 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 type="button"
                 onClick={() => setActiveTab("data")}
                 className={styles.btnSecondary}
-                style={{ fontSize: "0.8rem", padding: "0.45rem 0.95rem", minHeight: "38px" }}
               >
-                <FileTextIcon size={14} />
+                <FileTextIcon size={15} />
                 <span>Ubah Data Undangan</span>
               </button>
             </div>
@@ -595,10 +572,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                     target="_blank"
                     rel="noreferrer"
                     className={styles.btnSecondary}
-                    style={{ fontSize: "0.8rem", padding: "0.45rem 0.95rem", minHeight: "38px" }}
                   >
                     <span>Buka Halaman Penuh</span>
-                    <ExternalLinkIcon size={14} />
+                    <ExternalLinkIcon size={15} />
                   </a>
                 )}
               </div>
@@ -799,8 +775,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                         <button
                           type="button"
                           onClick={() => handleCopyGuestLink(g.name)}
-                          className={styles.btnSecondary}
-                          style={{ fontSize: "0.78rem", padding: "0.45rem 0.8rem", minHeight: "38px" }}
+                          className={styles.btnGuestAction}
                           title="Salin tautan link web undangan saja"
                         >
                           <LinkIcon size={14} />
@@ -809,8 +784,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                         <button
                           type="button"
                           onClick={() => handleCopyFullMessage(g.name)}
-                          className={styles.btnSecondary}
-                          style={{ fontSize: "0.78rem", padding: "0.45rem 0.8rem", minHeight: "38px" }}
+                          className={styles.btnGuestAction}
                           title="Salin teks pesan lengkap beserta nama tamu dan link"
                         >
                           <CopyIcon size={14} />
@@ -882,58 +856,31 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                   </p>
                 </div>
                 {/* Filter buttons */}
-                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div className={styles.rsvpFilterRow}>
                   <button
                     type="button"
                     onClick={() => setRsvpFilter("all")}
-                    className={styles.tabBtn}
-                    style={{
-                      padding: "0.4rem 0.8rem",
-                      fontSize: "0.8rem",
-                      borderRadius: "9999px",
-                      minHeight: "38px",
-                      background: rsvpFilter === "all" ? "#2c2523" : "#ffffff",
-                      borderColor: rsvpFilter === "all" ? "#2c2523" : "#eae3d9",
-                      color: rsvpFilter === "all" ? "#faf8f5" : "#63554f",
-                      fontWeight: rsvpFilter === "all" ? 700 : 500,
-                      border: "1px solid",
-                    }}
+                    className={`${styles.filterPill} ${
+                      rsvpFilter === "all" ? styles.filterPillAllActive : ""
+                    }`}
                   >
                     Semua ({data.rsvps.length})
                   </button>
                   <button
                     type="button"
                     onClick={() => setRsvpFilter("attending")}
-                    className={styles.tabBtn}
-                    style={{
-                      padding: "0.4rem 0.8rem",
-                      fontSize: "0.8rem",
-                      borderRadius: "9999px",
-                      minHeight: "38px",
-                      background: rsvpFilter === "attending" ? "#ecfdf5" : "#ffffff",
-                      borderColor: rsvpFilter === "attending" ? "#059669" : "#eae3d9",
-                      color: rsvpFilter === "attending" ? "#065f46" : "#63554f",
-                      fontWeight: rsvpFilter === "attending" ? 700 : 500,
-                      border: "1px solid",
-                    }}
+                    className={`${styles.filterPill} ${
+                      rsvpFilter === "attending" ? styles.filterPillAttendingActive : ""
+                    }`}
                   >
                     Hadir ({attendingRsvps.length})
                   </button>
                   <button
                     type="button"
                     onClick={() => setRsvpFilter("not_attending")}
-                    className={styles.tabBtn}
-                    style={{
-                      padding: "0.4rem 0.8rem",
-                      fontSize: "0.8rem",
-                      borderRadius: "9999px",
-                      minHeight: "38px",
-                      background: rsvpFilter === "not_attending" ? "#fff1f2" : "#ffffff",
-                      borderColor: rsvpFilter === "not_attending" ? "#dc2626" : "#eae3d9",
-                      color: rsvpFilter === "not_attending" ? "#dc2626" : "#63554f",
-                      fontWeight: rsvpFilter === "not_attending" ? 700 : 500,
-                      border: "1px solid",
-                    }}
+                    className={`${styles.filterPill} ${
+                      rsvpFilter === "not_attending" ? styles.filterPillNotAttendingActive : ""
+                    }`}
                   >
                     Berhalangan ({notAttendingRsvps.length})
                   </button>
