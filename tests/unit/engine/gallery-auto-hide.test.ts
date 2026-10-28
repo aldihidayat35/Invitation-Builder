@@ -1,18 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { resolveDocument } from "@/lib/engine/resolve-document";
-import type { CanonicalDocument, Element } from "@/lib/schema";
+import { canonicalDocumentV1Schema } from "@/lib/schema/document";
 
-const baseGalleryDoc: CanonicalDocument = {
+const baseGalleryDoc = canonicalDocumentV1Schema.parse({
   schemaVersion: 1,
   design: {
     baseWidth: 390,
-    tokens: {
-      colors: {},
-      typography: {},
-      spacing: {},
-      shadows: {},
-      radii: {},
-    },
+    tokens: {},
   },
   variables: [],
   sections: [
@@ -29,7 +23,15 @@ const baseGalleryDoc: CanonicalDocument = {
           frame: { x: 0, y: 0, w: 200, h: 50, rotation: 0 },
           visible: true,
           locked: false,
-          style: { fontSize: 20 },
+          style: {
+            fontSize: 20,
+            fontWeight: 400,
+            lineHeight: 1.2,
+            letterSpacing: 0,
+            textAlign: "left",
+            color: "#000000",
+            opacity: 1,
+          },
           content: { segments: [{ text: "The Wedding" }] },
         },
       ],
@@ -48,7 +50,15 @@ const baseGalleryDoc: CanonicalDocument = {
           frame: { x: 0, y: 0, w: 300, h: 40, rotation: 0 },
           visible: true,
           locked: false,
-          style: { fontSize: 24 },
+          style: {
+            fontSize: 24,
+            fontWeight: 700,
+            lineHeight: 1.2,
+            letterSpacing: 0,
+            textAlign: "left",
+            color: "#000000",
+            opacity: 1,
+          },
           content: { segments: [{ text: "Galeri Kenangan" }] },
         },
         {
@@ -70,7 +80,7 @@ const baseGalleryDoc: CanonicalDocument = {
       ],
     },
   ],
-};
+});
 
 describe("Gallery Auto-Hide Engine Behavior", () => {
   it("keeps gallery visible in template design mode with no client invitation data", () => {
@@ -101,7 +111,6 @@ describe("Gallery Auto-Hide Engine Behavior", () => {
   });
 
   it("automatically hides gallery section when client has not input any gallery items", () => {
-    // Client data without gallery.items key
     const clientData = {
       "couple.groom.nickname": "Andi",
       "couple.bride.nickname": "Siti",

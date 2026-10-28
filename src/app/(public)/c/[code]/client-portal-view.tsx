@@ -9,6 +9,7 @@ import {
 } from "./actions";
 import { PortalVariableForm } from "./components/PortalVariableForm";
 import { PortalGalleryManager } from "./components/PortalGalleryManager";
+import { PortalBacksoundManager } from "./components/PortalBacksoundManager";
 import { PortalAdminSupportCard } from "./components/PortalAdminSupportCard";
 import { PortalShareMessageCard } from "./components/PortalShareMessageCard";
 import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
@@ -20,8 +21,9 @@ interface ClientPortalViewProps {
 }
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
-  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "review" | "guests" | "rsvp" | "wishes">("data");
+  const [activeTab, setActiveTab] = useState<"data" | "gallery" | "audio" | "review" | "guests" | "rsvp" | "wishes">("data");
   const [galleryItems, setGalleryItems] = useState(data.galleryItems || []);
+  const [audioSettings, setAudioSettings] = useState(data.audioSettings);
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
   const [guestSearch, setGuestSearch] = useState("");
   const [rsvpFilter, setRsvpFilter] = useState<"all" | "attending" | "not_attending">("all");
@@ -292,6 +294,23 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("audio")}
+            className={`${styles.tabBtn} ${activeTab === "audio" ? styles.tabBtnActive : ""}`}
+          >
+            <span>🎵</span>
+            <span>Musik Undangan</span>
+            <span
+              className={styles.tabCount}
+              style={{
+                background: audioSettings?.enabled !== false ? "#d1fae5" : "#fee2e2",
+                color: audioSettings?.enabled !== false ? "#065f46" : "#991b1b",
+              }}
+            >
+              {audioSettings?.enabled !== false ? "Aktif" : "Mati"}
+            </span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("review")}
             className={`${styles.tabBtn} ${activeTab === "review" ? styles.tabBtnActive : ""}`}
           >
@@ -425,6 +444,23 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 enabled
                   ? "Galeri foto berhasil disimpan!"
                   : "Pengaturan galeri disimpan (galeri dinonaktifkan).",
+              );
+            }}
+          />
+        )}
+
+        {/* --- TAB 0.7: MUSIK & BACKSOUND UNDANGAN --- */}
+        {activeTab === "audio" && (
+          <PortalBacksoundManager
+            token={token}
+            initialAudio={audioSettings}
+            previewUrl={data.previewUrl}
+            onSaved={(newAudio) => {
+              setAudioSettings(newAudio);
+              showToast(
+                newAudio.enabled
+                  ? `Musik "${newAudio.title || "Lagu Pilihan"}" berhasil disimpan!`
+                  : "Musik latar berhasil dinonaktifkan.",
               );
             }}
           />

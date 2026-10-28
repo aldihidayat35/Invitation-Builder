@@ -355,14 +355,38 @@ export function resolveDocument(
 
   const docAudio = document.design.audio;
   let resolvedAudio: ResolvedDocumentAudio | undefined;
-  if (docAudio && docAudio.enabled && docAudio.src) {
+
+  const isAudioExplicitlyDisabled = data["audio.enabled"] === false;
+  const isAudioExplicitlyEnabled = data["audio.enabled"] === true;
+  const audioEnabled = isAudioExplicitlyDisabled
+    ? false
+    : isAudioExplicitlyEnabled
+      ? true
+      : Boolean(docAudio?.enabled);
+
+  let customAudioSrc: string | undefined;
+  if (typeof data["audio.src"] === "string" && data["audio.src"].trim()) {
+    customAudioSrc = data["audio.src"].trim();
+  } else if (typeof data["audio.assetId"] === "string" && data["audio.assetId"].trim()) {
+    customAudioSrc = `/api/assets/${data["audio.assetId"].trim()}`;
+  }
+
+  const effectiveAudioSrc = customAudioSrc || docAudio?.src;
+
+  const customAudioTitle =
+    typeof data["audio.title"] === "string" && data["audio.title"].trim()
+      ? data["audio.title"].trim()
+      : undefined;
+  const effectiveAudioTitle = customAudioTitle || docAudio?.title;
+
+  if (audioEnabled && effectiveAudioSrc) {
     resolvedAudio = {
-      enabled: docAudio.enabled,
-      src: docAudio.src,
-      title: docAudio.title,
-      position: docAudio.position ?? "bottom-right",
-      loop: docAudio.loop !== false,
-      autoplayOnOpen: docAudio.autoplayOnOpen !== false,
+      enabled: true,
+      src: effectiveAudioSrc,
+      title: effectiveAudioTitle,
+      position: docAudio?.position ?? "bottom-right",
+      loop: docAudio?.loop !== false,
+      autoplayOnOpen: docAudio?.autoplayOnOpen !== false,
     };
   }
 

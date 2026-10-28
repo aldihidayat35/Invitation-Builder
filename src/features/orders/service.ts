@@ -1044,6 +1044,15 @@ export interface PortalShareMessageTemplate {
   isDefault: boolean;
 }
 
+export interface PortalAudioSettings {
+  enabled: boolean;
+  src?: string;
+  title?: string;
+  artist?: string;
+  presetId?: string;
+  assetId?: string;
+}
+
 export interface ClientPortalData {
   order: CustomerOrder;
   invitation: InvitationRow | null;
@@ -1063,6 +1072,7 @@ export interface ClientPortalData {
   bankVerification?: BankVerificationMeta;
   galleryItems?: { assetId?: string; src?: string; alt?: string }[];
   galleryEnabled?: boolean;
+  audioSettings?: PortalAudioSettings;
   invitationCategory?: string;
   shareMessageTemplates?: PortalShareMessageTemplate[];
   activeShareMessageTemplate?: string;
@@ -1304,6 +1314,55 @@ export async function getClientPortalDataByToken(
     }
   }
 
+  // Resolving backsound audio settings for portal
+  let audioSettings: PortalAudioSettings = {
+    enabled: true,
+  };
+
+  const invData = invitation?.data as Record<string, unknown> | undefined;
+  if (
+    invData &&
+    (invData["audio.enabled"] !== undefined ||
+      invData["audio.src"] ||
+      invData["audio.assetId"])
+  ) {
+    audioSettings = {
+      enabled: invData["audio.enabled"] !== false,
+      src: typeof invData["audio.src"] === "string" ? invData["audio.src"] : undefined,
+      title: typeof invData["audio.title"] === "string" ? invData["audio.title"] : undefined,
+      artist: typeof invData["audio.artist"] === "string" ? invData["audio.artist"] : undefined,
+      presetId: typeof invData["audio.presetId"] === "string" ? invData["audio.presetId"] : undefined,
+      assetId: typeof invData["audio.assetId"] === "string" ? invData["audio.assetId"] : undefined,
+    };
+  } else if (invitation) {
+    const foundVersion = await findTemplateVersionWithWorkspace(db, invitation.templateVersionId);
+    if (foundVersion) {
+      const doc = parseDocumentOrThrow(migrateDocument(foundVersion.version.document));
+      if (doc.design.audio) {
+        audioSettings = {
+          enabled: doc.design.audio.enabled,
+          src: doc.design.audio.src,
+          title: doc.design.audio.title,
+        };
+      }
+    }
+  } else if (order?.templateId) {
+    const tmpl = await findTemplateById(db, order.templateId);
+    if (tmpl && tmpl.publishedVersionNo !== null) {
+      const ver = await findTemplateVersion(db, tmpl.id, tmpl.publishedVersionNo);
+      if (ver) {
+        const doc = parseDocumentOrThrow(migrateDocument(ver.document));
+        if (doc.design.audio) {
+          audioSettings = {
+            enabled: doc.design.audio.enabled,
+            src: doc.design.audio.src,
+            title: doc.design.audio.title,
+          };
+        }
+      }
+    }
+  }
+
   const slug = invitation?.slug;
   const shareableUrl = slug ? `/i/${slug}` : null;
   const previewUrl = slug
@@ -1380,6 +1439,7 @@ export async function getClientPortalDataByToken(
     bankVerification,
     galleryItems,
     galleryEnabled,
+    audioSettings,
     invitationCategory,
     shareMessageTemplates,
     activeShareMessageTemplate,
@@ -1678,6 +1738,65 @@ export async function saveClientPortalGallery(
   }
 
   return { ok: true, count: cleanItems.length, slug: invitation.slug };
+}
+
+export async function saveClientPortalAudio(
+  db: Database,
+  token: string,
+  audioSettings: PortalAudioSettings,
+): Promise<{ ok: boolean; slug?: string; audio: PortalAudioSettings }> {
+  const portal = await getClientPortalDataByToken(db, token);
+  if (!portal) {
+    throw new Error("Token akses portal tidak valid.");
+  }
+
+  let invitation = portal.invitation;
+  if (!invitation) {
+    if (portal.order?.templateId) {
+      invitation = await ensureOrderInvitation(db, portal.order);
+    }
+    if (!invitation) {
+      throw new Error("Proyek undangan belum siap atau template belum ditentukan.");
+    }
+  }
+
+  const updatedData: Record<string, unknown> = {
+    ...invitation.data,
+    "audio.enabled": audioSettings.enabled,
+    ...(audioSettings.src ? { "audio.src": audioSettings.src } : {}),
+    ...(audioSettings.title ? { "audio.title": audioSettings.title } : {}),
+    ...(audioSettings.artist ? { "audio.artist": audioSettings.artist } : {}),
+    ...(audioSettings.presetId ? { "audio.presetId": audioSettings.presetId } : {}),
+    ...(audioSettings.assetId ? { "audio.assetId": audioSettings.assetId } : {}),
+  };
+
+  const updatedInv = await updateInvitationData(db, {
+    invitationId: invitation.id,
+    data: updatedData,
+  });
+  if (!updatedInv) throw new Error("Gagal menyimpan pengaturan musik undangan.");
+
+  await insertAuditLog(db, {
+    workspaceId: invitation.workspaceId,
+    actorId: null,
+    action: "order.portal_data_update",
+    entityType: "invitation",
+    entityId: invitation.id,
+    metadata: { token, type: "audio", title: audioSettings.title },
+  });
+
+  const isRealOrder = portal.order && portal.order.id !== invitation.id;
+  if (isRealOrder) {
+    await insertOrderWorkflowEvent(db, {
+      orderId: portal.order.id,
+      actorId: null,
+      eventType: "portal_data_update",
+      note: `Klien memperbarui musik latar undangan: "${audioSettings.title || "Lagu Kustom"}" (${audioSettings.enabled ? "Aktif" : "Nonaktif"}).`,
+      metadata: { token, type: "audio" },
+    });
+  }
+
+  return { ok: true, slug: invitation.slug, audio: audioSettings };
 }
 
 export async function addGuestByClientToken(

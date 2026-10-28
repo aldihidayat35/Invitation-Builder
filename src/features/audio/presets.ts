@@ -1,7 +1,7 @@
 export interface BacksoundPreset {
   readonly id: string;
   readonly name: string;
-  readonly category: "tradisional" | "romantis" | "klasik" | "akustik" | "alam";
+  readonly category: "tradisional" | "romantis" | "klasik" | "akustik" | "alam" | "islami" | "pop";
   readonly src: string;
   readonly artist: string;
   readonly description?: string;
