@@ -102,9 +102,11 @@ export const giftWidget: WidgetDefinition = {
     bank: { bind: "gift.bank" },
     accountNumber: { bind: "gift.accountNumber" },
     accountName: { bind: "gift.accountName" },
+    bankLogo: { bind: "gift.bankLogo" },
     bank2: { bind: "gift.bank2" },
     accountNumber2: { bind: "gift.accountNumber2" },
     accountName2: { bind: "gift.accountName2" },
+    bankLogo2: { bind: "gift.bankLogo2" },
     accounts: [],
   },
   props: {
@@ -112,9 +114,11 @@ export const giftWidget: WidgetDefinition = {
     bank: defineProp("text", "Jenis Rekening / Bank (Utama)", z.string().max(60).optional()),
     accountNumber: defineProp("text", "Nomor Rekening (Utama)", z.string().max(60).optional()),
     accountName: defineProp("text", "Atas Nama Rekening (Utama)", z.string().max(80).optional()),
+    bankLogo: defineProp("text", "Logo Bank (Utama)", z.string().optional()),
     bank2: defineProp("text", "Jenis Rekening 2 (Opsional)", z.string().max(60).optional()),
     accountNumber2: defineProp("text", "Nomor Rekening 2 (Opsional)", z.string().max(60).optional()),
     accountName2: defineProp("text", "Atas Nama Rekening 2 (Opsional)", z.string().max(80).optional()),
+    bankLogo2: defineProp("text", "Logo Bank 2 (Opsional)", z.string().optional()),
     accounts: defineProp(
       "collection",
       "Rekening Tambahan / Koleksi (bank, accountNumber, accountName)",

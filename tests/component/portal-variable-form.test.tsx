@@ -86,3 +86,95 @@ describe("PortalVariableForm Character Limits & Counters", () => {
     expect(screen.getByText("Batas tercapai")).toBeDefined();
   });
 });
+
+describe("PortalVariableForm Master Bank Dropdown & Logo Auto-Binding", () => {
+  const bankGroups: FormGroup[] = [
+    {
+      group: "gift",
+      label: "Nomor Rekening",
+      fields: [
+        {
+          key: "gift.bank",
+          label: "Bank / E-Wallet",
+          type: "text",
+          control: "text",
+          required: true,
+          group: "gift",
+          needsTimeZone: false,
+        },
+        {
+          key: "gift.accountNumber",
+          label: "Nomor Rekening",
+          type: "text",
+          control: "text",
+          required: true,
+          group: "gift",
+          needsTimeZone: false,
+        },
+      ],
+    },
+  ];
+
+  const customMasterBanks = [
+    { code: "bca", name: "BCA", category: "bank" as const, logoUrl: "/images/banks/bca.svg" },
+    { code: "mandiri", name: "Bank Mandiri", category: "bank" as const, logoUrl: "/images/banks/mandiri.svg" },
+    { code: "custom_bank", name: "Bank Kaltim", category: "bank" as const, logoUrl: "/images/banks/custom.svg" },
+  ];
+
+  it("renders bank selection dropdown populated with masterBanks prop and updates logo", () => {
+    const onSaved = vi.fn();
+    render(
+      <PortalVariableForm
+        token="test-token"
+        groups={bankGroups}
+        initialValues={{
+          "gift.bank": "BCA",
+          "gift.accountNumber": "123456",
+        }}
+        initialErrors={{}}
+        masterBanks={customMasterBanks}
+        onSaved={onSaved}
+      />,
+    );
+
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    expect(select.value).toBe("bca");
+
+    // Live preview thumbnail exists
+    const img = screen.getByRole("img", { name: "BCA" }) as HTMLImageElement;
+    expect(img).toBeInTheDocument();
+    expect(img.getAttribute("src")).toBe("/images/banks/bca.svg");
+
+    // Change to custom bank
+    fireEvent.change(select, { target: { value: "custom_bank" } });
+    expect(select.value).toBe("custom_bank");
+  });
+
+  it("allows switching to custom bank with manual input fallback", () => {
+    render(
+      <PortalVariableForm
+        token="test-token"
+        groups={bankGroups}
+        initialValues={{
+          "gift.bank": "",
+          "gift.accountNumber": "",
+        }}
+        initialErrors={{}}
+        masterBanks={customMasterBanks}
+      />,
+    );
+
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    // Choose custom bank option
+    fireEvent.change(select, { target: { value: "__custom__" } });
+
+    // The manual input appears
+    const customInput = screen.getByPlaceholderText("Ketik nama bank lainnya di sini…") as HTMLInputElement;
+    expect(customInput).toBeInTheDocument();
+
+    fireEvent.change(customInput, { target: { value: "Bank Papua" } });
+    expect(customInput.value).toBe("Bank Papua");
+  });
+});
+

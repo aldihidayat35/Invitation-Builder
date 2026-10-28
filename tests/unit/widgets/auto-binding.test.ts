@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultWidgetRegistry,
-  ensureWidgetAutoVariables,
-  getWidgetAutoProps,
   isWidgetUsingAutoVariables,
-  GIFT_AUTO_VARIABLES,
-  MAP_AUTO_VARIABLES,
-  COUNTDOWN_AUTO_VARIABLES,
   MUSIC_AUTO_VARIABLES,
 } from "@/features/widgets";
 import { createWidgetElement, addSection } from "@/features/editor/core/ops";
@@ -42,15 +37,20 @@ describe("Widget Auto-Binding Variables Feature", () => {
     expect(declaredKeys).toContain("gift.bank");
     expect(declaredKeys).toContain("gift.accountNumber");
     expect(declaredKeys).toContain("gift.accountName");
+    expect(declaredKeys).toContain("gift.bankLogo");
     expect(declaredKeys).toContain("gift.bank2");
     expect(declaredKeys).toContain("gift.accountNumber2");
     expect(declaredKeys).toContain("gift.accountName2");
+    expect(declaredKeys).toContain("gift.bankLogo2");
 
     // 2. Widget props terikat ke variabel tersebut
     const giftElement = doc.sections[0]!.elements.find((e) => e.type === "widget")!;
     expect(giftElement.props.bank).toEqual({ bind: "gift.bank" });
     expect(giftElement.props.accountNumber).toEqual({ bind: "gift.accountNumber" });
     expect(giftElement.props.accountName).toEqual({ bind: "gift.accountName" });
+    expect(giftElement.props.bankLogo).toEqual({ bind: "gift.bankLogo" });
+    expect(giftElement.props.bank2).toEqual({ bind: "gift.bank2" });
+    expect(giftElement.props.bankLogo2).toEqual({ bind: "gift.bankLogo2" });
 
     // 3. Schema & Semantics valid tanpa error binding_unknown_key
     expect(canonicalDocumentSchema.safeParse(doc).success).toBe(true);

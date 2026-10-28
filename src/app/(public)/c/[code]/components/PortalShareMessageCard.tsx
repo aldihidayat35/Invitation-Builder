@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useTransition } from "react";
-import type { PortalShareMessageTemplate } from "@/features/orders";
-import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
+import { interpolateMessageTemplate } from "@/features/orders/message-templates";
+import type { PortalShareMessageTemplate } from "@/features/orders/service";
 import { savePortalShareMessageAction } from "../actions";
 import {
   MessageCircleIcon,

@@ -37,6 +37,14 @@ export const GIFT_AUTO_VARIABLES: readonly VariableDefinitionInput[] = [
     required: true,
   },
   {
+    key: "gift.bankLogo",
+    type: "text",
+    label: "Logo Bank / E-Wallet (Utama)",
+    description: "URL atau path logo bank utama (otomatis terisi dari katalog master bank)",
+    default: "/images/banks/bca.svg",
+    required: false,
+  },
+  {
     key: "gift.bank2",
     type: "text",
     label: "Jenis Rekening 2 (Opsional)",
@@ -57,6 +65,14 @@ export const GIFT_AUTO_VARIABLES: readonly VariableDefinitionInput[] = [
     type: "text",
     label: "Atas Nama Rekening 2 (Opsional)",
     description: "Nama lengkap pemilik rekening kedua jika ada",
+    default: "",
+    required: false,
+  },
+  {
+    key: "gift.bankLogo2",
+    type: "text",
+    label: "Logo Bank 2 (Opsional)",
+    description: "URL atau path logo rekening kedua (otomatis terisi dari katalog master bank)",
     default: "",
     required: false,
   },
@@ -221,9 +237,11 @@ export function getWidgetAutoProps(widgetType: string): Record<string, unknown> 
         bank: { bind: "gift.bank" },
         accountNumber: { bind: "gift.accountNumber" },
         accountName: { bind: "gift.accountName" },
+        bankLogo: { bind: "gift.bankLogo" },
         bank2: { bind: "gift.bank2" },
         accountNumber2: { bind: "gift.accountNumber2" },
         accountName2: { bind: "gift.accountName2" },
+        bankLogo2: { bind: "gift.bankLogo2" },
       };
     case "map":
       return {

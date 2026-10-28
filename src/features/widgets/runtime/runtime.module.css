@@ -1256,19 +1256,7 @@
   background: var(--widget-color, #2b2118);
 }
 
-.widget[data-widget="gift"]:is(
-    [data-variant="bank-card"],
-    [data-variant="stacked-slips"],
-    [data-variant="wallet-panel"],
-    [data-variant="compact-list"],
-    [data-variant="heritage-frame"],
-    [data-variant="minimalist-clean"],
-    [data-variant="envelope-tuck"],
-    [data-variant="glass-card"],
-    [data-variant="gold-ornament"],
-    [data-variant="qr-showcase"]
-  )
-  .bankLogoBadge {
+.widget[data-widget="gift"] .bankLogoBadge {
   display: flex;
   align-items: center;
   justify-content: center;

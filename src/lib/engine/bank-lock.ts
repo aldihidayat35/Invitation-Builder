@@ -18,7 +18,7 @@ export interface BankAccountDetails {
 export interface MasterBankItem {
   readonly code: string;
   readonly name: string;
-  readonly category: "bank" | "ewallet" | "qris";
+  readonly category?: string;
   readonly logoUrl: string;
 }
 
@@ -147,7 +147,13 @@ export function isGiftAccountVariableKey(key: string): boolean {
     normalized.includes("bank_name") ||
     normalized.includes("nomor_rekening") ||
     normalized.includes("nomorrekening") ||
-    normalized.includes("nama_rekening")
+    normalized.includes("nama_rekening") ||
+    normalized === "bank" ||
+    normalized === "bank2" ||
+    normalized === "banklogo" ||
+    normalized === "banklogo2" ||
+    normalized.includes("bank_logo") ||
+    normalized.includes("banklogo")
   ) {
     return true;
   }

@@ -298,6 +298,15 @@ export function resolveDocument(
             }
           }
 
+          if (element.widgetType === "gift") {
+            if (!props.bankLogo && (data["gift.bankLogo"] || data["gift.bank_logo"] || data["bankLogo"])) {
+              props.bankLogo = data["gift.bankLogo"] || data["gift.bank_logo"] || data["bankLogo"];
+            }
+            if (!props.bankLogo2 && (data["gift.bankLogo2"] || data["gift.bank_logo2"] || data["bankLogo2"])) {
+              props.bankLogo2 = data["gift.bankLogo2"] || data["gift.bank_logo2"] || data["bankLogo2"];
+            }
+          }
+
           if (element.widgetType === "gallery" && hideSectionDueToGallery) {
             hiddenByBinding = true;
           }

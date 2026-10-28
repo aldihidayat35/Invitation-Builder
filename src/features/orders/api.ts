@@ -208,6 +208,7 @@ export {
   OrderWorkflowError,
   buildClientCustomizationWhatsAppUrl,
 } from "./service";
+export { interpolateMessageTemplate } from "./message-templates";
 export type {
   ClientPortalData,
   PortalShareMessageTemplate,

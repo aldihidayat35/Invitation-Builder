@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useTransition } from "react";
-import type { ClientPortalData } from "@/features/orders";
+import type { ClientPortalData } from "@/features/orders/service";
 import {
   addPortalGuestAction,
   archivePortalGuestAction,
@@ -39,7 +39,7 @@ import {
   UserPlusIcon,
   SearchIcon,
 } from "./components/PortalIcons";
-import { interpolateMessageTemplate } from "@/lib/db/repositories/message-templates";
+import { interpolateMessageTemplate } from "@/features/orders/message-templates";
 import styles from "./client-portal.module.css";
 
 interface ClientPortalViewProps {
@@ -467,6 +467,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 initialErrors={data.variableErrors}
                 previewUrl={data.previewUrl}
                 bankVerification={data.bankVerification}
+                masterBanks={data.masterBanks}
                 onSwitchToAdmin={() => setDataMode("admin_assisted")}
                 onSaved={() => {
                   showToast("Data undangan berhasil disimpan!");

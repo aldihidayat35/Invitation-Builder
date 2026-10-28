@@ -38,6 +38,7 @@ import {
   insertTemplateVersion,
 } from "@/lib/db/repositories/templates";
 import { getAppSettings } from "@/lib/db/repositories/settings";
+import { listMasterBanks, DEFAULT_MASTER_BANKS } from "@/lib/db/repositories/master-banks";
 import { listMessageTemplatesForCategory } from "@/lib/db/repositories/message-templates";
 import { findUserById } from "@/lib/db/repositories/users";
 import {
@@ -78,6 +79,7 @@ import {
   type FormGroup,
   type BankVerificationMeta,
   type BankAccountDetails,
+  type MasterBankItem,
 } from "@/lib/engine";
 import { createInvitation } from "@/features/invitations/service";
 import { normalizeWhatsAppNumber } from "./platform-order";
@@ -1088,6 +1090,7 @@ export interface ClientPortalData {
     eventDate?: string;
     eventLocation?: string;
   };
+  masterBanks?: MasterBankItem[];
 }
 
 export async function getClientPortalDataByToken(
@@ -1457,6 +1460,18 @@ export async function getClientPortalDataByToken(
     (invitation?.data?.["location"] as string) ||
     "";
 
+  const activeMasterBanks = await listMasterBanks(db, { onlyActive: true }).catch(() =>
+    DEFAULT_MASTER_BANKS.map((b, idx) => ({
+      ...b,
+      id: `default-${idx}`,
+      category: b.category ?? "bank",
+      isActive: b.isActive ?? true,
+      sortOrder: b.sortOrder ?? idx,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+  );
+
   return {
     order: order!,
     invitation: invitation ?? null,
@@ -1487,6 +1502,7 @@ export async function getClientPortalDataByToken(
       eventDate: eventDateFormatted,
       eventLocation,
     },
+    masterBanks: activeMasterBanks,
   };
 }
 
@@ -1499,7 +1515,7 @@ export async function saveClientShareMessageTemplate(
   const cleanToken = token.trim();
   if (!cleanToken) throw new Error("Token tidak valid.");
 
-  let order = await findCustomerOrderByClientToken(db, cleanToken);
+  const order = await findCustomerOrderByClientToken(db, cleanToken);
   let invitation: InvitationRow | undefined;
 
   if (order && order.invitationId) {
@@ -2004,24 +2020,26 @@ export async function adminVerifyOrderBank(
     [BANK_VERIFICATION_KEY]: verifiedMeta,
   };
 
+  const nextData = {
+    ...invitation.data,
+    ...bankPatch,
+  };
+
   if (input.secondary?.bank && input.secondary.accountNumber) {
-    bankPatch["gift.bank2"] = input.secondary.bank;
-    bankPatch["gift.accountNumber2"] = input.secondary.accountNumber;
-    bankPatch["gift.accountName2"] = input.secondary.accountName || "";
-    bankPatch["gift.bankLogo2"] = secondaryLogo;
+    nextData["gift.bank2"] = input.secondary.bank;
+    nextData["gift.accountNumber2"] = input.secondary.accountNumber;
+    nextData["gift.accountName2"] = input.secondary.accountName || "";
+    nextData["gift.bankLogo2"] = secondaryLogo;
   } else {
-    delete bankPatch["gift.bank2"];
-    delete bankPatch["gift.accountNumber2"];
-    delete bankPatch["gift.accountName2"];
-    delete bankPatch["gift.bankLogo2"];
+    delete nextData["gift.bank2"];
+    delete nextData["gift.accountNumber2"];
+    delete nextData["gift.accountName2"];
+    delete nextData["gift.bankLogo2"];
   }
 
   const updatedInv = await updateInvitationData(db, {
     invitationId: invitation.id,
-    data: {
-      ...invitation.data,
-      ...bankPatch,
-    },
+    data: nextData,
   });
   if (!updatedInv) throw new OrderWorkflowError("Gagal memperbarui data undangan.");
 

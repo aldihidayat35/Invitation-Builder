@@ -7,6 +7,7 @@ import {
   MASTER_BANKS_DEFAULT,
   resolveFallbackBankLogo,
   type BankVerificationMeta,
+  type MasterBankItem,
 } from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
 import { PortalImageField } from "./PortalImageField";
@@ -33,6 +34,7 @@ interface PortalVariableFormProps {
   initialErrors: Record<string, string>;
   previewUrl?: string | null;
   bankVerification?: BankVerificationMeta | null;
+  masterBanks?: readonly MasterBankItem[];
   onSwitchToAdmin?: () => void;
   onSaved?: (values: Record<string, string>) => void;
 }
@@ -46,6 +48,7 @@ export function PortalVariableForm({
   initialErrors,
   previewUrl,
   bankVerification,
+  masterBanks = MASTER_BANKS_DEFAULT,
   onSwitchToAdmin,
   onSaved,
 }: PortalVariableFormProps) {
@@ -61,7 +64,9 @@ export function PortalVariableForm({
   const isBankVerified = bankVerification?.status === "verified";
 
   const valuesRef = useRef(values);
-  valuesRef.current = values;
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sequenceRef = useRef(0);
@@ -354,7 +359,13 @@ export function PortalVariableForm({
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                  src={resolveFallbackBankLogo(val)}
+                                  src={
+                                    masterBanks.find(
+                                      (b) =>
+                                        b.name.toLowerCase() === val.toLowerCase() ||
+                                        b.code.toLowerCase() === val.toLowerCase(),
+                                    )?.logoUrl || resolveFallbackBankLogo(val)
+                                  }
                                   alt={val}
                                   style={{
                                     maxWidth: "100%",
@@ -369,12 +380,12 @@ export function PortalVariableForm({
                               name={field.key}
                               disabled={isFieldLocked}
                               value={
-                                MASTER_BANKS_DEFAULT.some(
+                                masterBanks.some(
                                   (b) =>
                                     b.name.toLowerCase() === val.toLowerCase() ||
                                     b.code.toLowerCase() === val.toLowerCase(),
                                 )
-                                  ? MASTER_BANKS_DEFAULT.find(
+                                  ? masterBanks.find(
                                       (b) =>
                                         b.name.toLowerCase() === val.toLowerCase() ||
                                         b.code.toLowerCase() === val.toLowerCase(),
@@ -388,7 +399,7 @@ export function PortalVariableForm({
                                 if (selectedCode === "__custom__") {
                                   // Client chose custom, input below will be used
                                 } else {
-                                  const found = MASTER_BANKS_DEFAULT.find(
+                                  const found = masterBanks.find(
                                     (b) => b.code === selectedCode,
                                   );
                                   if (found) {
@@ -415,28 +426,28 @@ export function PortalVariableForm({
                             >
                               <option value="">- Pilih Bank / E-Wallet -</option>
                               <optgroup label="Bank Populer">
-                                {MASTER_BANKS_DEFAULT.filter((b) => b.category === "bank").map(
-                                  (b) => (
+                                {masterBanks
+                                  .filter((b) => b.category === "bank")
+                                  .map((b) => (
                                     <option key={b.code} value={b.code}>
                                       {b.name}
                                     </option>
-                                  ),
-                                )}
+                                  ))}
                               </optgroup>
                               <optgroup label="Dompet Digital & QRIS">
-                                {MASTER_BANKS_DEFAULT.filter((b) => b.category !== "bank").map(
-                                  (b) => (
+                                {masterBanks
+                                  .filter((b) => b.category !== "bank")
+                                  .map((b) => (
                                     <option key={b.code} value={b.code}>
                                       {b.name}
                                     </option>
-                                  ),
-                                )}
+                                  ))}
                               </optgroup>
                               <option value="__custom__">Bank Lainnya (Input Manual)...</option>
                             </select>
                           </div>
                           {(!val ||
-                            !MASTER_BANKS_DEFAULT.some(
+                            !masterBanks.some(
                               (b) =>
                                 b.name.toLowerCase() === val.toLowerCase() ||
                                 b.code.toLowerCase() === val.toLowerCase(),
@@ -447,7 +458,12 @@ export function PortalVariableForm({
                               value={val}
                               onChange={(e) => {
                                 handleChange(field.key, e.target.value);
-                                const autoLogo = resolveFallbackBankLogo(e.target.value);
+                                const match = masterBanks.find(
+                                  (b) =>
+                                    b.name.toLowerCase() === e.target.value.toLowerCase() ||
+                                    b.code.toLowerCase() === e.target.value.toLowerCase(),
+                                );
+                                const autoLogo = match ? match.logoUrl : resolveFallbackBankLogo(e.target.value);
                                 if (
                                   field.key === "gift.bank" ||
                                   field.key === "gift.bank_name" ||

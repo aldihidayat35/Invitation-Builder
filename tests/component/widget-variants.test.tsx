@@ -127,4 +127,30 @@ describe("current widget style variants", () => {
     expect(resolveWidgetStyleVariant("music", "bar").kind).toBe("legacy");
     expect(resolveWidgetStyleVariant("music", "unknown").kind).toBe("fallback");
   });
+
+  it("renders bank logos across all 10 gift widget style variants and forwards custom logoUrl", () => {
+    const giftVariants = getWidgetStyleVariants("gift");
+    expect(giftVariants).toHaveLength(10);
+
+    for (const variant of giftVariants) {
+      const { container, unmount } = render(
+        <WidgetRuntime
+          widgetType="gift"
+          props={{
+            title: "Kirim Hadiah",
+            bank: "BCA",
+            accountNumber: "1234567890",
+            accountName: "Alya",
+            bankLogo: "/images/banks/bca.svg",
+          }}
+          style={{ variant: variant.id }}
+        />,
+      );
+
+      const img = container.querySelector("img");
+      expect(img, `Variant ${variant.id} should render an img tag for bank logo`).not.toBeNull();
+      expect(img?.getAttribute("src")).toBe("/images/banks/bca.svg");
+      unmount();
+    }
+  });
 });

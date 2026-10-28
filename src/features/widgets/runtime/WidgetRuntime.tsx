@@ -84,9 +84,11 @@ const RUNTIME: Readonly<Record<string, Renderer>> = {
       bank={p.bank}
       accountNumber={p.accountNumber}
       accountName={p.accountName}
+      bankLogo={p.bankLogo}
       bank2={p.bank2}
       accountNumber2={p.accountNumber2}
       accountName2={p.accountName2}
+      bankLogo2={p.bankLogo2}
       style={style}
     />
   ),

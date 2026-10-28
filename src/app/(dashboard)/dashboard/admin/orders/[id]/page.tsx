@@ -25,13 +25,14 @@ import {
   IconCreditCard,
   IconClock,
   IconArrowRight,
-  IconSparkles,
   IconEdit,
   IconExternalLink,
   IconLock,
   IconEye,
 } from "@/features/orders/components";
 import { requireOwner } from "@/lib/auth/server";
+import { getMasterBanks } from "@/features/banks";
+import { MASTER_BANKS_DEFAULT } from "@/lib/engine";
 import type { CustomerOrderStatus, ProductionStatus } from "@/lib/schema/domain";
 import {
   changeOrderTemplateAction,
@@ -99,6 +100,7 @@ export default async function AdminOrderDetailPage({
   }
 
   const options = await getProductionSetupOptions();
+  const masterBanks = await getMasterBanks({ onlyActive: true }).catch(() => MASTER_BANKS_DEFAULT);
   const { order } = detail;
 
   const isTerminalCancelled = order.orderStatus === "cancelled" || order.orderStatus === "rejected";
@@ -125,9 +127,6 @@ export default async function AdminOrderDetailPage({
   ) {
     activeStep = 4;
   }
-
-  const showStudioCard = showAll || (!isTerminalCancelled && activeStep >= 2);
-  const showClientPortalCard = showAll || (!isTerminalCancelled && activeStep >= 2);
 
   const cleanPhone = (order.customerWhatsapp || "").replace(/\D/g, "");
   const formattedPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
@@ -376,6 +375,7 @@ export default async function AdminOrderDetailPage({
                 orderStatus={order.orderStatus}
                 bankVerification={detail.bankVerification}
                 verifyAction={adminVerifyOrderBankAction}
+                masterBanks={masterBanks}
               />
 
               {/* Jika dalam mode showAll, tampilkan juga kartu studio & portal */}
@@ -427,6 +427,7 @@ export default async function AdminOrderDetailPage({
                 orderStatus={order.orderStatus}
                 bankVerification={detail.bankVerification}
                 verifyAction={adminVerifyOrderBankAction}
+                masterBanks={masterBanks}
               />
 
               <OrderClientVariablesCard
@@ -600,6 +601,7 @@ export default async function AdminOrderDetailPage({
                 orderStatus={order.orderStatus}
                 bankVerification={detail.bankVerification}
                 verifyAction={adminVerifyOrderBankAction}
+                masterBanks={masterBanks}
               />
 
               <OrderClientVariablesCard
