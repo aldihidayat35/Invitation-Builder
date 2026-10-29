@@ -46,7 +46,6 @@ export const galleryWidget: WidgetDefinition = {
   type: GALLERY_WIDGET_TYPE,
   version: 1,
   label: "Galeri",
-  hidden: true,
   defaultFrame: { w: 326, h: 320 },
   defaultStyle: getDefaultWidgetStyle(GALLERY_WIDGET_TYPE),
   defaultProps: { title: "Galeri", layout: "grid", items: [] },

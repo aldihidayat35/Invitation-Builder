@@ -91,12 +91,13 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
     }
   }
 
-  return out;
+  // Maksimal 2 rekening sesuai standar
+  return out.slice(0, 2);
 }
 
 /** Bank/e-wallet list with copy-to-clipboard and visible/announced feedback (FR-WDG-008). */
 export function GiftWidget({
-  title,
+  title: _title,
   accounts,
   bank,
   accountNumber,
@@ -123,15 +124,13 @@ export function GiftWidget({
       ? parsed
       : [
           {
-            bank: "BCA",
-            accountNumber: "1234567890",
-            accountName: "Nama Mempelai",
-            bankLogo: resolveFallbackBankLogo("BCA"),
+            bank: "BNI",
+            accountNumber: "2020127190",
+            accountName: "Muhammad Ridhwan",
+            bankLogo: resolveFallbackBankLogo("BNI"),
           },
         ];
   const [feedback, setFeedback] = useState<{ index: number; ok: boolean } | null>(null);
-  const heading = s(title) || "Kirim Hadiah";
-  const variant = style?.variant ?? "bank-card";
 
   async function copy(index: number, account: GiftAccount) {
     const ok = await copyTextToClipboard(account.accountNumber);
@@ -139,111 +138,72 @@ export function GiftWidget({
     setTimeout(() => setFeedback(null), 2500);
   }
 
-  const isEnvelope = variant === "envelope-tuck";
-  const isGold = variant === "gold-ornament";
-  const isQr = variant === "qr-showcase";
-  const isCard = variant === "bank-card";
-
   return (
     <WidgetFrame type="gift" style={style} className={styles.gift}>
-      {isEnvelope ? (
-        <div className={styles.envelopeFlap} aria-hidden="true">
-          <span className={styles.envelopeSeal}>✉</span>
-        </div>
-      ) : null}
-
-      {isGold ? (
-        <div className={styles.goldHeaderAccent} aria-hidden="true">
-          <span className={styles.goldEmblem}>⚜</span>
-        </div>
-      ) : null}
-
-      <div className={styles.giftHeading}>
-        <span className={styles.eyebrow}>
-          {isGold ? "Wedding Gift & Blessing" : isQr ? "Cashless & Transfer" : "Digital Gift"}
-        </span>
-        <h3 className={styles.label}>{heading}</h3>
-        {isGold ? <div className={styles.goldHeadingRule} aria-hidden="true" /> : null}
-      </div>
-
       {list.length === 0 ? (
         <div className={styles.giftEmpty}>
           <p className={styles.giftEmptyText}>Nomor rekening belum ditambahkan.</p>
         </div>
       ) : (
-        <ul className={styles.giftList}>
+        <div className={styles.giftCardsStack}>
           {list.map((account, i) => {
             const isCopied = feedback?.index === i && feedback.ok;
             return (
-              <li key={`${account.accountNumber}-${i}`} className={styles.giftItem}>
-                {isCard ? <span className={styles.cardChip} aria-hidden="true" /> : null}
-
-                {isQr ? (
-                  <span className={styles.qrBadge} aria-hidden="true">
-                    <QrIcon className={styles.qrIcon} />
-                  </span>
-                ) : account.bankLogo ? (
-                  <span className={styles.bankLogoBadge} aria-hidden="true">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div key={`${account.accountNumber}-${i}`} className={styles.giftStandardCard}>
+                {/* 1. Logo Bank di tengah atas */}
+                <div className={styles.giftBankLogoWrap} aria-hidden="true">
+                  {account.bankLogo ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={account.bankLogo}
-                      alt={account.bank}
-                      className={styles.bankLogoImg}
+                      alt={account.bank || "Bank Logo"}
+                      className={styles.giftBankLogoImg}
                       loading="lazy"
                     />
-                  </span>
-                ) : (
-                  <span className={styles.bankBadge} aria-hidden="true">
-                    {(account.bank || "$").slice(0, 4).toLocaleUpperCase()}
-                  </span>
-                )}
-
-                <span className={styles.giftAccount}>
-                  <strong className={styles.giftBank}>
-                    {isQr && account.bankLogo ? (
-                      <span className={styles.inlineBankLogo} aria-hidden="true">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={account.bankLogo}
-                          alt=""
-                          className={styles.inlineBankLogoImg}
-                        />
-                      </span>
-                    ) : null}
-                    <span>{account.bank}</span>
-                  </strong>
-                  <span className={styles.giftNumber} data-testid="gift-number">
-                    {account.accountNumber}
-                  </span>
-                  {account.accountName ? (
-                    <span className={styles.giftOwner}>a.n. {account.accountName}</span>
-                  ) : null}
-                </span>
-
-                <button
-                  type="button"
-                  className={[styles.button, isCopied && styles.buttonCopied]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => void copy(i, account)}
-                  aria-label={`Salin nomor ${account.bank || "rekening"} ${account.accountNumber}`}
-                >
-                  {isCopied ? (
-                    <>
-                      <CheckIcon className={styles.copyIcon} />
-                      <span className={styles.copyLabel}>Tersalin</span>
-                    </>
                   ) : (
-                    <>
-                      <CopyIcon className={styles.copyIcon} />
-                      <span className={styles.copyLabel}>Salin</span>
-                    </>
+                    <span className={styles.giftBankTextBadge}>
+                      {account.bank || "BANK"}
+                    </span>
                   )}
-                </button>
-              </li>
+                </div>
+
+                {/* 2. Nama Pemilik Rekening */}
+                {account.accountName ? (
+                  <div className={styles.giftAccountHolder}>{account.accountName}</div>
+                ) : null}
+
+                {/* 3. Nomor Rekening */}
+                <div className={styles.giftAccountNumber} data-testid="gift-number">
+                  {account.accountNumber}
+                </div>
+
+                {/* 4. Tombol Salin Pill Navy */}
+                <div className={styles.giftCopyActionWrap}>
+                  <button
+                    type="button"
+                    className={[styles.giftCopyPillBtn, isCopied && styles.giftCopyPillBtnCopied]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => void copy(i, account)}
+                    aria-label={`Salin nomor ${account.bank || "rekening"} ${account.accountNumber}`}
+                  >
+                    {isCopied ? (
+                      <>
+                        <CheckIcon className={styles.giftCopyIcon} />
+                        <span>Tersalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <CopyIcon className={styles.giftCopyIcon} />
+                        <span>Salin</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
 
       <p className={styles.hint} role="status" aria-live="polite" data-testid="gift-feedback">

@@ -72,7 +72,7 @@ describe("Ornament Shapes Geometry & Concentric Double Borders", () => {
     expect(shape.innerFullPath).toContain("A 12 12");
   });
 
-  it("hides coupleProfile, video, gif, gallery, and photoFrame widgets from the insert palette", async () => {
+  it("hides coupleProfile, video, gif, and photoFrame widgets from the insert palette while keeping gallery visible", async () => {
     const { defaultWidgetRegistry } = await import("@/features/widgets/default-registry");
     const visibleWidgets = defaultWidgetRegistry.list().filter((w) => !w.hidden);
     const visibleTypes = visibleWidgets.map((w) => w.type);
@@ -80,7 +80,7 @@ describe("Ornament Shapes Geometry & Concentric Double Borders", () => {
     expect(visibleTypes).not.toContain("coupleProfile");
     expect(visibleTypes).not.toContain("video");
     expect(visibleTypes).not.toContain("gif");
-    expect(visibleTypes).not.toContain("gallery");
+    expect(visibleTypes).toContain("gallery");
     expect(visibleTypes).not.toContain("photoFrame");
 
     // Still present in registry for existing documents

@@ -71,11 +71,13 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
     }
 
     case "gift": {
-      const accounts = Array.isArray(props.accounts) ? props.accounts : [];
-      const hasTitle = typeof props.title === "string" && props.title.trim().length > 0;
-      const headerH = hasTitle ? 44 : 0;
-      const count = Math.max(1, accounts.length);
-      return Math.round(headerH + (count * 96) + 32);
+      const hasAcc2 =
+        Boolean(props.accountNumber2) ||
+        (Array.isArray(props.accounts) && props.accounts.length > 1);
+      const count = hasAcc2 ? 2 : 1;
+      const cardH = 184;
+      const gap = 16;
+      return count === 1 ? cardH : cardH * 2 + gap;
     }
 
     case "rsvp": {

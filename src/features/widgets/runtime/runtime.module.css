@@ -1363,6 +1363,117 @@
   margin: 0;
 }
 
+/* Standard Unified Gift Widget Layout (Logo -> Name -> Number -> Navy Pill Copy Button) */
+.giftCardsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.giftStandardCard {
+  background: var(--widget-surface, rgba(255, 255, 255, 0.94));
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--widget-radius, 18px);
+  padding: 24px 20px 20px 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  box-sizing: border-box;
+}
+
+.giftBankLogoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.giftBankLogoImg {
+  max-height: 46px;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+}
+
+.giftBankTextBadge {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0d3b66;
+  letter-spacing: 1px;
+}
+
+.giftAccountHolder {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.giftAccountNumber {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #0f172a;
+  margin-bottom: 16px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.giftCopyActionWrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.giftCopyPillBtn {
+  background: #182234;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 26px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(24, 34, 52, 0.2);
+  line-height: 1;
+}
+
+.giftCopyPillBtn:hover {
+  background: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 34, 52, 0.28);
+}
+
+.giftCopyPillBtn:active {
+  transform: translateY(0);
+}
+
+.giftCopyPillBtnCopied {
+  background: #059669 !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3) !important;
+}
+
+.giftCopyIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 /* 1. Bank Card */
 .widget[data-widget="gift"][data-variant="bank-card"] .giftItem {
   position: relative;
