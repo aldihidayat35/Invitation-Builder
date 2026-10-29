@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublic } from "@/features/invitations/api";
 import { getDemoInvitation } from "@/features/invitations/demo-catalog";
@@ -36,6 +37,23 @@ export async function generateMetadata(
     };
   }
 
+  // 0. Resolusi dinamis Host & Base URL dari HTTP Request Masuk
+  // Ini krusial agar scraper WhatsApp/Facebook mendapatkan URL absolut berdomain aktif
+  // (misal https://samawadigital.com) bukan fallback localhost:3000.
+  let dynamicBaseUrl: string | undefined = undefined;
+  try {
+    const headerList = await headers();
+    const host = headerList.get("x-forwarded-host") || headerList.get("host");
+    if (host) {
+      const proto =
+        headerList.get("x-forwarded-proto") ||
+        (host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+      dynamicBaseUrl = `${proto}://${host}`;
+    }
+  } catch {
+    // Abaikan jika dipanggil di luar konteks request HTTP (misal unit test)
+  }
+
   // Load app settings if available for site branding and canonical domain
   let settings = null;
   try {
@@ -45,38 +63,57 @@ export async function generateMetadata(
     // Fallback if DB unavailable or during build
   }
 
-  const baseUrl = getBaseUrl(settings);
+  const baseUrl = dynamicBaseUrl || getBaseUrl(settings);
   const siteName = settings?.appName || "Undangan Digital";
 
-  // 1. OG Title: "The Wedding of [Nama Mempelai]" persis seperti referensi kartu WhatsApp
+  // 1. OG Title: Pintar & Otomatis sesuai tipe acara (FR-OG-TITLE)
+  // - Acara Pernikahan -> "The Wedding of [Nama Mempelai]"
+  // - Acara Non-Pernikahan (Aqiqah/Khitan/dsb) -> Gunakan Judul Asli Acara (misal "Tasyakuran Aqiqah - Arash Shaquille Attaqi")
   const groomBride = invitation.groomBrideNames?.trim();
+  const isWeddingEvent =
+    Boolean(groomBride) ||
+    /wedding|nikah|pernikahan|mempelai/i.test(invitation.title);
+
   let ogTitle: string;
   if (groomBride) {
     ogTitle = groomBride.toLowerCase().startsWith("the wedding of")
       ? groomBride
       : `The Wedding of ${groomBride}`;
-  } else if (invitation.title) {
+  } else if (isWeddingEvent) {
     ogTitle = invitation.title.toLowerCase().startsWith("the wedding of")
       ? invitation.title
       : `The Wedding of ${invitation.title}`;
   } else {
-    ogTitle = "The Wedding of Undangan Pernikahan";
+    // Non-pernikahan (Aqiqah, Khitan, Ulang Tahun, Tasyakuran, Seminar, dsb)
+    ogTitle = invitation.title.trim();
   }
 
   if (invitation.isClosed) {
     ogTitle = `Undangan Telah Selesai — ${ogTitle}`;
   }
 
-  // 2. OG Description: Tanggal acara terformat ("Kamis, 30 Juli 2026")
+  // 2. OG Description: Tanggal acara terformat ("Kamis, 30 Juli 2026") atau deskripsi kategori acara
+  let defaultDescription = "Undangan Digital";
+  if (isWeddingEvent) {
+    defaultDescription = "Undangan Pernikahan Digital";
+  } else if (/aqiqah/i.test(invitation.title)) {
+    defaultDescription = "Undangan Tasyakuran Aqiqah Digital";
+  } else if (/khitan/i.test(invitation.title)) {
+    defaultDescription = "Undangan Walimatul Khitan Digital";
+  }
+
   const ogDescription =
     invitation.eventDateFormatted?.trim() ||
-    "Undangan Pernikahan Digital";
+    defaultDescription;
 
-  // 3. OG Image (Hybrid priority: Client Cover/Photo > Template Thumbnail > Fallback image)
-  const rawImage =
-    invitation.coverPhotoUrl ||
-    invitation.templateThumbnailUrl ||
-    "/images/template-jawa.jpg";
+  // 3. OG Image (Hybrid priority: Client Cover/Photo > Template Thumbnail > Dynamic OG Banner)
+  let rawImage = invitation.coverPhotoUrl || invitation.templateThumbnailUrl;
+  if (!rawImage) {
+    const encodedTitle = encodeURIComponent(ogTitle);
+    const encodedDesc = encodeURIComponent(ogDescription);
+    const badgeText = isWeddingEvent ? "THE WEDDING OF" : "UNDANGAN RESMI";
+    rawImage = `/api/og?title=${encodedTitle}&desc=${encodedDesc}&badge=${encodeURIComponent(badgeText)}`;
+  }
 
   const ogImageUrl =
     rawImage.startsWith("http://") || rawImage.startsWith("https://")
@@ -91,6 +128,12 @@ export async function generateMetadata(
   const pageTitle = invitation.isClosed
     ? `${invitation.groomBrideNames || invitation.title} — Undangan Telah Selesai`
     : `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`;
+
+  const mimeType = ogImageUrl.includes(".png")
+    ? "image/png"
+    : ogImageUrl.includes(".webp")
+    ? "image/webp"
+    : "image/jpeg";
 
   return {
     metadataBase: new URL(baseUrl),
@@ -110,9 +153,11 @@ export async function generateMetadata(
       images: [
         {
           url: ogImageUrl,
+          secureUrl: ogImageUrl.startsWith("https://") ? ogImageUrl : undefined,
           width: 1200,
           height: 630,
           alt: ogTitle,
+          type: mimeType,
         },
       ],
     },

@@ -73,4 +73,28 @@ describe("PublicInvitationPage (Live Preview Route)", () => {
     // Canonical link contains guest parameter
     expect(meta.alternates?.canonical).toContain("to=Voni%20Anggelia%20%26%20Keluarga");
   });
+
+  it("formats non-wedding event titles cleanly without 'The Wedding of' prefix", async () => {
+    const { extractGroomBrideNames, extractEventDateFormatted, extractCoverPhotoUrl } = await import(
+      "@/features/invitations/service"
+    );
+
+    // Non-wedding event (Aqiqah)
+    const aqiqahTitle = "Tasyakuran Aqiqah - Arash Shaquille Attaqi";
+    const aqiqahData = {
+      nama_anak: "Arash Shaquille Attaqi",
+      tanggal_acara: "7 November 2026",
+      foto_anak: "https://example.com/arash.jpg",
+    };
+
+    const names = extractGroomBrideNames(aqiqahData, aqiqahTitle);
+    // Should NOT invent groom/bride names for an Aqiqah event
+    expect(names).toBeUndefined();
+
+    const dateFormatted = extractEventDateFormatted(aqiqahData);
+    expect(dateFormatted).toBe("7 November 2026");
+
+    const coverPhoto = extractCoverPhotoUrl(aqiqahData);
+    expect(coverPhoto).toBe("https://example.com/arash.jpg");
+  });
 });

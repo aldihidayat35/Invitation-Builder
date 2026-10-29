@@ -1033,7 +1033,7 @@ const EMPTY_RESOLVED_DOCUMENT: ResolvedDocument = {
 
 const ASSET_ID_REGEX = /^[0-9a-f-]{36}$/i;
 
-export function extractGroomBrideNames(data: Record<string, unknown>, fallbackTitle: string): string {
+export function extractGroomBrideNames(data: Record<string, unknown>, fallbackTitle?: string): string | undefined {
   const groom =
     (typeof data["groom_nickname"] === "string" && data["groom_nickname"].trim()) ||
     (typeof data["groom_name"] === "string" && data["groom_name"].trim()) ||
@@ -1057,19 +1057,42 @@ export function extractGroomBrideNames(data: Record<string, unknown>, fallbackTi
   if (couple) {
     return couple;
   }
-  const cleaned = fallbackTitle.split(/\s*[-—–|·]\s*/)[0]?.trim();
-  return cleaned || fallbackTitle;
+  if (fallbackTitle) {
+    const candidate = fallbackTitle.split(/\s*[-—–|·]\s*/)[0]?.trim();
+    // Hanya anggap sebagai nama mempelai jika mengandung "&" atau kata "dan"
+    if (candidate && (/(&|\bdan\b)/i.test(candidate))) {
+      return candidate;
+    }
+  }
+  return undefined;
 }
 
 export function extractEventDateFormatted(data: Record<string, unknown>): string | undefined {
-  const dateStr =
+  const direct =
     (typeof data["event_date_formatted"] === "string" && data["event_date_formatted"].trim()) ||
     (typeof data["event_date"] === "string" && data["event_date"].trim()) ||
     (typeof data["tanggal_acara"] === "string" && data["tanggal_acara"].trim()) ||
+    (typeof data["tanggal"] === "string" && data["tanggal"].trim()) ||
+    (typeof data["waktu"] === "string" && data["waktu"].trim()) ||
+    (typeof data["hari_tanggal"] === "string" && data["hari_tanggal"].trim()) ||
+    (typeof data["event.date"] === "string" && data["event.date"].trim()) ||
+    (typeof data["date"] === "string" && data["date"].trim()) ||
     (typeof data["akad_date"] === "string" && data["akad_date"].trim()) ||
     (typeof data["resepsi_date"] === "string" && data["resepsi_date"].trim()) ||
     (typeof data["wedding_date"] === "string" && data["wedding_date"].trim()) ||
     "";
+
+  let dateStr = direct;
+  if (!dateStr) {
+    for (const [key, val] of Object.entries(data)) {
+      if (typeof val === "string" && val.trim().length > 0) {
+        if (/date|tanggal|tgl|waktu/i.test(key)) {
+          dateStr = val.trim();
+          break;
+        }
+      }
+    }
+  }
 
   if (!dateStr) return undefined;
 
@@ -1102,14 +1125,23 @@ export function extractCoverPhotoUrl(data: Record<string, unknown>): string | un
     (typeof data["meta_image"] === "string" && data["meta_image"].trim()) ||
     (typeof data["photo_mempelai"] === "string" && data["photo_mempelai"].trim()) ||
     (typeof data["couple_photo"] === "string" && data["couple_photo"].trim()) ||
-    (typeof data["header_photo"] === "string" && data["header_photo"].trim());
+    (typeof data["header_photo"] === "string" && data["header_photo"].trim()) ||
+    (typeof data["foto_anak"] === "string" && data["foto_anak"].trim()) ||
+    (typeof data["child_photo"] === "string" && data["child_photo"].trim()) ||
+    (typeof data["baby_photo"] === "string" && data["baby_photo"].trim()) ||
+    (typeof data["foto_utama"] === "string" && data["foto_utama"].trim()) ||
+    (typeof data["foto_sampul"] === "string" && data["foto_sampul"].trim()) ||
+    (typeof data["foto_cover"] === "string" && data["foto_cover"].trim()) ||
+    (typeof data["foto_mempelai"] === "string" && data["foto_mempelai"].trim()) ||
+    (typeof data["photo"] === "string" && data["photo"].trim()) ||
+    (typeof data["image"] === "string" && data["image"].trim());
 
   if (direct) {
     if (ASSET_ID_REGEX.test(direct)) return assetUrl(direct);
     return direct;
   }
 
-  const galleryItems = data["gallery.items"] || data["gallery_items"];
+  const galleryItems = data["gallery.items"] || data["gallery_items"] || data["gallery"];
   if (Array.isArray(galleryItems) && galleryItems.length > 0) {
     const first = galleryItems[0];
     if (typeof first === "object" && first !== null) {
@@ -1126,6 +1158,55 @@ export function extractCoverPhotoUrl(data: Record<string, unknown>): string | un
     }
   }
 
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val === "string" && val.trim().length > 0) {
+      const cleanVal = val.trim();
+      if (/photo|image|foto|sampul|cover|banner|hero|anak|mempelai/i.test(key)) {
+        if (ASSET_ID_REGEX.test(cleanVal)) return assetUrl(cleanVal);
+        if (cleanVal.startsWith("http://") || cleanVal.startsWith("https://") || cleanVal.startsWith("/")) {
+          return cleanVal;
+        }
+      }
+      if (ASSET_ID_REGEX.test(cleanVal)) {
+        return assetUrl(cleanVal);
+      }
+      if (/\.(jpg|jpeg|png|webp|avif)(\?.*)?$/i.test(cleanVal)) {
+        return cleanVal;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function extractCoverPhotoFromDocument(document: CanonicalDocument): string | undefined {
+  if (!document || !Array.isArray(document.sections)) return undefined;
+
+  for (const section of document.sections) {
+    if (!section) continue;
+    if (section.background?.image && "assetId" in section.background.image && section.background.image.assetId) {
+      return assetUrl(section.background.image.assetId);
+    }
+    if (!Array.isArray(section.elements)) continue;
+    for (const el of section.elements) {
+      if (el.type === "image" && el.source && "assetId" in el.source && el.source.assetId) {
+        return assetUrl(el.source.assetId);
+      }
+      if (el.type === "widget" && el.widgetType === "photoFrame" && el.props) {
+        const p = el.props as Record<string, unknown>;
+        if (typeof p.src === "string" && p.src.trim()) {
+          const src = p.src.trim();
+          if (ASSET_ID_REGEX.test(src)) return assetUrl(src);
+          return src;
+        }
+        if (typeof p.image === "string" && p.image.trim()) {
+          const img = p.image.trim();
+          if (ASSET_ID_REGEX.test(img)) return assetUrl(img);
+          return img;
+        }
+      }
+    }
+  }
   return undefined;
 }
 
@@ -1150,7 +1231,10 @@ export async function getPublicInvitation(
         .where(eq(templateVersions.id, row.templateVersionId))
         .limit(1);
       if (tpl) {
-        templateThumbnailUrl = tpl.thumbnailUrl || tpl.previewMockupUrl || null;
+        const rawTpl = tpl.thumbnailUrl || tpl.previewMockupUrl || null;
+        if (rawTpl) {
+          templateThumbnailUrl = ASSET_ID_REGEX.test(rawTpl) ? assetUrl(rawTpl) : rawTpl;
+        }
       }
     } catch {
       // ignore
@@ -1195,7 +1279,9 @@ export async function getPublicInvitation(
       const effectiveData = snapshot.data || {};
       const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
       const eventDateFormatted = extractEventDateFormatted(effectiveData);
-      const coverPhotoUrl = extractCoverPhotoUrl(effectiveData);
+      const coverPhotoUrl =
+        extractCoverPhotoUrl(effectiveData) ||
+        extractCoverPhotoFromDocument(document);
 
       return {
         title: row.title,
@@ -1229,7 +1315,9 @@ export async function getPublicInvitation(
       const effectiveData = row.data || {};
       const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
       const eventDateFormatted = extractEventDateFormatted(effectiveData);
-      const coverPhotoUrl = extractCoverPhotoUrl(effectiveData);
+      const coverPhotoUrl =
+        extractCoverPhotoUrl(effectiveData) ||
+        extractCoverPhotoFromDocument(document);
 
       return {
         title: row.title,
