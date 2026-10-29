@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AssetSummary } from "@/features/assets/api";
+import type { MasterBankItem } from "@/features/banks";
 import type { FormGroup } from "@/lib/engine";
 import type { SaveDataAction } from "./action-state";
 import styles from "./invitations.module.css";
@@ -43,6 +44,7 @@ export function DataModeForm({
   initialErrors,
   imageOptions,
   initialAssets,
+  masterBanks,
   save,
   readOnly = false,
   readOnlyBank = false,
@@ -54,6 +56,7 @@ export function DataModeForm({
   initialErrors: Readonly<Record<string, string>>;
   imageOptions?: readonly { id: string; label: string }[];
   initialAssets?: readonly AssetSummary[];
+  masterBanks?: readonly MasterBankItem[];
   save: SaveDataAction;
   readOnly?: boolean;
   readOnlyBank?: boolean;
@@ -117,6 +120,7 @@ export function DataModeForm({
           workspaceId={workspaceId}
           initialAssets={initialAssets}
           readOnlyBank={readOnlyBank}
+          masterBanks={masterBanks}
           {...(imageOptions && { imageOptions })}
         />
       </fieldset>

@@ -1,5 +1,7 @@
 import type { AssetSummary } from "@/features/assets/api";
+import type { MasterBankItem } from "@/features/banks";
 import { isGiftAccountVariableKey, type FormField, type FormGroup } from "@/lib/engine";
+import { BankSelectField } from "./BankSelectField";
 import { InvitationImagePicker } from "./InvitationImagePicker";
 import styles from "./VariableFields.module.css";
 
@@ -15,6 +17,7 @@ export interface VariableFieldsProps {
   readonly imageOptions?: readonly { readonly id: string; readonly label: string }[];
   readonly workspaceId?: string;
   readonly initialAssets?: readonly AssetSummary[];
+  readonly masterBanks?: readonly MasterBankItem[];
   /** When true, gift/bank variables are rendered read-only for sellers/resellers. */
   readonly readOnlyBank?: boolean;
 }
@@ -47,46 +50,87 @@ export function VariableFields({
   imageOptions,
   workspaceId,
   initialAssets,
+  masterBanks,
   readOnlyBank = false,
 }: VariableFieldsProps) {
   return (
     <div className={styles.groups}>
-      {groups.map((group) => (
-        <fieldset key={group.group} className={styles.group}>
-          <legend className={styles.legend}>{group.label}</legend>
-          {group.fields.map((field) => {
-            const id = `var-${field.key}`;
-            const name = `${namePrefix}${field.key}`;
-            const value = values[field.key] ?? "";
-            const error = errors[field.key];
-            const isBankField = isGiftAccountVariableKey(field.key);
-            const isFieldLocked = isBankField && readOnlyBank;
-            const hintId = `${id}-hint`;
-            const describedBy = error || HINT[field.control] || isFieldLocked ? hintId : undefined;
-            return (
-              <div
-                key={field.key}
-                className={styles.field}
-                data-invalid={error ? "true" : undefined}
-              >
-                <label htmlFor={id} className={styles.label}>
-                  {field.label}
-                  {field.required ? (
-                    <span className={styles.required} aria-hidden="true">
-                      {" "}
-                      *
-                    </span>
-                  ) : null}
-                  {isFieldLocked && (
-                    <span
-                      className={styles.bankLockBadge}
-                      title="Kolom rekening hanya dapat diverifikasi dan diisi resmi oleh Admin melalui detail pesanan."
-                    >
-                      🔒 Terkunci oleh Admin
-                    </span>
-                  )}
-                </label>
-                {field.control === "image" ? (
+      {groups.map((group) => {
+        // Sembunyikan input manual URL logo bank karena sudah ditangani otomatis oleh combo box pilihan bank
+        const visibleFields = group.fields.filter(
+          (f) =>
+            f.key !== "gift.bankLogo" &&
+            f.key !== "gift.bank_logo" &&
+            f.key !== "bankLogo" &&
+            f.key !== "gift.bankLogo2" &&
+            f.key !== "gift.bank_logo2" &&
+            f.key !== "bankLogo2",
+        );
+
+        return (
+          <fieldset key={group.group} className={styles.group}>
+            <legend className={styles.legend}>{group.label}</legend>
+            {visibleFields.map((field) => {
+              const id = `var-${field.key}`;
+              const name = `${namePrefix}${field.key}`;
+              const value = values[field.key] ?? "";
+              const error = errors[field.key];
+              const isBankField = isGiftAccountVariableKey(field.key);
+              const isFieldLocked = isBankField && readOnlyBank;
+              const hintId = `${id}-hint`;
+              const describedBy =
+                error || HINT[field.control] || isFieldLocked ? hintId : undefined;
+
+              const isBank1 =
+                field.key === "gift.bank" ||
+                field.key === "gift.bank_name" ||
+                field.key === "bank";
+              const isBank2 =
+                field.key === "gift.bank2" ||
+                field.key === "gift.bank_name2" ||
+                field.key === "bank2";
+
+              return (
+                <div
+                  key={field.key}
+                  className={styles.field}
+                  data-invalid={error ? "true" : undefined}
+                >
+                  <label htmlFor={id} className={styles.label}>
+                    {field.label}
+                    {field.required ? (
+                      <span className={styles.required} aria-hidden="true">
+                        {" "}
+                        *
+                      </span>
+                    ) : null}
+                    {isFieldLocked && (
+                      <span
+                        className={styles.bankLockBadge}
+                        title="Kolom rekening hanya dapat diverifikasi dan diisi resmi oleh Admin melalui detail pesanan."
+                      >
+                        🔒 Terkunci oleh Admin
+                      </span>
+                    )}
+                  </label>
+                  {isBank1 || isBank2 ? (
+                    <BankSelectField
+                      id={id}
+                      bankKey={field.key}
+                      logoKey={isBank1 ? "gift.bankLogo" : "gift.bankLogo2"}
+                      namePrefix={namePrefix}
+                      initialBank={value}
+                      initialLogo={
+                        values[isBank1 ? "gift.bankLogo" : "gift.bankLogo2"] ??
+                        values[isBank1 ? "bankLogo" : "bankLogo2"] ??
+                        ""
+                      }
+                      masterBanks={masterBanks}
+                      disabled={isFieldLocked}
+                      required={field.required}
+                      describedBy={describedBy}
+                    />
+                  ) : field.control === "image" ? (
                   <InvitationImagePicker
                     id={id}
                     name={name}
@@ -169,7 +213,8 @@ export function VariableFields({
             );
           })}
         </fieldset>
-      ))}
+      );
+    })}
     </div>
   );
 }

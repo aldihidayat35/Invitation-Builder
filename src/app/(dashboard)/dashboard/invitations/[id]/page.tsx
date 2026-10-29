@@ -19,6 +19,7 @@ import styles from "@/features/invitations/components/invitations.module.css";
 import { DashboardHeroHeader } from "@/features/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth/server";
 import { getOrderByInvitationId } from "@/features/orders/api";
+import { getMasterBanks } from "@/features/banks";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
 import { classifyAllSections } from "@/features/invitations/sections-classifier";
 import {
@@ -53,14 +54,16 @@ export default async function InvitationDataPage({
     throw error;
   }
 
-  const [permissions, guests, report, assets, snapshots, orderContext] = await Promise.all([
-    permissionsFor(invitation.workspaceId),
-    listGuests(invitation.id),
-    readiness(invitation.id),
-    searchAssets(invitation.workspaceId).catch(() => []),
-    canManagePublication ? listSnapshots(invitation.id) : Promise.resolve([]),
-    canManagePublication ? getOrderByInvitationId(invitation.id) : Promise.resolve(null),
-  ]);
+  const [permissions, guests, report, assets, snapshots, orderContext, masterBanks] =
+    await Promise.all([
+      permissionsFor(invitation.workspaceId),
+      listGuests(invitation.id),
+      readiness(invitation.id),
+      searchAssets(invitation.workspaceId).catch(() => []),
+      canManagePublication ? listSnapshots(invitation.id) : Promise.resolve([]),
+      canManagePublication ? getOrderByInvitationId(invitation.id) : Promise.resolve(null),
+      getMasterBanks({ onlyActive: true }).catch(() => []),
+    ]);
 
   const fields = buildFormFields(invitation.document.variables);
   const groups = groupFormFields(fields);
@@ -132,6 +135,7 @@ export default async function InvitationDataPage({
               initialErrors={errors}
               imageOptions={imageOptions}
               initialAssets={imageAssets}
+              masterBanks={masterBanks}
               save={saveInvitationDataAction}
               readOnly={archived || !permissions.write}
               readOnlyBank={user.systemRole !== "owner"}
