@@ -21,7 +21,7 @@ import {
 } from "./PortalIcons";
 import styles from "./PortalGalleryManager.module.css";
 
-const MAX_GALLERY_PHOTOS = 15;
+const MAX_GALLERY_PHOTOS = 50;
 const ASSET_ID_REGEX = /^[0-9a-f-]{36}$/i;
 
 export interface GalleryItem {

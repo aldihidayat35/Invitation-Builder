@@ -1753,8 +1753,8 @@ export async function saveClientPortalGallery(
     }
   }
 
-  // Batas maksimal 15 foto galeri sesuai kesepakatan
-  const cleanItems = (Array.isArray(items) ? items : []).slice(0, 15).map((item) => ({
+  // Batas foto galeri hingga 50 foto
+  const cleanItems = (Array.isArray(items) ? items : []).slice(0, 50).map((item) => ({
     ...(item.assetId ? { assetId: item.assetId } : {}),
     ...(item.src ? { src: item.src } : {}),
     alt: typeof item.alt === "string" ? item.alt.slice(0, 100) : "",

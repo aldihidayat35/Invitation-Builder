@@ -188,7 +188,7 @@ test.describe("P0 widgets (Fase 6)", () => {
     await preview.waitForLoadState("domcontentloaded");
     await expect(preview.locator('[data-widget="gallery"]')).toHaveAttribute(
       "data-variant",
-      "editorial-collage",
+      "masonry-flow",
     );
     await expect(preview.locator('[data-widget="gallery"] img')).toHaveCount(2);
   });

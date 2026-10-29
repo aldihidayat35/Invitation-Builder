@@ -1705,738 +1705,372 @@ function GalleryVisual({
 }) {
   const { w, h } = element.frame;
   const { color } = colors(element, tokens);
-  const variant = element.style.variant || "editorial-collage";
+  const variant = element.style.variant || "masonry-flow";
   const props = element.props as Record<string, unknown>;
   const images = parseGalleryItems(props.items, variables);
-  const radius = element.style.radius ?? 8;
-  const top = 14;
+  const radius =
+    element.style.radius ??
+    (variant === "carousel-slider" ? 16 : variant === "square-grid" ? 10 : 12);
+  const pad = 12;
 
+  const isSlider =
+    variant === "carousel-slider" ||
+    variant.includes("slider") ||
+    variant.includes("carousel");
+  const isSquare = variant === "square-grid";
+
+  // Empty state preview
   if (images.length === 0) {
     return (
       <Group listening={false}>
         <Background element={element} tokens={tokens} />
-        {variant === "filmstrip" ? (
+        {isSlider ? (
           <>
-            <Line points={[0, 8, w, 8]} stroke={color} strokeWidth={6} dash={[3, 5]} />
-            <Line points={[0, h - 8, w, h - 8]} stroke={color} strokeWidth={6} dash={[3, 5]} />
+            <CanvasEmptySlot
+              x={pad}
+              y={pad}
+              width={w - pad * 2}
+              height={Math.max(140, h - pad * 2 - 58)}
+              radius={radius}
+              color={color}
+            />
+            {/* Thumbnail slots at bottom */}
             {(() => {
-              const tileW = (w - 44) / 3;
-              return [0, 1, 2].map((i) => (
+              const thumbH = 46;
+              const thumbY = h - pad - thumbH;
+              const gap = 8;
+              const thumbW = (w - pad * 2 - gap * 3) / 4;
+              return [0, 1, 2, 3].map((i) => (
                 <CanvasEmptySlot
                   key={i}
-                  x={14 + i * (tileW + 8)}
-                  y={top + 6}
-                  width={tileW}
-                  height={h - top - 26}
-                  radius={radius}
+                  x={pad + i * (thumbW + gap)}
+                  y={thumbY}
+                  width={thumbW}
+                  height={thumbH}
+                  radius={6}
                   color={color}
                 />
               ));
             })()}
           </>
-        ) : variant === "arch-window" ? (
+        ) : isSquare ? (
           (() => {
-            const tileW = (w - 38) / 2;
-            const tileH = h - top - 16;
+            const gap = 8;
+            const tileW = (w - pad * 2 - gap) / 2;
+            const tileH = tileW;
             return (
               <>
-                <CanvasEmptySlot x={14} y={top} width={tileW} height={tileH} radius={radius} arch color={color} />
-                <CanvasEmptySlot x={14 + tileW + 10} y={top} width={tileW} height={tileH} radius={radius} arch color={color} />
-              </>
-            );
-          })()
-        ) : variant === "heritage-frame" ? (
-          (() => {
-            const tileW = (w - 38) / 2;
-            const tileH = h - top - 20;
-            return (
-              <>
-                <Rect x={5} y={5} width={w - 10} height={h - 10} cornerRadius={radius} stroke={color} strokeWidth={1} opacity={0.4} />
-                <Rect x={8} y={8} width={w - 16} height={h - 16} cornerRadius={Math.max(0, radius - 2)} stroke={color} strokeWidth={1.5} opacity={0.65} />
-                <CanvasEmptySlot x={14} y={top} width={tileW} height={tileH} radius={4} color={color} />
-                <CanvasEmptySlot x={14 + tileW + 10} y={top} width={tileW} height={tileH} radius={4} color={color} />
-              </>
-            );
-          })()
-        ) : variant === "spotlight-slider" ? (
-          <>
-            <CanvasEmptySlot x={14} y={top} width={w - 28} height={h - top - 14} radius={radius} color={color} />
-            <Rect x={22} y={h - 48} width={w - 44} height={32} cornerRadius={16} fill="#000" opacity={0.3} />
-            <Text x={w / 2 - 40} y={h - 38} width={80} text="Belum ada foto" fontSize={10} fill="#fff" align="center" />
-          </>
-        ) : variant === "glass-carousel" ? (
-          <>
-            <CanvasEmptySlot x={14} y={top} width={w - 28} height={h - top - 14} radius={radius} color={color} />
-            <Rect x={10} y={top - 4} width={w - 20} height={h - top - 6} cornerRadius={radius + 4} stroke={color} strokeWidth={1.5} opacity={0.3} />
-            <Rect x={w / 2 - 50} y={h - 45} width={100} height={26} cornerRadius={13} fill="#fff" opacity={0.7} stroke={color} strokeWidth={0.8} />
-            <Text x={w / 2 - 40} y={h - 38} width={80} text="Belum ada foto" fontSize={10} fill={color} align="center" />
-          </>
-        ) : variant === "circular-bubbles" ? (
-          (() => {
-            const bigW = Math.min(120, w * 0.42);
-            const medW = Math.min(90, w * 0.32);
-            const smallW = Math.min(74, w * 0.26);
-            return (
-              <>
-                <CanvasEmptySlot x={16} y={top + 6} width={bigW} height={bigW} circle color={color} />
-                <CanvasEmptySlot x={w - medW - 20} y={top + 4} width={medW} height={medW} circle color={color} />
-                <CanvasEmptySlot x={w - smallW - 35} y={top + medW + 16} width={smallW} height={smallW} circle color={color} />
-              </>
-            );
-          })()
-        ) : variant === "polaroid-stack" ? (
-          (() => {
-            const cardW = w * 0.38;
-            return (
-              <>
-                <Group x={w / 2 - cardW * 0.85} y={top + 12} rotation={-6}>
-                  <CanvasEmptySlot x={0} y={0} width={cardW} height={h - top - 24} radius={2} color={color} />
-                </Group>
-                <Group x={w / 2 - cardW * 0.15} y={top + 14} rotation={5}>
-                  <CanvasEmptySlot x={0} y={0} width={cardW} height={h - top - 24} radius={2} color={color} />
-                </Group>
-              </>
-            );
-          })()
-        ) : variant === "mosaic" ? (
-          (() => {
-            const tileW = (w - 36) / 2;
-            const tileH = (h - top - 22) / 2;
-            return (
-              <>
-                <CanvasEmptySlot x={14} y={top} width={tileW} height={tileH} radius={radius} color={color} />
-                <CanvasEmptySlot x={14 + tileW + 8} y={top} width={tileW} height={tileH} radius={radius} color={color} />
-                <CanvasEmptySlot x={14} y={top + tileH + 8} width={tileW} height={tileH} radius={radius} color={color} />
-                <CanvasEmptySlot x={14 + tileW + 8} y={top + tileH + 8} width={tileW} height={tileH} radius={radius} color={color} />
-              </>
-            );
-          })()
-        ) : variant === "masonry-cascade" ? (
-          (() => {
-            const tileW = (w - 36) / 2;
-            const usableH = h - top - 18;
-            const hLeft1 = usableH * 0.58;
-            const hLeft2 = usableH * 0.38;
-            const hRight1 = usableH * 0.42;
-            const hRight2 = usableH * 0.54;
-            return (
-              <>
-                <CanvasEmptySlot x={14} y={top} width={tileW} height={hLeft1} radius={radius} color={color} />
-                <CanvasEmptySlot x={14 + tileW + 8} y={top} width={tileW} height={hRight1} radius={radius} color={color} />
-                <CanvasEmptySlot x={14} y={top + hLeft1 + 8} width={tileW} height={hLeft2} radius={radius} color={color} />
-                <CanvasEmptySlot x={14 + tileW + 8} y={top + hRight1 + 8} width={tileW} height={hRight2} radius={radius} color={color} />
+                <CanvasEmptySlot
+                  x={pad}
+                  y={pad}
+                  width={tileW}
+                  height={tileH}
+                  radius={radius}
+                  color={color}
+                />
+                <CanvasEmptySlot
+                  x={pad + tileW + gap}
+                  y={pad}
+                  width={tileW}
+                  height={tileH}
+                  radius={radius}
+                  color={color}
+                />
+                {pad + tileH + gap + tileH <= h ? (
+                  <>
+                    <CanvasEmptySlot
+                      x={pad}
+                      y={pad + tileH + gap}
+                      width={tileW}
+                      height={tileH}
+                      radius={radius}
+                      color={color}
+                    />
+                    <CanvasEmptySlot
+                      x={pad + tileW + gap}
+                      y={pad + tileH + gap}
+                      width={tileW}
+                      height={tileH}
+                      radius={radius}
+                      color={color}
+                    />
+                  </>
+                ) : null}
               </>
             );
           })()
         ) : (
+          /* Masonry flow empty slots */
           (() => {
-            const leftW = w * 0.57;
-            const rightW = w * 0.35;
-            const rightH = (h - top - 22) / 2;
+            const gap = 8;
+            const tileW = (w - pad * 2 - gap) / 2;
+            const usableH = h - pad * 2;
+            const hL1 = usableH * 0.58;
+            const hL2 = usableH * 0.38;
+            const hR1 = usableH * 0.42;
+            const hR2 = usableH * 0.54;
             return (
               <>
-                <CanvasEmptySlot x={14} y={top} width={leftW} height={h - top - 14} radius={radius} color={color} />
-                <CanvasEmptySlot x={w * 0.62} y={top} width={rightW} height={rightH} radius={radius} color={color} />
-                <CanvasEmptySlot x={w * 0.62} y={top + rightH + 8} width={rightW} height={rightH} radius={radius} color={color} />
+                <CanvasEmptySlot
+                  x={pad}
+                  y={pad}
+                  width={tileW}
+                  height={hL1}
+                  radius={radius}
+                  color={color}
+                />
+                <CanvasEmptySlot
+                  x={pad + tileW + gap}
+                  y={pad}
+                  width={tileW}
+                  height={hR1}
+                  radius={radius}
+                  color={color}
+                />
+                <CanvasEmptySlot
+                  x={pad}
+                  y={pad + hL1 + gap}
+                  width={tileW}
+                  height={hL2}
+                  radius={radius}
+                  color={color}
+                />
+                <CanvasEmptySlot
+                  x={pad + tileW + gap}
+                  y={pad + hR1 + gap}
+                  width={tileW}
+                  height={hR2}
+                  radius={radius}
+                  color={color}
+                />
               </>
             );
           })()
         )}
         <Text
-          x={14}
+          x={pad}
           y={h / 2 - 8}
-          width={w - 28}
-          text="Belum ada foto galeri"
+          width={w - pad * 2}
+          text="Galeri Foto (Maksimal 50 Foto)"
           fontSize={11}
+          fontStyle="600"
           fill={color}
-          opacity={0.45}
+          opacity={0.5}
           align="center"
         />
       </Group>
     );
   }
 
+  // Render populated gallery
   return (
     <Group listening={false}>
       <Background element={element} tokens={tokens} />
-      {variant === "filmstrip" ? (
-        <>
-          <Line points={[0, 8, w, 8]} stroke={color} strokeWidth={6} dash={[3, 5]} />
-          <Line points={[0, h - 8, w, h - 8]} stroke={color} strokeWidth={6} dash={[3, 5]} />
-        </>
-      ) : null}
-      {variant === "heritage-frame" ? (
-        <>
-          <Rect
-            x={5}
-            y={5}
-            width={w - 10}
-            height={h - 10}
-            cornerRadius={radius}
-            stroke={color}
-            strokeWidth={1}
-            opacity={0.4}
-          />
-          <Rect
-            x={8}
-            y={8}
-            width={w - 16}
-            height={h - 16}
-            cornerRadius={Math.max(0, radius - 2)}
-            stroke={color}
-            strokeWidth={1.5}
-            opacity={0.65}
-          />
-        </>
-      ) : null}
-      {variant === "editorial-collage" ? (
+      {isSlider ? (
         (() => {
-          if (images.length === 1) {
-            return (
-              <CanvasGalleryPhoto
-                x={14}
-                y={top}
-                width={w - 28}
-                height={h - top - 14}
-                radius={radius}
-                color={color}
-                src={images[0]?.src}
-              />
-            );
-          }
-          if (images.length === 2) {
-            const halfW = (w - 36) / 2;
-            return (
-              <>
-                <CanvasGalleryPhoto x={14} y={top} width={halfW} height={h - top - 14} radius={radius} color={color} src={images[0]?.src} />
-                <CanvasGalleryPhoto x={14 + halfW + 8} y={top} width={halfW} height={h - top - 14} radius={radius} color={color} src={images[1]?.src} />
-              </>
-            );
-          }
-          const leftW = w * 0.57;
-          const rightW = w * 0.35;
-          const rightH = (h - top - 22) / 2;
+          const thumbH = 46;
+          const heroH = Math.max(140, h - pad * 2 - thumbH - 8);
+          const thumbY = pad + heroH + 8;
+          const gap = 8;
+          const thumbW = (w - pad * 2 - gap * 3) / 4;
+
           return (
             <>
+              {/* Main hero photo */}
               <CanvasGalleryPhoto
-                x={14}
-                y={top}
-                width={leftW}
-                height={h - top - 14}
+                x={pad}
+                y={pad}
+                width={w - pad * 2}
+                height={heroH}
                 radius={radius}
                 color={color}
                 src={images[0]?.src}
               />
-              <CanvasGalleryPhoto
-                x={w * 0.62}
-                y={top}
-                width={rightW}
-                height={rightH}
-                radius={radius}
-                color={color}
-                src={images[1]?.src}
-              />
-              <CanvasGalleryPhoto
-                x={w * 0.62}
-                y={top + rightH + 8}
-                width={rightW}
-                height={rightH}
-                radius={radius}
-                color={color}
-                src={images[2]?.src}
-              />
-              {images.length > 3 ? (
-                <Group x={w * 0.62 + rightW - 36} y={top + rightH * 2 + 8 - 22}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "mosaic" ? (
-        (() => {
-          if (images.length === 1) {
-            return (
-              <CanvasGalleryPhoto x={14} y={top} width={w - 28} height={h - top - 14} radius={radius} color={color} src={images[0]?.src} />
-            );
-          }
-          if (images.length === 2) {
-            const halfW = (w - 36) / 2;
-            return (
-              <>
-                <CanvasGalleryPhoto x={14} y={top} width={halfW} height={h - top - 14} radius={radius} color={color} src={images[0]?.src} />
-                <CanvasGalleryPhoto x={14 + halfW + 8} y={top} width={halfW} height={h - top - 14} radius={radius} color={color} src={images[1]?.src} />
-              </>
-            );
-          }
-          const tileW = (w - 36) / 2;
-          const halfH = (h - top - 22) / 2;
-          return (
-            <>
-              <CanvasGalleryPhoto x={14} y={top} width={tileW} height={h - top - 14} radius={radius} color={color} src={images[0]?.src} />
-              <CanvasGalleryPhoto x={14 + tileW + 8} y={top} width={tileW} height={halfH} radius={radius} color={color} src={images[1]?.src} />
-              <CanvasGalleryPhoto x={14 + tileW + 8} y={top + halfH + 8} width={tileW} height={halfH} radius={radius} color={color} src={images[2]?.src} />
-              {images.length > 3 ? (
-                <Group x={14 + tileW + 8 + tileW - 36} y={top + halfH * 2 + 8 - 22}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "filmstrip" ? (
-        (() => {
-          const filmTiles = images.slice(0, 4);
-          const tileW = Math.min(105, (w - 30) / Math.max(1, filmTiles.length));
-          return (
-            <>
-              {filmTiles.map((img, index) => (
-                <CanvasGalleryPhoto
-                  key={index}
-                  x={14 + index * (tileW + 8)}
-                  y={top + 6}
-                  width={tileW}
-                  height={h - top - 26}
-                  radius={radius}
-                  color={color}
-                  src={img.src}
-                />
-              ))}
-              {images.length > 4 ? (
-                <Group x={w - 40} y={top + 10}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 4}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "spotlight-slider" ? (
-        <>
-          <CanvasGalleryPhoto
-            x={14}
-            y={top}
-            width={w - 28}
-            height={h - top - 14}
-            radius={radius}
-            color={color}
-            src={images[0]?.src}
-          />
-          <Rect
-            x={22}
-            y={h - 48}
-            width={w - 44}
-            height={32}
-            cornerRadius={16}
-            fill="#000"
-            opacity={0.46}
-          />
-          <Text x={28} y={h - 40} width={30} text="‹" fontSize={18} fill="#fff" align="center" />
-          <Text
-            x={w / 2 - 30}
-            y={h - 38}
-            width={60}
-            text={`1 / ${images.length}`}
-            fontSize={10}
-            fill="#fff"
-            align="center"
-          />
-          <Text
-            x={w - 58}
-            y={h - 40}
-            width={30}
-            text="›"
-            fontSize={18}
-            fill="#fff"
-            align="center"
-          />
-        </>
-      ) : variant === "arch-window" ? (
-        (() => {
-          if (images.length === 1) {
-            const tileW = Math.min(220, w * 0.55);
-            return (
-              <CanvasGalleryPhoto
-                x={w / 2 - tileW / 2}
-                y={top}
-                width={tileW}
-                height={h - top - 16}
-                radius={radius}
-                arch
-                color={color}
-                src={images[0]?.src}
-              />
-            );
-          }
-          const tileW = (w - 38) / 2;
-          const tileH = h - top - 16;
-          return (
-            <>
-              <CanvasGalleryPhoto
-                x={14}
-                y={top}
-                width={tileW}
-                height={tileH}
-                radius={radius}
-                arch
-                color={color}
-                src={images[0]?.src}
-              />
-              <CanvasGalleryPhoto
-                x={14 + tileW + 10}
-                y={top}
-                width={tileW}
-                height={tileH}
-                radius={radius}
-                arch
-                color={color}
-                src={images[1]?.src}
-              />
-              {images.length > 2 ? (
-                <Group x={14 + tileW + 10 + tileW - 36} y={top + tileH - 26}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "masonry-cascade" ? (
-        (() => {
-          if (images.length === 1) {
-            return (
-              <CanvasGalleryPhoto x={14} y={top} width={w - 28} height={h - top - 16} radius={radius} color={color} src={images[0]?.src} />
-            );
-          }
-          if (images.length === 2) {
-            const halfW = (w - 36) / 2;
-            return (
-              <>
-                <CanvasGalleryPhoto x={14} y={top} width={halfW} height={(h - top - 16) * 0.95} radius={radius} color={color} src={images[0]?.src} />
-                <CanvasGalleryPhoto x={14 + halfW + 8} y={top} width={halfW} height={(h - top - 16) * 0.8} radius={radius} color={color} src={images[1]?.src} />
-              </>
-            );
-          }
-          const tileW = (w - 36) / 2;
-          const usableH = h - top - 18;
-          const hLeft1 = usableH * 0.58;
-          const hLeft2 = usableH * 0.38;
-          const hRight1 = usableH * 0.42;
-          const hRight2 = usableH * 0.54;
-          return (
-            <>
-              <CanvasGalleryPhoto
-                x={14}
-                y={top}
-                width={tileW}
-                height={hLeft1}
-                radius={radius}
-                color={color}
-                src={images[0]?.src}
-              />
-              <CanvasGalleryPhoto
-                x={14 + tileW + 8}
-                y={top}
-                width={tileW}
-                height={hRight1}
-                radius={radius}
-                color={color}
-                src={images[1]?.src}
-              />
-              <CanvasGalleryPhoto
-                x={14}
-                y={top + hLeft1 + 8}
-                width={tileW}
-                height={hLeft2}
-                radius={radius}
-                color={color}
-                src={images[2]?.src}
-              />
-              {images[3] ? (
-                <CanvasGalleryPhoto
-                  x={14 + tileW + 8}
-                  y={top + hRight1 + 8}
-                  width={tileW}
-                  height={hRight2}
-                  radius={radius}
-                  color={color}
-                  src={images[3]?.src}
-                />
-              ) : null}
-              {images.length > 4 ? (
-                <Group x={14 + tileW + 8 + tileW - 36} y={top + hRight1 + 8 + hRight2 - 24}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 3}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "heritage-frame" ? (
-        (() => {
-          if (images.length === 1) {
-            const tileW = Math.min(220, w * 0.58);
-            return (
-              <CanvasGalleryPhoto
-                x={w / 2 - tileW / 2}
-                y={top}
-                width={tileW}
-                height={h - top - 20}
-                radius={4}
-                color={color}
-                src={images[0]?.src}
-                strokeWidth={1.5}
-              />
-            );
-          }
-          const tileW = (w - 38) / 2;
-          const tileH = h - top - 20;
-          return (
-            <>
-              <CanvasGalleryPhoto
-                x={14}
-                y={top}
-                width={tileW}
-                height={tileH}
-                radius={4}
-                color={color}
-                src={images[0]?.src}
-                strokeWidth={1.5}
-              />
-              <CanvasGalleryPhoto
-                x={14 + tileW + 10}
-                y={top}
-                width={tileW}
-                height={tileH}
-                radius={4}
-                color={color}
-                src={images[1]?.src}
-                strokeWidth={1.5}
-              />
-              {images.length > 2 ? (
-                <Group x={14 + tileW + 10 + tileW - 36} y={top + tileH - 26}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
-            </>
-          );
-        })()
-      ) : variant === "glass-carousel" ? (
-        <>
-          <CanvasGalleryPhoto
-            x={14}
-            y={top}
-            width={w - 28}
-            height={h - top - 14}
-            radius={radius}
-            color={color}
-            src={images[0]?.src}
-          />
-          <Rect
-            x={10}
-            y={top - 4}
-            width={w - 20}
-            height={h - top - 6}
-            cornerRadius={radius + 4}
-            stroke={color}
-            strokeWidth={1.5}
-            opacity={0.3}
-          />
-          <Rect
-            x={w / 2 - 50}
-            y={h - 45}
-            width={100}
-            height={26}
-            cornerRadius={13}
-            fill="#fff"
-            opacity={0.7}
-            stroke={color}
-            strokeWidth={0.8}
-          />
-          <Text x={w / 2 - 46} y={h - 39} width={20} text="‹" fontSize={15} fill={color} align="center" />
-          <Text x={w / 2 - 25} y={h - 37} width={50} text={`1 / ${images.length}`} fontSize={10} fill={color} align="center" />
-          <Text x={w / 2 + 26} y={h - 39} width={20} text="›" fontSize={15} fill={color} align="center" />
-        </>
-      ) : variant === "circular-bubbles" ? (
-        (() => {
-          if (images.length === 1) {
-            const size = Math.min(130, w * 0.5, h - top - 20);
-            return (
-              <Group x={w / 2 - size / 2} y={top + (h - top - size) / 2}>
-                <Circle
-                  x={size / 2}
-                  y={size / 2}
-                  radius={size / 2 + 4}
-                  stroke={color}
-                  strokeWidth={1.2}
-                  opacity={0.4}
-                />
-                <CanvasGalleryPhoto
-                  x={0}
-                  y={0}
-                  width={size}
-                  height={size}
-                  radius={size / 2}
-                  color={color}
-                  src={images[0]?.src}
+              {/* Badge counter on top right */}
+              <Group x={w - pad - 58} y={pad + 10}>
+                <Rect width={50} height={20} cornerRadius={10} fill="#000" opacity={0.6} />
+                <Text
+                  width={50}
+                  y={3}
+                  text={`1 / ${images.length}`}
+                  fontSize={10}
+                  fontStyle="bold"
+                  fill="#fff"
+                  align="center"
                 />
               </Group>
-            );
-          }
-          if (images.length === 2) {
-            const bigW = Math.min(120, w * 0.44);
-            const medW = Math.min(94, w * 0.35);
-            return (
-              <>
-                <Group x={16} y={top + 10}>
-                  <Circle x={bigW / 2} y={bigW / 2} radius={bigW / 2 + 4} stroke={color} strokeWidth={1.2} opacity={0.4} />
-                  <CanvasGalleryPhoto x={0} y={0} width={bigW} height={bigW} radius={bigW / 2} color={color} src={images[0]?.src} />
-                </Group>
-                <Group x={w - medW - 20} y={top + 16}>
-                  <Circle x={medW / 2} y={medW / 2} radius={medW / 2 + 3} stroke={color} strokeWidth={1.2} opacity={0.4} />
-                  <CanvasGalleryPhoto x={0} y={0} width={medW} height={medW} radius={medW / 2} color={color} src={images[1]?.src} />
-                </Group>
-              </>
-            );
-          }
-          const bigW = Math.min(120, w * 0.42);
-          const medW = Math.min(90, w * 0.32);
-          const smallW = Math.min(74, w * 0.26);
+              {/* Prev / Next buttons in hero */}
+              <Group x={pad + 8} y={pad + heroH / 2 - 14}>
+                <Rect width={28} height={28} cornerRadius={14} fill="#000" opacity={0.4} />
+                <Text width={28} y={4} text="‹" fontSize={18} fontStyle="bold" fill="#fff" align="center" />
+              </Group>
+              <Group x={w - pad - 36} y={pad + heroH / 2 - 14}>
+                <Rect width={28} height={28} cornerRadius={14} fill="#000" opacity={0.4} />
+                <Text width={28} y={4} text="›" fontSize={18} fontStyle="bold" fill="#fff" align="center" />
+              </Group>
+              {/* Bottom thumbnails */}
+              {[0, 1, 2, 3].map((idx) => {
+                const img = images[idx];
+                const x = pad + idx * (thumbW + gap);
+                if (!img) return null;
+                return (
+                  <Group key={idx}>
+                    <CanvasGalleryPhoto
+                      x={x}
+                      y={thumbY}
+                      width={thumbW}
+                      height={thumbH}
+                      radius={6}
+                      color={color}
+                      src={img.src}
+                    />
+                    {idx === 0 && (
+                      <Rect
+                        x={x - 1}
+                        y={thumbY - 1}
+                        width={thumbW + 2}
+                        height={thumbH + 2}
+                        cornerRadius={7}
+                        stroke={color}
+                        strokeWidth={2}
+                      />
+                    )}
+                  </Group>
+                );
+              })}
+            </>
+          );
+        })()
+      ) : isSquare ? (
+        (() => {
+          const gap = 8;
+          const tileW = (w - pad * 2 - gap) / 2;
+          const tileH = tileW;
+
           return (
             <>
-              <Group x={16} y={top + 6}>
-                <Circle
-                  x={bigW / 2}
-                  y={bigW / 2}
-                  radius={bigW / 2 + 4}
-                  stroke={color}
-                  strokeWidth={1.2}
-                  opacity={0.4}
-                />
-                <CanvasGalleryPhoto
-                  x={0}
-                  y={0}
-                  width={bigW}
-                  height={bigW}
-                  radius={bigW / 2}
-                  color={color}
-                  src={images[0]?.src}
-                />
-              </Group>
-              <Group x={w - medW - 20} y={top + 4}>
-                <Circle
-                  x={medW / 2}
-                  y={medW / 2}
-                  radius={medW / 2 + 3}
-                  stroke={color}
-                  strokeWidth={1.2}
-                  opacity={0.4}
-                />
-                <CanvasGalleryPhoto
-                  x={0}
-                  y={0}
-                  width={medW}
-                  height={medW}
-                  radius={medW / 2}
-                  color={color}
-                  src={images[1]?.src}
-                />
-              </Group>
-              <Group x={w - smallW - 35} y={top + medW + 16}>
-                <Circle
-                  x={smallW / 2}
-                  y={smallW / 2}
-                  radius={smallW / 2 + 3}
-                  stroke={color}
-                  strokeWidth={1.2}
-                  opacity={0.4}
-                />
-                <CanvasGalleryPhoto
-                  x={0}
-                  y={0}
-                  width={smallW}
-                  height={smallW}
-                  radius={smallW / 2}
-                  color={color}
-                  src={images[2]?.src}
-                />
-              </Group>
-              {images.length > 3 ? (
-                <Group x={w - 40} y={top + medW + smallW + 8}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
+              {/* 2-column square tiles */}
+              {images.slice(0, 4).map((img, idx) => {
+                const col = idx % 2;
+                const row = Math.floor(idx / 2);
+                const x = pad + col * (tileW + gap);
+                const y = pad + row * (tileH + gap);
+                if (y + tileH > h) return null;
+
+                const isLastWithMore = idx === 3 && images.length > 4;
+
+                return (
+                  <Group key={idx}>
+                    <CanvasGalleryPhoto
+                      x={x}
+                      y={y}
+                      width={tileW}
+                      height={tileH}
+                      radius={radius}
+                      color={color}
+                      src={img.src}
+                    />
+                    {isLastWithMore && (
+                      <Group x={x} y={y}>
+                        <Rect width={tileW} height={tileH} cornerRadius={radius} fill="#000" opacity={0.6} />
+                        <Text
+                          width={tileW}
+                          y={tileH / 2 - 10}
+                          text={`+${images.length - 3}`}
+                          fontSize={18}
+                          fontStyle="bold"
+                          fill="#ffffff"
+                          align="center"
+                        />
+                      </Group>
+                    )}
+                  </Group>
+                );
+              })}
+              {images.length > 4 && (
+                <Group x={w / 2 - 50} y={h - pad - 24}>
+                  <Rect width={100} height={22} cornerRadius={11} fill={color} opacity={0.12} />
+                  <Text
+                    width={100}
+                    y={4}
+                    text={`Lihat Semua (${images.length})`}
+                    fontSize={9}
+                    fontStyle="bold"
+                    fill={color}
+                    align="center"
+                  />
                 </Group>
-              ) : null}
+              )}
             </>
           );
         })()
       ) : (
-        /* polaroid-stack */
+        /* Masonry Flow layout */
         (() => {
-          if (images.length === 1) {
-            const cardW = Math.min(200, w * 0.55);
-            return (
-              <Group x={w / 2 - cardW / 2} y={top + 10}>
-                <Rect x={-5} y={-5} width={cardW + 10} height={h - top - 24} fill="#fff" shadowColor="#000" shadowBlur={8} shadowOpacity={0.16} />
-                <CanvasGalleryPhoto x={0} y={0} width={cardW} height={h - top - 46} radius={radius} color={color} src={images[0]?.src} />
-              </Group>
-            );
-          }
-          if (images.length === 2) {
-            const cardW = w * 0.4;
-            return (
-              <>
-                <Group x={w / 2 - cardW * 0.95} y={top + 14} rotation={-4}>
-                  <Rect x={-5} y={-5} width={cardW + 10} height={h - top - 26} fill="#fff" shadowColor="#000" shadowBlur={8} shadowOpacity={0.16} />
-                  <CanvasGalleryPhoto x={0} y={0} width={cardW} height={h - top - 48} radius={radius} color={color} src={images[0]?.src} />
-                </Group>
-                <Group x={w / 2 - cardW * 0.05} y={top + 14} rotation={4}>
-                  <Rect x={-5} y={-5} width={cardW + 10} height={h - top - 26} fill="#fff" shadowColor="#000" shadowBlur={8} shadowOpacity={0.16} />
-                  <CanvasGalleryPhoto x={0} y={0} width={cardW} height={h - top - 48} radius={radius} color={color} src={images[1]?.src} />
-                </Group>
-              </>
-            );
-          }
-          const cardW = w * 0.38;
+          const gap = 8;
+          const tileW = (w - pad * 2 - gap) / 2;
+          const usableH = h - pad * 2 - (images.length > 4 ? 26 : 0);
+          const hL1 = usableH * 0.58;
+          const hL2 = usableH * 0.38;
+          const hR1 = usableH * 0.42;
+          const hR2 = usableH * 0.54;
+
+          const slots = [
+            { x: pad, y: pad, width: tileW, height: hL1 },
+            { x: pad + tileW + gap, y: pad, width: tileW, height: hR1 },
+            { x: pad, y: pad + hL1 + gap, width: tileW, height: hL2 },
+            { x: pad + tileW + gap, y: pad, width: tileW, height: hR2 },
+          ];
+
           return (
             <>
-              {images.slice(0, 3).map((img, index) => (
-                <Group
-                  key={index}
-                  x={w / 2 - cardW / 2 + (index - 1) * cardW * 0.62}
-                  y={top + 10 + Math.abs(index - 1) * 8}
-                  rotation={(index - 1) * 6}
-                >
-                  <Rect
-                    x={-5}
-                    y={-5}
-                    width={cardW + 10}
-                    height={h - top - 24}
-                    fill="#fff"
-                    shadowColor="#000"
-                    shadowBlur={8}
-                    shadowOpacity={0.16}
-                  />
-                  <CanvasGalleryPhoto
-                    x={0}
-                    y={0}
-                    width={cardW}
-                    height={h - top - 46}
-                    radius={radius}
-                    color={color}
-                    src={img.src}
+              {slots.map((slot, idx) => {
+                const img = images[idx];
+                if (!img) return null;
+                const isLastWithMore = idx === 3 && images.length > 4;
+
+                return (
+                  <Group key={idx}>
+                    <CanvasGalleryPhoto
+                      x={slot.x}
+                      y={slot.y}
+                      width={slot.width}
+                      height={slot.height}
+                      radius={radius}
+                      color={color}
+                      src={img.src}
+                    />
+                    {isLastWithMore && (
+                      <Group x={slot.x} y={slot.y}>
+                        <Rect width={slot.width} height={slot.height} cornerRadius={radius} fill="#000" opacity={0.6} />
+                        <Text
+                          width={slot.width}
+                          y={slot.height / 2 - 10}
+                          text={`+${images.length - 3}`}
+                          fontSize={18}
+                          fontStyle="bold"
+                          fill="#ffffff"
+                          align="center"
+                        />
+                      </Group>
+                    )}
+                  </Group>
+                );
+              })}
+              {images.length > 4 && (
+                <Group x={w / 2 - 50} y={h - pad - 24}>
+                  <Rect width={100} height={22} cornerRadius={11} fill={color} opacity={0.12} />
+                  <Text
+                    width={100}
+                    y={4}
+                    text={`Lihat Semua (${images.length})`}
+                    fontSize={9}
+                    fontStyle="bold"
+                    fill={color}
+                    align="center"
                   />
                 </Group>
-              ))}
-              {images.length > 3 ? (
-                <Group x={w / 2 + cardW * 0.62 - 10} y={top + 16}>
-                  <Rect width={32} height={18} cornerRadius={9} fill="#000" opacity={0.65} />
-                  <Text width={32} y={2} text={`+${images.length - 2}`} fontSize={10} fontStyle="bold" fill="#fff" align="center" />
-                </Group>
-              ) : null}
+              )}
             </>
           );
         })()

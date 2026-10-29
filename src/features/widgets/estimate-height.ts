@@ -92,11 +92,17 @@ export function estimateWidgetContentHeight(element: WidgetElement): number {
     case "gallery": {
       const items = Array.isArray(props.items) ? props.items : [];
       const count = Math.max(1, items.length);
-      if (variant.includes("slider") || variant.includes("filmstrip")) {
-        return 260;
+      if (
+        variant.includes("slider") ||
+        variant.includes("carousel") ||
+        variant === "carousel-slider"
+      ) {
+        return 340;
       }
-      const rows = Math.ceil(count / 2);
-      return Math.round(rows * 140 + 44);
+      const displayed = Math.min(6, count);
+      const rows = Math.ceil(displayed / 2);
+      const expandBtnH = count > 6 ? 48 : 0;
+      return Math.round(rows * 140 + 44 + expandBtnH);
     }
 
     case "countdown": {

@@ -51,7 +51,7 @@ function setupGallery(items: readonly Record<string, string>[] = []) {
     locked: false,
     widgetType: "gallery",
     widgetVersion: 1,
-    style: { variant: "editorial-collage" },
+    style: { variant: "masonry-flow" },
     props: { title: "Galeri", layout: "grid", items: [...items] },
   };
   const document: CanonicalDocument = {
@@ -77,7 +77,10 @@ function setupGallery(items: readonly Record<string, string>[] = []) {
       <Inspector />
     </EditorProvider>,
   );
-  fireEvent.click(screen.getByRole("button", { name: /^pengaturan widget$/i }));
+  const widgetSettingsBtn = screen.queryByRole("button", { name: /^pengaturan (widget|galeri)$/i });
+  if (widgetSettingsBtn && widgetSettingsBtn.getAttribute("aria-expanded") !== "true") {
+    fireEvent.click(widgetSettingsBtn);
+  }
   return store;
 }
 

@@ -89,3 +89,4 @@ describe("Unified Gift & Rekening Widget (Standard Layout)", () => {
     expect(writeText).toHaveBeenCalledWith("8888999900");
   });
 });
+

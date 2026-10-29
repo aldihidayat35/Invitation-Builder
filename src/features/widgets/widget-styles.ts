@@ -29,6 +29,9 @@ export type WidgetVariantResolution =
     };
 
 export type GalleryPresentation =
+  | "masonry-flow"
+  | "carousel-slider"
+  | "square-grid"
   | "collage"
   | "mosaic"
   | "filmstrip"
@@ -220,64 +223,22 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   ],
   gallery: [
     {
-      id: "editorial-collage",
-      label: "Editorial Collage",
-      description: "Satu foto utama dipadukan dengan foto pendamping seperti majalah.",
-      defaultRadius: 8,
+      id: "masonry-flow",
+      label: "Masonry Flow",
+      description: "Grid bertingkat fleksibel (Pinterest style) yang mengalir dinamis untuk foto tak terbatas.",
+      defaultRadius: 12,
     },
     {
-      id: "mosaic",
-      label: "Mosaic",
-      description: "Grid tidak seragam dengan ritme ukuran foto yang lebih ekspresif.",
-      defaultRadius: 6,
-    },
-    {
-      id: "filmstrip",
-      label: "Filmstrip",
-      description: "Deretan foto horizontal dengan bingkai perforasi ala film.",
-      defaultRadius: 2,
-    },
-    {
-      id: "spotlight-slider",
-      label: "Spotlight Slider",
-      description: "Satu foto besar dengan navigasi dan indikator yang menyatu.",
-      defaultRadius: 14,
-    },
-    {
-      id: "polaroid-stack",
-      label: "Polaroid Stack",
-      description: "Foto tersusun seperti cetakan polaroid dengan rotasi bergantian.",
-      defaultRadius: 3,
-    },
-    {
-      id: "arch-window",
-      label: "Arch Window",
-      description: "Koleksi foto berbingkai kubah lengkung (arch top) bernuansa anggun & artistik.",
+      id: "carousel-slider",
+      label: "Carousel Slider",
+      description: "Tampilan geser interaktif dengan foto utama besar dan deretan thumbnail navigasi di bawah.",
       defaultRadius: 16,
     },
     {
-      id: "masonry-cascade",
-      label: "Masonry Cascade",
-      description: "Susunan foto vertikal bertingkat yang mengalir dinamis dengan variasi tinggi.",
-      defaultRadius: 8,
-    },
-    {
-      id: "heritage-frame",
-      label: "Heritage Frame",
-      description: "Galeri foto berbingkai ganda klasik dengan aksen sudut dan ornamen formal.",
-      defaultRadius: 6,
-    },
-    {
-      id: "glass-carousel",
-      label: "Glass Carousel",
-      description: "Slider modern dengan panel kartu kaca frosted transparan dan kontrol mengambang.",
-      defaultRadius: 16,
-    },
-    {
-      id: "circular-bubbles",
-      label: "Circular Lockets",
-      description: "Kompilasi foto bentuk lingkaran dan oval locket dengan ring border yang artistik.",
-      defaultRadius: 999,
+      id: "square-grid",
+      label: "Square Grid",
+      description: "Album kotak persegi rapi (2–3 kolom) dengan proporsi presisi dan tombol ekspansi foto.",
+      defaultRadius: 10,
     },
   ],
   photoFrame: [
@@ -600,7 +561,23 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
     "qr-showcase",
   ]),
   music: legacy(["pill", "solid", "disc", "minimal", "bar"]),
-  gallery: legacy(["grid-rounded", "grid-border", "slider-classic", "slider-pill", "circle"]),
+  gallery: legacy([
+    "grid-rounded",
+    "grid-border",
+    "slider-classic",
+    "slider-pill",
+    "circle",
+    "editorial-collage",
+    "mosaic",
+    "filmstrip",
+    "spotlight-slider",
+    "polaroid-stack",
+    "arch-window",
+    "masonry-cascade",
+    "heritage-frame",
+    "glass-carousel",
+    "circular-bubbles",
+  ]),
   photoFrame: legacy(["torn-rect", "torn-oval", "torn-circle", "torn-heart", "torn-arch"]),
   timeline: legacy(["vertical-left", "vertical-centered", "minimal-cards", "horizontal-steps", "luxury-gold"]),
   wishes: legacy(["chat-bubbles", "modern-cards", "masonry-board", "editorial-ticker", "luxury-gold"]),
@@ -700,22 +677,16 @@ export function getGalleryPresentation(
   legacyLayout: unknown,
 ): GalleryPresentation | "legacy-grid" | "legacy-slider" {
   const resolution = resolveWidgetStyleVariant("gallery", variant);
-  if (resolution.kind !== "current") {
-    return legacyLayout === "slider" ? "legacy-slider" : "legacy-grid";
+  if (resolution.kind === "current") {
+    switch (resolution.variant.id) {
+      case "carousel-slider":
+        return "carousel-slider";
+      case "square-grid":
+        return "square-grid";
+      case "masonry-flow":
+      default:
+        return "masonry-flow";
+    }
   }
-  switch (resolution.variant.id) {
-    case "mosaic":
-    case "filmstrip":
-    case "polaroid-stack":
-    case "arch-window":
-    case "masonry-cascade":
-    case "heritage-frame":
-    case "glass-carousel":
-    case "circular-bubbles":
-      return resolution.variant.id;
-    case "spotlight-slider":
-      return "slider";
-    default:
-      return "collage";
-  }
+  return legacyLayout === "slider" ? "legacy-slider" : "legacy-grid";
 }
