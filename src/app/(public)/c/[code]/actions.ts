@@ -200,6 +200,7 @@ export async function savePortalGalleryAction(
 export async function savePortalShareMessageAction(
   token: string,
   templateText: string,
+  shareImageUrl?: string | null,
 ): Promise<PortalActionResult> {
   const cleanToken = token.trim();
   if (!cleanToken) {
@@ -211,9 +212,12 @@ export async function savePortalShareMessageAction(
   }
 
   try {
-    const res = await savePortalShareMessage(cleanToken, templateText);
+    const res = await savePortalShareMessage(cleanToken, templateText, shareImageUrl);
     revalidatePath(`/c/${cleanToken}`);
     revalidatePath(`/portal/${cleanToken}`);
+    if (res.slug) {
+      revalidatePath(`/i/${res.slug}`);
+    }
     return {
       ok: true,
       message: res.message || "Format pesan undangan berhasil disimpan.",

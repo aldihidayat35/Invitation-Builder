@@ -1085,6 +1085,7 @@ export interface ClientPortalData {
   invitationCategory?: string;
   shareMessageTemplates?: PortalShareMessageTemplate[];
   activeShareMessageTemplate?: string;
+  shareImageUrl?: string | null;
   eventDetails?: {
     eventTitle?: string;
     eventDate?: string;
@@ -1497,6 +1498,11 @@ export async function getClientPortalDataByToken(
     invitationCategory,
     shareMessageTemplates,
     activeShareMessageTemplate,
+    shareImageUrl:
+      (typeof invitation?.data?.["whatsapp_share_image"] === "string" && (invitation.data["whatsapp_share_image"] as string).trim()) ||
+      (typeof invitation?.data?.["share_image"] === "string" && (invitation.data["share_image"] as string).trim()) ||
+      (typeof invitation?.data?.["cover_photo"] === "string" && (invitation.data["cover_photo"] as string).trim()) ||
+      null,
     eventDetails: {
       eventTitle: coupleOrTitle,
       eventDate: eventDateFormatted,
@@ -1506,12 +1512,13 @@ export async function getClientPortalDataByToken(
   };
 }
 
-/** Saves custom message template for client invitation. */
+/** Saves custom message template and optional custom share image for client invitation. */
 export async function saveClientShareMessageTemplate(
   db: Database,
   token: string,
   templateText: string,
-): Promise<{ ok: boolean; message: string; template: string }> {
+  shareImageUrl?: string | null,
+): Promise<{ ok: boolean; message: string; template: string; shareImageUrl?: string | null; slug?: string }> {
   const cleanToken = token.trim();
   if (!cleanToken) throw new Error("Token tidak valid.");
 
@@ -1533,9 +1540,14 @@ export async function saveClientShareMessageTemplate(
   }
 
   const currentData = (invitation.data || {}) as Record<string, unknown>;
-  const updatedData = {
+  const updatedData: Record<string, unknown> = {
     ...currentData,
     share_message_template: templateText.trim(),
+    ...(shareImageUrl !== undefined && {
+      whatsapp_share_image: shareImageUrl ? shareImageUrl.trim() : null,
+      share_image: shareImageUrl ? shareImageUrl.trim() : null,
+      cover_photo: shareImageUrl ? shareImageUrl.trim() : currentData.cover_photo,
+    }),
   };
 
   await db
@@ -1546,10 +1558,43 @@ export async function saveClientShareMessageTemplate(
     })
     .where(eq(invitations.id, invitation.id));
 
+  // If invitation has an active published snapshot, also update snapshot.data so live visitors & crawlers immediately see it
+  if (invitation.activePublishedSnapshotId) {
+    try {
+      const { publishedSnapshots } = await import("@/lib/db/schema");
+      const [snapshot] = await db
+        .select()
+        .from(publishedSnapshots)
+        .where(eq(publishedSnapshots.id, invitation.activePublishedSnapshotId))
+        .limit(1);
+
+      if (snapshot) {
+        const snapData = (snapshot.data || {}) as Record<string, unknown>;
+        const updatedSnapData = {
+          ...snapData,
+          share_message_template: templateText.trim(),
+          ...(shareImageUrl !== undefined && {
+            whatsapp_share_image: shareImageUrl ? shareImageUrl.trim() : null,
+            share_image: shareImageUrl ? shareImageUrl.trim() : null,
+            cover_photo: shareImageUrl ? shareImageUrl.trim() : snapData.cover_photo,
+          }),
+        };
+        await db
+          .update(publishedSnapshots)
+          .set({ data: updatedSnapData })
+          .where(eq(publishedSnapshots.id, snapshot.id));
+      }
+    } catch {
+      // Ignore if snapshot update fails
+    }
+  }
+
   return {
     ok: true,
-    message: "Format pesan undangan berhasil disimpan.",
+    message: "Format pesan dan foto kartu WhatsApp berhasil disimpan.",
     template: templateText.trim(),
+    shareImageUrl: shareImageUrl !== undefined ? shareImageUrl : null,
+    slug: invitation.slug,
   };
 }
 

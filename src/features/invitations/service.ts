@@ -1121,6 +1121,9 @@ export function extractEventDateFormatted(data: Record<string, unknown>): string
 
 export function extractCoverPhotoUrl(data: Record<string, unknown>): string | undefined {
   const direct =
+    (typeof data["whatsapp_share_image"] === "string" && data["whatsapp_share_image"].trim()) ||
+    (typeof data["share_image"] === "string" && data["share_image"].trim()) ||
+    (typeof data["og_image"] === "string" && data["og_image"].trim()) ||
     (typeof data["cover_photo"] === "string" && data["cover_photo"].trim()) ||
     (typeof data["meta_image"] === "string" && data["meta_image"].trim()) ||
     (typeof data["photo_mempelai"] === "string" && data["photo_mempelai"].trim()) ||

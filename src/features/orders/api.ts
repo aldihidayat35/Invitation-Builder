@@ -136,8 +136,9 @@ export async function savePortalInvitationData(
 export async function savePortalShareMessage(
   token: string,
   templateText: string,
+  shareImageUrl?: string | null,
 ) {
-  return service.saveClientShareMessageTemplate(await getDb(), token, templateText);
+  return service.saveClientShareMessageTemplate(await getDb(), token, templateText, shareImageUrl);
 }
 
 export async function savePortalGallery(

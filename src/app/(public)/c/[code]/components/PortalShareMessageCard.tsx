@@ -3,7 +3,8 @@
 import React, { useState, useRef, useTransition } from "react";
 import { interpolateMessageTemplate } from "@/features/orders/message-templates";
 import type { PortalShareMessageTemplate } from "@/features/orders/service";
-import { savePortalShareMessageAction } from "../actions";
+import { savePortalShareMessageAction, uploadPortalAssetAction } from "../actions";
+import { compressImageClient } from "./image-compressor";
 import {
   MessageCircleIcon,
   ChevronUpIcon,
@@ -15,6 +16,9 @@ import {
   SmartphoneIcon,
   RotateCcwIcon,
   SaveIcon,
+  ImageIcon,
+  UploadCloudIcon,
+  Trash2Icon,
 } from "./PortalIcons";
 import styles from "./PortalShareMessageCard.module.css";
 
@@ -22,6 +26,7 @@ interface PortalShareMessageCardProps {
   token: string;
   presets?: PortalShareMessageTemplate[];
   activeTemplate: string;
+  initialShareImageUrl?: string | null;
   eventDetails?: {
     eventTitle?: string;
     eventDate?: string;
@@ -29,6 +34,7 @@ interface PortalShareMessageCardProps {
   };
   shareableUrl?: string | null;
   onTemplateChange: (newTemplate: string) => void;
+  onShareImageChange?: (newUrl: string | null) => void;
   onShowToast: (msg: string) => void;
 }
 
@@ -44,17 +50,24 @@ export function PortalShareMessageCard({
   token,
   presets = [],
   activeTemplate,
+  initialShareImageUrl,
   eventDetails,
   shareableUrl,
   onTemplateChange,
+  onShareImageChange,
   onShowToast,
 }: PortalShareMessageCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentText, setCurrentText] = useState(activeTemplate);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(
+    initialShareImageUrl || null,
+  );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sampleUrl = shareableUrl
     ? (typeof window !== "undefined" ? window.location.origin : "") +
@@ -100,6 +113,45 @@ export function PortalShareMessageCard({
     }, 0);
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      onShowToast("Berkas yang dipilih harus berupa file gambar.");
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      const compressed = await compressImageClient(file, 1920, 0.85);
+      const formData = new FormData();
+      formData.append("file", compressed);
+
+      const res = await uploadPortalAssetAction(token, formData);
+      if (res.ok && res.data?.url) {
+        setShareImageUrl(res.data.url);
+        onShareImageChange?.(res.data.url);
+        onShowToast("Foto kartu WhatsApp berhasil diunggah! Klik Simpan untuk menerapkan.");
+      } else {
+        onShowToast(res.error || "Gagal mengunggah foto.");
+      }
+    } catch {
+      onShowToast("Terjadi kesalahan saat memproses gambar.");
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setShareImageUrl(null);
+    onShareImageChange?.(null);
+    onShowToast("Foto kartu preview WhatsApp dihapus. Klik Simpan untuk menerapkan.");
+  };
+
   const handleSave = () => {
     if (!currentText.trim()) {
       onShowToast("Format pesan tidak boleh kosong.");
@@ -107,9 +159,9 @@ export function PortalShareMessageCard({
     }
 
     startTransition(async () => {
-      const res = await savePortalShareMessageAction(token, currentText);
+      const res = await savePortalShareMessageAction(token, currentText, shareImageUrl);
       if (res.ok) {
-        onShowToast("Format pesan undangan WhatsApp berhasil disimpan!");
+        onShowToast("Format pesan dan foto kartu WhatsApp berhasil disimpan!");
       } else {
         onShowToast(res.error || "Gagal menyimpan format pesan.");
       }
@@ -125,9 +177,9 @@ export function PortalShareMessageCard({
             <MessageCircleIcon size={20} />
           </div>
           <div>
-            <h3 className={styles.titleText}>Format Teks Pesan WhatsApp</h3>
+            <h3 className={styles.titleText}>Format Teks & Foto Pesan WhatsApp</h3>
             <p className={styles.subText}>
-              Sesuaikan kata-kata sapaan saat membagikan link ke tamu undangan atau gunakan template 1-klik
+              Unggah foto kartu preview WhatsApp dan sesuaikan kata-kata sapaan saat membagikan link ke tamu undangan
             </p>
           </div>
         </div>
@@ -138,9 +190,9 @@ export function PortalShareMessageCard({
             e.stopPropagation();
             setIsOpen((prev) => !prev);
           }}
-          aria-label={isOpen ? "Tutup Editor" : "Buka Editor"}
+          aria-label={isOpen ? "Tutup Editor Format Pesan & Foto" : "Atur Format Pesan & Foto"}
         >
-          <span>{isOpen ? "Tutup Editor" : "Atur Format Pesan"}</span>
+          <span>{isOpen ? "Tutup Editor" : "Atur Format Pesan & Foto"}</span>
           {isOpen ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
         </button>
       </div>
@@ -148,7 +200,79 @@ export function PortalShareMessageCard({
       {/* Collapsible Body */}
       {isOpen && (
         <div className={styles.body}>
-          {/* 1-Click Presets */}
+          {/* 1. Custom WhatsApp Card Photo Upload */}
+          <div className={styles.imageUploadSection}>
+            <div className={styles.sectionLabel}>
+              <ImageIcon size={14} />
+              <span>Foto Kartu Preview WhatsApp (Thumbnail Kustom):</span>
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              style={{ display: "none" }}
+            />
+
+            {shareImageUrl ? (
+              <div className={styles.imagePreviewWrapper}>
+                <div className={styles.imagePreviewCard}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={shareImageUrl}
+                    alt="Pratinjau Foto Kartu WhatsApp"
+                    className={styles.imagePreviewImg}
+                  />
+                  <div className={styles.imageBadgeActive}>Foto Kustom Aktif</div>
+                </div>
+                <div className={styles.imageActionsRow}>
+                  <button
+                    type="button"
+                    disabled={isUploadingImage}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={styles.btnChangeImg}
+                  >
+                    <UploadCloudIcon size={14} />
+                    <span>{isUploadingImage ? "Mengunggah..." : "Ganti Foto"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isUploadingImage}
+                    onClick={handleRemoveImage}
+                    className={styles.btnRemoveImg}
+                  >
+                    <Trash2Icon size={14} />
+                    <span>Hapus Foto</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={styles.uploadDropzone}
+                onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    fileInputRef.current?.click();
+                  }
+                }}
+              >
+                <div className={styles.uploadIconWrap}>
+                  <UploadCloudIcon size={22} />
+                </div>
+                <div className={styles.uploadMainText}>
+                  {isUploadingImage ? "Sedang Mengunggah Foto..." : "Klik untuk Unggah Foto Kartu WhatsApp"}
+                </div>
+                <div className={styles.uploadSubText}>
+                  Foto ini akan otomatis muncul sebagai gambar utama saat link dibagikan di WhatsApp. (Disarankan rasio lanskap atau foto terbaik Anda, JPG/PNG maks. 15MB)
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. 1-Click Presets */}
           {presets.length > 0 && (
             <div className={styles.presetsSection}>
               <div className={styles.sectionLabel}>
@@ -176,7 +300,7 @@ export function PortalShareMessageCard({
             </div>
           )}
 
-          {/* Quick Variable Tag Insertion */}
+          {/* 3. Quick Variable Tag Insertion */}
           <div className={styles.tagsSection}>
             <div className={styles.sectionLabel}>
               <TagIcon size={14} />
@@ -198,7 +322,7 @@ export function PortalShareMessageCard({
             </div>
           </div>
 
-          {/* Text Editor */}
+          {/* 4. Text Editor */}
           <div className={styles.editorWrapper}>
             <div className={styles.sectionLabel}>
               <Edit3Icon size={14} />
@@ -215,19 +339,53 @@ export function PortalShareMessageCard({
             <span className={styles.charCount}>{currentText.length} karakter</span>
           </div>
 
-          {/* Live Simulated WhatsApp Preview */}
+          {/* 5. Live Simulated WhatsApp Preview */}
           <div className={styles.previewBox}>
             <div className={styles.previewHeader}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <SmartphoneIcon size={14} />
-                <span>Simulasi Pesan WhatsApp Tamu</span>
+                <span>Simulasi Tampilan Pesan di WhatsApp Tamu</span>
               </div>
               <span style={{ fontFamily: "monospace", fontSize: "0.72rem" }}>09:41</span>
             </div>
-            <div className={styles.previewBubble}>{previewText}</div>
+
+            <div className={styles.simulatedBubble}>
+              {/* WhatsApp Link Card Preview */}
+              <div className={styles.waCardPreview}>
+                <div className={styles.waCardImageWrap}>
+                  {shareImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={shareImageUrl}
+                      alt="Thumbnail Undangan WhatsApp"
+                      className={styles.waCardImage}
+                    />
+                  ) : (
+                    <div className={styles.waCardPlaceholder}>
+                      <ImageIcon size={28} />
+                      <span>Thumbnail Template Standar (Otomatis)</span>
+                    </div>
+                  )}
+                </div>
+                <div className={styles.waCardInfo}>
+                  <div className={styles.waCardTitle}>
+                    {eventDetails?.eventTitle || "Undangan Digital"}
+                  </div>
+                  <div className={styles.waCardDesc}>
+                    {eventDetails?.eventDate || "Undangan Pernikahan Digital"}
+                  </div>
+                  <div className={styles.waCardDomain}>
+                    {typeof window !== "undefined" ? window.location.hostname : "undangan.id"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Message text below the card */}
+              <div className={styles.waCardText}>{previewText}</div>
+            </div>
           </div>
 
-          {/* Footer Save Action */}
+          {/* 6. Footer Save Action */}
           <div className={styles.footerActions}>
             <button
               type="button"
@@ -244,12 +402,12 @@ export function PortalShareMessageCard({
             </button>
             <button
               type="button"
-              disabled={isPending}
+              disabled={isPending || isUploadingImage}
               onClick={handleSave}
               className={styles.saveBtn}
             >
               <SaveIcon size={15} />
-              <span>{isPending ? "Menyimpan..." : "Simpan Format Pesan"}</span>
+              <span>{isPending ? "Menyimpan..." : "Simpan Format & Foto"}</span>
             </button>
           </div>
         </div>

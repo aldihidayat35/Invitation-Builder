@@ -66,6 +66,9 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
     data.activeShareMessageTemplate ||
       `Halo {guestname},\n\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Anda untuk hadir di acara kami:\n*{event_title}*\n\nInformasi lengkap dan tautan undangan dapat dilihat di:\n{link}\n\nTerima kasih dan sampai jumpa!`,
   );
+  const [customShareImage, setCustomShareImage] = useState<string | null>(
+    data.shareImageUrl || null,
+  );
   const [isPending, startTransition] = useTransition();
 
   const showToast = (msg: string) => {
@@ -670,11 +673,12 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         {/* --- TAB 2: DAFTAR TAMU --- */}
         {activeTab === "guests" && (
           <div>
-            {/* Format Pesan WhatsApp Dinamis */}
+            {/* Format Pesan WhatsApp Dinamis & Foto Kartu Preview */}
             <PortalShareMessageCard
               token={token}
               presets={data.shareMessageTemplates}
               activeTemplate={customShareMessage}
+              initialShareImageUrl={customShareImage}
               eventDetails={{
                 eventTitle: coupleTitle,
                 eventDate: eventDateStr || undefined,
@@ -682,6 +686,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
               }}
               shareableUrl={data.shareableUrl}
               onTemplateChange={(newTmpl) => setCustomShareMessage(newTmpl)}
+              onShareImageChange={(newImg) => setCustomShareImage(newImg)}
               onShowToast={showToast}
             />
 
