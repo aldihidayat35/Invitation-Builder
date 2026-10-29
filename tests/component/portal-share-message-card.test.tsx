@@ -108,3 +108,4 @@ describe("PortalShareMessageCard (WhatsApp Custom Photo & Message)", () => {
     });
   });
 });
+
