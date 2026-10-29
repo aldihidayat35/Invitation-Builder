@@ -13,7 +13,6 @@ import {
 } from "@/features/widgets/logic";
 import { fitImage } from "@/lib/image-fit";
 import { resolveColor } from "../core/display";
-import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { CanvasGalleryPhoto, CurrentWidgetVisual } from "./canvas-widget-variants";
 import { useCanvasImage } from "./use-canvas-image";
@@ -1061,195 +1060,7 @@ function GuestGreetingWidgetVisual({
   );
 }
 
-function GiftWidgetVisual({
-  element,
-  tokens,
-  variables,
-}: {
-  element: WidgetElement;
-  tokens?: ThemeTokens;
-  variables?: readonly VariableDefinition[];
-}) {
-  const { w, h } = element.frame;
-  const props = element.props as Record<string, unknown>;
-  const resolvedTitle = resolveCanvasBoundValue(props.title, variables);
-  const title =
-    typeof resolvedTitle === "string" && resolvedTitle.trim() !== ""
-      ? resolvedTitle.trim()
-      : "Tanda Kasih";
-  const resolvedExtra = {
-    bank: resolveCanvasBoundValue(props.bank, variables),
-    accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
-    accountName: resolveCanvasBoundValue(props.accountName, variables),
-    bank2: resolveCanvasBoundValue(props.bank2, variables),
-    accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
-    accountName2: resolveCanvasBoundValue(props.accountName2, variables),
-  };
-  const accounts = parseGiftAccounts(props.accounts, resolvedExtra);
 
-  const color = getWidgetColor(element, tokens);
-  const background = getWidgetBackground(element, tokens);
-  const radius = typeof element.style.radius === "number" ? element.style.radius : 0;
-  const variant = element.style.variant ?? "cards";
-
-  const padX = 14;
-  const contentW = w - padX * 2;
-
-  return (
-    <Group listening={false}>
-      {background !== "transparent" && (
-        <Rect width={w} height={h} cornerRadius={radius} fill={background} />
-      )}
-
-      {variant === "luxury" && (
-        <Group>
-          <Rect width={w} height={h} cornerRadius={radius || 14} stroke={color} strokeWidth={1} />
-          <Rect
-            x={3}
-            y={3}
-            width={w - 6}
-            height={h - 6}
-            cornerRadius={Math.max(0, (radius || 14) - 2)}
-            stroke={color}
-            strokeWidth={1.5}
-          />
-        </Group>
-      )}
-
-      {/* Title */}
-      <Text
-        x={padX}
-        y={10}
-        width={contentW}
-        text={title}
-        fontSize={15}
-        fontStyle="600"
-        fill={color}
-        align="center"
-      />
-
-      {accounts.length === 0 ? (
-        <Text
-          x={padX}
-          y={Math.max(20, h / 2 - 8)}
-          width={contentW}
-          text="Nomor rekening belum ditambahkan."
-          fontSize={14}
-          fill={color}
-          opacity={0.7}
-          align="center"
-        />
-      ) : (
-        /* List accounts */
-        accounts.slice(0, 3).map((acc, i) => {
-          const itemH = variant === "compact" ? 42 : 56;
-          const itemY = 38 + i * itemH;
-          if (itemY + 36 > h) return null;
-          const copyBtnW = 68;
-          const copyBtnH = 30;
-          const copyBtnX = w - padX - copyBtnW;
-          const copyBtnY = itemY + 4;
-
-          return (
-            <Group key={`${acc.accountNumber}-${i}`}>
-              {/* Account Card Background if variant is cards or pill */}
-              {variant === "cards" && (
-                <Rect
-                  x={padX}
-                  y={itemY - 2}
-                  width={contentW}
-                  height={itemH - 4}
-                  cornerRadius={radius || 10}
-                  stroke={color}
-                  strokeWidth={1}
-                  fill={color}
-                  opacity={0.04}
-                />
-              )}
-              {variant === "pill" && (
-                <Rect
-                  x={padX}
-                  y={itemY - 2}
-                  width={contentW}
-                  height={itemH - 4}
-                  cornerRadius={(itemH - 4) / 2}
-                  stroke={color}
-                  strokeWidth={1.5}
-                />
-              )}
-
-              {/* Account details */}
-              <Text
-                x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
-                y={itemY}
-                width={copyBtnX - padX - 16}
-                text={acc.bank}
-                fontSize={13.5}
-                fontStyle="bold"
-                fill={color}
-              />
-              <Text
-                x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
-                y={itemY + 16}
-                width={copyBtnX - padX - 16}
-                text={acc.accountNumber}
-                fontSize={13}
-                fontStyle="bold"
-                fill={color}
-                letterSpacing={0.5}
-              />
-              {variant !== "compact" && (
-                <Text
-                  x={padX + (variant === "cards" || variant === "pill" ? 10 : 0)}
-                  y={itemY + 32}
-                  width={copyBtnX - padX - 16}
-                  text={`a.n. ${acc.accountName}`}
-                  fontSize={11.5}
-                  fill={color}
-                  opacity={0.8}
-                  ellipsis
-                />
-              )}
-
-              {/* Salin button */}
-              <Rect
-                x={copyBtnX - (variant === "cards" || variant === "pill" ? 8 : 0)}
-                y={copyBtnY}
-                width={copyBtnW}
-                height={copyBtnH}
-                cornerRadius={copyBtnH / 2}
-                stroke={color}
-                strokeWidth={1.5}
-                fill="transparent"
-              />
-              <Text
-                x={copyBtnX - (variant === "cards" || variant === "pill" ? 8 : 0)}
-                y={copyBtnY + (copyBtnH - 13) / 2}
-                width={copyBtnW}
-                text="Salin"
-                fontSize={12.5}
-                fontStyle="600"
-                fill={color}
-                align="center"
-              />
-
-              {/* Divider if minimal and not last */}
-              {variant === "minimal" && i < accounts.length - 1 && (
-                <Line
-                  points={[padX, itemY + 48, w - padX, itemY + 48]}
-                  stroke={color}
-                  strokeWidth={0.8}
-                  dash={[3, 3]}
-                  opacity={0.25}
-                />
-              )}
-            </Group>
-          );
-        })
-      )}
-    </Group>
-  );
-}
 
 function MusicWidgetVisual({
   element,
@@ -1616,7 +1427,7 @@ export function WidgetVisual({
     case "music":
       return <MusicWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "gift":
-      return <GiftWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
+      return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "photoFrame":
       return <CurrentWidgetVisual element={legacyElement} tokens={tokens} variables={variables} />;
     case "timeline":

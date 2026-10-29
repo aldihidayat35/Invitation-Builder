@@ -151,7 +151,7 @@ export function GiftWidget({
             return (
               <div key={`${account.accountNumber}-${i}`} className={styles.giftStandardCard}>
                 {/* 1. Logo Bank di tengah atas */}
-                <div className={styles.giftBankLogoWrap} aria-hidden="true">
+                <div className={styles.giftBankLogoWrap}>
                   {account.bankLogo ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
