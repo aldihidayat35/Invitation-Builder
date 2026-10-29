@@ -102,3 +102,4 @@ describe("ActionElementWrapper Runtime Component", () => {
     dispatchSpy.mockRestore();
   });
 });
+
