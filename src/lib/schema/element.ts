@@ -19,6 +19,38 @@ import {
 import { frameSchema } from "./frame";
 import { colorValueSchema, fontValueSchema, idSchema, opacitySchema } from "./primitives";
 
+// --------------------------------------------------------------------- action
+
+export const ELEMENT_ACTION_TYPES = [
+  "url",
+  "scroll_to_section",
+  "open_invitation",
+  "whatsapp",
+  "phone",
+  "email",
+] as const;
+export type ElementActionType = (typeof ELEMENT_ACTION_TYPES)[number];
+
+export const ELEMENT_HOVER_EFFECTS = [
+  "none",
+  "scale",
+  "opacity",
+  "glow",
+] as const;
+export type ElementHoverEffect = (typeof ELEMENT_HOVER_EFFECTS)[number];
+
+export const elementActionSchema = z.strictObject({
+  type: z.enum(ELEMENT_ACTION_TYPES),
+  url: z.string().max(1000).optional(),
+  target: z.enum(["_blank", "_self"]).default("_blank"),
+  sectionId: idSchema.optional(),
+  phone: z.string().max(50).optional(),
+  message: z.string().max(500).optional(),
+  email: z.string().max(254).optional(),
+  hoverEffect: z.enum(ELEMENT_HOVER_EFFECTS).default("scale"),
+});
+export type ElementAction = z.infer<typeof elementActionSchema>;
+
 const baseElementShape = {
   id: idSchema,
   name: z.string().max(120).optional(),
@@ -28,6 +60,7 @@ const baseElementShape = {
   /** Locked elements still render but cannot be manipulated (PRD §9.2). */
   locked: z.boolean().default(false),
   animations: animationConfigSchema.optional(),
+  action: elementActionSchema.optional(),
   /** Optional group identifier for grouped elements. */
   groupId: idSchema.optional(),
   /** Optional custom display name for the group. */

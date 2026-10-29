@@ -303,6 +303,31 @@ const ElementNode = memo(function ElementNode({
     >
       {/* Invisible hit area so thin or text-only elements are easy to grab. */}
       <Rect width={w} height={h} fill="rgba(0,0,0,0)" />
+
+      {/* Click Action Badge Indicator */}
+      {element.action && (
+        <Group x={w - 20 / zoom} y={-8 / zoom} listening={false}>
+          <Rect
+            width={18 / zoom}
+            height={18 / zoom}
+            fill="#84633F"
+            cornerRadius={9 / zoom}
+            shadowColor="#000"
+            shadowBlur={4}
+            shadowOpacity={0.25}
+          />
+          <Text
+            width={18 / zoom}
+            height={18 / zoom}
+            text="🔗"
+            fontSize={9 / zoom}
+            align="center"
+            verticalAlign="middle"
+            y={2 / zoom}
+          />
+        </Group>
+      )}
+
       <Group
         ref={innerRef}
         name="element-inner"

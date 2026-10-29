@@ -47,10 +47,12 @@ import {
   IconFlipV,
   IconDuplicateMirror,
   IconAlignCenterHorizontal,
+  IconLink,
 } from "./icons";
 import { ImagePanel } from "./ImagePanel";
 import { PanelSection } from "./PanelSection";
 import { WidgetPanel } from "./WidgetPanel";
+import { ActionPanel } from "./ActionPanel";
 import { AnimationPanel } from "./AnimationPanel";
 import { SectionTransitionControl } from "./SectionTransitionControl";
 import { ShadowControl } from "./ShadowControl";
@@ -1018,6 +1020,7 @@ export const DEFAULT_ELEMENT_PANEL_ORDER = [
   "insp-content",
   "insp-opacity-section",
   "insp-shadow-section",
+  "insp-action",
   "insp-animation",
 ] as const;
 
@@ -1273,6 +1276,22 @@ function ElementPanel({
 
       case "insp-content":
         return renderContentSection();
+
+      case "insp-action":
+        return (
+          <PanelSection
+            key="insp-action"
+            id="insp-action"
+            title="Aksi & Tautan Tombol"
+            icon={<IconLink size={13} />}
+            count={element.action ? 1 : undefined}
+            scopeKey={id}
+            defaultOpen={defaultOpen}
+            dragProps={getDragProps("insp-action")}
+          >
+            <ActionPanel element={element} readOnly={readOnly} sectionId={sectionId} />
+          </PanelSection>
+        );
 
       case "insp-animation":
         return (

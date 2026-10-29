@@ -18,6 +18,7 @@ import { cssDropShadowFilter, cssTextShadow } from "@/lib/shadow";
 import type { ElementShadow } from "@/lib/schema";
 import { AnimatedElement } from "./AnimatedElement";
 import { AnimatedSection } from "./AnimatedSection";
+import { ActionElementWrapper } from "./ActionElementWrapper";
 import { PublicImage } from "./PublicImage";
 import { RendererViewport } from "./RendererViewport";
 import { OpeningCoverCanvas } from "./opening";
@@ -193,6 +194,15 @@ function ElementView({
     }
   }
 
+  const content =
+    element.action && body ? (
+      <ActionElementWrapper action={element.action} runtimeMode={runtimeMode}>
+        {body}
+      </ActionElementWrapper>
+    ) : (
+      body
+    );
+
   return (
     <AnimatedElement
       element={element}
@@ -201,7 +211,7 @@ function ElementView({
       data-testid={`element-${element.id}`}
       data-element-type={element.type}
     >
-      {body}
+      {content}
     </AnimatedElement>
   );
 }
