@@ -1279,11 +1279,29 @@ export async function getPublicInvitation(
         input,
       );
       const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
-      const effectiveData = snapshot.data || {};
+      // Always merge snapshot.data with row.data so client customizations
+      // (custom WhatsApp share photo, share message, or client portal edits)
+      // are immediately active without waiting for a re-publish.
+      const effectiveData: Record<string, unknown> = {
+        ...(snapshot.data || {}),
+        ...(row.data || {}),
+      };
+
+      // Explicitly prioritize whatsapp_share_image from row.data or snapshot.data
+      const rawShareImg =
+        (row.data as Record<string, unknown> | null)?.["whatsapp_share_image"] ||
+        (row.data as Record<string, unknown> | null)?.["share_image"] ||
+        (snapshot.data as Record<string, unknown> | null)?.["whatsapp_share_image"] ||
+        (snapshot.data as Record<string, unknown> | null)?.["share_image"];
+      if (rawShareImg && typeof rawShareImg === "string") {
+        effectiveData["whatsapp_share_image"] = rawShareImg.trim();
+      }
+
       const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
       const eventDateFormatted = extractEventDateFormatted(effectiveData);
       const coverPhotoUrl =
         extractCoverPhotoUrl(effectiveData) ||
+        extractCoverPhotoUrl(row.data as Record<string, unknown>) ||
         extractCoverPhotoFromDocument(document);
 
       return {

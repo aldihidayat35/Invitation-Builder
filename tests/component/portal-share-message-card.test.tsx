@@ -92,12 +92,9 @@ describe("PortalShareMessageCard (WhatsApp Custom Photo & Message)", () => {
     // Open card
     fireEvent.click(screen.getByRole("button", { name: /Atur Format Pesan & Foto/i }));
 
-    // Click Hapus Foto
+    // Click Hapus Foto (triggers auto-save)
     fireEvent.click(screen.getByRole("button", { name: /Hapus Foto/i }));
     expect(onImgChange).toHaveBeenCalledWith(null);
-
-    // Click Simpan Format & Foto
-    fireEvent.click(screen.getByRole("button", { name: /Simpan Format & Foto/i }));
 
     await waitFor(() => {
       expect(savePortalShareMessageAction).toHaveBeenCalledWith(

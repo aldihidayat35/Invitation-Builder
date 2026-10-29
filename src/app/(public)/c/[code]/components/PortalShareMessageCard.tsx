@@ -4,7 +4,7 @@ import React, { useState, useRef, useTransition } from "react";
 import { interpolateMessageTemplate } from "@/features/orders/message-templates";
 import type { PortalShareMessageTemplate } from "@/features/orders/service";
 import { savePortalShareMessageAction, uploadPortalAssetAction } from "../actions";
-import { compressImageClient } from "./image-compressor";
+import { compressImageClient, compressImageForWhatsAppCard } from "./image-compressor";
 import {
   MessageCircleIcon,
   ChevronUpIcon,
@@ -124,15 +124,24 @@ export function PortalShareMessageCard({
 
     try {
       setIsUploadingImage(true);
-      const compressed = await compressImageClient(file, 1920, 0.85);
+      // Format specifically to 1200x630 WhatsApp card format (landscape with aesthetic blurred backdrop if portrait)
+      const compressed = await compressImageForWhatsAppCard(file);
       const formData = new FormData();
       formData.append("file", compressed);
 
       const res = await uploadPortalAssetAction(token, formData);
       if (res.ok && res.data?.url) {
-        setShareImageUrl(res.data.url);
-        onShareImageChange?.(res.data.url);
-        onShowToast("Foto kartu WhatsApp berhasil diunggah! Klik Simpan untuk menerapkan.");
+        const newUrl = res.data.url;
+        setShareImageUrl(newUrl);
+        onShareImageChange?.(newUrl);
+
+        // Auto-save immediately so thumbnail is live right away without needing extra clicks
+        const saveRes = await savePortalShareMessageAction(token, currentText, newUrl);
+        if (saveRes.ok) {
+          onShowToast("Foto kartu WhatsApp berhasil diunggah & disimpan otomatis!");
+        } else {
+          onShowToast("Foto diunggah. Klik Simpan untuk memperbarui format pesan.");
+        }
       } else {
         onShowToast(res.error || "Gagal mengunggah foto.");
       }
@@ -149,7 +158,14 @@ export function PortalShareMessageCard({
   const handleRemoveImage = () => {
     setShareImageUrl(null);
     onShareImageChange?.(null);
-    onShowToast("Foto kartu preview WhatsApp dihapus. Klik Simpan untuk menerapkan.");
+    startTransition(async () => {
+      const res = await savePortalShareMessageAction(token, currentText, null);
+      if (res.ok) {
+        onShowToast("Foto kartu WhatsApp dihapus & disimpan otomatis.");
+      } else {
+        onShowToast("Foto kartu dihapus. Klik Simpan untuk menerapkan.");
+      }
+    });
   };
 
   const handleSave = () => {

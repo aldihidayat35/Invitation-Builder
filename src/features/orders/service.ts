@@ -46,7 +46,7 @@ import {
   findWorkspaceById,
   getMemberRole,
 } from "@/lib/db/repositories/workspaces";
-import { guests, invitations, rsvps, users } from "@/lib/db/schema";
+import { guests, invitations, publishedSnapshots, rsvps, users } from "@/lib/db/schema";
 import type {
   CustomerOrder,
   GuestRow,
@@ -1561,7 +1561,6 @@ export async function saveClientShareMessageTemplate(
   // If invitation has an active published snapshot, also update snapshot.data so live visitors & crawlers immediately see it
   if (invitation.activePublishedSnapshotId) {
     try {
-      const { publishedSnapshots } = await import("@/lib/db/schema");
       const [snapshot] = await db
         .select()
         .from(publishedSnapshots)
@@ -1584,8 +1583,8 @@ export async function saveClientShareMessageTemplate(
           .set({ data: updatedSnapData })
           .where(eq(publishedSnapshots.id, snapshot.id));
       }
-    } catch {
-      // Ignore if snapshot update fails
+    } catch (err) {
+      console.error("Failed to update active snapshot share data:", err);
     }
   }
 

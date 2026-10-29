@@ -129,11 +129,12 @@ export async function generateMetadata(
     ? `${invitation.groomBrideNames || invitation.title} — Undangan Telah Selesai`
     : `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`;
 
-  const mimeType = ogImageUrl.includes(".png")
-    ? "image/png"
-    : ogImageUrl.includes(".webp")
-    ? "image/webp"
-    : "image/jpeg";
+  const mimeType =
+    ogImageUrl.includes("/api/og") || ogImageUrl.includes(".png")
+      ? "image/png"
+      : ogImageUrl.includes(".webp")
+      ? "image/webp"
+      : "image/jpeg";
 
   return {
     metadataBase: new URL(baseUrl),

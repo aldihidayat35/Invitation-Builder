@@ -5,6 +5,23 @@ import { readPublicAsset } from "@/features/assets/api";
  * Supports HTTP 206 Partial Content (Range requests) so HTML5 video players can stream,
  * seek, and buffer video smoothly in Chrome, Safari, Firefox, and mobile browsers.
  */
+export async function HEAD(request: Request, ctx: RouteContext<"/api/assets/[id]/file">) {
+  const { id } = await ctx.params;
+  const asset = await readPublicAsset(id);
+  if (!asset) return new Response(null, { status: 404 });
+
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Content-Type": asset.mimeType,
+      "Content-Length": String(asset.bytes.byteLength),
+      "Accept-Ranges": "bytes",
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
+
 export async function GET(request: Request, ctx: RouteContext<"/api/assets/[id]/file">) {
   const { id } = await ctx.params;
   const asset = await readPublicAsset(id);
