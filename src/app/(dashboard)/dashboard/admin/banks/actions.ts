@@ -1,5 +1,7 @@
 "use server";
 
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import {
   createMasterBank,
@@ -140,5 +142,51 @@ export async function resetMasterBanksAction(): Promise<{ ok: boolean; message?:
     return { ok: true, message: "Seluruh bank master telah direset ke 16 bank default." };
   } catch (err: unknown) {
     return { ok: false, error: err instanceof Error ? err.message : "Gagal mereset bank master." };
+  }
+}
+
+export async function uploadBankLogoAction(
+  formData: FormData,
+): Promise<{ ok: true; url: string; filename: string } | { ok: false; error: string }> {
+  try {
+    await requireOwner();
+
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "File logo tidak ditemukan atau kosong." };
+    }
+
+    // Maksimal 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      return { ok: false, error: "Ukuran file logo maksimal 2MB." };
+    }
+
+    const mime = file.type.toLowerCase();
+    const allowedMimes = ["image/svg+xml", "image/png", "image/webp", "image/jpeg", "image/jpg"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const allowedExts = ["svg", "png", "webp", "jpg", "jpeg"];
+
+    if (!allowedMimes.includes(mime) && !allowedExts.includes(ext)) {
+      return { ok: false, error: "Format file tidak didukung. Gunakan SVG, PNG, WebP, atau JPG." };
+    }
+
+    const safeExt = ext === "jpeg" ? "jpg" : ext || (mime === "image/svg+xml" ? "svg" : "png");
+    const code = text(formData, "code") || "bank";
+    const cleanCode = code.toLowerCase().replace(/[^a-z0-9_-]/g, "") || "logo";
+    const filename = `${cleanCode}-${Date.now()}.${safeExt}`;
+
+    const uploadDir = path.join(process.cwd(), "public", "images", "banks", "uploads");
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const filePath = path.join(uploadDir, filename);
+
+    await fs.writeFile(filePath, buffer);
+
+    const publicUrl = `/images/banks/uploads/${filename}`;
+    return { ok: true, url: publicUrl, filename };
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : "Gagal mengunggah logo bank." };
   }
 }

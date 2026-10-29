@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import type { MasterBankItem as MasterBankRow } from "@/features/banks";
 import {
   createMasterBankAction,
@@ -8,6 +8,7 @@ import {
   toggleMasterBankAction,
   deleteMasterBankAction,
   resetMasterBanksAction,
+  uploadBankLogoAction,
 } from "./actions";
 
 interface BanksManagerProps {
@@ -54,6 +55,44 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
   const [formSortOrder, setFormSortOrder] = useState(0);
   const [formIsActive, setFormIsActive] = useState(true);
 
+  // Logo upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showManualUrl, setShowManualUrl] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    setUploadError(null);
+
+    // Validate size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError("Ukuran file logo maksimal 2MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("code", formCode || formName || "bank");
+
+    try {
+      const res = await uploadBankLogoAction(fd);
+      if (res.ok) {
+        setFormLogoUrl(res.url);
+        setUploadError(null);
+      } else {
+        setUploadError(res.error || "Gagal mengunggah file logo.");
+      }
+    } catch {
+      setUploadError("Terjadi kesalahan saat mengunggah file.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const openAddModal = () => {
     setEditingBank(null);
     setFormName("");
@@ -62,6 +101,10 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
     setFormLogoUrl("/images/banks/generic.svg");
     setFormSortOrder(banks.length + 1);
     setFormIsActive(true);
+    setIsUploading(false);
+    setUploadError(null);
+    setShowManualUrl(false);
+    setDragOver(false);
     setIsOpenModal(true);
   };
 
@@ -73,12 +116,20 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
     setFormLogoUrl(bank.logoUrl);
     setFormSortOrder(bank.sortOrder);
     setFormIsActive(bank.isActive);
+    setIsUploading(false);
+    setUploadError(null);
+    setShowManualUrl(false);
+    setDragOver(false);
     setIsOpenModal(true);
   };
 
   const closeModal = () => {
     setIsOpenModal(false);
     setEditingBank(null);
+    setIsUploading(false);
+    setUploadError(null);
+    setShowManualUrl(false);
+    setDragOver(false);
   };
 
   const handleToggle = (bank: MasterBankRow) => {
@@ -477,10 +528,13 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
 
               <div>
                 <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  Logo Bank (Pilih Preset atau Masukkan URL) *
+                  Logo Bank / E-Wallet *
                 </label>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-12 w-24 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-white p-1.5 shadow-2xs overflow-hidden">
+
+                {/* Main Logo Upload & Preview Card */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-2xl border border-stone-200 bg-stone-50/70">
+                  {/* Thumbnail Preview */}
+                  <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-white p-2 shadow-2xs overflow-hidden mx-auto sm:mx-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={formLogoUrl}
@@ -491,27 +545,93 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
                       }}
                     />
                   </div>
-                  <input
-                    type="text"
-                    required
-                    value={formLogoUrl}
-                    onChange={(e) => setFormLogoUrl(e.target.value)}
-                    placeholder="/images/banks/bca.svg atau URL eksternal"
-                    className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-mono text-stone-800 outline-none focus:border-[#84633F]"
-                  />
+
+                  {/* Dropzone / Upload button */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragOver(true);
+                    }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      const f = e.dataTransfer.files?.[0];
+                      if (f) handleFileUpload(f);
+                    }}
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    className={`flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition text-center ${
+                      dragOver
+                        ? "border-[#84633F] bg-[#84633F]/5"
+                        : "border-stone-300 hover:border-stone-400 bg-white hover:bg-stone-50/50"
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileUpload(f);
+                      }}
+                    />
+                    {isUploading ? (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#84633F]">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                        </svg>
+                        <span>Sedang mengunggah logo…</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#2C221E]">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          <span>Unggah File Logo Baru</span>
+                        </div>
+                        <span className="text-[10px] text-stone-500 mt-0.5">
+                          Klik untuk memilih file atau seret ke sini (SVG, PNG, WebP, JPG • Maks 2MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Quick Logo Presets */}
-                <div className="mt-2">
-                  <span className="text-[10px] text-stone-500 font-semibold block mb-1">
-                    Pilihan Logo Cepat dari Koleksi Sistem:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1.5 border border-stone-200 rounded-xl bg-stone-50">
+                {uploadError && (
+                  <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>{uploadError}</span>
+                  </p>
+                )}
+
+                {/* Quick Logo Presets & Toggle Manual URL */}
+                <div className="mt-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-stone-500 font-semibold block">
+                      Atau Pilih Cepat dari Koleksi Preset Sistem:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowManualUrl(!showManualUrl)}
+                      className="text-[10px] text-[#84633F] hover:underline font-semibold"
+                    >
+                      {showManualUrl ? "Tutup Input URL Manual" : "Gunakan URL Eksternal / CDN"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 border border-stone-200 rounded-xl bg-stone-50">
                     {PRESET_LOGOS.map((p) => (
                       <button
                         key={p.url}
                         type="button"
-                        onClick={() => setFormLogoUrl(p.url)}
+                        onClick={() => {
+                          setFormLogoUrl(p.url);
+                          setUploadError(null);
+                        }}
                         className={`rounded-lg px-2 py-1 text-[11px] font-semibold border transition ${
                           formLogoUrl === p.url
                             ? "bg-[#2C221E] text-white border-[#2C221E]"
@@ -523,6 +643,22 @@ export function BanksManager({ initialBanks }: BanksManagerProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* Collapsible Manual URL field */}
+                {showManualUrl && (
+                  <div className="mt-2 pt-2 border-t border-stone-200">
+                    <label className="block text-[10px] font-semibold text-stone-600 mb-1">
+                      Ketik / Tempel URL Logo Manual (Opsional):
+                    </label>
+                    <input
+                      type="text"
+                      value={formLogoUrl}
+                      onChange={(e) => setFormLogoUrl(e.target.value)}
+                      placeholder="/images/banks/bca.svg atau https://..."
+                      className="w-full rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-mono text-stone-800 outline-none focus:border-[#84633F]"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
