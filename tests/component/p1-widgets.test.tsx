@@ -342,6 +342,11 @@ describe("registry-driven rendering", () => {
   it("renders every P1 type through WidgetRuntime without template-specific code", () => {
     for (const type of ["rsvp", "gallery", "music", "gift", "photoFrame", "timeline", "wishes"]) {
       const { container, unmount } = render(<WidgetRuntime widgetType={type} props={{}} />);
+      if (!container.querySelector(`[data-widget="${type}"]`)) {
+        console.error(`FAILED ON TYPE: ${type}`);
+        console.error("resolved:", defaultWidgetRegistry.resolve(type));
+        console.error("container:", container.innerHTML);
+      }
       expect(container.querySelector(`[data-widget="${type}"]`)).not.toBeNull();
       unmount();
     }

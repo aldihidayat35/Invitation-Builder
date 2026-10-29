@@ -160,3 +160,4 @@ describe("BankSelectField and VariableFields Combo Box", () => {
     expect(hiddenLogo.name).toBe("v.gift.bankLogo");
   });
 });
+

@@ -223,22 +223,16 @@ export const WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   ],
   gallery: [
     {
-      id: "masonry-flow",
-      label: "Masonry Flow",
-      description: "Grid bertingkat fleksibel (Pinterest style) yang mengalir dinamis untuk foto tak terbatas.",
-      defaultRadius: 12,
+      id: "square-grid",
+      label: "Square Grid",
+      description: "Album kotak persegi rapi (2–3 kolom) dengan proporsi presisi dan tombol ekspansi foto.",
+      defaultRadius: 10,
     },
     {
       id: "carousel-slider",
       label: "Carousel Slider",
       description: "Tampilan geser interaktif dengan foto utama besar dan deretan thumbnail navigasi di bawah.",
       defaultRadius: 16,
-    },
-    {
-      id: "square-grid",
-      label: "Square Grid",
-      description: "Album kotak persegi rapi (2–3 kolom) dengan proporsi presisi dan tombol ekspansi foto.",
-      defaultRadius: 10,
     },
   ],
   photoFrame: [
@@ -562,6 +556,7 @@ const LEGACY_WIDGET_STYLE_VARIANTS: Readonly<Record<string, readonly WidgetStyle
   ]),
   music: legacy(["pill", "solid", "disc", "minimal", "bar"]),
   gallery: legacy([
+    "masonry-flow",
     "grid-rounded",
     "grid-border",
     "slider-classic",
@@ -682,10 +677,8 @@ export function getGalleryPresentation(
       case "carousel-slider":
         return "carousel-slider";
       case "square-grid":
-        return "square-grid";
-      case "masonry-flow":
       default:
-        return "masonry-flow";
+        return "square-grid";
     }
   }
   return legacyLayout === "slider" ? "legacy-slider" : "legacy-grid";

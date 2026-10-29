@@ -84,4 +84,7 @@ export interface PublicInvitationModel {
   readonly publishedAt?: Date | null;
   readonly expiresAt?: Date | null;
   readonly groomBrideNames?: string;
+  readonly eventDateFormatted?: string;
+  readonly coverPhotoUrl?: string | null;
+  readonly templateThumbnailUrl?: string | null;
 }

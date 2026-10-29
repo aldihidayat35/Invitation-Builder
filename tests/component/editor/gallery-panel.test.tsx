@@ -51,7 +51,7 @@ function setupGallery(items: readonly Record<string, string>[] = []) {
     locked: false,
     widgetType: "gallery",
     widgetVersion: 1,
-    style: { variant: "masonry-flow" },
+    style: { variant: "square-grid" },
     props: { title: "Galeri", layout: "grid", items: [...items] },
   };
   const document: CanonicalDocument = {

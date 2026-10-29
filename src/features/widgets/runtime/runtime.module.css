@@ -262,45 +262,6 @@
 }
 
 /* --- Gallery Modern Multi-Photo Styles (Unlimited 10+ Photos) --- */
-.galleryMasonryFlow {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  column-count: 2;
-  column-gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (min-width: 640px) {
-  .galleryMasonryFlow {
-    column-count: 3;
-    column-gap: 12px;
-  }
-}
-
-.galleryMasonryItem {
-  break-inside: avoid;
-  margin-bottom: 10px;
-  cursor: pointer;
-  overflow: hidden;
-  border-radius: var(--widget-radius, 12px);
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-}
-
-.galleryMasonryItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.galleryMasonryImg {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-  border-radius: inherit;
-}
-
 .gallerySquareGrid {
   list-style: none;
   margin: 0;

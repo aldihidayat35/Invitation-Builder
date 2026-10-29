@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublic } from "@/features/invitations/api";
 import { getDemoInvitation } from "@/features/invitations/demo-catalog";
+import { getBaseUrl, absoluteUrl } from "@/lib/seo/config";
 import { DocumentRenderer } from "@/features/renderer";
 import { PublicContextProvider } from "@/features/widgets/runtime";
 import { ExpiredInvitationView } from "./ExpiredInvitationView";
@@ -13,21 +14,114 @@ function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/i/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata(
+  props: PageProps<"/i/[slug]">,
+): Promise<Metadata> {
+  const { slug } = await props.params;
+  const query = props.searchParams ? await props.searchParams : {};
+  const rawTo = first(query.to);
+  const rawGuest = first(query.guest);
+  const guestToken = rawGuest && rawGuest.length <= 160 ? rawGuest : undefined;
+  const guestName = rawTo && rawTo.length <= 160 ? rawTo : undefined;
+
   const invitation =
-    (await getPublic(slug).catch(() => null)) ||
-    (await getPublic(slug, undefined, { allowDraft: true }).catch(() => null)) ||
-    (await getDemoInvitation(slug));
+    (await getPublic(slug, guestToken, { guestName }).catch(() => null)) ||
+    (await getPublic(slug, guestToken, { guestName, allowDraft: true }).catch(() => null)) ||
+    (await getDemoInvitation(slug, guestName || guestToken));
+
+  if (!invitation) {
+    return {
+      title: "Undangan",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  // Load app settings if available for site branding and canonical domain
+  let settings = null;
+  try {
+    const { getAppSettings } = await import("@/lib/db/repositories/settings");
+    settings = await getAppSettings();
+  } catch {
+    // Fallback if DB unavailable or during build
+  }
+
+  const baseUrl = getBaseUrl(settings);
+  const siteName = settings?.appName || "Undangan Digital";
+
+  // 1. OG Title: "The Wedding of [Nama Mempelai]" persis seperti referensi kartu WhatsApp
+  const groomBride = invitation.groomBrideNames?.trim();
+  let ogTitle: string;
+  if (groomBride) {
+    ogTitle = groomBride.toLowerCase().startsWith("the wedding of")
+      ? groomBride
+      : `The Wedding of ${groomBride}`;
+  } else if (invitation.title) {
+    ogTitle = invitation.title.toLowerCase().startsWith("the wedding of")
+      ? invitation.title
+      : `The Wedding of ${invitation.title}`;
+  } else {
+    ogTitle = "The Wedding of Undangan Pernikahan";
+  }
+
+  if (invitation.isClosed) {
+    ogTitle = `Undangan Telah Selesai — ${ogTitle}`;
+  }
+
+  // 2. OG Description: Tanggal acara terformat ("Kamis, 30 Juli 2026")
+  const ogDescription =
+    invitation.eventDateFormatted?.trim() ||
+    "Undangan Pernikahan Digital";
+
+  // 3. OG Image (Hybrid priority: Client Cover/Photo > Template Thumbnail > Fallback image)
+  const rawImage =
+    invitation.coverPhotoUrl ||
+    invitation.templateThumbnailUrl ||
+    "/images/template-jawa.jpg";
+
+  const ogImageUrl =
+    rawImage.startsWith("http://") || rawImage.startsWith("https://")
+      ? rawImage
+      : absoluteUrl(rawImage, baseUrl);
+
+  const canonicalPath = rawTo
+    ? `/i/${slug}?to=${encodeURIComponent(rawTo)}`
+    : `/i/${slug}`;
+  const canonicalUrl = absoluteUrl(canonicalPath, baseUrl);
+
+  const pageTitle = invitation.isClosed
+    ? `${invitation.groomBrideNames || invitation.title} — Undangan Telah Selesai`
+    : `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`;
+
   return {
-    title: invitation
-      ? invitation.isClosed
-        ? `${invitation.groomBrideNames || invitation.title} — Undangan Telah Selesai`
-        : `${invitation.title}${invitation.isDraft ? " (Pratinjau)" : ""} — Undangan Digital`
-      : "Undangan",
+    metadataBase: new URL(baseUrl),
+    title: pageTitle,
+    description: ogDescription,
     robots: { index: false, follow: false },
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      type: "website",
+      locale: "id_ID",
+      url: canonicalUrl,
+      siteName,
+      title: ogTitle,
+      description: ogDescription,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: ogTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: [ogImageUrl],
+    },
   };
 }
 

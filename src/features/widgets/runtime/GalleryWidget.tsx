@@ -89,10 +89,9 @@ export function parseGalleryItems(
 }
 
 /**
- * Gallery widget supporting unlimited photos (10+ hingga 50+ foto) with 3 modern responsive variants:
- * 1. Masonry Flow (Pinterest-style dynamic multi-column flow)
+ * Gallery widget supporting unlimited photos (10+ hingga 50+ foto) with 2 modern responsive variants:
+ * 1. Square Grid (Clean uniform square photo album)
  * 2. Carousel Slider (Hero photo + interactive thumbnail strip)
- * 3. Square Grid (Clean uniform square photo album)
  * Includes expandable pagination toggle and interactive Fullscreen Lightbox preview.
  */
 export function GalleryWidget({ title, layout, items, style, variables }: GalleryWidgetProps) {
@@ -128,8 +127,6 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
     presentation === "legacy-slider" ||
     presentation === "glass-carousel";
 
-  const isSquare = presentation === "square-grid";
-
   // Lightbox keyboard listener
   const handleLightboxKeyDown = useCallback(
     (e: globalThis.KeyboardEvent) => {
@@ -157,7 +154,11 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
   }, [lightboxIndex, handleLightboxKeyDown]);
 
   if (images.length === 0) {
-    return null;
+    return (
+      <WidgetFrame type="gallery" style={style} className={styles.gallery}>
+        <div data-empty="true" aria-hidden="true" />
+      </WidgetFrame>
+    );
   }
 
   const last = images.length - 1;
@@ -394,11 +395,11 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
     );
   }
 
-  // 2. MASONRY FLOW & 3. SQUARE GRID VARIANTS
+  // 2. SQUARE GRID VARIANT
   return (
     <WidgetFrame type="gallery" style={style} className={styles.gallery}>
       <ul
-        className={isSquare ? styles.gallerySquareGrid : styles.galleryMasonryFlow}
+        className={styles.gallerySquareGrid}
         aria-label={heading}
         data-gallery-presentation={presentation}
         data-gallery-count={images.length}
@@ -407,7 +408,7 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
         {displayedImages.map((img, i) => (
           <li
             key={`${img.bind || img.src}-${i}`}
-            className={isSquare ? styles.gallerySquareItem : styles.galleryMasonryItem}
+            className={styles.gallerySquareItem}
             onClick={() => setLightboxIndex(i)}
             title="Klik untuk melihat foto lebih besar"
           >
@@ -416,7 +417,7 @@ export function GalleryWidget({ title, layout, items, style, variables }: Galler
               <img
                 src={img.src}
                 alt={img.alt || `Foto ${i + 1}`}
-                className={isSquare ? styles.gallerySquareImg : styles.galleryMasonryImg}
+                className={styles.gallerySquareImg}
                 loading="lazy"
                 decoding="async"
               />

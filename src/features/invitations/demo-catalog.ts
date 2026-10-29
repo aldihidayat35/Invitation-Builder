@@ -12,6 +12,11 @@ import {
 import { resolveDocument, createVariableRegistry, applyDefaults } from "@/lib/engine";
 import type { PublicInvitationModel } from "./types";
 import {
+  extractGroomBrideNames,
+  extractEventDateFormatted,
+  extractCoverPhotoUrl,
+} from "./service";
+import {
   createRoyalElegantDemoDocument,
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
@@ -53,6 +58,8 @@ export async function getDemoInvitation(
   let doc: CanonicalDocument | null = null;
   let title = "Undangan Pernikahan Digital";
   let revisionNo = 1;
+  let templateThumbnailUrl: string | null = null;
+  let fallbackEventDate: string | undefined = undefined;
 
   // 1. Prioritas utama: Cek apakah template ada di database
   // Jika ada, muat versi yang dipublikasikan (v2, v3, dst) atau draft terakhir.
@@ -66,6 +73,7 @@ export async function getDemoInvitation(
 
     if (tpl) {
       title = tpl.name;
+      templateThumbnailUrl = tpl.thumbnailUrl || tpl.previewMockupUrl || null;
 
       // Prioritas 1.A: Muat TemplateVersion yang telah dipublikasikan (publishedVersionNo)
       if (tpl.publishedVersionNo !== null && tpl.publishedVersionNo > 0) {
@@ -96,6 +104,8 @@ export async function getDemoInvitation(
     ) {
       doc = createAllFeaturesShowcaseDocument();
       title = "Arya & Nabila — Grand Master Showcase";
+      templateThumbnailUrl = "/images/template-editorial.jpg";
+      fallbackEventDate = "Sabtu, 10 Oktober 2026";
     } else if (
       clean === "demo-royal-elegant" ||
       clean === "royal-elegant-jawa" ||
@@ -105,6 +115,8 @@ export async function getDemoInvitation(
     ) {
       doc = createRoyalElegantDemoDocument();
       title = "Danang & Sekar — Royal Elegant";
+      templateThumbnailUrl = "/images/template-jawa.jpg";
+      fallbackEventDate = "Sabtu, 28 November 2026";
     } else if (
       clean === "demo-classic-floral" ||
       clean === "classic-floral-botanical" ||
@@ -115,6 +127,8 @@ export async function getDemoInvitation(
     ) {
       doc = createClassicFloralDemoDocument();
       title = "Raka & Salsabila — Classic Floral";
+      templateThumbnailUrl = "/images/template-botanical.jpg";
+      fallbackEventDate = "Minggu, 13 Desember 2026";
     } else if (
       clean === "demo-modern-minimal" ||
       clean === "modern-minimal-boho" ||
@@ -125,10 +139,14 @@ export async function getDemoInvitation(
     ) {
       doc = createModernMinimalDemoDocument();
       title = "Aditya & Clarissa — Modern Minimal";
+      templateThumbnailUrl = "/images/template-boho.jpg";
+      fallbackEventDate = "Minggu, 20 September 2026";
     } else if (clean.startsWith("demo-")) {
       // Any other demo-* slug defaults to luxury Royal Elegant demo
       doc = createRoyalElegantDemoDocument();
       title = `Demo Undangan — ${clean.replace(/^demo-/, "").replace(/-/g, " ").toUpperCase()}`;
+      templateThumbnailUrl = "/images/template-jawa.jpg";
+      fallbackEventDate = "Sabtu, 28 November 2026";
     }
   }
 
@@ -138,11 +156,19 @@ export async function getDemoInvitation(
   const initialData = doc ? applyDefaults(createVariableRegistry(doc.variables), {}) : {};
   const resolved = resolveDocument(doc, initialData, guestData);
 
+  const groomBrideNames = extractGroomBrideNames(initialData, title);
+  const eventDateFormatted = extractEventDateFormatted(initialData) || fallbackEventDate;
+  const coverPhotoUrl = extractCoverPhotoUrl(initialData) || templateThumbnailUrl;
+
   return {
     title,
     slug: clean,
     revisionNo,
     resolved,
+    groomBrideNames,
+    eventDateFormatted,
+    coverPhotoUrl,
+    templateThumbnailUrl,
     ...(guestName && { guestName }),
     hasGuest: Boolean(guestName),
   };

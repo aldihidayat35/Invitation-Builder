@@ -12,31 +12,30 @@ const mockPhotos12 = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 describe("Gallery Widget Unlimited Photos (10+ Photos) & New Variants", () => {
-  it("exposes the 3 modern unlimited-photo variants for gallery", () => {
+  it("exposes the 2 modern unlimited-photo variants for gallery", () => {
     const variants = getWidgetStyleVariants("gallery");
     expect(variants.map((v) => v.id)).toEqual([
-      "masonry-flow",
-      "carousel-slider",
       "square-grid",
+      "carousel-slider",
     ]);
   });
 
   it("resolves gallery presentations correctly for both new and legacy variants", () => {
-    expect(getGalleryPresentation("masonry-flow", "grid")).toBe("masonry-flow");
-    expect(getGalleryPresentation("carousel-slider", "grid")).toBe("carousel-slider");
     expect(getGalleryPresentation("square-grid", "slider")).toBe("square-grid");
+    expect(getGalleryPresentation("carousel-slider", "grid")).toBe("carousel-slider");
 
     // Legacy fallback mapping
+    expect(getGalleryPresentation("masonry-flow", "grid")).toBe("legacy-grid");
     expect(getGalleryPresentation("editorial-collage", "grid")).toBe("legacy-grid");
     expect(getGalleryPresentation("spotlight-slider", "slider")).toBe("legacy-slider");
     expect(getGalleryPresentation("masonry-cascade", "grid")).toBe("legacy-grid");
   });
 
-  it("renders Masonry Flow with 12 photos, showing initial 6 items with expand toggle button", () => {
+  it("renders Square Grid with 12 photos, showing initial 6 items with expand toggle button", () => {
     render(
       <GalleryWidget
         items={mockPhotos12}
-        style={{ variant: "masonry-flow" }}
+        style={{ variant: "square-grid" }}
       />,
     );
 

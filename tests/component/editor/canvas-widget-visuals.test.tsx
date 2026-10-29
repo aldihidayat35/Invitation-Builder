@@ -252,7 +252,7 @@ describe("Canvas Widget Visuals", () => {
       frame: { x: 0, y: 0, w: 326, h: 320, rotation: 0 },
       locked: false,
       visible: true,
-      style: { variant: "masonry-flow", color: "#2b2118" },
+      style: { variant: "square-grid", color: "#2b2118" },
       widgetType: "gallery",
       widgetVersion: 1,
       props: {

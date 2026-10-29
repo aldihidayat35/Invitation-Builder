@@ -62,7 +62,14 @@ import {
   findTemplateVersion,
   findTemplateVersionById,
 } from "@/lib/db/repositories/templates";
-import { guests, type GuestRow, type InvitationRow } from "@/lib/db/schema";
+import {
+  guests,
+  templates,
+  templateVersions,
+  type GuestRow,
+  type InvitationRow,
+} from "@/lib/db/schema";
+import { assetUrl } from "@/features/assets/urls";
 import type { Database } from "@/lib/db/types";
 import {
   applyDefaults,
@@ -1024,6 +1031,104 @@ const EMPTY_RESOLVED_DOCUMENT: ResolvedDocument = {
   ok: true,
 };
 
+const ASSET_ID_REGEX = /^[0-9a-f-]{36}$/i;
+
+export function extractGroomBrideNames(data: Record<string, unknown>, fallbackTitle: string): string {
+  const groom =
+    (typeof data["groom_nickname"] === "string" && data["groom_nickname"].trim()) ||
+    (typeof data["groom_name"] === "string" && data["groom_name"].trim()) ||
+    (typeof data["nama_pria"] === "string" && data["nama_pria"].trim()) ||
+    (typeof data["mempelai_pria"] === "string" && data["mempelai_pria"].trim()) ||
+    "";
+  const bride =
+    (typeof data["bride_nickname"] === "string" && data["bride_nickname"].trim()) ||
+    (typeof data["bride_name"] === "string" && data["bride_name"].trim()) ||
+    (typeof data["nama_wanita"] === "string" && data["nama_wanita"].trim()) ||
+    (typeof data["mempelai_wanita"] === "string" && data["mempelai_wanita"].trim()) ||
+    "";
+  const couple =
+    (typeof data["couple_names"] === "string" && data["couple_names"].trim()) ||
+    (typeof data["nama_mempelai"] === "string" && data["nama_mempelai"].trim()) ||
+    "";
+
+  if (groom && bride) {
+    return `${groom} & ${bride}`;
+  }
+  if (couple) {
+    return couple;
+  }
+  const cleaned = fallbackTitle.split(/\s*[-—–|·]\s*/)[0]?.trim();
+  return cleaned || fallbackTitle;
+}
+
+export function extractEventDateFormatted(data: Record<string, unknown>): string | undefined {
+  const dateStr =
+    (typeof data["event_date_formatted"] === "string" && data["event_date_formatted"].trim()) ||
+    (typeof data["event_date"] === "string" && data["event_date"].trim()) ||
+    (typeof data["tanggal_acara"] === "string" && data["tanggal_acara"].trim()) ||
+    (typeof data["akad_date"] === "string" && data["akad_date"].trim()) ||
+    (typeof data["resepsi_date"] === "string" && data["resepsi_date"].trim()) ||
+    (typeof data["wedding_date"] === "string" && data["wedding_date"].trim()) ||
+    "";
+
+  if (!dateStr) return undefined;
+
+  const indonesianMonths =
+    /januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember/i;
+  if (indonesianMonths.test(dateStr)) {
+    return dateStr;
+  }
+
+  const parsed = new Date(dateStr);
+  if (!Number.isNaN(parsed.getTime())) {
+    try {
+      return new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(parsed);
+    } catch {
+      return dateStr;
+    }
+  }
+
+  return dateStr;
+}
+
+export function extractCoverPhotoUrl(data: Record<string, unknown>): string | undefined {
+  const direct =
+    (typeof data["cover_photo"] === "string" && data["cover_photo"].trim()) ||
+    (typeof data["meta_image"] === "string" && data["meta_image"].trim()) ||
+    (typeof data["photo_mempelai"] === "string" && data["photo_mempelai"].trim()) ||
+    (typeof data["couple_photo"] === "string" && data["couple_photo"].trim()) ||
+    (typeof data["header_photo"] === "string" && data["header_photo"].trim());
+
+  if (direct) {
+    if (ASSET_ID_REGEX.test(direct)) return assetUrl(direct);
+    return direct;
+  }
+
+  const galleryItems = data["gallery.items"] || data["gallery_items"];
+  if (Array.isArray(galleryItems) && galleryItems.length > 0) {
+    const first = galleryItems[0];
+    if (typeof first === "object" && first !== null) {
+      const rec = first as Record<string, unknown>;
+      if (typeof rec.assetId === "string" && ASSET_ID_REGEX.test(rec.assetId.trim())) {
+        return assetUrl(rec.assetId.trim());
+      }
+      if (typeof rec.src === "string" && rec.src.trim()) {
+        return rec.src.trim();
+      }
+      if (typeof rec.url === "string" && rec.url.trim()) {
+        return rec.url.trim();
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export async function getPublicInvitation(
   db: Database,
   input: { slug: string; guestToken?: string; guestName?: string; allowDraft?: boolean },
@@ -1032,14 +1137,33 @@ export async function getPublicInvitation(
   const row = await findInvitationBySlug(db, input.slug);
   if (!row || row.status === "archived") return null;
 
+  let templateThumbnailUrl: string | null = null;
+  if (row.templateVersionId) {
+    try {
+      const [tpl] = await db
+        .select({
+          thumbnailUrl: templates.thumbnailUrl,
+          previewMockupUrl: templates.previewMockupUrl,
+        })
+        .from(templateVersions)
+        .innerJoin(templates, eq(templates.id, templateVersions.templateId))
+        .where(eq(templateVersions.id, row.templateVersionId))
+        .limit(1);
+      if (tpl) {
+        templateThumbnailUrl = tpl.thumbnailUrl || tpl.previewMockupUrl || null;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // Check if invitation has expired or was manually closed
   const isClosed = isInvitationExpiredOrClosed(row);
   if (isClosed && row.status === "published" && !input.allowDraft) {
-    const groomName =
-      (row.data.groom_name as string) || (row.data.groom_nickname as string) || "";
-    const brideName =
-      (row.data.bride_name as string) || (row.data.bride_nickname as string) || "";
-    const groomBrideNames = groomName && brideName ? `${groomName} & ${brideName}` : undefined;
+    const effectiveData = row.data || {};
+    const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
+    const eventDateFormatted = extractEventDateFormatted(effectiveData);
+    const coverPhotoUrl = extractCoverPhotoUrl(effectiveData);
 
     return {
       title: row.title,
@@ -1051,7 +1175,10 @@ export async function getPublicInvitation(
       closedReason: row.isManuallyClosed ? "manual" : "expired",
       publishedAt: row.publishedAt,
       expiresAt: row.expiresAt,
-      ...(groomBrideNames && { groomBrideNames }),
+      groomBrideNames,
+      eventDateFormatted,
+      coverPhotoUrl,
+      templateThumbnailUrl,
     };
   }
 
@@ -1065,6 +1192,11 @@ export async function getPublicInvitation(
         input,
       );
       const document = parseDocumentOrThrow(migrateDocument(snapshot.document));
+      const effectiveData = snapshot.data || {};
+      const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
+      const eventDateFormatted = extractEventDateFormatted(effectiveData);
+      const coverPhotoUrl = extractCoverPhotoUrl(effectiveData);
+
       return {
         title: row.title,
         slug: row.slug,
@@ -1077,6 +1209,10 @@ export async function getPublicInvitation(
         isClosed: false,
         publishedAt: row.publishedAt,
         expiresAt: row.expiresAt,
+        groomBrideNames,
+        eventDateFormatted,
+        coverPhotoUrl,
+        templateThumbnailUrl,
       };
     }
   }
@@ -1090,6 +1226,11 @@ export async function getPublicInvitation(
         row.id,
         input,
       );
+      const effectiveData = row.data || {};
+      const groomBrideNames = extractGroomBrideNames(effectiveData, row.title);
+      const eventDateFormatted = extractEventDateFormatted(effectiveData);
+      const coverPhotoUrl = extractCoverPhotoUrl(effectiveData);
+
       return {
         title: row.title,
         slug: row.slug,
@@ -1102,6 +1243,10 @@ export async function getPublicInvitation(
         isClosed,
         publishedAt: row.publishedAt,
         expiresAt: row.expiresAt,
+        groomBrideNames,
+        eventDateFormatted,
+        coverPhotoUrl,
+        templateThumbnailUrl,
       };
     } catch {
       return null;

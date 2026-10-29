@@ -1705,19 +1705,18 @@ function GalleryVisual({
 }) {
   const { w, h } = element.frame;
   const { color } = colors(element, tokens);
-  const variant = element.style.variant || "masonry-flow";
+  const variant = element.style.variant || "square-grid";
   const props = element.props as Record<string, unknown>;
   const images = parseGalleryItems(props.items, variables);
   const radius =
     element.style.radius ??
-    (variant === "carousel-slider" ? 16 : variant === "square-grid" ? 10 : 12);
+    (variant === "carousel-slider" ? 16 : 10);
   const pad = 12;
 
   const isSlider =
     variant === "carousel-slider" ||
     variant.includes("slider") ||
     variant.includes("carousel");
-  const isSquare = variant === "square-grid";
 
   // Empty state preview
   if (images.length === 0) {
@@ -1753,7 +1752,7 @@ function GalleryVisual({
               ));
             })()}
           </>
-        ) : isSquare ? (
+        ) : (
           (() => {
             const gap = 8;
             const tileW = (w - pad * 2 - gap) / 2;
@@ -1796,53 +1795,6 @@ function GalleryVisual({
                     />
                   </>
                 ) : null}
-              </>
-            );
-          })()
-        ) : (
-          /* Masonry flow empty slots */
-          (() => {
-            const gap = 8;
-            const tileW = (w - pad * 2 - gap) / 2;
-            const usableH = h - pad * 2;
-            const hL1 = usableH * 0.58;
-            const hL2 = usableH * 0.38;
-            const hR1 = usableH * 0.42;
-            const hR2 = usableH * 0.54;
-            return (
-              <>
-                <CanvasEmptySlot
-                  x={pad}
-                  y={pad}
-                  width={tileW}
-                  height={hL1}
-                  radius={radius}
-                  color={color}
-                />
-                <CanvasEmptySlot
-                  x={pad + tileW + gap}
-                  y={pad}
-                  width={tileW}
-                  height={hR1}
-                  radius={radius}
-                  color={color}
-                />
-                <CanvasEmptySlot
-                  x={pad}
-                  y={pad + hL1 + gap}
-                  width={tileW}
-                  height={hL2}
-                  radius={radius}
-                  color={color}
-                />
-                <CanvasEmptySlot
-                  x={pad + tileW + gap}
-                  y={pad + hR1 + gap}
-                  width={tileW}
-                  height={hR2}
-                  radius={radius}
-                  color={color}
-                />
               </>
             );
           })()
@@ -1941,7 +1893,7 @@ function GalleryVisual({
             </>
           );
         })()
-      ) : isSquare ? (
+      ) : (
         (() => {
           const gap = 8;
           const tileW = (w - pad * 2 - gap) / 2;
@@ -1976,76 +1928,6 @@ function GalleryVisual({
                         <Text
                           width={tileW}
                           y={tileH / 2 - 10}
-                          text={`+${images.length - 3}`}
-                          fontSize={18}
-                          fontStyle="bold"
-                          fill="#ffffff"
-                          align="center"
-                        />
-                      </Group>
-                    )}
-                  </Group>
-                );
-              })}
-              {images.length > 4 && (
-                <Group x={w / 2 - 50} y={h - pad - 24}>
-                  <Rect width={100} height={22} cornerRadius={11} fill={color} opacity={0.12} />
-                  <Text
-                    width={100}
-                    y={4}
-                    text={`Lihat Semua (${images.length})`}
-                    fontSize={9}
-                    fontStyle="bold"
-                    fill={color}
-                    align="center"
-                  />
-                </Group>
-              )}
-            </>
-          );
-        })()
-      ) : (
-        /* Masonry Flow layout */
-        (() => {
-          const gap = 8;
-          const tileW = (w - pad * 2 - gap) / 2;
-          const usableH = h - pad * 2 - (images.length > 4 ? 26 : 0);
-          const hL1 = usableH * 0.58;
-          const hL2 = usableH * 0.38;
-          const hR1 = usableH * 0.42;
-          const hR2 = usableH * 0.54;
-
-          const slots = [
-            { x: pad, y: pad, width: tileW, height: hL1 },
-            { x: pad + tileW + gap, y: pad, width: tileW, height: hR1 },
-            { x: pad, y: pad + hL1 + gap, width: tileW, height: hL2 },
-            { x: pad + tileW + gap, y: pad, width: tileW, height: hR2 },
-          ];
-
-          return (
-            <>
-              {slots.map((slot, idx) => {
-                const img = images[idx];
-                if (!img) return null;
-                const isLastWithMore = idx === 3 && images.length > 4;
-
-                return (
-                  <Group key={idx}>
-                    <CanvasGalleryPhoto
-                      x={slot.x}
-                      y={slot.y}
-                      width={slot.width}
-                      height={slot.height}
-                      radius={radius}
-                      color={color}
-                      src={img.src}
-                    />
-                    {isLastWithMore && (
-                      <Group x={slot.x} y={slot.y}>
-                        <Rect width={slot.width} height={slot.height} cornerRadius={radius} fill="#000" opacity={0.6} />
-                        <Text
-                          width={slot.width}
-                          y={slot.height / 2 - 10}
                           text={`+${images.length - 3}`}
                           fontSize={18}
                           fontStyle="bold"
