@@ -14,6 +14,7 @@ interface PackageSummary {
   name: string;
   sectionsCount: number;
   elementsCount: number;
+  variablesCount: number;
   assetsCount: number;
   versionsCount: number;
   fileName: string;
@@ -80,6 +81,7 @@ export function ImportTemplateDialog({ workspaceId }: { workspaceId: string }) {
         if (Array.isArray(s.elements)) totalElements += s.elements.length;
       }
 
+      const variables = Array.isArray(parsed.document.variables) ? parsed.document.variables : [];
       const assets = Array.isArray(parsed.assets) ? parsed.assets : [];
       const versions = Array.isArray(parsed.versions) ? parsed.versions : [];
 
@@ -90,6 +92,7 @@ export function ImportTemplateDialog({ workspaceId }: { workspaceId: string }) {
         name: parsed.name,
         sectionsCount: sections.length,
         elementsCount: totalElements,
+        variablesCount: variables.length,
         assetsCount: assets.length,
         versionsCount: versions.length,
         fileName: file.name,
@@ -274,6 +277,12 @@ export function ImportTemplateDialog({ workspaceId }: { workspaceId: string }) {
                       <span className={styles.packageStatLabel}>Objek / Elemen</span>
                       <strong className={styles.packageStatVal}>
                         {summary.elementsCount} Elemen
+                      </strong>
+                    </div>
+                    <div className={styles.packageStatBox}>
+                      <span className={styles.packageStatLabel}>Variabel Data</span>
+                      <strong className={styles.packageStatVal}>
+                        {summary.variablesCount} Variabel
                       </strong>
                     </div>
                     <div className={styles.packageStatBox}>

@@ -58,6 +58,21 @@ export async function exportTemplatePackage(
 
   const zip = new JSZip();
   const assetIds = extractAssetIdsFromDocument(template.document);
+
+  // Check if thumbnailUrl or previewMockupUrl points to a local asset
+  if (template.thumbnailUrl) {
+    const match = template.thumbnailUrl.match(
+      /\/api\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+    );
+    if (match?.[1]) assetIds.add(match[1].toLowerCase());
+  }
+  if (template.previewMockupUrl) {
+    const match = template.previewMockupUrl.match(
+      /\/api\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+    );
+    if (match?.[1]) assetIds.add(match[1].toLowerCase());
+  }
+
   const assetEntries: TemplatePackageAssetEntry[] = [];
 
   for (const assetId of assetIds) {
@@ -88,6 +103,15 @@ export async function exportTemplatePackage(
     exportVersion: 1,
     exportedAt: new Date().toISOString(),
     name: template.name,
+    description: template.description ?? undefined,
+    category: template.category ?? undefined,
+    style: template.style ?? undefined,
+    tier: template.tier ?? undefined,
+    price: template.price ?? undefined,
+    tags: Array.isArray(template.tags) ? template.tags : [],
+    metadata: (template.metadata as Record<string, unknown>) ?? {},
+    thumbnailUrl: template.thumbnailUrl ?? null,
+    previewMockupUrl: template.previewMockupUrl ?? null,
     document: template.document,
     versions: template.versions.map((v) => ({
       versionNo: v.versionNo,

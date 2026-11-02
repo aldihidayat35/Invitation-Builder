@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import JSZip from "jszip";
+import { eq } from "drizzle-orm";
+import { templates } from "@/lib/db/schema";
 import { createMigratedDb } from "../helpers/db";
 import { pngBytes } from "../helpers/images";
 import { makeWorld } from "../helpers/world";
@@ -30,6 +32,7 @@ import {
   extractAssetIdsFromDocument,
   remapAssetIdsInDocument,
 } from "@/features/templates/package";
+import { createAllFeaturesShowcaseDocument } from "@/features/invitations/demo-presets";
 import { exportTemplatePackage } from "@/features/templates/export";
 import {
   TemplateImportError,
@@ -386,5 +389,143 @@ describe("Template Export & Import Integration (FR-TPL-PKG)", () => {
     expect(importedTpl.document.design.audio?.enabled).toBe(true);
     expect(importedTpl.document.design.audio?.src).not.toBe(`/api/assets/${audioInit.assetId}`);
     expect(importedTpl.document.design.audio?.src).toContain("/api/assets/");
+  });
+
+  it("exports and imports a comprehensive template (all features, layout, design, variables, widgets, animations, actions)", async () => {
+    // 1. Create a rich document using createAllFeaturesShowcaseDocument()
+    const showcaseDoc = createAllFeaturesShowcaseDocument();
+
+    // Verify initial structure
+    expect(showcaseDoc.sections.length).toBeGreaterThan(5);
+    expect(showcaseDoc.variables.length).toBeGreaterThan(15);
+    expect(showcaseDoc.design.tokens?.fonts).toBeDefined();
+
+    // 2. Create template in Workspace A with this showcase document
+    const templateA = await createTemplate(db(), world.ownerA, {
+      workspaceId: world.wsA.id,
+      name: "Grand Showcase Template",
+      document: showcaseDoc,
+    });
+
+    // Set catalog metadata
+    await db()
+      .update(templates)
+      .set({
+        description: "A grand showcase template with all widgets, variables, and styling",
+        category: "wedding",
+        style: "modern_minimalist",
+        tier: "premium",
+        price: 150000,
+        tags: ["luxury", "modern", "wedding"],
+        metadata: {
+          demoInvitationSlug: "grand-showcase",
+          colorPalette: [{ name: "Gold", hex: "#d4af37", isPrimary: true }],
+        },
+      })
+      .where(eq(templates.id, templateA.id));
+
+    // Publish it
+    await publishTemplate(
+      db(),
+      world.ownerA,
+      { templateId: templateA.id, expectedRevision: 1 },
+    );
+
+    // 3. Export package
+    const exportedPkg = await exportTemplatePackage(db(), storage, world.ownerA, templateA.id);
+    expect(exportedPkg.buffer.byteLength).toBeGreaterThan(0);
+
+    // 4. Import into Workspace B
+    const importResult = await importTemplatePackage(
+      db(),
+      storage,
+      world.ownerB,
+      world.wsB.id,
+      exportedPkg.buffer,
+    );
+    expect(importResult.templateId).toBeDefined();
+    expect(importResult.name).toBe("Grand Showcase Template");
+
+    // 5. Deep verification of imported template
+    const importedTpl = await getTemplate(db(), world.ownerB, importResult.templateId);
+    const importedDoc = importedTpl.document;
+
+    // Metadata preservation verification
+    expect(importedTpl.description).toBe("A grand showcase template with all widgets, variables, and styling");
+    expect(importedTpl.category).toBe("wedding");
+    expect(importedTpl.style).toBe("modern_minimalist");
+    expect(importedTpl.tier).toBe("premium");
+    expect(importedTpl.price).toBe(150000);
+    expect(importedTpl.tags).toEqual(["luxury", "modern", "wedding"]);
+    expect((importedTpl.metadata as Record<string, unknown>)?.demoInvitationSlug).toBe("grand-showcase");
+
+    // A. DESIGN VERIFICATION
+    expect(importedDoc.design.baseWidth).toBe(showcaseDoc.design.baseWidth);
+    expect(importedDoc.design.tokens).toEqual(showcaseDoc.design.tokens);
+    expect(importedDoc.design.background).toEqual(showcaseDoc.design.background);
+    expect(importedDoc.design.audio).toEqual(showcaseDoc.design.audio);
+
+    // B. LAYOUT & SECTIONS VERIFICATION
+    expect(importedDoc.sections.length).toBe(showcaseDoc.sections.length);
+    for (let sIdx = 0; sIdx < showcaseDoc.sections.length; sIdx++) {
+      const origSec = showcaseDoc.sections[sIdx]!;
+      const impSec = importedDoc.sections[sIdx]!;
+
+      expect(impSec.id).toBe(origSec.id);
+      expect(impSec.name).toBe(origSec.name);
+      expect(impSec.baseHeight).toBe(origSec.baseHeight);
+      expect(impSec.background).toEqual(origSec.background);
+      expect(impSec.overflow).toBe(origSec.overflow);
+      expect(impSec.visible).toBe(origSec.visible);
+
+      // Elements inside section
+      expect(impSec.elements.length).toBe(origSec.elements.length);
+      for (let eIdx = 0; eIdx < origSec.elements.length; eIdx++) {
+        const origEl = origSec.elements[eIdx]!;
+        const impEl = impSec.elements[eIdx]!;
+
+        expect(impEl.id).toBe(origEl.id);
+        expect(impEl.type).toBe(origEl.type);
+        expect(impEl.frame).toEqual(origEl.frame);
+        expect(impEl.visible).toBe(origEl.visible);
+        expect(impEl.locked).toBe(origEl.locked);
+        expect(impEl.animations).toEqual(origEl.animations);
+        expect(impEl.action).toEqual(origEl.action);
+
+        if (origEl.type === "text" && impEl.type === "text") {
+          expect(impEl.content).toEqual(origEl.content);
+          expect(impEl.style).toEqual(origEl.style);
+        } else if (origEl.type === "shape" && impEl.type === "shape") {
+          expect(impEl.shapeType).toBe(origEl.shapeType);
+          expect(impEl.style).toEqual(origEl.style);
+        } else if (origEl.type === "widget" && impEl.type === "widget") {
+          expect(impEl.widgetType).toBe(origEl.widgetType);
+          expect(impEl.widgetVersion).toBe(origEl.widgetVersion);
+          expect(impEl.style).toEqual(origEl.style);
+          expect(impEl.props).toEqual(origEl.props);
+        }
+      }
+    }
+
+    // C. VARIABLES VERIFICATION
+    expect(importedDoc.variables.length).toBe(showcaseDoc.variables.length);
+    for (let vIdx = 0; vIdx < showcaseDoc.variables.length; vIdx++) {
+      const origVar = showcaseDoc.variables[vIdx]!;
+      const impVar = importedDoc.variables[vIdx]!;
+
+      expect(impVar.key).toBe(origVar.key);
+      expect(impVar.type).toBe(origVar.type);
+      expect(impVar.label).toBe(origVar.label);
+      expect(impVar.required).toBe(origVar.required);
+      if ("default" in origVar && "default" in impVar) {
+        expect(impVar.default).toEqual(origVar.default);
+      }
+      if ("options" in origVar && "options" in impVar) {
+        expect(impVar.options).toEqual(origVar.options);
+      }
+      if ("fields" in origVar && "fields" in impVar) {
+        expect(impVar.fields).toEqual(origVar.fields);
+      }
+    }
   });
 });

@@ -4,7 +4,7 @@
  * and the editor. Runtime React components live in `./runtime`.
  */
 import { z } from "zod";
-import { datetimeValueSchema } from "@/lib/schema";
+import { coordinateSchema, datetimeValueSchema } from "@/lib/schema";
 import { defineProp, type WidgetDefinition } from "./registry";
 import { getDefaultWidgetStyle } from "./widget-styles";
 import {
@@ -34,6 +34,7 @@ export const mapWidget: WidgetDefinition = {
   },
   defaultStyle: getDefaultWidgetStyle(MAP_WIDGET_TYPE),
   props: {
+    coordinate: defineProp("coordinate", "Koordinat", coordinateSchema.optional()),
     latitude: defineProp("number", "Latitude Lokasi", z.number().optional()),
     longitude: defineProp("number", "Longitude Lokasi", z.number().optional()),
     address: defineProp("text", "Alamat Lokasi Teks", z.string().max(300).optional()),

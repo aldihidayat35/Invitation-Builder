@@ -1,6 +1,8 @@
 import "server-only";
 import JSZip from "jszip";
+import { eq } from "drizzle-orm";
 import type { Database } from "@/lib/db/types";
+import { templates } from "@/lib/db/schema";
 import type { StorageDriver } from "@/lib/storage";
 import type { Actor } from "@/lib/auth/authorization";
 import { requireCapability } from "@/lib/auth/authorization";
@@ -123,7 +125,43 @@ export async function importTemplatePackage(
     document: remappedDocument,
   });
 
-  // 5. Restore published versions if available in manifest
+  // 5. Restore catalog metadata if available in manifest
+  let remappedThumbnailUrl = manifest.thumbnailUrl;
+  let remappedPreviewMockupUrl = manifest.previewMockupUrl;
+
+  if (remappedThumbnailUrl) {
+    for (const [oldId, newId] of Object.entries(assetIdMap)) {
+      const escaped = oldId.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      remappedThumbnailUrl = remappedThumbnailUrl.replace(new RegExp(escaped, "gi"), newId);
+    }
+  }
+  if (remappedPreviewMockupUrl) {
+    for (const [oldId, newId] of Object.entries(assetIdMap)) {
+      const escaped = oldId.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      remappedPreviewMockupUrl = remappedPreviewMockupUrl.replace(new RegExp(escaped, "gi"), newId);
+    }
+  }
+
+  const updateMeta: Record<string, unknown> = {
+    updatedAt: new Date(),
+  };
+  if (manifest.description !== undefined) updateMeta.description = manifest.description;
+  if (manifest.category !== undefined) updateMeta.category = manifest.category;
+  if (manifest.style !== undefined) updateMeta.style = manifest.style;
+  if (manifest.tier !== undefined) updateMeta.tier = manifest.tier;
+  if (manifest.price !== undefined) updateMeta.price = manifest.price;
+  if (manifest.tags && manifest.tags.length > 0) updateMeta.tags = manifest.tags;
+  if (manifest.metadata && Object.keys(manifest.metadata).length > 0) {
+    updateMeta.metadata = manifest.metadata;
+  }
+  if (remappedThumbnailUrl !== undefined) updateMeta.thumbnailUrl = remappedThumbnailUrl;
+  if (remappedPreviewMockupUrl !== undefined) updateMeta.previewMockupUrl = remappedPreviewMockupUrl;
+
+  if (Object.keys(updateMeta).length > 1) {
+    await db.update(templates).set(updateMeta).where(eq(templates.id, created.id));
+  }
+
+  // 6. Restore published versions if available in manifest
   let importedVersionsCount = 0;
   if (manifest.versions && manifest.versions.length > 0) {
     try {

@@ -26,6 +26,14 @@ export const templatePackageManifestSchema = z.strictObject({
   exportedAt: z.string(),
   name: z.string().min(1).max(120),
   description: z.string().optional(),
+  category: z.string().optional(),
+  style: z.string().optional(),
+  tier: z.string().optional(),
+  price: z.number().int().nonnegative().optional(),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+  thumbnailUrl: z.string().nullable().optional(),
+  previewMockupUrl: z.string().nullable().optional(),
   document: canonicalDocumentSchema,
   versions: z.array(templatePackageVersionEntrySchema).default([]),
   assets: z.array(templatePackageAssetEntrySchema).default([]),
@@ -49,15 +57,21 @@ export function extractAssetIdsFromDocument(doc: CanonicalDocument): Set<string>
 
     const obj = val as Record<string, unknown>;
 
-    if (typeof obj.assetId === "string" && UUID_REGEX.test(obj.assetId)) {
-      assetIds.add(obj.assetId.toLowerCase());
-    }
-
-    for (const v of Object.values(obj)) {
-      if (typeof v === "string") {
-        const match = v.match(/\/api\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
-        if (match?.[1]) {
-          assetIds.add(match[1].toLowerCase());
+    for (const [k, v] of Object.entries(obj)) {
+      if (
+        (k === "assetId" || k.endsWith("AssetId") || k === "asset_id") &&
+        typeof v === "string" &&
+        UUID_REGEX.test(v)
+      ) {
+        assetIds.add(v.toLowerCase());
+      } else if (typeof v === "string") {
+        const matches = v.matchAll(
+          /\/api\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi,
+        );
+        for (const match of matches) {
+          if (match[1]) {
+            assetIds.add(match[1].toLowerCase());
+          }
         }
       } else if (typeof v === "object" && v !== null) {
         scan(v);
@@ -92,14 +106,17 @@ export function remapAssetIdsInDocument(
     const copy: Record<string, unknown> = {};
 
     for (const [k, v] of Object.entries(obj)) {
-      if (k === "assetId" && typeof v === "string") {
+      if (
+        (k === "assetId" || k.endsWith("AssetId") || k === "asset_id") &&
+        typeof v === "string"
+      ) {
         const lower = v.toLowerCase();
         copy[k] = lowerMap[lower] ?? v;
       } else if (typeof v === "string") {
         let text = v;
-        for (const [oldId, newId] of Object.entries(mapObj)) {
-          text = text.replaceAll(oldId, newId);
-          text = text.replaceAll(`/api/assets/${oldId}`, `/api/assets/${newId}`);
+        for (const [oldId, newId] of Object.entries(lowerMap)) {
+          const escaped = oldId.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+          text = text.replace(new RegExp(escaped, "gi"), newId);
         }
         copy[k] = text;
       } else if (typeof v === "object" && v !== null) {
