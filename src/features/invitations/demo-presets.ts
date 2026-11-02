@@ -2238,3 +2238,1383 @@ export function createAllFeaturesShowcaseDocument(): CanonicalDocument {
   });
 }
 
+/**
+ * Built-in Preset: Jawa Emerald Botanical ("The Wedding of Vidi & Hening").
+ *
+ * Rich multi-section traditional Javanese wedding invitation with botanical emerald theme,
+ * traditional Joglo illustration, love story timeline, interactive widgets (countdown,
+ * map, gallery slider, RSVP, wishes guestbook, digital bank gift, live streaming banner),
+ * and dynamic animations (plantSway, float, pulse, slideUp, fadeIn).
+ */
+export function createJawaEmeraldBotanicalDocument(): CanonicalDocument {
+  return canonicalDocumentSchema.parse({
+    schemaVersion: 1,
+    design: {
+      baseWidth: 390,
+      tokens: {
+        colors: {
+          emeraldDark: "#0B2E2B",
+          emerald: "#134E4A",
+          emeraldLight: "#1F6B66",
+          gold: "#C59B27",
+          goldLight: "#F5EBC7",
+          goldBorder: "#D8C39D",
+          creamBg: "#FCF8F2",
+          surfaceWhite: "#FFFDF9",
+          textDark: "#1B332B",
+          textMuted: "#6B7C75",
+        },
+        fonts: {
+          display: "Cinzel",
+          body: "Plus Jakarta Sans",
+        },
+      },
+      background: {
+        color: "#FCF8F2",
+      },
+      audio: {
+        enabled: true,
+        src: "/audio/eastern-thought.mp3",
+        title: "Gending Jawa & Romantic Orchestra",
+        position: "bottom-right",
+        loop: true,
+        autoplayOnOpen: true,
+      },
+    },
+    variables: [
+      {
+        key: "guest.name",
+        type: "guest-context",
+        label: "Nama Tamu Undangan",
+        description: "Nama penerima undangan yang otomatis terisi dari link unik tamu",
+        required: false,
+      },
+      {
+        key: "couple.groomName",
+        type: "text",
+        label: "Nama Panggilan Pengantin Pria",
+        default: "Vidi",
+        required: true,
+      },
+      {
+        key: "couple.brideName",
+        type: "text",
+        label: "Nama Panggilan Pengantin Wanita",
+        default: "Hening",
+        required: true,
+      },
+      {
+        key: "couple.groomFullName",
+        type: "text",
+        label: "Nama Lengkap Pengantin Pria",
+        default: "Vidi Pratama, S.T.",
+        required: true,
+      },
+      {
+        key: "couple.brideFullName",
+        type: "text",
+        label: "Nama Lengkap Pengantin Wanita",
+        default: "Hening Lestari, S.M.",
+        required: true,
+      },
+      {
+        key: "couple.groomParents",
+        type: "text",
+        label: "Orang Tua Pengantin Pria",
+        default: "Putra dari Bapak Suryo Wicaksono & Ibu Ratna Mulyani",
+        required: true,
+      },
+      {
+        key: "couple.brideParents",
+        type: "text",
+        label: "Orang Tua Pengantin Wanita",
+        default: "Putri dari Bapak Agus Santoso & Ibu Dewi Marwati",
+        required: true,
+      },
+      {
+        key: "event.weddingDate",
+        type: "datetime",
+        label: "Waktu & Tanggal Resepsi Utama",
+        default: {
+          local: "2027-05-05T08:00",
+          timeZone: "Asia/Jakarta",
+        },
+        required: true,
+      },
+      {
+        key: "event.dateDisplay",
+        type: "text",
+        label: "Teks Tanggal Acara",
+        default: "Minggu, 5 Mei 2027",
+        required: true,
+      },
+      {
+        key: "event.locationGeneral",
+        type: "text",
+        label: "Lokasi Umum Acara",
+        default: "Hotel Shangri-La, Jakarta",
+        required: true,
+      },
+      {
+        key: "event.akadTime",
+        type: "text",
+        label: "Waktu Akad Nikah",
+        default: "08.00 - 09.00 WIB",
+        required: true,
+      },
+      {
+        key: "event.akadVenue",
+        type: "text",
+        label: "Tempat Akad Nikah",
+        default: "Hotel Shangri-La, Ruang Borobudur",
+        required: true,
+      },
+      {
+        key: "event.resepsiTime",
+        type: "text",
+        label: "Waktu Resepsi",
+        default: "11.00 - 14.00 WIB",
+        required: true,
+      },
+      {
+        key: "event.resepsiVenue",
+        type: "text",
+        label: "Tempat Resepsi",
+        default: "Hotel Shangri-La, Ballroom Nusantara",
+        required: true,
+      },
+      {
+        key: "event.location.address",
+        type: "text",
+        label: "Alamat Lengkap Google Maps",
+        default: "Hotel Shangri-La, Jl. Jend. Sudirman Kav. 1, Karet Tengsin, Tanah Abang, Jakarta Pusat",
+        required: true,
+      },
+      {
+        key: "event.location.lat",
+        type: "number",
+        label: "Latitude Peta Lokasi",
+        default: -6.2038,
+        required: true,
+      },
+      {
+        key: "event.location.lng",
+        type: "number",
+        label: "Longitude Peta Lokasi",
+        default: 106.8227,
+        required: true,
+      },
+      {
+        key: "story.quote",
+        type: "text",
+        label: "Kutipan / Catatan Kisah Cinta",
+        default: "Dari pertemuan yang sederhana, tumbuh cerita, doa, dan keyakinan untuk melangkah bersama dalam ikatan suci.",
+        required: false,
+      },
+      {
+        key: "gift.bank",
+        type: "text",
+        label: "Nama Bank (Utama)",
+        default: "BCA",
+        required: true,
+      },
+      {
+        key: "gift.accountNumber",
+        type: "text",
+        label: "Nomor Rekening (Utama)",
+        default: "1234567890",
+        required: true,
+      },
+      {
+        key: "gift.accountName",
+        type: "text",
+        label: "Atas Nama Rekening (Utama)",
+        default: "Vidi Pratama",
+        required: true,
+      },
+      {
+        key: "gift.bankLogo",
+        type: "text",
+        label: "URL Logo Bank (Utama)",
+        default: "/images/banks/bca.svg",
+        required: false,
+      },
+      {
+        key: "streaming.youtubeUrl",
+        type: "url",
+        label: "Tautan YouTube Live Streaming",
+        default: "https://youtube.com/@VidiHeningWedding",
+        required: false,
+      },
+    ],
+    sections: [
+      // 0. Cover Pembuka (Opening Screen)
+      {
+        id: "sec_jb_cover",
+        name: "Cover Pembuka",
+        baseHeight: 680,
+        background: { color: "#134E4A" },
+        elements: [
+          {
+            id: "el_jb_cover_subtitle",
+            type: "text",
+            frame: { x: 20, y: 70, w: 350, h: 25, rotation: 0 },
+            content: { segments: [{ text: "THE WEDDING OF" }] },
+            style: {
+              fontSize: 13,
+              letterSpacing: 4,
+              fontWeight: 600,
+              fontFamily: { token: "display" },
+              color: { token: "goldLight" },
+              textAlign: "center",
+            },
+            animations: {
+              enter: {
+                presetId: "fadeIn",
+                trigger: "onEnterViewport",
+                durationMs: 700,
+                delayMs: 100,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+          {
+            id: "el_jb_cover_title",
+            type: "text",
+            frame: { x: 20, y: 100, w: 350, h: 55, rotation: 0 },
+            content: {
+              segments: [
+                { bind: "couple.groomName", fallback: "Vidi" },
+                { text: " & " },
+                { bind: "couple.brideName", fallback: "Hening" },
+              ],
+            },
+            style: {
+              fontSize: 38,
+              fontWeight: 700,
+              fontFamily: { token: "display" },
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+            animations: {
+              enter: {
+                presetId: "zoomIn",
+                trigger: "onEnterViewport",
+                durationMs: 800,
+                delayMs: 200,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+          // Card Tamu
+          {
+            id: "el_jb_cover_card_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 35, y: 320, w: 320, h: 140, rotation: 0 },
+            style: {
+              fill: "#0B2E2B",
+              stroke: { color: "#C59B27", width: 1.5 },
+              radius: 16,
+              opacity: 0.95,
+            },
+            animations: {
+              enter: {
+                presetId: "slideUp",
+                trigger: "onEnterViewport",
+                durationMs: 700,
+                delayMs: 300,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+          {
+            id: "el_jb_cover_guest_prefix",
+            type: "text",
+            frame: { x: 45, y: 345, w: 300, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Kepada Yth. Bapak/Ibu/Saudara/i:" }] },
+            style: {
+              fontSize: 12,
+              color: "#F5EBC7",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_cover_guest_name",
+            type: "text",
+            frame: { x: 45, y: 375, w: 300, h: 40, rotation: 0 },
+            content: {
+              segments: [
+                { bind: "guest.name", fallback: "Tamu Undangan" },
+              ],
+            },
+            style: {
+              fontSize: 20,
+              fontWeight: 700,
+              fontFamily: { token: "display" },
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          // Tombol Buka Undangan
+          {
+            id: "el_jb_cover_btn_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 95, y: 490, w: 200, h: 48, rotation: 0 },
+            style: {
+              fill: "#C59B27",
+              radius: 24,
+              stroke: { color: "#F5EBC7", width: 1 },
+            },
+            action: {
+              type: "open_invitation",
+              hoverEffect: "scale",
+            },
+            animations: {
+              attention: {
+                presetId: "pulseSoft",
+                trigger: "whileVisible",
+                durationMs: 2000,
+                easing: "ease-in-out",
+                repeat: -1,
+                yoyo: true,
+                once: false,
+              },
+            },
+          },
+          {
+            id: "el_jb_cover_btn_text",
+            type: "text",
+            frame: { x: 95, y: 504, w: 200, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Buka Undangan" }] },
+            style: {
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+            action: {
+              type: "open_invitation",
+              hoverEffect: "scale",
+            },
+          },
+          {
+            id: "el_jb_cover_hint",
+            type: "text",
+            frame: { x: 20, y: 560, w: 350, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Sentuh untuk membuka undangan & memutar musik" }] },
+            style: {
+              fontSize: 11,
+              color: "#A2C4BD",
+              textAlign: "center",
+            },
+          },
+        ],
+      },
+
+      // 1. Header & Ilustrasi Pasangan Pengantin Joglo
+      {
+        id: "sec_jb_hero",
+        name: "Header & Ilustrasi Mempelai",
+        baseHeight: 520,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_hero_leaf_l",
+            type: "shape",
+            shapeType: "circle",
+            frame: { x: 15, y: 15, w: 40, h: 40, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              opacity: 0.8,
+            },
+            animations: {
+              attention: {
+                presetId: "plantSway",
+                trigger: "whileVisible",
+                durationMs: 3500,
+                easing: "ease-in-out",
+                repeat: -1,
+                yoyo: true,
+                anchor: "bottom-center",
+                intensity: 6,
+                once: false,
+              },
+            },
+          },
+          {
+            id: "el_jb_hero_leaf_r",
+            type: "shape",
+            shapeType: "circle",
+            frame: { x: 335, y: 15, w: 40, h: 40, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              opacity: 0.8,
+            },
+            animations: {
+              attention: {
+                presetId: "plantSway",
+                trigger: "whileVisible",
+                durationMs: 3500,
+                delayMs: 300,
+                easing: "ease-in-out",
+                repeat: -1,
+                yoyo: true,
+                anchor: "bottom-center",
+                intensity: 6,
+                once: false,
+              },
+            },
+          },
+          {
+            id: "el_jb_hero_subtitle",
+            type: "text",
+            frame: { x: 20, y: 25, w: 350, h: 25, rotation: 0 },
+            content: { segments: [{ text: "The Wedding of" }] },
+            style: {
+              fontSize: 14,
+              fontFamily: { token: "display" },
+              letterSpacing: 2,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_hero_title",
+            type: "text",
+            frame: { x: 20, y: 50, w: 350, h: 50, rotation: 0 },
+            content: {
+              segments: [
+                { bind: "couple.groomName", fallback: "Vidi" },
+                { text: " & " },
+                { bind: "couple.brideName", fallback: "Hening" },
+              ],
+            },
+            style: {
+              fontSize: 36,
+              fontWeight: 700,
+              fontFamily: { token: "display" },
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          // Divider Line
+          {
+            id: "el_jb_hero_divider",
+            type: "shape",
+            shapeType: "line",
+            frame: { x: 155, y: 105, w: 80, h: 2, rotation: 0 },
+            style: {
+              stroke: { color: "#C59B27", width: 2 },
+            },
+          },
+          // PhotoFrame Widget Mempelai Joglo
+          {
+            id: "wdg_jb_hero_illustration",
+            type: "widget",
+            widgetType: "photoFrame",
+            frame: { x: 25, y: 125, w: 340, h: 360, rotation: 0 },
+            props: {
+              image: "/images/template-jawa.jpg",
+              caption: "Vidi & Hening",
+              fit: "cover",
+              alt: "Ilustrasi Pengantin Adat Jawa & Rumah Joglo",
+            },
+            style: {
+              radius: 20,
+              color: "#C59B27",
+              background: "#FFFDF9",
+            },
+            animations: {
+              enter: {
+                presetId: "fadeIn",
+                trigger: "onEnterViewport",
+                durationMs: 800,
+                delayMs: 150,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+        ],
+      },
+
+      // 2. Salam & Doa Pembuka
+      {
+        id: "sec_jb_salam",
+        name: "Salam & Doa Pembuka",
+        baseHeight: 240,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_salam_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 25, y: 20, w: 340, h: 190, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1.5 },
+              radius: 18,
+            },
+            animations: {
+              enter: {
+                presetId: "fadeIn",
+                trigger: "onEnterViewport",
+                durationMs: 700,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+          {
+            id: "el_jb_salam_head",
+            type: "text",
+            frame: { x: 35, y: 45, w: 320, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Assalamu'alaikum Warahmatullahi Wabarakatuh" }] },
+            style: {
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_salam_body",
+            type: "text",
+            frame: { x: 45, y: 80, w: 300, h: 100, rotation: 0 },
+            content: {
+              segments: [
+                {
+                  text: "Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.",
+                },
+              ],
+            },
+            style: {
+              fontSize: 12,
+              lineHeight: 1.8,
+              color: "#33473F",
+              textAlign: "center",
+            },
+          },
+        ],
+      },
+
+      // 3. Countdown (Our Wedding Day)
+      {
+        id: "sec_jb_countdown",
+        name: "Hitung Mundur Acara",
+        baseHeight: 230,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_cd_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 110, y: 15, w: 170, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_cd_pill_txt",
+            type: "text",
+            frame: { x: 110, y: 22, w: 170, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Our Wedding Day" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          // Countdown Widget
+          {
+            id: "wdg_jb_countdown",
+            type: "widget",
+            widgetType: "countdown",
+            frame: { x: 25, y: 65, w: 340, h: 140, rotation: 0 },
+            props: {
+              targetDateTime: { bind: "event.weddingDate" },
+            },
+            style: {
+              color: "#134E4A",
+              background: "#FFFDF9",
+              radius: 16,
+            },
+            animations: {
+              enter: {
+                presetId: "slideUp",
+                trigger: "onEnterViewport",
+                durationMs: 700,
+                easing: "power2.out",
+                once: true,
+              },
+            },
+          },
+        ],
+      },
+
+      // 4. Mempelai (Bride & Groom)
+      {
+        id: "sec_jb_couple",
+        name: "Profil Mempelai",
+        baseHeight: 440,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_cp_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 120, y: 15, w: 150, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_cp_pill_txt",
+            type: "text",
+            frame: { x: 120, y: 22, w: 150, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Bride & Groom" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          // Groom Column
+          {
+            id: "el_jb_groom_name",
+            type: "text",
+            frame: { x: 20, y: 80, w: 165, h: 45, rotation: 0 },
+            content: { segments: [{ bind: "couple.groomFullName", fallback: "Vidi Pratama, S.T." }] },
+            style: {
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_groom_parents",
+            type: "text",
+            frame: { x: 20, y: 130, w: 165, h: 80, rotation: 0 },
+            content: { segments: [{ bind: "couple.groomParents", fallback: "Putra dari Bapak Suryo Wicaksono & Ibu Ratna Mulyani" }] },
+            style: {
+              fontSize: 11,
+              lineHeight: 1.6,
+              color: "#4A5D54",
+              textAlign: "center",
+            },
+          },
+          // Divider Tengah
+          {
+            id: "el_jb_couple_divider",
+            type: "shape",
+            shapeType: "line",
+            frame: { x: 194, y: 80, w: 2, h: 180, rotation: 0 },
+            style: {
+              stroke: { color: "#D8C39D", width: 1.5 },
+            },
+          },
+          // Bride Column
+          {
+            id: "el_jb_bride_name",
+            type: "text",
+            frame: { x: 205, y: 80, w: 165, h: 45, rotation: 0 },
+            content: { segments: [{ bind: "couple.brideFullName", fallback: "Hening Lestari, S.M." }] },
+            style: {
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_bride_parents",
+            type: "text",
+            frame: { x: 205, y: 130, w: 165, h: 80, rotation: 0 },
+            content: { segments: [{ bind: "couple.brideParents", fallback: "Putri dari Bapak Agus Santoso & Ibu Dewi Marwati" }] },
+            style: {
+              fontSize: 11,
+              lineHeight: 1.6,
+              color: "#4A5D54",
+              textAlign: "center",
+            },
+          },
+        ],
+      },
+
+      // 5. Kisah Cinta (Our Story)
+      {
+        id: "sec_jb_story",
+        name: "Kisah Cinta (Our Story)",
+        baseHeight: 320,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_st_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 125, y: 15, w: 140, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_st_pill_txt",
+            type: "text",
+            frame: { x: 125, y: 22, w: 140, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Our Story" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          // Milestone 1: Bertemu
+          {
+            id: "el_jb_ms1_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 25, y: 70, w: 105, h: 90, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1 },
+              radius: 12,
+            },
+          },
+          {
+            id: "el_jb_ms1_txt",
+            type: "text",
+            frame: { x: 25, y: 85, w: 105, h: 60, rotation: 0 },
+            content: { segments: [{ text: "🌱\nBertemu\n2020" }] },
+            style: {
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#134E4A",
+              textAlign: "center",
+              fontWeight: 600,
+            },
+          },
+          // Milestone 2: Berkisah
+          {
+            id: "el_jb_ms2_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 142, y: 70, w: 105, h: 90, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1 },
+              radius: 12,
+            },
+          },
+          {
+            id: "el_jb_ms2_txt",
+            type: "text",
+            frame: { x: 142, y: 85, w: 105, h: 60, rotation: 0 },
+            content: { segments: [{ text: "💛\nBerkisah\n2021 - 2026" }] },
+            style: {
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#134E4A",
+              textAlign: "center",
+              fontWeight: 600,
+            },
+          },
+          // Milestone 3: Bertunangan
+          {
+            id: "el_jb_ms3_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 260, y: 70, w: 105, h: 90, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1 },
+              radius: 12,
+            },
+          },
+          {
+            id: "el_jb_ms3_txt",
+            type: "text",
+            frame: { x: 260, y: 85, w: 105, h: 60, rotation: 0 },
+            content: { segments: [{ text: "💍\nBertunangan\nDesember 2026" }] },
+            style: {
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#134E4A",
+              textAlign: "center",
+              fontWeight: 600,
+            },
+          },
+          // Quote
+          {
+            id: "el_jb_story_quote",
+            type: "text",
+            frame: { x: 30, y: 190, w: 330, h: 80, rotation: 0 },
+            content: { segments: [{ bind: "story.quote", fallback: "Dari pertemuan yang sederhana, tumbuh cerita, doa, dan keyakinan untuk melangkah bersama dalam ikatan suci." }] },
+            style: {
+              fontSize: 12,
+              lineHeight: 1.8,
+              color: "#4A5D54",
+              textAlign: "center",
+            },
+          },
+        ],
+      },
+
+      // 6. Galeri Foto (Gallery Widget)
+      {
+        id: "sec_jb_gallery",
+        name: "Galeri Foto Prewedding",
+        baseHeight: 430,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_gal_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 115, y: 15, w: 160, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_gal_pill_txt",
+            type: "text",
+            frame: { x: 115, y: 22, w: 160, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Momen Bahagia" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "wdg_jb_gallery",
+            type: "widget",
+            widgetType: "gallery",
+            frame: { x: 25, y: 65, w: 340, h: 340, rotation: 0 },
+            props: {
+              title: "Galeri Foto",
+              layout: "slider",
+              items: [
+                { src: "/images/template-jawa.jpg", alt: "Kebersamaan Adat Jawa" },
+                { src: "/images/template-botanical.jpg", alt: "Momen Romantis Prewedding" },
+                { src: "/images/template-boho.jpg", alt: "Ikatan Kasih Vidi & Hening" },
+              ],
+            },
+            style: {
+              radius: 16,
+              background: "#FFFDF9",
+            },
+          },
+        ],
+      },
+
+      // 7. Rangkaian Acara (Save the Date) & Peta Lokasi
+      {
+        id: "sec_jb_events",
+        name: "Rangkaian Acara & Peta",
+        baseHeight: 820,
+        background: { color: "#FCF8F2" },
+        elements: [
+          // Header Card Save the Date
+          {
+            id: "el_jb_std_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 25, y: 15, w: 340, h: 105, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1.5 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_std_label",
+            type: "text",
+            frame: { x: 35, y: 28, w: 320, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Save the Date" }] },
+            style: {
+              fontSize: 13,
+              fontFamily: { token: "display" },
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_std_date",
+            type: "text",
+            frame: { x: 35, y: 50, w: 320, h: 35, rotation: 0 },
+            content: { segments: [{ bind: "event.dateDisplay", fallback: "Minggu, 5 Mei 2027" }] },
+            style: {
+              fontSize: 20,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_std_loc",
+            type: "text",
+            frame: { x: 35, y: 88, w: 320, h: 25, rotation: 0 },
+            content: { segments: [{ text: "📍 " }, { bind: "event.locationGeneral", fallback: "Hotel Shangri-La, Jakarta" }] },
+            style: {
+              fontSize: 13,
+              color: "#4A5D54",
+              textAlign: "center",
+            },
+          },
+          // Card Akad Nikah
+          {
+            id: "el_jb_akad_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 25, y: 140, w: 162, h: 210, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1.5 },
+              radius: 14,
+            },
+          },
+          {
+            id: "el_jb_akad_icon",
+            type: "text",
+            frame: { x: 25, y: 155, w: 162, h: 30, rotation: 0 },
+            content: { segments: [{ text: "🏛️" }] },
+            style: { fontSize: 24, textAlign: "center" },
+          },
+          {
+            id: "el_jb_akad_title",
+            type: "text",
+            frame: { x: 25, y: 190, w: 162, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Akad Nikah" }] },
+            style: { fontSize: 14, fontWeight: 700, color: "#134E4A", textAlign: "center" },
+          },
+          {
+            id: "el_jb_akad_details",
+            type: "text",
+            frame: { x: 30, y: 220, w: 152, h: 110, rotation: 0 },
+            content: {
+              segments: [
+                { text: "🗓️ Minggu, 5 Mei 2027\n" },
+                { text: "⏰ 08.00 - 09.00 WIB\n" },
+                { text: "📍 Ruang Borobudur" },
+              ],
+            },
+            style: { fontSize: 11, lineHeight: 1.8, color: "#4A5D54", textAlign: "center" },
+          },
+          // Card Resepsi
+          {
+            id: "el_jb_resepsi_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 203, y: 140, w: 162, h: 210, rotation: 0 },
+            style: {
+              fill: "#FFFDF9",
+              stroke: { color: "#D8C39D", width: 1.5 },
+              radius: 14,
+            },
+          },
+          {
+            id: "el_jb_resepsi_icon",
+            type: "text",
+            frame: { x: 203, y: 155, w: 162, h: 30, rotation: 0 },
+            content: { segments: [{ text: "🥂" }] },
+            style: { fontSize: 24, textAlign: "center" },
+          },
+          {
+            id: "el_jb_resepsi_title",
+            type: "text",
+            frame: { x: 203, y: 190, w: 162, h: 25, rotation: 0 },
+            content: { segments: [{ text: "Resepsi" }] },
+            style: { fontSize: 14, fontWeight: 700, color: "#134E4A", textAlign: "center" },
+          },
+          {
+            id: "el_jb_resepsi_details",
+            type: "text",
+            frame: { x: 208, y: 220, w: 152, h: 110, rotation: 0 },
+            content: {
+              segments: [
+                { text: "🗓️ Minggu, 5 Mei 2027\n" },
+                { text: "⏰ 11.00 - 14.00 WIB\n" },
+                { text: "📍 Ballroom Nusantara" },
+              ],
+            },
+            style: { fontSize: 11, lineHeight: 1.8, color: "#4A5D54", textAlign: "center" },
+          },
+          // Map Widget
+          {
+            id: "wdg_jb_map",
+            type: "widget",
+            widgetType: "map",
+            frame: { x: 25, y: 370, w: 340, h: 260, rotation: 0 },
+            props: {
+              latitude: { bind: "event.location.lat" },
+              longitude: { bind: "event.location.lng" },
+              address: { bind: "event.location.address" },
+              label: "Hotel Shangri-La, Jakarta",
+              buttonText: "Buka Google Maps",
+            },
+            style: {
+              radius: 16,
+              background: "#FFFDF9",
+            },
+          },
+        ],
+      },
+
+      // 8. Konfirmasi Kehadiran (RSVP)
+      {
+        id: "sec_jb_rsvp",
+        name: "Konfirmasi Kehadiran (RSVP)",
+        baseHeight: 460,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_rsvp_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 135, y: 15, w: 120, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_rsvp_pill_txt",
+            type: "text",
+            frame: { x: 135, y: 22, w: 120, h: 20, rotation: 0 },
+            content: { segments: [{ text: "RSVP" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "wdg_jb_rsvp",
+            type: "widget",
+            widgetType: "rsvp",
+            frame: { x: 25, y: 65, w: 340, h: 370, rotation: 0 },
+            props: {
+              title: "Konfirmasi Kehadiran",
+              enablePartySize: true,
+              enableMessage: true,
+              maxParty: 5,
+            },
+            style: {
+              radius: 16,
+              background: "#FFFDF9",
+              color: "#134E4A",
+            },
+          },
+        ],
+      },
+
+      // 9. Ucapan & Doa (Wishes Widget)
+      {
+        id: "sec_jb_wishes",
+        name: "Ucapan & Doa",
+        baseHeight: 440,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_wsh_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 120, y: 15, w: 150, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_wsh_pill_txt",
+            type: "text",
+            frame: { x: 120, y: 22, w: 150, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Ucapan & Doa" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "wdg_jb_wishes",
+            type: "widget",
+            widgetType: "wishes",
+            frame: { x: 25, y: 65, w: 340, h: 350, rotation: 0 },
+            props: {
+              title: "Ucapan & Doa Restu",
+              subtitle: "Sampaikan ucapan, doa, dan harapan terbaik untuk kami.",
+              maxDisplay: 5,
+            },
+            style: {
+              radius: 16,
+              background: "#FFFDF9",
+              color: "#134E4A",
+            },
+          },
+        ],
+      },
+
+      // 10. Gift Registry (Amplop Digital)
+      {
+        id: "sec_jb_gift",
+        name: "Gift Registry (Amplop Digital)",
+        baseHeight: 300,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_gft_pill_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 120, y: 15, w: 150, h: 32, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_gft_pill_txt",
+            type: "text",
+            frame: { x: 120, y: 22, w: 150, h: 20, rotation: 0 },
+            content: { segments: [{ text: "Gift Registry" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "wdg_jb_gift",
+            type: "widget",
+            widgetType: "gift",
+            frame: { x: 25, y: 65, w: 340, h: 210, rotation: 0 },
+            props: {
+              title: "Tanda Kasih Digital",
+              bank: { bind: "gift.bank" },
+              accountNumber: { bind: "gift.accountNumber" },
+              accountName: { bind: "gift.accountName" },
+              bankLogo: { bind: "gift.bankLogo" },
+            },
+            style: {
+              radius: 16,
+              background: "#FFFDF9",
+              color: "#134E4A",
+              variant: "gold-ornament",
+            },
+          },
+        ],
+      },
+
+      // 11. Live Streaming
+      {
+        id: "sec_jb_streaming",
+        name: "Live Streaming",
+        baseHeight: 180,
+        background: { color: "#FCF8F2" },
+        elements: [
+          {
+            id: "el_jb_strm_card",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 20, y: 25, w: 350, h: 120, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              stroke: { color: "#C59B27", width: 1.5 },
+              radius: 16,
+            },
+          },
+          {
+            id: "el_jb_strm_icon_label",
+            type: "text",
+            frame: { x: 30, y: 55, w: 90, h: 50, rotation: 0 },
+            content: { segments: [{ text: "▶\nLive Streaming" }] },
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              textAlign: "center",
+              lineHeight: 1.4,
+            },
+          },
+          {
+            id: "el_jb_strm_div",
+            type: "shape",
+            shapeType: "line",
+            frame: { x: 125, y: 35, w: 1, h: 100, rotation: 0 },
+            style: {
+              stroke: { color: "#FFFFFF", width: 1 },
+              opacity: 0.3,
+            },
+          },
+          {
+            id: "el_jb_strm_desc",
+            type: "text",
+            frame: { x: 135, y: 40, w: 225, h: 35, rotation: 0 },
+            content: { segments: [{ text: "Saksikan prosesi pernikahan kami secara daring melalui tautan berikut:" }] },
+            style: {
+              fontSize: 11,
+              color: "#FFFFFF",
+              lineHeight: 1.4,
+            },
+          },
+          {
+            id: "el_jb_strm_btn_bg",
+            type: "shape",
+            shapeType: "rectangle",
+            frame: { x: 135, y: 80, w: 220, h: 38, rotation: 0 },
+            style: {
+              fill: "#FFFFFF",
+              radius: 19,
+            },
+            action: {
+              type: "url",
+              url: "https://youtube.com/@VidiHeningWedding",
+              target: "_blank",
+              hoverEffect: "scale",
+            },
+          },
+          {
+            id: "el_jb_strm_btn_txt",
+            type: "text",
+            frame: { x: 135, y: 90, w: 220, h: 20, rotation: 0 },
+            content: { segments: [{ text: "▶ youtube.com/@VidiHeningWedding ↗" }] },
+            style: {
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+            action: {
+              type: "url",
+              url: "https://youtube.com/@VidiHeningWedding",
+              target: "_blank",
+              hoverEffect: "scale",
+            },
+          },
+        ],
+      },
+
+      // 12. Penutup (Terima Kasih)
+      {
+        id: "sec_jb_closing",
+        name: "Penutup (Terima Kasih)",
+        baseHeight: 280,
+        background: { color: "#FCF8F2" },
+        elements: [
+          // Lotus Ornament Left & Right
+          {
+            id: "el_jb_cls_lotus_l",
+            type: "shape",
+            shapeType: "circle",
+            frame: { x: 15, y: 160, w: 45, h: 45, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              opacity: 0.8,
+            },
+            animations: {
+              attention: {
+                presetId: "plantSway",
+                trigger: "whileVisible",
+                durationMs: 3500,
+                easing: "ease-in-out",
+                repeat: -1,
+                yoyo: true,
+                anchor: "bottom-center",
+                intensity: 6,
+                once: false,
+              },
+            },
+          },
+          {
+            id: "el_jb_cls_lotus_r",
+            type: "shape",
+            shapeType: "circle",
+            frame: { x: 330, y: 160, w: 45, h: 45, rotation: 0 },
+            style: {
+              fill: "#134E4A",
+              opacity: 0.8,
+            },
+            animations: {
+              attention: {
+                presetId: "plantSway",
+                trigger: "whileVisible",
+                durationMs: 3500,
+                delayMs: 300,
+                easing: "ease-in-out",
+                repeat: -1,
+                yoyo: true,
+                anchor: "bottom-center",
+                intensity: 6,
+                once: false,
+              },
+            },
+          },
+          {
+            id: "el_jb_cls_title",
+            type: "text",
+            frame: { x: 20, y: 35, w: 350, h: 40, rotation: 0 },
+            content: { segments: [{ text: "Terima Kasih" }] },
+            style: {
+              fontSize: 28,
+              fontFamily: { token: "display" },
+              fontWeight: 700,
+              color: "#134E4A",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_cls_desc",
+            type: "text",
+            frame: { x: 30, y: 85, w: 330, h: 60, rotation: 0 },
+            content: { segments: [{ text: "Atas doa, restu, dan kehadiran Bapak/Ibu/Saudara/i yang menjadi kebahagiaan bagi kami." }] },
+            style: {
+              fontSize: 13,
+              lineHeight: 1.8,
+              color: "#3A4B44",
+              textAlign: "center",
+            },
+          },
+          {
+            id: "el_jb_cls_names",
+            type: "text",
+            frame: { x: 20, y: 160, w: 350, h: 35, rotation: 0 },
+            content: { segments: [{ text: "Vidi & Hening" }] },
+            style: {
+              fontSize: 22,
+              fontFamily: { token: "display" },
+              fontWeight: 700,
+              color: "#C59B27",
+              textAlign: "center",
+            },
+          },
+        ],
+      },
+    ],
+  });
+}
+

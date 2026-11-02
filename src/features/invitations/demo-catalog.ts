@@ -21,6 +21,7 @@ import {
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
   createAllFeaturesShowcaseDocument,
+  createJawaEmeraldBotanicalDocument,
 } from "./demo-presets";
 
 export {
@@ -28,6 +29,7 @@ export {
   createClassicFloralDemoDocument,
   createModernMinimalDemoDocument,
   createAllFeaturesShowcaseDocument,
+  createJawaEmeraldBotanicalDocument,
 };
 
 function formatGuestName(rawTokenOrName?: string): string | undefined {
@@ -97,6 +99,19 @@ export async function getDemoInvitation(
   // 2. Jika template tidak ditemukan di database, gunakan preset fallback bawaan
   if (!doc) {
     if (
+      clean === "demo-jawa-emerald" ||
+      clean === "demo-vidi-hening" ||
+      clean === "jawa-emerald-botanical" ||
+      clean === "vidi-hening" ||
+      clean.includes("vidi") ||
+      clean.includes("hening") ||
+      clean.includes("emerald")
+    ) {
+      doc = createJawaEmeraldBotanicalDocument();
+      title = "Vidi & Hening — Jawa Emerald Botanical";
+      templateThumbnailUrl = "/images/template-jawa.jpg";
+      fallbackEventDate = "Minggu, 5 Mei 2027";
+    } else if (
       clean === "demo-master-showcase" ||
       clean === "master-showcase-all-features" ||
       clean === "master-showcase" ||
