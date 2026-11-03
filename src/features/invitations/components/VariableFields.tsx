@@ -126,6 +126,7 @@ export function VariableFields({
                         ""
                       }
                       masterBanks={masterBanks}
+                      workspaceId={workspaceId}
                       disabled={isFieldLocked}
                       required={field.required}
                       describedBy={describedBy}

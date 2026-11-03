@@ -159,5 +159,37 @@ describe("BankSelectField and VariableFields Combo Box", () => {
     expect(hiddenLogo.value).toBe("/images/banks/mandiri.svg");
     expect(hiddenLogo.name).toBe("v.gift.bankLogo");
   });
+
+  it("allows toggling custom logo controls and updating custom logo URL", () => {
+    render(
+      <BankSelectField
+        id="var-gift-bank"
+        bankKey="gift.bank"
+        logoKey="gift.bankLogo"
+        namePrefix="v."
+        initialBank="BCA"
+        initialLogo="/images/banks/bca.svg"
+      />,
+    );
+
+    // Toggle button should be present
+    const toggleBtn = screen.getByRole("button", { name: /kustomisasi \/ upload logo bank/i });
+    expect(toggleBtn).toBeInTheDocument();
+
+    fireEvent.click(toggleBtn);
+
+    // Custom logo URL input should be displayed
+    const urlInput = screen.getByPlaceholderText(/https:\/\/... atau \/images\/banks\//i) as HTMLInputElement;
+    expect(urlInput).toBeInTheDocument();
+
+    // Type a custom logo URL
+    fireEvent.change(urlInput, { target: { value: "https://example.com/custom-logo.png" } });
+
+    const hiddenLogo = screen.getByTestId("var-gift-bank-hidden-logo") as HTMLInputElement;
+    expect(hiddenLogo.value).toBe("https://example.com/custom-logo.png");
+
+    const logoImg = screen.getByRole("img", { name: "BCA" });
+    expect(logoImg).toHaveAttribute("src", "https://example.com/custom-logo.png");
+  });
 });
 

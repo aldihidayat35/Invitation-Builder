@@ -19,6 +19,7 @@ import {
   type ThemeTokens,
 } from "@/lib/schema";
 
+import { resolveFallbackBankLogo } from "./bank-lock";
 import { createResolver, type ResolvedBinding, type ResolverOptions } from "./resolver";
 import {
   BLOCKING_RESOLVE_CODES,
@@ -303,12 +304,31 @@ export function resolveDocument(
           }
 
           if (element.widgetType === "gift") {
-            if (!props.bankLogo && (data["gift.bankLogo"] || data["gift.bank_logo"] || data["bankLogo"])) {
-              props.bankLogo = data["gift.bankLogo"] || data["gift.bank_logo"] || data["bankLogo"];
-            }
-            if (!props.bankLogo2 && (data["gift.bankLogo2"] || data["gift.bank_logo2"] || data["bankLogo2"])) {
-              props.bankLogo2 = data["gift.bankLogo2"] || data["gift.bank_logo2"] || data["bankLogo2"];
-            }
+            const rawLogo1 =
+              (typeof data["gift.bankLogo"] === "string" && data["gift.bankLogo"]) ||
+              (typeof data["gift.bank_logo"] === "string" && data["gift.bank_logo"]) ||
+              (typeof data["bankLogo"] === "string" && data["bankLogo"]) ||
+              (typeof props.bankLogo === "string" && props.bankLogo);
+            const bName1 =
+              typeof props.bank === "string"
+                ? props.bank
+                : typeof data["gift.bank"] === "string"
+                  ? data["gift.bank"]
+                  : undefined;
+            props.bankLogo = rawLogo1 || resolveFallbackBankLogo(bName1);
+
+            const rawLogo2 =
+              (typeof data["gift.bankLogo2"] === "string" && data["gift.bankLogo2"]) ||
+              (typeof data["gift.bank_logo2"] === "string" && data["gift.bank_logo2"]) ||
+              (typeof data["bankLogo2"] === "string" && data["bankLogo2"]) ||
+              (typeof props.bankLogo2 === "string" && props.bankLogo2);
+            const bName2 =
+              typeof props.bank2 === "string"
+                ? props.bank2
+                : typeof data["gift.bank2"] === "string"
+                  ? data["gift.bank2"]
+                  : undefined;
+            props.bankLogo2 = rawLogo2 || resolveFallbackBankLogo(bName2);
           }
 
           if (element.widgetType === "gallery" && hideSectionDueToGallery) {

@@ -38,6 +38,7 @@ const ownerOnly = [
   "toggleMasterBankAction",
   "deleteMasterBankAction",
   "resetMasterBanksAction",
+  "uploadBankLogoAction",
 ] as const;
 
 const authenticated = [

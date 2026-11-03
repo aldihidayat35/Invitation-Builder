@@ -1223,15 +1223,31 @@ function GiftVisual({
   const { surface } = colors(element, tokens);
   const props = element.props as Record<string, unknown>;
 
+  const rawBank = resolveCanvasBoundValue(props.bank, variables);
+  const rawBankLogo = resolveCanvasBoundValue(props.bankLogo, variables);
+  const bankStr = typeof rawBank === "string" ? rawBank : "";
+  const bankLogoStr =
+    typeof rawBankLogo === "string" && rawBankLogo
+      ? rawBankLogo
+      : resolveFallbackBankLogo(bankStr || "BNI");
+
+  const rawBank2 = resolveCanvasBoundValue(props.bank2, variables);
+  const rawBankLogo2 = resolveCanvasBoundValue(props.bankLogo2, variables);
+  const bankStr2 = typeof rawBank2 === "string" ? rawBank2 : "";
+  const bankLogoStr2 =
+    typeof rawBankLogo2 === "string" && rawBankLogo2
+      ? rawBankLogo2
+      : resolveFallbackBankLogo(bankStr2 || "Mandiri");
+
   const resolvedExtra = {
-    bank: resolveCanvasBoundValue(props.bank, variables),
+    bank: bankStr,
     accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
     accountName: resolveCanvasBoundValue(props.accountName, variables),
-    bankLogo: resolveCanvasBoundValue(props.bankLogo, variables),
-    bank2: resolveCanvasBoundValue(props.bank2, variables),
+    bankLogo: bankLogoStr,
+    bank2: bankStr2,
     accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
     accountName2: resolveCanvasBoundValue(props.accountName2, variables),
-    bankLogo2: resolveCanvasBoundValue(props.bankLogo2, variables),
+    bankLogo2: bankLogoStr2,
   };
   const accounts = parseGiftAccounts(props.accounts, resolvedExtra);
   const list = accounts.length

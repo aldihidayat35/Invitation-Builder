@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { uploadAssetFile } from "@/features/assets/upload";
+import { assetUrl } from "@/features/assets/urls";
 import type { MasterBankItem } from "@/features/banks";
 import { DEFAULT_MASTER_BANKS } from "@/lib/db/repositories/master-banks";
 import { resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
@@ -14,9 +16,11 @@ export interface BankSelectFieldProps {
   readonly initialBank?: string;
   readonly initialLogo?: string;
   readonly masterBanks?: readonly MasterBankItem[];
+  readonly workspaceId?: string;
   readonly disabled?: boolean;
   readonly required?: boolean;
   readonly describedBy?: string;
+  readonly onChange?: (bank: string, logo: string) => void;
 }
 
 export function BankSelectField({
@@ -27,12 +31,15 @@ export function BankSelectField({
   initialBank = "",
   initialLogo = "",
   masterBanks,
+  workspaceId,
   disabled = false,
   required = false,
   describedBy,
+  onChange,
 }: BankSelectFieldProps) {
   const bankInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const availableBanks =
     masterBanks && masterBanks.length > 0
@@ -44,7 +51,6 @@ export function BankSelectField({
     initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : ""),
   );
 
-  // Determine if initial bank matches any master bank
   const matchedBank = availableBanks.find(
     (b) =>
       b.name.toLowerCase() === (initialBank || "").toLowerCase() ||
@@ -55,9 +61,46 @@ export function BankSelectField({
     matchedBank ? matchedBank.code : initialBank ? "__custom__" : "",
   );
   const [customBankName, setCustomBankName] = useState(matchedBank ? "" : initialBank);
+  const [showCustomLogoBox, setShowCustomLogoBox] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Synchronize internal state whenever initialBank or initialLogo props change
+  useEffect(() => {
+    setSelectedBank(initialBank);
+    const resolvedLogo =
+      initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : "");
+    setSelectedLogo(resolvedLogo);
+
+    const found = availableBanks.find(
+      (b) =>
+        b.name.toLowerCase() === (initialBank || "").toLowerCase() ||
+        b.code.toLowerCase() === (initialBank || "").toLowerCase(),
+    );
+    setPresetCode(found ? found.code : initialBank ? "__custom__" : "");
+    setCustomBankName(found ? "" : initialBank);
+  }, [initialBank, initialLogo, availableBanks]);
+
+  const updateValues = (bankName: string, logoUrl: string) => {
+    setSelectedBank(bankName);
+    setSelectedLogo(logoUrl);
+
+    if (bankInputRef.current) {
+      bankInputRef.current.value = bankName;
+      bankInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+      bankInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    if (logoInputRef.current) {
+      logoInputRef.current.value = logoUrl;
+      logoInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+      logoInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    onChange?.(bankName, logoUrl);
+  };
 
   const handleSelectPreset = (code: string) => {
     setPresetCode(code);
+    setUploadError(null);
     if (!code) {
       updateValues("", "");
       return;
@@ -65,7 +108,12 @@ export function BankSelectField({
 
     if (code === "__custom__") {
       const customName = customBankName.trim();
-      const logo = customName ? resolveFallbackBankLogo(customName) : "/images/banks/generic.svg";
+      const logo =
+        selectedLogo && selectedLogo !== "/images/banks/generic.svg"
+          ? selectedLogo
+          : customName
+            ? resolveFallbackBankLogo(customName)
+            : "/images/banks/generic.svg";
       updateValues(customName, logo);
       return;
     }
@@ -84,24 +132,65 @@ export function BankSelectField({
         b.name.toLowerCase() === trimmed.toLowerCase() ||
         b.code.toLowerCase() === trimmed.toLowerCase(),
     );
-    const logo = match ? match.logoUrl : resolveFallbackBankLogo(trimmed);
+    // Jika ada logo kustom yang diunggah/diinput, pertahankan logo tersebut
+    const isUploadedOrCustomUrl =
+      selectedLogo &&
+      !selectedLogo.startsWith("/images/banks/") &&
+      !selectedLogo.includes("generic.svg");
+    const logo = isUploadedOrCustomUrl
+      ? selectedLogo
+      : match
+        ? match.logoUrl
+        : resolveFallbackBankLogo(trimmed);
     updateValues(name, logo);
   };
 
-  const updateValues = (bankName: string, logoUrl: string) => {
-    setSelectedBank(bankName);
-    setSelectedLogo(logoUrl);
+  const handleCustomLogoUrlChange = (url: string) => {
+    const trimmed = url.trim();
+    updateValues(selectedBank, trimmed);
+  };
 
-    if (bankInputRef.current) {
-      bankInputRef.current.value = bankName;
-      bankInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-      bankInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+  const handleFileUpload = async (file: File) => {
+    setUploadError(null);
+    if (file.size > 3 * 1024 * 1024) {
+      setUploadError("Ukuran logo maksimal 3MB.");
+      return;
     }
-    if (logoInputRef.current) {
-      logoInputRef.current.value = logoUrl;
-      logoInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-      logoInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+
+    setIsUploading(true);
+    try {
+      if (workspaceId) {
+        const res = await uploadAssetFile(workspaceId, file);
+        if (res.ok) {
+          const publicUrl = assetUrl(res.asset.id);
+          updateValues(selectedBank, publicUrl);
+          setShowCustomLogoBox(true);
+        } else {
+          setUploadError(res.error || "Gagal mengunggah file logo.");
+        }
+      } else {
+        // Fallback jika tidak ada workspaceId (misal admin direct mode)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result;
+          if (typeof dataUrl === "string") {
+            updateValues(selectedBank, dataUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Terjadi kesalahan saat upload.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleResetLogo = () => {
+    setUploadError(null);
+    const defaultLogo = resolveFallbackBankLogo(selectedBank);
+    updateValues(selectedBank, defaultLogo);
   };
 
   const bankNameAttr = `${namePrefix}${bankKey}`;
@@ -111,20 +200,22 @@ export function BankSelectField({
   const ewalletsList = availableBanks.filter((b) => b.category !== "bank");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
-      {/* Hidden inputs to feed FormData and autosave */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+      {/* Hidden inputs to feed FormData and autosave reliably */}
       <input
         ref={bankInputRef}
         type="hidden"
         name={bankNameAttr}
-        defaultValue={selectedBank}
+        value={selectedBank}
+        readOnly
         data-testid={`${id}-hidden-bank`}
       />
       <input
         ref={logoInputRef}
         type="hidden"
         name={logoNameAttr}
-        defaultValue={selectedLogo}
+        value={selectedLogo}
+        readOnly
         data-testid={`${id}-hidden-logo`}
       />
 
@@ -188,7 +279,76 @@ export function BankSelectField({
           onChange={(e) => handleCustomNameChange(e.target.value)}
         />
       )}
+
+      {/* Toggle button to upload or change custom bank logo */}
+      {!disabled && (
+        <div>
+          <button
+            type="button"
+            className={styles.bankCustomLogoToggle}
+            onClick={() => setShowCustomLogoBox((prev) => !prev)}
+          >
+            {showCustomLogoBox ? "▲ Sembunyikan Pengaturan Logo" : "⚙️ Kustomisasi / Upload Logo Bank"}
+          </button>
+        </div>
+      )}
+
+      {/* Custom Logo Drawer / Upload Controls */}
+      {showCustomLogoBox && !disabled && (
+        <div className={styles.bankCustomLogoBox}>
+          <div className={styles.bankCustomLogoActions}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/svg+xml,image/png,image/jpeg,image/webp"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleFileUpload(f);
+              }}
+            />
+            <button
+              type="button"
+              className={styles.bankUploadBtn}
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              📁 {isUploading ? "Mengunggah Logo…" : "Upload File Logo (SVG/PNG/JPG)"}
+            </button>
+
+            {selectedLogo && (
+              <button
+                type="button"
+                className={styles.bankResetLogoBtn}
+                onClick={handleResetLogo}
+                title="Kembalikan logo ke logo standar bank"
+              >
+                Reset Logo
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "0.78rem", color: "var(--dash-text-muted, #64748b)" }}>
+              Atau gunakan link/URL logo kustom:
+            </label>
+            <input
+              type="text"
+              value={selectedLogo}
+              placeholder="https://... atau /images/banks/..."
+              className={styles.input}
+              style={{ fontSize: "0.85rem", padding: "6px 10px" }}
+              onChange={(e) => handleCustomLogoUrlChange(e.target.value)}
+            />
+          </div>
+
+          {uploadError && (
+            <p style={{ color: "#dc2626", fontSize: "0.8rem", margin: 0 }}>
+              {uploadError}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
-

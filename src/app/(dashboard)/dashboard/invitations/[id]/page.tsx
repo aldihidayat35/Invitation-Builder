@@ -138,7 +138,7 @@ export default async function InvitationDataPage({
               masterBanks={masterBanks}
               save={saveInvitationDataAction}
               readOnly={archived || !permissions.write}
-              readOnlyBank={user.systemRole !== "owner"}
+              readOnlyBank={false}
             />
           )}
         </div>

@@ -114,4 +114,83 @@
   opacity: 0.6;
 }
 
+.bankCustomLogoToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--dash-accent-text, #2563eb);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-top: 2px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bankCustomLogoToggle:hover {
+  opacity: 0.8;
+}
+
+.bankCustomLogoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--dash-radius-sm, 6px);
+  background: var(--dash-surface-sunken, #f8fafc);
+  border: 1px dashed var(--dash-border, #cbd5e1);
+  margin-top: 4px;
+}
+
+.bankCustomLogoActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bankUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: var(--dash-radius-sm, 6px);
+  border: 1px solid var(--dash-border-strong, #94a3b8);
+  background: #ffffff;
+  color: var(--dash-text, #1e293b);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.bankUploadBtn:hover:not(:disabled) {
+  background: var(--dash-surface-hover, #f1f5f9);
+}
+
+.bankUploadBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bankResetLogoBtn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #dc2626;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  text-decoration: underline;
+}
+
+.bankUploadStatus {
+  font-size: 0.8rem;
+  color: var(--dash-text-muted, #64748b);
+}
+
+
 

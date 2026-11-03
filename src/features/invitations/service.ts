@@ -78,6 +78,7 @@ import {
   resolveDocument,
   validateInvitationData,
   isGiftAccountVariableKey,
+  resolveFallbackBankLogo,
   BANK_VERIFICATION_KEY,
   type DataIssue,
   type GuestData,
@@ -537,23 +538,54 @@ export async function saveInvitationData(
   });
   const stored = persistableData(data, issues);
 
-  let finalStored = stored;
-  // Keamanan: Jika aktor BUKAN super admin ("owner"), kunci seluruh variabel rekening
-  if (actor.systemRole !== "owner") {
-    const protectedStored: Record<string, unknown> = { ...stored };
-    for (const key of Object.keys(stored)) {
-      if (isGiftAccountVariableKey(key)) {
-        if (key in row.data) {
-          protectedStored[key] = row.data[key];
-        } else {
-          delete protectedStored[key];
-        }
-      }
+  // Pertahankan data row yang sudah ada (gallery.items, whatsapp_share_image, sections, dll)
+  const baseData =
+    row.data && typeof row.data === "object" ? (structuredClone(row.data) as Record<string, unknown>) : {};
+  const finalStored: Record<string, unknown> = {
+    ...baseData,
+    ...stored,
+  };
+
+  // Simpan nilai logo rekening jika disertakan dalam input form,
+  // meskipun tidak dideklarasikan secara eksplisit dalam document.variables template versi lama
+  for (const logoKey of [
+    "gift.bankLogo",
+    "gift.bankLogo2",
+    "gift.bank_logo",
+    "gift.bank_logo2",
+    "bankLogo",
+    "bankLogo2",
+  ]) {
+    if (typeof input.values[logoKey] === "string" && input.values[logoKey]!.trim()) {
+      finalStored[logoKey] = input.values[logoKey]!.trim();
+    } else if (input.values[logoKey] === "") {
+      delete finalStored[logoKey];
     }
-    if (BANK_VERIFICATION_KEY in row.data) {
-      protectedStored[BANK_VERIFICATION_KEY] = row.data[BANK_VERIFICATION_KEY];
+  }
+
+  // Jika nama bank diset tetapi logo belum ada, berikan fallback logo otomatis
+  if (typeof finalStored["gift.bank"] === "string" && !finalStored["gift.bankLogo"]) {
+    finalStored["gift.bankLogo"] = resolveFallbackBankLogo(finalStored["gift.bank"] as string);
+  }
+  if (typeof finalStored["gift.bank2"] === "string" && !finalStored["gift.bankLogo2"]) {
+    finalStored["gift.bankLogo2"] = resolveFallbackBankLogo(finalStored["gift.bank2"] as string);
+  }
+
+  // Sinkronkan status verifikasi bank jika ada di data undangan
+  if (BANK_VERIFICATION_KEY in baseData && typeof baseData[BANK_VERIFICATION_KEY] === "object") {
+    const meta = { ...(baseData[BANK_VERIFICATION_KEY] as Record<string, unknown>) };
+    const bName = typeof finalStored["gift.bank"] === "string" ? finalStored["gift.bank"] : "";
+    const bAcc = typeof finalStored["gift.accountNumber"] === "string" ? finalStored["gift.accountNumber"] : "";
+    const bHolder = typeof finalStored["gift.accountName"] === "string" ? finalStored["gift.accountName"] : "";
+    if (bName || bAcc || bHolder) {
+      meta.verifiedPrimary = {
+        bank: bName,
+        accountNumber: bAcc,
+        accountName: bHolder,
+      };
+      meta.status = "verified";
     }
-    finalStored = protectedStored;
+    finalStored[BANK_VERIFICATION_KEY] = meta;
   }
 
   const updated = await updateInvitationData(db, { invitationId: row.id, data: finalStored });
