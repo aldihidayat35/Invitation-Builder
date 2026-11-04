@@ -36,6 +36,7 @@ import {
 } from "./repositories/users";
 import { createWorkspaceWithOwner, findWorkspaceBySlug } from "./repositories/workspaces";
 import { ensureMessageTemplatesTable } from "./repositories/message-templates";
+import { ensureMasterBanksTable } from "./repositories/master-banks";
 import type { Database } from "./types";
 
 export const ADMIN_USER_EMAIL = "admin@admin.com";
@@ -159,6 +160,9 @@ export async function seedDev(db: Database, options: SeedOptions = {}): Promise<
 
   // Ensure default message templates exist
   await ensureMessageTemplatesTable(db);
+
+  // Ensure default master banks exist
+  await ensureMasterBanksTable(db);
 
   const catalogTemplatesSeed = [
     {

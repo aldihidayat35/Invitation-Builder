@@ -115,10 +115,15 @@ export async function generateMetadata(
     rawImage = `/api/og?title=${encodedTitle}&desc=${encodedDesc}&badge=${encodeURIComponent(badgeText)}`;
   }
 
-  const ogImageUrl =
+  let ogImageUrl =
     rawImage.startsWith("http://") || rawImage.startsWith("https://")
       ? rawImage
       : absoluteUrl(rawImage, baseUrl);
+
+  // Ensure WhatsApp/social crawlers recognize the asset URL as an image by appending a virtual extension query if needed
+  if (ogImageUrl.includes("/api/assets/") && !/\.(jpg|jpeg|png|webp|avif)/i.test(ogImageUrl)) {
+    ogImageUrl = `${ogImageUrl}?ext=.jpg`;
+  }
 
   const canonicalPath = rawTo
     ? `/i/${slug}?to=${encodeURIComponent(rawTo)}`

@@ -6,8 +6,8 @@
  * Migrations are NOT run here: use `npm run db:migrate`.
  */
 import "server-only";
-import { mkdirSync, renameSync, existsSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdirSync, renameSync, existsSync, rmSync, unlinkSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { connectPostgres } from "./connect";
 import type { Database } from "./types";
 
@@ -21,10 +21,9 @@ async function open(url: string): Promise<Database> {
     const dataDir = url.slice("pglite://".length) || undefined;
     if (dataDir) {
       mkdirSync(dirname(dataDir), { recursive: true });
-      const pidFile = `${dataDir}/postmaster.pid`;
+      const pidFile = join(dataDir, "postmaster.pid");
       try {
         if (existsSync(pidFile)) {
-          const { unlinkSync } = await import("node:fs");
           unlinkSync(pidFile);
         }
       } catch {
@@ -32,21 +31,38 @@ async function open(url: string): Promise<Database> {
       }
     }
     const { connectPglite, migratePglite } = await import("./pglite");
+    let initialConn: Awaited<ReturnType<typeof connectPglite>> | null = null;
     try {
-      const conn = await connectPglite(dataDir);
-      await conn.client.waitReady;
-      return conn.db;
+      initialConn = await connectPglite(dataDir);
+      await initialConn.client.waitReady;
+      return initialConn.db;
     } catch (err) {
+      if (initialConn?.client) {
+        try {
+          await initialConn.client.close();
+        } catch {
+          // Ignore close error
+        }
+      }
       if (dataDir && existsSync(/*turbopackIgnore: true*/ dataDir)) {
         const corruptedDir = `${dataDir}_corrupted_${Date.now()}`;
         console.warn(`[db/client] PGlite dataDir corrupted (${err}). Auto-recovering to ${corruptedDir}...`);
+        let moved = false;
         try {
           renameSync(dataDir, corruptedDir);
+          moved = true;
         } catch {
-          // Ignore rename error
+          try {
+            rmSync(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+            moved = true;
+          } catch {
+            // Locked by another process on Windows
+          }
         }
-        mkdirSync(dataDir, { recursive: true });
-        const freshConn = await connectPglite(dataDir);
+        // If dataDir was moved or removed, recreate it; otherwise use a fallback recovery directory to avoid re-opening the locked directory
+        const effectiveDir = (moved || !existsSync(dataDir)) ? dataDir : `${dataDir}_recovered_${Date.now()}`;
+        mkdirSync(effectiveDir, { recursive: true });
+        const freshConn = await connectPglite(effectiveDir);
         await freshConn.client.waitReady;
         await migratePglite(freshConn);
         try {

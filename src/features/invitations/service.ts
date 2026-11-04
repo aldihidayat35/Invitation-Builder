@@ -1244,21 +1244,37 @@ export function extractEventDateFormatted(data: Record<string, unknown>): string
     (typeof data["event_date_formatted"] === "string" && data["event_date_formatted"].trim()) ||
     (typeof data["event_date"] === "string" && data["event_date"].trim()) ||
     (typeof data["tanggal_acara"] === "string" && data["tanggal_acara"].trim()) ||
+    (typeof data["waktu_acara"] === "string" && data["waktu_acara"].trim()) ||
+    (typeof data["acara_tanggal"] === "string" && data["acara_tanggal"].trim()) ||
+    (typeof data["acara_waktu"] === "string" && data["acara_waktu"].trim()) ||
+    (typeof data["tgl_acara"] === "string" && data["tgl_acara"].trim()) ||
+    (typeof data["tanggal_pelaksanaan"] === "string" && data["tanggal_pelaksanaan"].trim()) ||
+    (typeof data["waktu_pelaksanaan"] === "string" && data["waktu_pelaksanaan"].trim()) ||
+    (typeof data["tanggal_aqiqah"] === "string" && data["tanggal_aqiqah"].trim()) ||
+    (typeof data["tanggal_tasyakuran"] === "string" && data["tanggal_tasyakuran"].trim()) ||
+    (typeof data["event.date"] === "string" && data["event.date"].trim()) ||
+    (typeof data["event.ceremony.date"] === "string" && data["event.ceremony.date"].trim()) ||
+    (typeof data["event.reception.date"] === "string" && data["event.reception.date"].trim()) ||
+    (typeof data["hari_tanggal"] === "string" && data["hari_tanggal"].trim()) ||
+    (typeof data["tanggal_resepsi"] === "string" && data["tanggal_resepsi"].trim()) ||
+    (typeof data["tanggal_akad"] === "string" && data["tanggal_akad"].trim()) ||
+    (typeof data["resepsi_date"] === "string" && data["resepsi_date"].trim()) ||
+    (typeof data["akad_date"] === "string" && data["akad_date"].trim()) ||
+    (typeof data["wedding_date"] === "string" && data["wedding_date"].trim()) ||
     (typeof data["tanggal"] === "string" && data["tanggal"].trim()) ||
     (typeof data["waktu"] === "string" && data["waktu"].trim()) ||
-    (typeof data["hari_tanggal"] === "string" && data["hari_tanggal"].trim()) ||
-    (typeof data["event.date"] === "string" && data["event.date"].trim()) ||
     (typeof data["date"] === "string" && data["date"].trim()) ||
-    (typeof data["akad_date"] === "string" && data["akad_date"].trim()) ||
-    (typeof data["resepsi_date"] === "string" && data["resepsi_date"].trim()) ||
-    (typeof data["wedding_date"] === "string" && data["wedding_date"].trim()) ||
     "";
 
   let dateStr = direct;
   if (!dateStr) {
     for (const [key, val] of Object.entries(data)) {
       if (typeof val === "string" && val.trim().length > 0) {
-        if (/date|tanggal|tgl|waktu/i.test(key)) {
+        // Exclude birth dates (e.g. tanggal_lahir, birth_date, tgl_lahir) and system timestamps
+        if (
+          /date|tanggal|tgl|waktu/i.test(key) &&
+          !/lahir|birth|dob|created|updated|deleted|expired|publish/i.test(key)
+        ) {
           dateStr = val.trim();
           break;
         }

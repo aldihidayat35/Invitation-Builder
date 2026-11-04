@@ -94,6 +94,14 @@ describe("PublicInvitationPage (Live Preview Route)", () => {
     const dateFormatted = extractEventDateFormatted(aqiqahData);
     expect(dateFormatted).toBe("7 November 2026");
 
+    // Must ignore birth date (e.g. tanggal_lahir / 2001-08-01) and pick the actual event date
+    const aqiqahDataWithBirth = {
+      nama_anak: "Arash Shaquille Attaqi",
+      tanggal_lahir: "2001-08-01",
+      tanggal_acara: "7 November 2026",
+    };
+    expect(extractEventDateFormatted(aqiqahDataWithBirth)).toBe("7 November 2026");
+
     const coverPhoto = extractCoverPhotoUrl(aqiqahData);
     expect(coverPhoto).toBe("https://example.com/arash.jpg");
   });

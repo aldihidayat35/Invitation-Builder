@@ -1390,7 +1390,18 @@ export async function getClientPortalDataByToken(
 
   // Resolve template category for message templates
   let invitationCategory = "wedding";
-  if (order?.templateId) {
+  const titleToCheck = `${invitation?.title || ""} ${order?.customerName || ""} ${order?.notes || ""}`.toLowerCase();
+  if (/aqiqah|akikah|tasyakuran\s+(kelahiran|aqiqah)|kelahiran\s+buah\s+hati/i.test(titleToCheck)) {
+    invitationCategory = "aqiqah";
+  } else if (/khitan|sunatan|walimatul\s+khitan/i.test(titleToCheck)) {
+    invitationCategory = "khitan";
+  } else if (/ulang\s+tahun|birthday|milad|ultah/i.test(titleToCheck)) {
+    invitationCategory = "birthday";
+  } else if (/wisuda|graduation/i.test(titleToCheck)) {
+    invitationCategory = "graduation";
+  } else if (/seminar|webinar|gathering|perusahaan|corporate/i.test(titleToCheck)) {
+    invitationCategory = "corporate";
+  } else if (order?.templateId) {
     const tmpl = await findTemplateById(db, order.templateId);
     if (tmpl?.category) invitationCategory = tmpl.category;
   } else if (invitation) {
@@ -1417,7 +1428,15 @@ export async function getClientPortalDataByToken(
     shareMessageTemplates.find((t) => t.isDefault) ||
     shareMessageTemplates[0];
 
-  const activeShareMessageTemplate = savedShareTemplate?.trim() || defaultTemplate?.content || "";
+  // If previous saved template was a stale wedding default ("acara pernikahan kami") but this is an Aqiqah/Khitan event, prefer appropriate category template
+  const isStaleWeddingOnNonWedding =
+    invitationCategory !== "wedding" &&
+    Boolean(savedShareTemplate && /acara\s+pernikahan\s+kami/i.test(savedShareTemplate));
+
+  const activeShareMessageTemplate =
+    (!isStaleWeddingOnNonWedding && savedShareTemplate?.trim()) ||
+    defaultTemplate?.content ||
+    "";
 
   // Resolving sections and disabled status for portal
   let portalSections: ClassifiedSection[] = [];

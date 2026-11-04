@@ -136,7 +136,13 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const getGuestShareUrl = (guestName: string) => {
     if (!data.shareableUrl) return null;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}${data.shareableUrl}?to=${encodeURIComponent(guestName)}`;
+    const base = `${origin}${data.shareableUrl}?to=${encodeURIComponent(guestName)}`;
+    if (data.shareImageUrl) {
+      // Append a stable version token derived from the custom share image to bust WhatsApp's stale link preview cache
+      const imgToken = data.shareImageUrl.replace(/[^a-zA-Z0-9]/g, "").slice(-8);
+      return `${base}&v=${imgToken}`;
+    }
+    return base;
   };
 
   const handleCopyGuestLink = (guestName: string) => {

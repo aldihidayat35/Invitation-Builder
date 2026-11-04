@@ -18,6 +18,7 @@ export async function HEAD(request: Request, ctx: RouteContext<"/api/assets/[id]
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*",
     },
   });
 }
@@ -50,6 +51,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/assets/[id]/
           "Content-Length": String(chunkSize),
           "X-Content-Type-Options": "nosniff",
           "Cache-Control": "public, max-age=31536000, immutable",
+          "Access-Control-Allow-Origin": "*",
         },
       });
     }
@@ -63,6 +65,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/assets/[id]/
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*",
     },
   });
 }
