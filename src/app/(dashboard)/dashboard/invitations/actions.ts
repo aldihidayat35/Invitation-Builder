@@ -83,7 +83,6 @@ export async function saveInvitationDataAction(
   }
   try {
     const { issues } = await saveData(invitationId, safeValues);
-    revalidatePath(`${LIST}/${invitationId}`);
     const errors: Record<string, string> = {};
     for (const issue of issues) {
       if (issue.code !== "unknown_key" && !(issue.key in errors)) errors[issue.key] = issue.message;

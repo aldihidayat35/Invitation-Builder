@@ -179,13 +179,9 @@ export function BankSelectField({
 
     if (bankInputRef.current) {
       bankInputRef.current.value = bankName;
-      bankInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-      bankInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
     }
     if (logoInputRef.current) {
       logoInputRef.current.value = logoUrl;
-      logoInputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-      logoInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
     }
     onChange?.(bankName, logoUrl);
   };

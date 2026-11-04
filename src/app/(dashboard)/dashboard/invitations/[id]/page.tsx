@@ -71,6 +71,11 @@ export default async function InvitationDataPage({
   for (const field of fields) {
     values[field.key] = formatFormValue(field, invitation.data[field.key]);
   }
+  for (const [k, v] of Object.entries(invitation.data || {})) {
+    if (typeof v === "string" && !(k in values)) {
+      values[k] = v;
+    }
+  }
   const errors: Record<string, string> = {};
   for (const issue of report.issues) {
     if (!(issue.key in errors)) errors[issue.key] = issue.message;
