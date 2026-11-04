@@ -60,6 +60,7 @@ import {
   findCustomerOrderByInvitationId,
   insertOrderWorkflowEvent,
 } from "@/lib/db/repositories/orders";
+import { listMasterBanks } from "@/lib/db/repositories/master-banks";
 import {
   findTemplateById,
   findTemplateVersion,
@@ -82,6 +83,7 @@ import {
   resolveDocument,
   validateInvitationData,
   isGiftAccountVariableKey,
+  resolveDynamicBankLogo,
   resolveFallbackBankLogo,
   getBankVerificationMeta,
   extractBankAccountsFromRecord,
@@ -613,12 +615,15 @@ export async function saveInvitationData(
     (typeof finalStored["gift.accountName"] === "string" ? (finalStored["gift.accountName"] as string) : "") ||
     (typeof finalStored["gift.account_holder"] === "string" ? (finalStored["gift.account_holder"] as string) : "");
 
-  const pLogo =
+  const masterBanks = await listMasterBanks(db, { activeOnly: true }).catch(() => []);
+
+  const rawLogo1 =
     input.values["gift.bankLogo"]?.trim() ||
     input.values["gift.bank_logo"]?.trim() ||
     input.values["bankLogo"]?.trim() ||
-    (typeof finalStored["gift.bankLogo"] === "string" ? (finalStored["gift.bankLogo"] as string) : "") ||
-    (pBank ? resolveFallbackBankLogo(pBank) : "");
+    (typeof finalStored["gift.bankLogo"] === "string" ? (finalStored["gift.bankLogo"] as string) : "");
+
+  const pLogo = resolveDynamicBankLogo(pBank, rawLogo1, masterBanks);
 
   if (pBank) {
     finalStored["gift.bank"] = pBank;
@@ -650,35 +655,42 @@ export async function saveInvitationData(
   const pNumber2 =
     input.values["gift.accountNumber2"]?.trim() ||
     input.values["gift.account_number2"]?.trim() ||
+    input.values["rekening2"]?.trim() ||
     (typeof finalStored["gift.accountNumber2"] === "string" ? (finalStored["gift.accountNumber2"] as string) : "");
 
   const pHolder2 =
     input.values["gift.accountName2"]?.trim() ||
     input.values["gift.account_name2"]?.trim() ||
     input.values["gift.account_holder2"]?.trim() ||
+    input.values["atas_nama2"]?.trim() ||
     (typeof finalStored["gift.accountName2"] === "string" ? (finalStored["gift.accountName2"] as string) : "");
 
-  const pLogo2 =
+  const rawLogo2 =
     input.values["gift.bankLogo2"]?.trim() ||
     input.values["gift.bank_logo2"]?.trim() ||
     input.values["bankLogo2"]?.trim() ||
-    (typeof finalStored["gift.bankLogo2"] === "string" ? (finalStored["gift.bankLogo2"] as string) : "") ||
-    (pBank2 ? resolveFallbackBankLogo(pBank2) : "");
+    (typeof finalStored["gift.bankLogo2"] === "string" ? (finalStored["gift.bankLogo2"] as string) : "");
 
-  if (pBank2 && pNumber2) {
+  const pLogo2 = resolveDynamicBankLogo(pBank2, rawLogo2, masterBanks);
+
+  if (pBank2) {
     finalStored["gift.bank2"] = pBank2;
     finalStored["gift.bank_name2"] = pBank2;
     finalStored["bank2"] = pBank2;
-    finalStored["gift.accountNumber2"] = pNumber2;
-    finalStored["gift.account_number2"] = pNumber2;
-    finalStored["gift.accountName2"] = pHolder2;
-    finalStored["gift.account_name2"] = pHolder2;
-    finalStored["gift.account_holder2"] = pHolder2;
     if (pLogo2) {
       finalStored["gift.bankLogo2"] = pLogo2;
       finalStored["gift.bank_logo2"] = pLogo2;
       finalStored["bankLogo2"] = pLogo2;
     }
+  }
+  if (pNumber2 !== undefined && pNumber2 !== "") {
+    finalStored["gift.accountNumber2"] = pNumber2;
+    finalStored["gift.account_number2"] = pNumber2;
+  }
+  if (pHolder2 !== undefined && pHolder2 !== "") {
+    finalStored["gift.accountName2"] = pHolder2;
+    finalStored["gift.account_name2"] = pHolder2;
+    finalStored["gift.account_holder2"] = pHolder2;
   }
 
   // Sinkronkan status verifikasi bank jika ada rekening atau meta sebelumnya
@@ -702,7 +714,7 @@ export async function saveInvitationData(
       meta.proposedSecondary = null;
     }
 
-    if (pBank2 && pNumber2) {
+    if (pBank2 || pNumber2) {
       meta.verifiedSecondary = {
         bank: pBank2,
         accountNumber: pNumber2,
@@ -715,32 +727,6 @@ export async function saveInvitationData(
 
   const updated = await updateInvitationData(db, { invitationId: row.id, data: finalStored });
   if (!updated) throw new InvitationArchivedError();
-
-  // Sinkronkan data snapshot aktif jika undangan sudah dipublish agar live view dan crawler langsung sinkron
-  if (row.activePublishedSnapshotId) {
-    try {
-      const [snapshot] = await db
-        .select()
-        .from(publishedSnapshots)
-        .where(eq(publishedSnapshots.id, row.activePublishedSnapshotId))
-        .limit(1);
-
-      if (snapshot) {
-        const snapData = (snapshot.data || {}) as Record<string, unknown>;
-        await db
-          .update(publishedSnapshots)
-          .set({
-            data: {
-              ...snapData,
-              ...finalStored,
-            },
-          })
-          .where(eq(publishedSnapshots.id, snapshot.id));
-      }
-    } catch (err) {
-      console.error("Failed to update active snapshot on saveInvitationData:", err);
-    }
-  }
 
   return { invitation: toSummary(updated), issues };
 }
@@ -932,9 +918,11 @@ export async function buildPreview(
     guestLabel = `Tamu: ${found.name}`;
   }
 
+  const masterBanks = await listMasterBanks(db, { activeOnly: true }).catch(() => []);
+
   return {
     invitation: toSummary(row),
-    resolved: resolveDocument(document, row.data, guest),
+    resolved: resolveDocument(document, row.data, guest, masterBanks),
     guest,
     guestLabel,
   };
@@ -1453,6 +1441,8 @@ export async function getPublicInvitation(
     };
   }
 
+  const masterBanks = await listMasterBanks(db, { activeOnly: true }).catch(() => []);
+
   // 1. If published, load from the immutable active snapshot (FR-PUB-001)
   if (row.status === "published" && row.activePublishedSnapshotId) {
     const snapshot = await findSnapshotById(db, row.activePublishedSnapshotId);
@@ -1492,7 +1482,7 @@ export async function getPublicInvitation(
         title: row.title,
         slug: row.slug,
         revisionNo: snapshot.revisionNo,
-        resolved: resolveDocument(document, snapshot.data, guest),
+        resolved: resolveDocument(document, effectiveData, guest, masterBanks),
         ...(guestName !== undefined && { guestName }),
         ...(guestToken !== undefined && { guestToken }),
         hasGuest: guestName !== undefined,
@@ -1528,7 +1518,7 @@ export async function getPublicInvitation(
         title: row.title,
         slug: row.slug,
         revisionNo: 0,
-        resolved: resolveDocument(document, row.data, guest),
+        resolved: resolveDocument(document, effectiveData, guest, masterBanks),
         ...(guestName !== undefined && { guestName }),
         ...(guestToken !== undefined && { guestToken }),
         hasGuest: guestName !== undefined,
@@ -1598,10 +1588,19 @@ export async function adminApproveBankProposal(
     throw new InvitationInputError("Tidak ada usulan rekening dari klien untuk disetujui.");
   }
 
-  const primaryLogo =
-    proposalPrimary.bankLogo || resolveFallbackBankLogo(proposalPrimary.bank);
+  const masterBanks = await listMasterBanks(db, { activeOnly: true }).catch(() => []);
+
+  const primaryLogo = resolveDynamicBankLogo(
+    proposalPrimary.bank,
+    proposalPrimary.bankLogo,
+    masterBanks,
+  );
   const secondaryLogo = meta.proposedSecondary?.bank
-    ? meta.proposedSecondary.bankLogo || resolveFallbackBankLogo(meta.proposedSecondary.bank)
+    ? resolveDynamicBankLogo(
+        meta.proposedSecondary.bank,
+        meta.proposedSecondary.bankLogo,
+        masterBanks,
+      )
     : null;
 
   const verifiedMeta: BankVerificationMeta = {
@@ -1617,8 +1616,8 @@ export async function adminApproveBankProposal(
     verifiedSecondary: meta.proposedSecondary?.bank
       ? {
           bank: meta.proposedSecondary.bank,
-          accountNumber: meta.proposedSecondary.accountNumber,
-          accountName: meta.proposedSecondary.accountName,
+          accountNumber: meta.proposedSecondary.accountNumber || "",
+          accountName: meta.proposedSecondary.accountName || "",
           bankLogo: secondaryLogo,
         }
       : null,
@@ -1644,18 +1643,20 @@ export async function adminApproveBankProposal(
     [BANK_VERIFICATION_KEY]: verifiedMeta,
   };
 
-  if (meta.proposedSecondary?.bank && meta.proposedSecondary.accountNumber) {
+  if (meta.proposedSecondary?.bank) {
     bankPatch["gift.bank2"] = meta.proposedSecondary.bank;
     bankPatch["gift.bank_name2"] = meta.proposedSecondary.bank;
     bankPatch["bank2"] = meta.proposedSecondary.bank;
-    bankPatch["gift.accountNumber2"] = meta.proposedSecondary.accountNumber;
-    bankPatch["gift.account_number2"] = meta.proposedSecondary.accountNumber;
+    bankPatch["gift.accountNumber2"] = meta.proposedSecondary.accountNumber || "";
+    bankPatch["gift.account_number2"] = meta.proposedSecondary.accountNumber || "";
     bankPatch["gift.accountName2"] = meta.proposedSecondary.accountName || "";
     bankPatch["gift.account_name2"] = meta.proposedSecondary.accountName || "";
     bankPatch["gift.account_holder2"] = meta.proposedSecondary.accountName || "";
-    bankPatch["gift.bankLogo2"] = secondaryLogo;
-    bankPatch["gift.bank_logo2"] = secondaryLogo;
-    bankPatch["bankLogo2"] = secondaryLogo;
+    if (secondaryLogo) {
+      bankPatch["gift.bankLogo2"] = secondaryLogo;
+      bankPatch["gift.bank_logo2"] = secondaryLogo;
+      bankPatch["bankLogo2"] = secondaryLogo;
+    }
   }
 
   const nextData = {

@@ -2069,16 +2069,32 @@ export async function adminVerifyOrderBank(
     ...bankPatch,
   };
 
-  if (input.secondary?.bank && input.secondary.accountNumber) {
+  if (input.secondary?.bank) {
     nextData["gift.bank2"] = input.secondary.bank;
-    nextData["gift.accountNumber2"] = input.secondary.accountNumber;
+    nextData["gift.bank_name2"] = input.secondary.bank;
+    nextData["bank2"] = input.secondary.bank;
+    nextData["gift.accountNumber2"] = input.secondary.accountNumber || "";
+    nextData["gift.account_number2"] = input.secondary.accountNumber || "";
     nextData["gift.accountName2"] = input.secondary.accountName || "";
-    nextData["gift.bankLogo2"] = secondaryLogo;
+    nextData["gift.account_name2"] = input.secondary.accountName || "";
+    nextData["gift.account_holder2"] = input.secondary.accountName || "";
+    if (secondaryLogo) {
+      nextData["gift.bankLogo2"] = secondaryLogo;
+      nextData["gift.bank_logo2"] = secondaryLogo;
+      nextData["bankLogo2"] = secondaryLogo;
+    }
   } else {
     delete nextData["gift.bank2"];
+    delete nextData["gift.bank_name2"];
+    delete nextData["bank2"];
     delete nextData["gift.accountNumber2"];
+    delete nextData["gift.account_number2"];
     delete nextData["gift.accountName2"];
+    delete nextData["gift.account_name2"];
+    delete nextData["gift.account_holder2"];
     delete nextData["gift.bankLogo2"];
+    delete nextData["gift.bank_logo2"];
+    delete nextData["bankLogo2"];
   }
 
   const updatedInv = await updateInvitationData(db, {

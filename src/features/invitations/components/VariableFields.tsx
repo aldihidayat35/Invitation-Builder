@@ -181,6 +181,7 @@ export function VariableFields({
                       disabled={isFieldLocked}
                       required={field.required}
                       describedBy={describedBy}
+                      allowCustomLogo={false}
                     />
                   ) : field.control === "image" ? (
                   <InvitationImagePicker

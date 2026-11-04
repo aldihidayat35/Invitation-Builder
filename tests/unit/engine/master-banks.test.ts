@@ -14,10 +14,13 @@ import {
   resetMasterBanksToDefault,
 } from "@/lib/db/repositories/master-banks";
 import {
+  resolveDynamicBankLogo,
   resolveFallbackBankLogo,
   MASTER_BANKS_DEFAULT,
   extractBankAccountsFromRecord,
 } from "@/lib/engine/bank-lock";
+import { resolveDocument } from "@/lib/engine/resolve-document";
+import { canonicalDocumentV1Schema } from "@/lib/schema";
 
 describe("Master Banks & Logo Fallbacks", () => {
   describe("Default Bank Definitions & Fallback Resolver", () => {
@@ -199,6 +202,106 @@ describe("Master Banks & Logo Fallbacks", () => {
       expect(resetList.length).toBe(16);
       expect(resetList.map((b) => b.code)).toContain("bca");
       expect(resetList.map((b) => b.code)).toContain("qris");
+    });
+  });
+
+  describe("resolveDynamicBankLogo & Dynamic Resolution in resolveDocument", () => {
+    it("uses updated master bank logo when logoUrl is changed in master banks", () => {
+      const customMasterBanks = [
+        ...DEFAULT_MASTER_BANKS.filter((b) => b.code !== "bca"),
+        {
+          code: "bca",
+          name: "BCA",
+          category: "bank",
+          logoUrl: "/uploads/banks/bca-custom-new.png",
+          isActive: true,
+          sortOrder: 1,
+        },
+      ];
+
+      // Even if old stock logo is passed, it should dynamically resolve to the updated master logo!
+      const resolved = resolveDynamicBankLogo("BCA", "/images/banks/bca.svg", customMasterBanks);
+      expect(resolved).toBe("/uploads/banks/bca-custom-new.png");
+    });
+
+    it("never returns generic.svg for secondary bank when valid bank name is provided", () => {
+      // Secondary bank was previously stuck on generic.svg
+      const resolvedMandiri = resolveDynamicBankLogo(
+        "Bank Mandiri",
+        "/images/banks/generic.svg",
+      );
+      expect(resolvedMandiri).toBe("/images/banks/mandiri.svg");
+
+      const resolvedDana = resolveDynamicBankLogo(
+        "DANA",
+        "/images/banks/generic.svg",
+      );
+      expect(resolvedDana).toBe("/images/banks/dana.svg");
+    });
+
+    it("resolveDocument dynamically resolves bankLogo and bankLogo2 from masterBanks", () => {
+      const customMasterBanks = [
+        ...DEFAULT_MASTER_BANKS.filter((b) => b.code !== "mandiri"),
+        {
+          code: "mandiri",
+          name: "Bank Mandiri",
+          category: "bank",
+          logoUrl: "/uploads/banks/mandiri-updated.png",
+          isActive: true,
+          sortOrder: 2,
+        },
+      ];
+
+      const doc = canonicalDocumentV1Schema.parse({
+        schemaVersion: 1,
+        design: {
+          baseWidth: 390,
+          tokens: {},
+        },
+        variables: [],
+        sections: [
+          {
+            id: "sec-1",
+            baseHeight: 500,
+            visible: true,
+            overflow: "hidden",
+            elements: [
+              {
+                id: "gift-widget",
+                type: "widget",
+                widgetType: "gift",
+                frame: { x: 0, y: 0, w: 300, h: 200, rotation: 0 },
+                style: {},
+                props: {},
+              },
+            ],
+          },
+        ],
+      });
+
+      const invitationData = {
+        "gift.bank": "BCA",
+        "gift.accountNumber": "123456789",
+        "gift.accountName": "Mempelai 1",
+        "gift.bankLogo": "/images/banks/bca.svg",
+        "gift.bank2": "Bank Mandiri",
+        "gift.accountNumber2": "987654321",
+        "gift.accountName2": "Mempelai 2",
+        "gift.bankLogo2": "/images/banks/generic.svg", // simulated legacy generic.svg
+      };
+
+      const resolved = resolveDocument(doc, invitationData, {}, customMasterBanks);
+      const widget = resolved.sections[0]?.elements[0];
+      expect(widget).toBeDefined();
+      expect(widget?.type).toBe("widget");
+      if (widget && widget.type === "widget") {
+        expect(widget.props.bank).toBe("BCA");
+        expect(widget.props.bankLogo).toBe("/images/banks/bca.svg");
+        expect(widget.props.bank2).toBe("Bank Mandiri");
+        // bankLogo2 must be the updated custom master bank logo, NOT generic.svg!
+        expect(widget.props.bankLogo2).toBe("/uploads/banks/mandiri-updated.png");
+        expect(widget.props.accountNumber2).toBe("987654321");
+      }
     });
   });
 });

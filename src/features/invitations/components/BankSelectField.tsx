@@ -5,8 +5,14 @@ import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
 import type { MasterBankItem } from "@/features/banks";
 import { DEFAULT_MASTER_BANKS } from "@/lib/db/repositories/master-banks";
-import { resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
+import {
+  findMatchingMasterBank,
+  resolveDynamicBankLogo,
+  resolveFallbackBankLogo,
+} from "@/lib/engine/bank-lock";
 import styles from "./VariableFields.module.css";
+
+export { findMatchingMasterBank };
 
 export interface BankSelectFieldProps {
   readonly id: string;
@@ -20,95 +26,8 @@ export interface BankSelectFieldProps {
   readonly disabled?: boolean;
   readonly required?: boolean;
   readonly describedBy?: string;
+  readonly allowCustomLogo?: boolean;
   readonly onChange?: (bank: string, logo: string) => void;
-}
-
-export function findMatchingMasterBank<T extends { code: string; name: string }>(
-  availableBanks: readonly T[],
-  input?: string | null,
-): T | undefined {
-  if (!input || !input.trim()) return undefined;
-  const raw = input.trim().toLowerCase();
-  // Remove common Indonesian business/banking prefixes and suffixes
-  let cleaned = raw
-    .replace(/^(pt|pt\.|cv|cv\.)\s+/gi, "")
-    .trim();
-  cleaned = cleaned
-    .replace(/^bank\s+/gi, "")
-    .replace(/\s+bank$/gi, "")
-    .replace(/\s+(tbk|tbk\.)$/gi, "")
-    .trim();
-
-  // 1. Direct code or name match
-  let found = availableBanks.find(
-    (b) => b.code.toLowerCase() === raw || b.name.toLowerCase() === raw,
-  );
-  if (found) return found;
-
-  // 2. Cleaned name or code match
-  found = availableBanks.find(
-    (b) =>
-      b.code.toLowerCase() === cleaned ||
-      b.name.toLowerCase() === cleaned ||
-      b.name.toLowerCase().replace(/^bank\s+/gi, "").trim() === cleaned,
-  );
-  if (found) return found;
-
-  // 3. Known aliases and abbreviations
-  if (cleaned.includes("central asia") || raw.includes("bca") || cleaned === "bca") {
-    return availableBanks.find((b) => b.code === "bca");
-  }
-  if (cleaned.includes("mandiri") || raw.includes("livin")) {
-    return availableBanks.find((b) => b.code === "mandiri");
-  }
-  if (cleaned.includes("rakyat indonesia") || raw.includes("bri") || raw.includes("brimo")) {
-    return availableBanks.find((b) => b.code === "bri");
-  }
-  if (cleaned.includes("negara indonesia") || /\bbni\b/i.test(raw)) {
-    return availableBanks.find((b) => b.code === "bni");
-  }
-  if (cleaned.includes("syariah indonesia") || /\bbsi\b/i.test(raw) || raw.includes("syariah")) {
-    return availableBanks.find((b) => b.code === "bsi");
-  }
-  if (cleaned.includes("cimb") || cleaned.includes("niaga")) {
-    return availableBanks.find((b) => b.code === "cimb");
-  }
-  if (cleaned.includes("permata")) {
-    return availableBanks.find((b) => b.code === "permata");
-  }
-  if (cleaned.includes("jago")) {
-    return availableBanks.find((b) => b.code === "jago");
-  }
-  if (cleaned.includes("sea") || cleaned.includes("seabank")) {
-    return availableBanks.find((b) => b.code === "seabank");
-  }
-  if (cleaned.includes("blu")) {
-    return availableBanks.find((b) => b.code === "blu");
-  }
-  if (cleaned.includes("dana")) {
-    return availableBanks.find((b) => b.code === "dana");
-  }
-  if (cleaned.includes("gopay") || raw.includes("gojek")) {
-    return availableBanks.find((b) => b.code === "gopay");
-  }
-  if (cleaned.includes("ovo")) {
-    return availableBanks.find((b) => b.code === "ovo");
-  }
-  if (cleaned.includes("shopeepay") || cleaned.includes("shopee") || raw.includes("spay")) {
-    return availableBanks.find((b) => b.code === "shopeepay");
-  }
-  if (
-    cleaned.includes("linkaja") ||
-    raw.includes("tcash") ||
-    /\blink\b/i.test(raw)
-  ) {
-    return availableBanks.find((b) => b.code === "linkaja");
-  }
-  if (cleaned.includes("qris") || /\bqr\b/i.test(raw)) {
-    return availableBanks.find((b) => b.code === "qris");
-  }
-
-  return undefined;
 }
 
 export function BankSelectField({
@@ -123,6 +42,7 @@ export function BankSelectField({
   disabled = false,
   required = false,
   describedBy,
+  allowCustomLogo = true,
   onChange,
 }: BankSelectFieldProps) {
   const bankInputRef = useRef<HTMLInputElement>(null);
@@ -139,7 +59,7 @@ export function BankSelectField({
 
   const [selectedBank, setSelectedBank] = useState(initialBank);
   const [selectedLogo, setSelectedLogo] = useState(
-    initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : ""),
+    resolveDynamicBankLogo(initialBank, initialLogo, availableBanks),
   );
 
   const matchedBank = findMatchingMasterBank(availableBanks, initialBank);
@@ -167,8 +87,7 @@ export function BankSelectField({
     lastPropLogoRef.current = initialLogo;
 
     setSelectedBank(initialBank);
-    const resolvedLogo =
-      initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : "");
+    const resolvedLogo = resolveDynamicBankLogo(initialBank, initialLogo, availableBanks);
     setSelectedLogo(resolvedLogo);
 
     const found = findMatchingMasterBank(availableBanks, initialBank);
@@ -370,7 +289,7 @@ export function BankSelectField({
       )}
 
       {/* Toggle button to upload or change custom bank logo */}
-      {!disabled && (
+      {allowCustomLogo && !disabled && (
         <div>
           <button
             type="button"
@@ -383,7 +302,7 @@ export function BankSelectField({
       )}
 
       {/* Custom Logo Drawer / Upload Controls */}
-      {showCustomLogoBox && !disabled && (
+      {allowCustomLogo && showCustomLogoBox && !disabled && (
         <div className={styles.bankCustomLogoBox}>
           <div className={styles.bankCustomLogoActions}>
             <input

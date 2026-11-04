@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { copyTextToClipboard } from "@/lib/browser/clipboard";
-import { resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
+import { resolveDynamicBankLogo, resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
 import styles from "./runtime.module.css";
 import { WidgetFrame, type WidgetStyleProps } from "./WidgetFrame";
 import { CheckIcon, CopyIcon, QrIcon } from "./WidgetIcons";
@@ -49,7 +49,7 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
   const mainAccNo = s(extraProps?.accountNumber);
   if (mainAccNo) {
     const bankName = s(extraProps?.bank) || "BCA";
-    const logo = s(extraProps?.bankLogo) || resolveFallbackBankLogo(bankName);
+    const logo = resolveDynamicBankLogo(bankName, s(extraProps?.bankLogo));
     out.push({
       bank: bankName,
       accountNumber: mainAccNo,
@@ -60,15 +60,18 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
 
   // 2. Cek rekening kedua (opsional)
   const secAccNo = s(extraProps?.accountNumber2);
-  if (secAccNo) {
-    const bankName2 = s(extraProps?.bank2) || "Mandiri";
-    const logo2 = s(extraProps?.bankLogo2) || resolveFallbackBankLogo(bankName2);
-    out.push({
-      bank: bankName2,
-      accountNumber: secAccNo,
-      accountName: s(extraProps?.accountName2) || "Nama Mempelai",
-      bankLogo: logo2,
-    });
+  const secBank = s(extraProps?.bank2);
+  if (secAccNo || secBank) {
+    const bankName2 = secBank || "Mandiri";
+    const logo2 = resolveDynamicBankLogo(bankName2, s(extraProps?.bankLogo2));
+    if (secAccNo) {
+      out.push({
+        bank: bankName2,
+        accountNumber: secAccNo,
+        accountName: s(extraProps?.accountName2) || "Nama Mempelai",
+        bankLogo: logo2,
+      });
+    }
   }
 
   // 3. Cek array accounts (collection)
@@ -80,7 +83,7 @@ export function parseGiftAccounts(accounts: unknown, extraProps?: GiftExtraProps
       if (!accountNumber) continue;
       if (!out.some((a) => a.accountNumber === accountNumber)) {
         const b = s(rec.bank);
-        const l = s(rec.bankLogo || rec.logoUrl || rec.logo) || resolveFallbackBankLogo(b);
+        const l = resolveDynamicBankLogo(b, s(rec.bankLogo || rec.logoUrl || rec.logo));
         out.push({
           bank: b,
           accountNumber,
@@ -127,7 +130,7 @@ export function GiftWidget({
             bank: "BNI",
             accountNumber: "2020127190",
             accountName: "Muhammad Ridhwan",
-            bankLogo: resolveFallbackBankLogo("BNI"),
+            bankLogo: resolveDynamicBankLogo("BNI"),
           },
         ];
   const [feedback, setFeedback] = useState<{ index: number; ok: boolean } | null>(null);

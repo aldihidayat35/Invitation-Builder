@@ -104,6 +104,165 @@ export function resolveFallbackBankLogo(
   return "/images/banks/generic.svg";
 }
 
+/**
+ * Fuzzy matches an input bank/e-wallet name against the active master banks list.
+ */
+export function findMatchingMasterBank<T extends { code: string; name: string }>(
+  availableBanks: readonly T[],
+  input?: string | null,
+): T | undefined {
+  if (!input || !input.trim()) return undefined;
+  const raw = input.trim().toLowerCase();
+  // Remove common Indonesian business/banking prefixes and suffixes
+  let cleaned = raw
+    .replace(/^(pt|pt\.|cv|cv\.)\s+/gi, "")
+    .trim();
+  cleaned = cleaned
+    .replace(/^bank\s+/gi, "")
+    .replace(/\s+bank$/gi, "")
+    .replace(/\s+(tbk|tbk\.)$/gi, "")
+    .trim();
+
+  // 1. Direct code or name match
+  let found = availableBanks.find(
+    (b) => b.code.toLowerCase() === raw || b.name.toLowerCase() === raw,
+  );
+  if (found) return found;
+
+  // 2. Cleaned name or code match
+  found = availableBanks.find(
+    (b) =>
+      b.code.toLowerCase() === cleaned ||
+      b.name.toLowerCase() === cleaned ||
+      b.name.toLowerCase().replace(/^bank\s+/gi, "").trim() === cleaned,
+  );
+  if (found) return found;
+
+  // 3. Known aliases and abbreviations
+  if (cleaned.includes("central asia") || raw.includes("bca") || cleaned === "bca") {
+    return availableBanks.find((b) => b.code === "bca");
+  }
+  if (cleaned.includes("mandiri") || raw.includes("livin")) {
+    return availableBanks.find((b) => b.code === "mandiri");
+  }
+  if (cleaned.includes("rakyat indonesia") || raw.includes("bri") || raw.includes("brimo")) {
+    return availableBanks.find((b) => b.code === "bri");
+  }
+  if (cleaned.includes("negara indonesia") || /\bbni\b/i.test(raw)) {
+    return availableBanks.find((b) => b.code === "bni");
+  }
+  if (cleaned.includes("syariah indonesia") || /\bbsi\b/i.test(raw) || raw.includes("syariah")) {
+    return availableBanks.find((b) => b.code === "bsi");
+  }
+  if (cleaned.includes("cimb") || cleaned.includes("niaga")) {
+    return availableBanks.find((b) => b.code === "cimb");
+  }
+  if (cleaned.includes("permata")) {
+    return availableBanks.find((b) => b.code === "permata");
+  }
+  if (cleaned.includes("jago")) {
+    return availableBanks.find((b) => b.code === "jago");
+  }
+  if (cleaned.includes("sea") || cleaned.includes("seabank")) {
+    return availableBanks.find((b) => b.code === "seabank");
+  }
+  if (cleaned.includes("blu")) {
+    return availableBanks.find((b) => b.code === "blu");
+  }
+  if (cleaned.includes("dana")) {
+    return availableBanks.find((b) => b.code === "dana");
+  }
+  if (cleaned.includes("gopay") || raw.includes("gojek")) {
+    return availableBanks.find((b) => b.code === "gopay");
+  }
+  if (cleaned.includes("ovo")) {
+    return availableBanks.find((b) => b.code === "ovo");
+  }
+  if (cleaned.includes("shopeepay") || cleaned.includes("shopee") || raw.includes("spay")) {
+    return availableBanks.find((b) => b.code === "shopeepay");
+  }
+  if (
+    cleaned.includes("linkaja") ||
+    raw.includes("tcash") ||
+    /\blink\b/i.test(raw)
+  ) {
+    return availableBanks.find((b) => b.code === "linkaja");
+  }
+  if (cleaned.includes("qris") || /\bqr\b/i.test(raw)) {
+    return availableBanks.find((b) => b.code === "qris");
+  }
+
+  return undefined;
+}
+
+const STOCK_DEFAULT_LOGOS = new Set<string>(
+  MASTER_BANKS_DEFAULT.map((b) => b.logoUrl).concat(["/images/banks/generic.svg"]),
+);
+
+export function isStockBankLogo(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  const trimmed = url.trim();
+  if (trimmed === "" || trimmed.includes("generic.svg")) return true;
+  return (
+    STOCK_DEFAULT_LOGOS.has(trimmed) ||
+    (trimmed.startsWith("/images/banks/") && trimmed.endsWith(".svg"))
+  );
+}
+
+/**
+ * Resolves bank/e-wallet logo dynamically from active Master Banks.
+ *
+ * Rules:
+ * 1. If bankName matches a master bank, it follows the master bank's logo.
+ *    - If master bank has an updated logo from admin, it is used immediately.
+ *    - If currentLogo is stock default, it uses the master bank logo.
+ * 2. If currentLogo is an explicit custom external URL (e.g. https://... or custom upload), it is preserved.
+ * 3. Never returns generic.svg if bankName can be resolved.
+ */
+export function resolveDynamicBankLogo(
+  bankName?: string | null,
+  currentLogo?: string | null,
+  masterBanks?: readonly MasterBankItem[],
+): string {
+  const banks = masterBanks && masterBanks.length > 0 ? masterBanks : MASTER_BANKS_DEFAULT;
+
+  const isGeneric = (url?: string | null) =>
+    !url ||
+    url.trim() === "" ||
+    url.includes("generic.svg") ||
+    url.endsWith("/generic.svg");
+
+  const trimmedLogo = typeof currentLogo === "string" ? currentLogo.trim() : "";
+
+  if (bankName && bankName.trim()) {
+    const matched = findMatchingMasterBank(banks, bankName);
+    if (matched && matched.logoUrl && !isGeneric(matched.logoUrl)) {
+      const masterIsCustom = !isStockBankLogo(matched.logoUrl);
+      const currentIsStock = isStockBankLogo(trimmedLogo);
+
+      if (masterIsCustom || currentIsStock) {
+        return matched.logoUrl;
+      }
+
+      if (trimmedLogo && !isGeneric(trimmedLogo)) {
+        return trimmedLogo;
+      }
+
+      return matched.logoUrl;
+    }
+  }
+
+  if (trimmedLogo && !isGeneric(trimmedLogo)) {
+    return trimmedLogo;
+  }
+
+  if (bankName && bankName.trim()) {
+    return resolveFallbackBankLogo(bankName);
+  }
+
+  return "/images/banks/generic.svg";
+}
+
 export interface BankVerificationMeta {
   status: "unconfigured" | "pending_review" | "verified";
   verifiedAt?: string | null;

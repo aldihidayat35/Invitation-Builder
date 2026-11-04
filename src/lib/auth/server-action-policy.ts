@@ -93,6 +93,8 @@ export const SERVER_ACTION_POLICIES: Readonly<Record<string, readonly ActionActo
   toggleInvitationClosureAction: ["owner"],
   adminApproveOrderProductionAction: ["owner"],
   adminSendOrderToReviewAction: ["owner"],
+  adminApproveInvitationBankAction: ["owner"],
+  adminRejectInvitationBankAction: ["owner"],
   decideInvitationReviewAction: ["client"],
   verifyDomainAction: ["reseller"],
   updateBrandingAction: ["reseller"],

@@ -10,7 +10,7 @@ import {
   type CountdownUnit,
 } from "@/features/widgets/logic";
 import { parseGiftAccounts } from "@/features/widgets/runtime/GiftWidget";
-import { resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
+import { resolveDynamicBankLogo, resolveFallbackBankLogo } from "@/lib/engine/bank-lock";
 import { parseGalleryItems } from "@/features/widgets/runtime/GalleryWidget";
 import { parseFrameImage } from "@/features/widgets/runtime/PhotoFrameWidget";
 import { parseTimelineEvents } from "@/features/widgets/runtime/TimelineWidget";
@@ -1223,30 +1223,56 @@ function GiftVisual({
   const { surface } = colors(element, tokens);
   const props = element.props as Record<string, unknown>;
 
+  const getVarDefault = (...keys: string[]): string => {
+    if (!variables) return "";
+    for (const k of keys) {
+      const found = variables.find((v) => v.key === k);
+      if (found && "default" in found && typeof (found as { default?: unknown }).default === "string") {
+        const d = (found as { default: string }).default.trim();
+        if (d) return d;
+      }
+    }
+    return "";
+  };
+
   const rawBank = resolveCanvasBoundValue(props.bank, variables);
   const rawBankLogo = resolveCanvasBoundValue(props.bankLogo, variables);
-  const bankStr = typeof rawBank === "string" ? rawBank : "";
-  const bankLogoStr =
-    typeof rawBankLogo === "string" && rawBankLogo
-      ? rawBankLogo
-      : resolveFallbackBankLogo(bankStr || "BNI");
+  const bankStr =
+    typeof rawBank === "string" && rawBank.trim()
+      ? rawBank.trim()
+      : getVarDefault("gift.bank", "bank");
+  const bankLogoStr = resolveDynamicBankLogo(
+    bankStr || "BNI",
+    typeof rawBankLogo === "string" ? rawBankLogo : undefined,
+  );
 
   const rawBank2 = resolveCanvasBoundValue(props.bank2, variables);
   const rawBankLogo2 = resolveCanvasBoundValue(props.bankLogo2, variables);
-  const bankStr2 = typeof rawBank2 === "string" ? rawBank2 : "";
-  const bankLogoStr2 =
-    typeof rawBankLogo2 === "string" && rawBankLogo2
-      ? rawBankLogo2
-      : resolveFallbackBankLogo(bankStr2 || "Mandiri");
+  const bankStr2 =
+    typeof rawBank2 === "string" && rawBank2.trim()
+      ? rawBank2.trim()
+      : getVarDefault("gift.bank2", "bank2");
+  const bankLogoStr2 = resolveDynamicBankLogo(
+    bankStr2 || "Mandiri",
+    typeof rawBankLogo2 === "string" ? rawBankLogo2 : undefined,
+  );
 
   const resolvedExtra = {
     bank: bankStr,
-    accountNumber: resolveCanvasBoundValue(props.accountNumber, variables),
-    accountName: resolveCanvasBoundValue(props.accountName, variables),
+    accountNumber:
+      resolveCanvasBoundValue(props.accountNumber, variables) ||
+      getVarDefault("gift.accountNumber", "rekening"),
+    accountName:
+      resolveCanvasBoundValue(props.accountName, variables) ||
+      getVarDefault("gift.accountName", "gift.account_name"),
     bankLogo: bankLogoStr,
     bank2: bankStr2,
-    accountNumber2: resolveCanvasBoundValue(props.accountNumber2, variables),
-    accountName2: resolveCanvasBoundValue(props.accountName2, variables),
+    accountNumber2:
+      resolveCanvasBoundValue(props.accountNumber2, variables) ||
+      getVarDefault("gift.accountNumber2", "rekening2"),
+    accountName2:
+      resolveCanvasBoundValue(props.accountName2, variables) ||
+      getVarDefault("gift.accountName2", "gift.account_name2"),
     bankLogo2: bankLogoStr2,
   };
   const accounts = parseGiftAccounts(props.accounts, resolvedExtra);

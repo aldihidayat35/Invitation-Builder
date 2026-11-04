@@ -19,7 +19,11 @@ import {
   type ThemeTokens,
 } from "@/lib/schema";
 
-import { resolveFallbackBankLogo } from "./bank-lock";
+import {
+  resolveDynamicBankLogo,
+  resolveFallbackBankLogo,
+  type MasterBankItem,
+} from "./bank-lock";
 import { createResolver, type ResolvedBinding, type ResolverOptions } from "./resolver";
 import {
   BLOCKING_RESOLVE_CODES,
@@ -135,14 +139,24 @@ function imageFromBinding(resolved: ResolvedBinding): { assetId: string } | null
   return null;
 }
 
+export type ResolveDocumentOptions = ResolverOptions & {
+  masterBanks?: readonly MasterBankItem[];
+};
+
 export function resolveDocument(
   document: CanonicalDocument,
   data: InvitationData = {},
   guest: GuestData = {},
-  options: ResolverOptions = {},
+  options?: ResolveDocumentOptions | readonly MasterBankItem[],
 ): ResolvedDocument {
+  const isArray = Array.isArray(options);
+  const resolverOpts: ResolverOptions = isArray ? {} : (options as ResolverOptions) || {};
+  const masterBanks: readonly MasterBankItem[] | undefined = isArray
+    ? (options as readonly MasterBankItem[])
+    : (options as ResolveDocumentOptions | undefined)?.masterBanks;
+
   const registry = createVariableRegistry(document.variables);
-  const resolver = createResolver(registry, options);
+  const resolver = createResolver(registry, resolverOpts);
   const issues: ResolveIssue[] = [];
 
   const resolveAt = (
@@ -304,31 +318,67 @@ export function resolveDocument(
           }
 
           if (element.widgetType === "gift") {
-            const rawLogo1 =
-              (typeof data["gift.bankLogo"] === "string" && data["gift.bankLogo"]) ||
-              (typeof data["gift.bank_logo"] === "string" && data["gift.bank_logo"]) ||
-              (typeof data["bankLogo"] === "string" && data["bankLogo"]) ||
-              (typeof props.bankLogo === "string" && props.bankLogo);
             const bName1 =
-              typeof props.bank === "string"
-                ? props.bank
-                : typeof data["gift.bank"] === "string"
-                  ? data["gift.bank"]
-                  : undefined;
-            props.bankLogo = rawLogo1 || resolveFallbackBankLogo(bName1);
+              (typeof props.bank === "string" && props.bank.trim()) ||
+              (typeof data["gift.bank"] === "string" && data["gift.bank"].trim()) ||
+              (typeof data["bank"] === "string" && data["bank"].trim()) ||
+              (typeof data["gift.bank_name"] === "string" && data["gift.bank_name"].trim()) ||
+              undefined;
+            const accNo1 =
+              (typeof props.accountNumber === "string" && props.accountNumber.trim()) ||
+              (typeof data["gift.accountNumber"] === "string" && data["gift.accountNumber"].trim()) ||
+              (typeof data["gift.account_number"] === "string" && data["gift.account_number"].trim()) ||
+              (typeof data["rekening"] === "string" && data["rekening"].trim()) ||
+              undefined;
+            const accName1 =
+              (typeof props.accountName === "string" && props.accountName.trim()) ||
+              (typeof data["gift.accountName"] === "string" && data["gift.accountName"].trim()) ||
+              (typeof data["gift.account_name"] === "string" && data["gift.account_name"].trim()) ||
+              (typeof data["gift.account_holder"] === "string" && data["gift.account_holder"].trim()) ||
+              undefined;
+
+            const bName2 =
+              (typeof props.bank2 === "string" && props.bank2.trim()) ||
+              (typeof data["gift.bank2"] === "string" && data["gift.bank2"].trim()) ||
+              (typeof data["bank2"] === "string" && data["bank2"].trim()) ||
+              (typeof data["gift.bank_name2"] === "string" && data["gift.bank_name2"].trim()) ||
+              undefined;
+            const accNo2 =
+              (typeof props.accountNumber2 === "string" && props.accountNumber2.trim()) ||
+              (typeof data["gift.accountNumber2"] === "string" && data["gift.accountNumber2"].trim()) ||
+              (typeof data["gift.account_number2"] === "string" && data["gift.account_number2"].trim()) ||
+              (typeof data["rekening2"] === "string" && data["rekening2"].trim()) ||
+              undefined;
+            const accName2 =
+              (typeof props.accountName2 === "string" && props.accountName2.trim()) ||
+              (typeof data["gift.accountName2"] === "string" && data["gift.accountName2"].trim()) ||
+              (typeof data["gift.account_name2"] === "string" && data["gift.account_name2"].trim()) ||
+              (typeof data["gift.account_holder2"] === "string" && data["gift.account_holder2"].trim()) ||
+              undefined;
+
+            if (bName1) props.bank = bName1;
+            if (accNo1) props.accountNumber = accNo1;
+            if (accName1) props.accountName = accName1;
+
+            if (bName2) props.bank2 = bName2;
+            if (accNo2) props.accountNumber2 = accNo2;
+            if (accName2) props.accountName2 = accName2;
+
+            const rawLogo1 =
+              (typeof data["gift.bankLogo"] === "string" && data["gift.bankLogo"].trim()) ||
+              (typeof data["gift.bank_logo"] === "string" && data["gift.bank_logo"].trim()) ||
+              (typeof data["bankLogo"] === "string" && data["bankLogo"].trim()) ||
+              (typeof props.bankLogo === "string" && props.bankLogo.trim()) ||
+              undefined;
+            props.bankLogo = resolveDynamicBankLogo(bName1, rawLogo1, masterBanks);
 
             const rawLogo2 =
-              (typeof data["gift.bankLogo2"] === "string" && data["gift.bankLogo2"]) ||
-              (typeof data["gift.bank_logo2"] === "string" && data["gift.bank_logo2"]) ||
-              (typeof data["bankLogo2"] === "string" && data["bankLogo2"]) ||
-              (typeof props.bankLogo2 === "string" && props.bankLogo2);
-            const bName2 =
-              typeof props.bank2 === "string"
-                ? props.bank2
-                : typeof data["gift.bank2"] === "string"
-                  ? data["gift.bank2"]
-                  : undefined;
-            props.bankLogo2 = rawLogo2 || resolveFallbackBankLogo(bName2);
+              (typeof data["gift.bankLogo2"] === "string" && data["gift.bankLogo2"].trim()) ||
+              (typeof data["gift.bank_logo2"] === "string" && data["gift.bank_logo2"].trim()) ||
+              (typeof data["bankLogo2"] === "string" && data["bankLogo2"].trim()) ||
+              (typeof props.bankLogo2 === "string" && props.bankLogo2.trim()) ||
+              undefined;
+            props.bankLogo2 = resolveDynamicBankLogo(bName2, rawLogo2, masterBanks);
           }
 
           if (element.widgetType === "gallery" && hideSectionDueToGallery) {
