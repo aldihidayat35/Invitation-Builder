@@ -69,6 +69,16 @@ export async function regenerateClientToken(invitationId: string) {
   return service.regenerateInvitationClientToken(db, actor, invitationId);
 }
 
+export async function approveBankProposal(invitationId: string, adminNote?: string) {
+  const { db, actor } = await context();
+  return service.adminApproveBankProposal(db, actor, { invitationId, adminNote });
+}
+
+export async function rejectBankProposal(invitationId: string, adminNote?: string) {
+  const { db, actor } = await context();
+  return service.adminRejectBankProposal(db, actor, { invitationId, adminNote });
+}
+
 export async function saveData(
   invitationId: string,
   values: Record<string, string | undefined>,

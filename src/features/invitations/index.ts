@@ -8,6 +8,8 @@ export type { VariableFieldsProps } from "./components/VariableFields";
 export { CreateInvitationForm } from "./components/CreateInvitationForm";
 export type { PublishedTemplateOption } from "./components/CreateInvitationForm";
 export { DataModeForm } from "./components/DataModeForm";
+export { ClientBankProposalCallout } from "./components/ClientBankProposalCallout";
+export type { ClientBankProposalCalloutProps } from "./components/ClientBankProposalCallout";
 export { GuestPanel } from "./components/GuestPanel";
 export { AdminSectionManager } from "./components/AdminSectionManager";
 export { InvitationList } from "./components/InvitationList";

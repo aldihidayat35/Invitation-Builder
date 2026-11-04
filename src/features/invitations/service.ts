@@ -56,7 +56,10 @@ import {
   isInvitationExpiredOrClosed,
   type ExpiryDuration,
 } from "./expiry";
-import { findCustomerOrderByInvitationId } from "@/lib/db/repositories/orders";
+import {
+  findCustomerOrderByInvitationId,
+  insertOrderWorkflowEvent,
+} from "@/lib/db/repositories/orders";
 import {
   findTemplateById,
   findTemplateVersion,
@@ -80,7 +83,10 @@ import {
   validateInvitationData,
   isGiftAccountVariableKey,
   resolveFallbackBankLogo,
+  getBankVerificationMeta,
+  extractBankAccountsFromRecord,
   BANK_VERIFICATION_KEY,
+  type BankVerificationMeta,
   type DataIssue,
   type GuestData,
   type ResolvedDocument,
@@ -160,7 +166,12 @@ export class GuestNotFoundError extends Error {
 export async function assertInvitationWorkflowMutable(
   db: Database,
   invitationId: string,
+  actor?: Actor,
 ): Promise<void> {
+  // Super Admin (owner) selalu memiliki wewenang penuh untuk mengubah data tanpa terblokir workflow
+  if (actor?.systemRole === "owner") {
+    return;
+  }
   const order = await findCustomerOrderByInvitationId(db, invitationId);
   if (order && ["client_review", "approved"].includes(order.productionStatus)) {
     throw new InvitationInputError(
@@ -532,7 +543,7 @@ export async function saveInvitationData(
 ): Promise<SaveDataResult> {
   const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
   assertWritable(row);
-  await assertInvitationWorkflowMutable(db, row.id);
+  await assertInvitationWorkflowMutable(db, row.id, actor);
   const { document } = await loadPinnedDocument(db, row);
   const { data, issues } = parseFormSubmission(document.variables, input.values, {
     timeZone: input.timeZone ?? "Asia/Jakarta",
@@ -580,41 +591,123 @@ export async function saveInvitationData(
     }
   }
 
-  // Jika nama bank diset tetapi logo belum ada, berikan fallback logo otomatis
-  if (typeof finalStored["gift.bank"] === "string" && !finalStored["gift.bankLogo"]) {
-    finalStored["gift.bankLogo"] = resolveFallbackBankLogo(finalStored["gift.bank"] as string);
+  // Sinkronisasi dua arah untuk semua alias variabel rekening Utama
+  const pBank =
+    input.values["gift.bank"]?.trim() ||
+    input.values["gift.bank_name"]?.trim() ||
+    input.values["bank"]?.trim() ||
+    (typeof finalStored["gift.bank"] === "string" ? (finalStored["gift.bank"] as string) : "") ||
+    (typeof finalStored["gift.bank_name"] === "string" ? (finalStored["gift.bank_name"] as string) : "");
+
+  const pNumber =
+    input.values["gift.accountNumber"]?.trim() ||
+    input.values["gift.account_number"]?.trim() ||
+    input.values["rekening"]?.trim() ||
+    (typeof finalStored["gift.accountNumber"] === "string" ? (finalStored["gift.accountNumber"] as string) : "") ||
+    (typeof finalStored["gift.account_number"] === "string" ? (finalStored["gift.account_number"] as string) : "");
+
+  const pHolder =
+    input.values["gift.accountName"]?.trim() ||
+    input.values["gift.account_name"]?.trim() ||
+    input.values["gift.account_holder"]?.trim() ||
+    (typeof finalStored["gift.accountName"] === "string" ? (finalStored["gift.accountName"] as string) : "") ||
+    (typeof finalStored["gift.account_holder"] === "string" ? (finalStored["gift.account_holder"] as string) : "");
+
+  const pLogo =
+    input.values["gift.bankLogo"]?.trim() ||
+    input.values["gift.bank_logo"]?.trim() ||
+    input.values["bankLogo"]?.trim() ||
+    (typeof finalStored["gift.bankLogo"] === "string" ? (finalStored["gift.bankLogo"] as string) : "") ||
+    (pBank ? resolveFallbackBankLogo(pBank) : "");
+
+  if (pBank) {
+    finalStored["gift.bank"] = pBank;
+    finalStored["gift.bank_name"] = pBank;
+    finalStored["bank"] = pBank;
   }
-  if (typeof finalStored["gift.bank2"] === "string" && !finalStored["gift.bankLogo2"]) {
-    finalStored["gift.bankLogo2"] = resolveFallbackBankLogo(finalStored["gift.bank2"] as string);
+  if (pNumber) {
+    finalStored["gift.accountNumber"] = pNumber;
+    finalStored["gift.account_number"] = pNumber;
+  }
+  if (pHolder) {
+    finalStored["gift.accountName"] = pHolder;
+    finalStored["gift.account_name"] = pHolder;
+    finalStored["gift.account_holder"] = pHolder;
+  }
+  if (pLogo) {
+    finalStored["gift.bankLogo"] = pLogo;
+    finalStored["gift.bank_logo"] = pLogo;
+    finalStored["bankLogo"] = pLogo;
   }
 
-  // Sinkronkan status verifikasi bank jika ada di data undangan
-  if (BANK_VERIFICATION_KEY in baseData && typeof baseData[BANK_VERIFICATION_KEY] === "object") {
-    const meta = { ...(baseData[BANK_VERIFICATION_KEY] as Record<string, unknown>) };
-    const bName = typeof finalStored["gift.bank"] === "string" ? finalStored["gift.bank"] : "";
-    const bAcc = typeof finalStored["gift.accountNumber"] === "string" ? finalStored["gift.accountNumber"] : "";
-    const bHolder = typeof finalStored["gift.accountName"] === "string" ? finalStored["gift.accountName"] : "";
-    const bLogo = typeof finalStored["gift.bankLogo"] === "string" ? (finalStored["gift.bankLogo"] as string) : null;
-    if (bName || bAcc || bHolder) {
+  // Sinkronisasi dua arah untuk semua alias variabel rekening Kedua
+  const pBank2 =
+    input.values["gift.bank2"]?.trim() ||
+    input.values["gift.bank_name2"]?.trim() ||
+    input.values["bank2"]?.trim() ||
+    (typeof finalStored["gift.bank2"] === "string" ? (finalStored["gift.bank2"] as string) : "");
+
+  const pNumber2 =
+    input.values["gift.accountNumber2"]?.trim() ||
+    input.values["gift.account_number2"]?.trim() ||
+    (typeof finalStored["gift.accountNumber2"] === "string" ? (finalStored["gift.accountNumber2"] as string) : "");
+
+  const pHolder2 =
+    input.values["gift.accountName2"]?.trim() ||
+    input.values["gift.account_name2"]?.trim() ||
+    input.values["gift.account_holder2"]?.trim() ||
+    (typeof finalStored["gift.accountName2"] === "string" ? (finalStored["gift.accountName2"] as string) : "");
+
+  const pLogo2 =
+    input.values["gift.bankLogo2"]?.trim() ||
+    input.values["gift.bank_logo2"]?.trim() ||
+    input.values["bankLogo2"]?.trim() ||
+    (typeof finalStored["gift.bankLogo2"] === "string" ? (finalStored["gift.bankLogo2"] as string) : "") ||
+    (pBank2 ? resolveFallbackBankLogo(pBank2) : "");
+
+  if (pBank2 && pNumber2) {
+    finalStored["gift.bank2"] = pBank2;
+    finalStored["gift.bank_name2"] = pBank2;
+    finalStored["bank2"] = pBank2;
+    finalStored["gift.accountNumber2"] = pNumber2;
+    finalStored["gift.account_number2"] = pNumber2;
+    finalStored["gift.accountName2"] = pHolder2;
+    finalStored["gift.account_name2"] = pHolder2;
+    finalStored["gift.account_holder2"] = pHolder2;
+    if (pLogo2) {
+      finalStored["gift.bankLogo2"] = pLogo2;
+      finalStored["gift.bank_logo2"] = pLogo2;
+      finalStored["bankLogo2"] = pLogo2;
+    }
+  }
+
+  // Sinkronkan status verifikasi bank jika ada rekening atau meta sebelumnya
+  if (pBank || pNumber || pHolder || (BANK_VERIFICATION_KEY in baseData)) {
+    const meta =
+      typeof baseData[BANK_VERIFICATION_KEY] === "object" && baseData[BANK_VERIFICATION_KEY] !== null
+        ? { ...(baseData[BANK_VERIFICATION_KEY] as Record<string, unknown>) }
+        : {};
+
+    if (pBank || pNumber || pHolder) {
       meta.verifiedPrimary = {
-        bank: bName,
-        accountNumber: bAcc,
-        accountName: bHolder,
-        bankLogo: bLogo,
+        bank: pBank,
+        accountNumber: pNumber,
+        accountName: pHolder,
+        bankLogo: pLogo,
       };
       meta.status = "verified";
+      meta.verifiedAt = new Date().toISOString();
+      meta.verifiedBy = actor.userId;
+      meta.proposedPrimary = null;
+      meta.proposedSecondary = null;
     }
 
-    const bName2 = typeof finalStored["gift.bank2"] === "string" ? finalStored["gift.bank2"] : "";
-    const bAcc2 = typeof finalStored["gift.accountNumber2"] === "string" ? finalStored["gift.accountNumber2"] : "";
-    const bHolder2 = typeof finalStored["gift.accountName2"] === "string" ? finalStored["gift.accountName2"] : "";
-    const bLogo2 = typeof finalStored["gift.bankLogo2"] === "string" ? (finalStored["gift.bankLogo2"] as string) : null;
-    if (bName2 || bAcc2 || bHolder2) {
+    if (pBank2 && pNumber2) {
       meta.verifiedSecondary = {
-        bank: bName2,
-        accountNumber: bAcc2,
-        accountName: bHolder2,
-        bankLogo: bLogo2,
+        bank: pBank2,
+        accountNumber: pNumber2,
+        accountName: pHolder2,
+        bankLogo: pLogo2,
       };
     }
     finalStored[BANK_VERIFICATION_KEY] = meta;
@@ -662,7 +755,7 @@ export async function saveInvitationSections(
 ): Promise<InvitationSummary> {
   const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
   assertWritable(row);
-  await assertInvitationWorkflowMutable(db, row.id);
+  await assertInvitationWorkflowMutable(db, row.id, actor);
 
   const disabledClean = Array.isArray(input.disabledSections)
     ? input.disabledSections.filter((id) => typeof id === "string" && id.trim().length > 0)
@@ -725,7 +818,7 @@ export async function addGuest(
 ): Promise<GuestSummary> {
   const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
   assertWritable(row);
-  await assertInvitationWorkflowMutable(db, row.id);
+  await assertInvitationWorkflowMutable(db, row.id, actor);
   const name = guestNameSchema.safeParse(input.name);
   if (!name.success) {
     throw new InvitationInputError(name.error.issues[0]?.message ?? "Nama tamu tidak valid.");
@@ -760,7 +853,7 @@ export async function updateGuest(
 ): Promise<GuestSummary> {
   const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
   assertWritable(row);
-  await assertInvitationWorkflowMutable(db, row.id);
+  await assertInvitationWorkflowMutable(db, row.id, actor);
   const changes: { name?: string; maxParty?: number } = {};
   if (input.name !== undefined) {
     const name = guestNameSchema.safeParse(input.name);
@@ -793,7 +886,7 @@ export async function archiveGuest(
 ): Promise<GuestSummary> {
   const row = await loadAuthorized(db, actor, input.invitationId, "invitation:guest_manage");
   assertWritable(row);
-  await assertInvitationWorkflowMutable(db, row.id);
+  await assertInvitationWorkflowMutable(db, row.id, actor);
   return db.transaction(async (tx) => {
     const archived = await archiveGuestRow(tx, row.id, input.guestId);
     if (!archived) throw new GuestNotFoundError(input.guestId);
@@ -1484,4 +1577,184 @@ export async function regenerateInvitationClientToken(
     throw new Error("Gagal memperbarui token portal klien.");
   }
   return updated.clientAccessToken;
+}
+
+export async function adminApproveBankProposal(
+  db: Database,
+  actor: Actor,
+  input: {
+    invitationId: string;
+    adminNote?: string;
+  },
+): Promise<{ ok: boolean; bankVerification: BankVerificationMeta }> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
+  assertWritable(row);
+
+  const currentData = (row.data || {}) as Record<string, unknown>;
+  const meta = getBankVerificationMeta(currentData);
+
+  const proposalPrimary = meta.proposedPrimary || extractBankAccountsFromRecord(currentData).primary;
+  if (!proposalPrimary || !proposalPrimary.bank) {
+    throw new InvitationInputError("Tidak ada usulan rekening dari klien untuk disetujui.");
+  }
+
+  const primaryLogo =
+    proposalPrimary.bankLogo || resolveFallbackBankLogo(proposalPrimary.bank);
+  const secondaryLogo = meta.proposedSecondary?.bank
+    ? meta.proposedSecondary.bankLogo || resolveFallbackBankLogo(meta.proposedSecondary.bank)
+    : null;
+
+  const verifiedMeta: BankVerificationMeta = {
+    status: "verified",
+    verifiedAt: new Date().toISOString(),
+    verifiedBy: actor.userId,
+    verifiedPrimary: {
+      bank: proposalPrimary.bank,
+      accountNumber: proposalPrimary.accountNumber,
+      accountName: proposalPrimary.accountName,
+      bankLogo: primaryLogo,
+    },
+    verifiedSecondary: meta.proposedSecondary?.bank
+      ? {
+          bank: meta.proposedSecondary.bank,
+          accountNumber: meta.proposedSecondary.accountNumber,
+          accountName: meta.proposedSecondary.accountName,
+          bankLogo: secondaryLogo,
+        }
+      : null,
+    proposedPrimary: null,
+    proposedSecondary: null,
+    proposedAt: null,
+    clientNote: meta.clientNote ?? null,
+    adminNote: input.adminNote?.trim() || "Disetujui oleh Admin",
+  };
+
+  const bankPatch: Record<string, unknown> = {
+    "gift.bank": proposalPrimary.bank,
+    "gift.bank_name": proposalPrimary.bank,
+    "bank": proposalPrimary.bank,
+    "gift.accountNumber": proposalPrimary.accountNumber,
+    "gift.account_number": proposalPrimary.accountNumber,
+    "gift.accountName": proposalPrimary.accountName,
+    "gift.account_name": proposalPrimary.accountName,
+    "gift.account_holder": proposalPrimary.accountName,
+    "gift.bankLogo": primaryLogo,
+    "gift.bank_logo": primaryLogo,
+    "bankLogo": primaryLogo,
+    [BANK_VERIFICATION_KEY]: verifiedMeta,
+  };
+
+  if (meta.proposedSecondary?.bank && meta.proposedSecondary.accountNumber) {
+    bankPatch["gift.bank2"] = meta.proposedSecondary.bank;
+    bankPatch["gift.bank_name2"] = meta.proposedSecondary.bank;
+    bankPatch["bank2"] = meta.proposedSecondary.bank;
+    bankPatch["gift.accountNumber2"] = meta.proposedSecondary.accountNumber;
+    bankPatch["gift.account_number2"] = meta.proposedSecondary.accountNumber;
+    bankPatch["gift.accountName2"] = meta.proposedSecondary.accountName || "";
+    bankPatch["gift.account_name2"] = meta.proposedSecondary.accountName || "";
+    bankPatch["gift.account_holder2"] = meta.proposedSecondary.accountName || "";
+    bankPatch["gift.bankLogo2"] = secondaryLogo;
+    bankPatch["gift.bank_logo2"] = secondaryLogo;
+    bankPatch["bankLogo2"] = secondaryLogo;
+  }
+
+  const nextData = {
+    ...currentData,
+    ...bankPatch,
+  };
+
+  const updated = await updateInvitationData(db, { invitationId: row.id, data: nextData });
+  if (!updated) throw new InvitationArchivedError();
+
+  // Sinkronkan ke workflow order jika ada
+  try {
+    const order = await findCustomerOrderByInvitationId(db, row.id);
+    if (order) {
+      await insertOrderWorkflowEvent(db, {
+        orderId: order.id,
+        actorId: actor.userId,
+        eventType: "order.bank_verified",
+        note: `Rekening disetujui dari usulan portal klien oleh Admin: ${proposalPrimary.bank} - ${proposalPrimary.accountNumber} a/n ${proposalPrimary.accountName}`,
+        metadata: {
+          primary: proposalPrimary,
+          secondary: meta.proposedSecondary,
+        },
+      });
+    }
+  } catch (err) {
+    console.warn("[adminApproveBankProposal] order sync notice:", err);
+  }
+
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "order.bank_verified",
+    entityType: "invitation",
+    entityId: row.id,
+    metadata: {
+      primary: proposalPrimary,
+      secondary: meta.proposedSecondary,
+    },
+  });
+
+  return { ok: true, bankVerification: verifiedMeta };
+}
+
+export async function adminRejectBankProposal(
+  db: Database,
+  actor: Actor,
+  input: {
+    invitationId: string;
+    adminNote?: string;
+  },
+): Promise<{ ok: boolean; bankVerification: BankVerificationMeta }> {
+  const row = await loadAuthorized(db, actor, input.invitationId, "invitation:content_write");
+  assertWritable(row);
+
+  const currentData = (row.data || {}) as Record<string, unknown>;
+  const meta = getBankVerificationMeta(currentData);
+
+  const updatedMeta: BankVerificationMeta = {
+    ...meta,
+    status: meta.verifiedPrimary ? "verified" : "unconfigured",
+    proposedPrimary: null,
+    proposedSecondary: null,
+    proposedAt: null,
+    adminNote: input.adminNote?.trim() || "Usulan rekening klien ditolak oleh Admin",
+  };
+
+  const nextData = {
+    ...currentData,
+    [BANK_VERIFICATION_KEY]: updatedMeta,
+  };
+
+  const updated = await updateInvitationData(db, { invitationId: row.id, data: nextData });
+  if (!updated) throw new InvitationArchivedError();
+
+  try {
+    const order = await findCustomerOrderByInvitationId(db, row.id);
+    if (order) {
+      await insertOrderWorkflowEvent(db, {
+        orderId: order.id,
+        actorId: actor.userId,
+        eventType: "order.bank_rejected",
+        note: `Usulan rekening dari portal klien ditolak oleh Admin: ${input.adminNote || "Ditolak tanpa catatan"}`,
+      });
+    }
+  } catch (err) {
+    console.warn("[adminRejectBankProposal] order sync notice:", err);
+  }
+
+  await insertAuditLog(db, {
+    workspaceId: row.workspaceId,
+    actorId: actor.userId,
+    action: "order.portal_data_update",
+    entityType: "invitation",
+    entityId: row.id,
+    metadata: {
+      note: input.adminNote,
+    },
+  });
+
+  return { ok: true, bankVerification: updatedMeta };
 }

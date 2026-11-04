@@ -19,6 +19,8 @@ import {
   SAMPLE_GUEST_NAME,
   TemplateNotPublishedError,
   addGuest,
+  adminApproveBankProposal,
+  adminRejectBankProposal,
   archiveGuest,
   archiveInvitation,
   buildPreview,
@@ -476,5 +478,132 @@ describe("audit trail (FR-AUD-001)", () => {
       entityId: guest.id,
     });
     expect(guestLogs.map((l) => l.action).sort()).toEqual(["guest.archive", "guest.create"]);
+  });
+});
+
+describe("bank verification and client bank proposal approval", () => {
+  it("allows saving gift bank data freely and synchronizes aliases and verification status", async () => {
+    const invitation = await newInvitation("GiftTest");
+    await saveInvitationData(db(), world.ownerA, {
+      invitationId: invitation.id,
+      values: {
+        ...REQUIRED_VALUES,
+        "gift.bank": "DANA",
+        "gift.accountNumber": "08123456789",
+        "gift.accountName": "Siska",
+      },
+    });
+
+    const detail = await getInvitation(db(), world.ownerA, invitation.id);
+    expect(detail.data["gift.bank"]).toBe("DANA");
+    expect(detail.data["gift.bank_name"]).toBe("DANA");
+    expect(detail.data["gift.accountNumber"]).toBe("08123456789");
+    expect(detail.data["gift.accountName"]).toBe("Siska");
+    expect(detail.data["gift.bankLogo"]).toBe("/images/banks/dana.svg");
+
+    const meta = detail.data["_bankVerification"] as Record<string, unknown>;
+    expect(meta).toBeDefined();
+    expect(meta.status).toBe("verified");
+    expect((meta.verifiedPrimary as Record<string, unknown>).bank).toBe("DANA");
+  });
+
+  it("approves client proposed bank account and applies it immediately to invitation", async () => {
+    const invitation = await newInvitation("ProposalApprove");
+    // Simulate initial verified account
+    await saveInvitationData(db(), world.ownerA, {
+      invitationId: invitation.id,
+      values: {
+        ...REQUIRED_VALUES,
+        "gift.bank": "BCA",
+        "gift.accountNumber": "111222333",
+        "gift.accountName": "Budi",
+      },
+    });
+
+    // Simulate client submitting a proposal via client portal
+    const { updateInvitationData } = await import("@/lib/db/repositories/invitations");
+    const currentDetail = await getInvitation(db(), world.ownerA, invitation.id);
+    await updateInvitationData(db(), {
+      invitationId: invitation.id,
+      data: {
+        ...currentDetail.data,
+        _bankVerification: {
+          status: "pending_review",
+          verifiedPrimary: {
+            bank: "BCA",
+            accountNumber: "111222333",
+            accountName: "Budi",
+            bankLogo: "/images/banks/bca.svg",
+          },
+          proposedPrimary: {
+            bank: "DANA",
+            accountNumber: "0899999999",
+            accountName: "Budi Santoso",
+            bankLogo: "/images/banks/dana.svg",
+          },
+          proposedAt: new Date().toISOString(),
+          clientNote: "Ganti ke akun DANA saya",
+        },
+      },
+    });
+
+    // Admin approves proposal
+    const result = await adminApproveBankProposal(db(), world.ownerA, {
+      invitationId: invitation.id,
+      adminNote: "Disetujui via dashboard",
+    });
+    expect(result.ok).toBe(true);
+    expect(result.bankVerification.status).toBe("verified");
+    expect(result.bankVerification.verifiedPrimary?.bank).toBe("DANA");
+    expect(result.bankVerification.verifiedPrimary?.accountNumber).toBe("0899999999");
+    expect(result.bankVerification.proposedPrimary).toBeNull();
+
+    // Verify invitation data is updated
+    const afterApproval = await getInvitation(db(), world.ownerA, invitation.id);
+    expect(afterApproval.data["gift.bank"]).toBe("DANA");
+    expect(afterApproval.data["gift.accountNumber"]).toBe("0899999999");
+    expect(afterApproval.data["gift.accountName"]).toBe("Budi Santoso");
+  });
+
+  it("rejects client proposed bank account and preserves existing verified bank", async () => {
+    const invitation = await newInvitation("ProposalReject");
+    const { updateInvitationData } = await import("@/lib/db/repositories/invitations");
+    await updateInvitationData(db(), {
+      invitationId: invitation.id,
+      data: {
+        ...REQUIRED_VALUES,
+        "gift.bank": "BCA",
+        "gift.accountNumber": "111222333",
+        "gift.accountName": "Budi",
+        _bankVerification: {
+          status: "pending_review",
+          verifiedPrimary: {
+            bank: "BCA",
+            accountNumber: "111222333",
+            accountName: "Budi",
+            bankLogo: "/images/banks/bca.svg",
+          },
+          proposedPrimary: {
+            bank: "OVO",
+            accountNumber: "0877777777",
+            accountName: "Budi",
+            bankLogo: "/images/banks/ovo.svg",
+          },
+          proposedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    const res = await adminRejectBankProposal(db(), world.ownerA, {
+      invitationId: invitation.id,
+      adminNote: "Rekening tidak sesuai KTP",
+    });
+    expect(res.ok).toBe(true);
+    expect(res.bankVerification.status).toBe("verified");
+    expect(res.bankVerification.proposedPrimary).toBeNull();
+
+    const afterRejection = await getInvitation(db(), world.ownerA, invitation.id);
+    expect(afterRejection.data["gift.bank"]).toBe("BCA");
+    expect(afterRejection.data["gift.accountNumber"]).toBe("111222333");
   });
 });

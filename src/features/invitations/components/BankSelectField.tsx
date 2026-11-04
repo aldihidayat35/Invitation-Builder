@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { uploadAssetFile } from "@/features/assets/upload";
 import { assetUrl } from "@/features/assets/urls";
 import type { MasterBankItem } from "@/features/banks";
@@ -129,10 +129,13 @@ export function BankSelectField({
   const logoInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const availableBanks =
-    masterBanks && masterBanks.length > 0
-      ? masterBanks
-      : (DEFAULT_MASTER_BANKS as unknown as MasterBankItem[]);
+  const availableBanks = useMemo(
+    () =>
+      masterBanks && masterBanks.length > 0
+        ? masterBanks
+        : (DEFAULT_MASTER_BANKS as unknown as MasterBankItem[]),
+    [masterBanks],
+  );
 
   const [selectedBank, setSelectedBank] = useState(initialBank);
   const [selectedLogo, setSelectedLogo] = useState(

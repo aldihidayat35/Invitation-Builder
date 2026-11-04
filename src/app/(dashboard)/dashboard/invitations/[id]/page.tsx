@@ -22,9 +22,13 @@ import { getOrderByInvitationId } from "@/features/orders/api";
 import { getMasterBanks } from "@/features/banks";
 import { buildFormFields, formatFormValue, groupFormFields } from "@/lib/engine";
 import { classifyAllSections } from "@/features/invitations/sections-classifier";
+import { getBankVerificationMeta } from "@/lib/engine";
+import { ClientBankProposalCallout } from "@/features/invitations";
 import {
   addGuestAction,
+  adminApproveInvitationBankAction,
   adminApproveOrderProductionAction,
+  adminRejectInvitationBankAction,
   adminSendOrderToReviewAction,
   archiveGuestAction,
   extendInvitationExpiryAction,
@@ -83,6 +87,7 @@ export default async function InvitationDataPage({
   const imageAssets = assets.filter((asset) => asset.mimeType.startsWith("image/"));
   const imageOptions = imageAssets.map((asset) => ({ id: asset.id, label: asset.filename }));
   const archived = invitation.status === "archived";
+  const bankVerification = getBankVerificationMeta(invitation.data);
 
   const rawDisabled = Array.isArray(invitation.data["sections.disabled"])
     ? (invitation.data["sections.disabled"] as string[])
@@ -127,6 +132,16 @@ export default async function InvitationDataPage({
 
       <div className={styles.layout}>
         <div>
+          {bankVerification?.proposedPrimary && (
+            <ClientBankProposalCallout
+              invitationId={invitation.id}
+              bankVerification={bankVerification}
+              canApprove={canManagePublication || permissions.write}
+              approveAction={adminApproveInvitationBankAction}
+              rejectAction={adminRejectInvitationBankAction}
+            />
+          )}
+
           {groups.length === 0 ? (
             <div className={styles.empty}>
               <p>Template ini tidak memiliki variabel yang perlu diisi.</p>

@@ -105,6 +105,33 @@ export function VariableFields({
                   keyLower === "rekening_bank" ||
                   keyLower === "digital_gift.bank");
 
+              const resolvedBank = isBank1
+                ? values[field.key] ||
+                  values["gift.bank"] ||
+                  values["gift.bank_name"] ||
+                  values["bank"] ||
+                  values["rekening.bank"] ||
+                  ""
+                : values[field.key] ||
+                  values["gift.bank2"] ||
+                  values["gift.bank_name2"] ||
+                  values["bank2"] ||
+                  values["rekening.bank2"] ||
+                  "";
+
+              let resolvedValue = value;
+              if (!resolvedValue && isBankField) {
+                if (keyLower.includes("number") || keyLower.includes("rekening")) {
+                  resolvedValue = isBank2
+                    ? values["gift.accountNumber2"] || values["gift.account_number2"] || ""
+                    : values["gift.accountNumber"] || values["gift.account_number"] || values["rekening"] || "";
+                } else if (keyLower.includes("name") || keyLower.includes("holder")) {
+                  resolvedValue = isBank2
+                    ? values["gift.accountName2"] || values["gift.account_name2"] || values["gift.account_holder2"] || ""
+                    : values["gift.accountName"] || values["gift.account_name"] || values["gift.account_holder"] || "";
+                }
+              }
+
               const logoKey = isBank1 ? "gift.bankLogo" : "gift.bankLogo2";
               const initialLogo = isBank1
                 ? values["gift.bankLogo"] ??
@@ -147,7 +174,7 @@ export function VariableFields({
                       bankKey={field.key}
                       logoKey={logoKey}
                       namePrefix={namePrefix}
-                      initialBank={value}
+                      initialBank={resolvedBank}
                       initialLogo={initialLogo}
                       masterBanks={masterBanks}
                       workspaceId={workspaceId}
@@ -188,7 +215,7 @@ export function VariableFields({
                   <textarea
                     id={id}
                     name={name}
-                    defaultValue={value}
+                    defaultValue={resolvedValue}
                     disabled={isFieldLocked}
                     className={styles.input}
                     rows={3}
@@ -210,7 +237,7 @@ export function VariableFields({
                     id={id}
                     name={name}
                     type={INPUT_TYPE[field.control] ?? "text"}
-                    defaultValue={value}
+                    defaultValue={resolvedValue}
                     disabled={isFieldLocked}
                     className={styles.input}
                     required={field.required}

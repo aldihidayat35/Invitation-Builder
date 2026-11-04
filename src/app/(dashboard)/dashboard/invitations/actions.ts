@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   addGuest,
+  approveBankProposal,
   archive,
   archiveGuest,
   create,
@@ -13,6 +14,7 @@ import {
   importGuestsCsv,
   publish,
   regenerateClientToken,
+  rejectBankProposal,
   remove,
   permanentDelete,
   restore,
@@ -364,6 +366,40 @@ export async function saveInvitationSectionsAction(
     return { ok: true, message: "Pengaturan section berhasil diperbarui." };
   } catch (error) {
     return failure(error);
+  }
+}
+
+export async function adminApproveInvitationBankAction(
+  invitationId: string,
+  adminNote?: string,
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  await requireOwner();
+  const validId = idSchema.safeParse(invitationId);
+  if (!validId.success) return { ok: false, error: "ID undangan tidak valid." };
+
+  try {
+    await approveBankProposal(validId.data, adminNote);
+    revalidatePath(`${LIST}/${validId.data}`);
+    return { ok: true, message: "Rekening klien berhasil disetujui dan diterapkan!" };
+  } catch (error) {
+    return { ok: false, error: failure(error).error ?? "Gagal menyetujui rekening." };
+  }
+}
+
+export async function adminRejectInvitationBankAction(
+  invitationId: string,
+  adminNote?: string,
+): Promise<{ ok: boolean; message?: string; error?: string }> {
+  await requireOwner();
+  const validId = idSchema.safeParse(invitationId);
+  if (!validId.success) return { ok: false, error: "ID undangan tidak valid." };
+
+  try {
+    await rejectBankProposal(validId.data, adminNote);
+    revalidatePath(`${LIST}/${validId.data}`);
+    return { ok: true, message: "Usulan rekening klien berhasil ditolak." };
+  } catch (error) {
+    return { ok: false, error: failure(error).error ?? "Gagal menolak usulan rekening." };
   }
 }
 
