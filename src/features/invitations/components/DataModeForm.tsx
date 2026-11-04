@@ -102,9 +102,6 @@ export function DataModeForm({
       noValidate
       onInput={schedule}
       onChange={schedule}
-      onBlur={() => {
-        if (state === "dirty") void flush();
-      }}
       onSubmit={(event) => {
         event.preventDefault();
         void flush();
