@@ -225,10 +225,25 @@ describe("ClientPortalView Component & Interaction Suite", () => {
     expect(screen.getByText("Pengaturan & Pengisian Data Undangan")).toBeInTheDocument();
   });
 
+  it("renders Daftar Tamu as the first menu item and the default active tab on initial load", () => {
+    render(<ClientPortalView data={mockPortalData} token="token-123" />);
+
+    // Verify Daftar Tamu is displayed on initial open
+    expect(screen.getByText("Manajemen Daftar Tamu")).toBeInTheDocument();
+    expect(screen.getByText("Bpk. Bambang & Rekan")).toBeInTheDocument();
+
+    // Verify tab buttons order: Daftar Tamu is the first tab button
+    const tabs = screen.getAllByRole("button", { name: /(Daftar Tamu|Data Undangan|Galeri Foto|Musik Undangan|Atur Section|Review Undangan|Konfirmasi RSVP|Buku Doa)/i });
+    expect(tabs[0]).toHaveTextContent(/Daftar Tamu/i);
+  });
+
   it("supports switching between self-service and admin-assisted modes in Data Undangan tab", () => {
     render(<ClientPortalView data={mockPortalData} token="token-123" />);
 
-    // Initially in self-service
+    // Switch to Data Undangan tab
+    fireEvent.click(screen.getByRole("button", { name: /Data Undangan/i }));
+
+    // In self-service
     expect(screen.getByText("Isi Data Mandiri (Self-Service)")).toBeInTheDocument();
     expect(screen.getByLabelText(/Nama Panggilan Pria/i)).toBeInTheDocument();
 

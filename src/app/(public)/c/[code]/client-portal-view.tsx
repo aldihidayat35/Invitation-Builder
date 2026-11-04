@@ -49,8 +49,8 @@ interface ClientPortalViewProps {
 
 export function ClientPortalView({ data, token }: ClientPortalViewProps) {
   const [activeTab, setActiveTab] = useState<
-    "data" | "gallery" | "audio" | "sections" | "review" | "guests" | "rsvp" | "wishes"
-  >("data");
+    "guests" | "data" | "gallery" | "audio" | "sections" | "review" | "rsvp" | "wishes"
+  >("guests");
   const [galleryItems, setGalleryItems] = useState(data.galleryItems || []);
   const [audioSettings, setAudioSettings] = useState(data.audioSettings);
   const [dataMode, setDataMode] = useState<"self_service" | "admin_assisted">("self_service");
@@ -322,6 +322,15 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
         <div className={styles.tabsList}>
           <button
             type="button"
+            onClick={() => setActiveTab("guests")}
+            className={`${styles.tabBtn} ${activeTab === "guests" ? styles.tabBtnActive : ""}`}
+          >
+            <UsersIcon size={17} />
+            <span>Daftar Tamu</span>
+            <span className={styles.tabCount}>{data.guests.length}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("data")}
             className={`${styles.tabBtn} ${activeTab === "data" ? styles.tabBtnActive : ""}`}
           >
@@ -377,15 +386,6 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("guests")}
-            className={`${styles.tabBtn} ${activeTab === "guests" ? styles.tabBtnActive : ""}`}
-          >
-            <UsersIcon size={17} />
-            <span>Daftar Tamu</span>
-            <span className={styles.tabCount}>{data.guests.length}</span>
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveTab("rsvp")}
             className={`${styles.tabBtn} ${activeTab === "rsvp" ? styles.tabBtnActive : ""}`}
           >
@@ -407,7 +407,159 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
 
       {/* Main Body */}
       <main className={styles.mainContent}>
-        {/* --- TAB 0: DATA UNDANGAN (DUAL MODE: MANDIRI vs BANTUAN WA ADMIN) --- */}
+        {/* --- TAB 1: DAFTAR TAMU (MENU UTAMA AWAL) --- */}
+        {activeTab === "guests" && (
+          <div>
+            {/* Format Pesan WhatsApp Dinamis & Foto Kartu Preview */}
+            <PortalShareMessageCard
+              token={token}
+              presets={data.shareMessageTemplates}
+              activeTemplate={customShareMessage}
+              initialShareImageUrl={customShareImage}
+              eventDetails={{
+                eventTitle: coupleTitle,
+                eventDate: eventDateStr || undefined,
+                eventLocation: data.order?.eventLocation || undefined,
+              }}
+              shareableUrl={data.shareableUrl}
+              onTemplateChange={(newTmpl) => setCustomShareMessage(newTmpl)}
+              onShareImageChange={(newImg) => setCustomShareImage(newImg)}
+              onShowToast={showToast}
+            />
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <h2 className={styles.cardTitle}>Manajemen Daftar Tamu</h2>
+                  <p className={styles.cardDesc}>
+                    Tambahkan nama tamu untuk membuat link undangan personal dan bagikan via WhatsApp
+                  </p>
+                </div>
+              </div>
+
+              {/* Input Tambah Tamu */}
+              <form onSubmit={handleAddGuest} className={styles.guestInputRow}>
+                <input
+                  type="text"
+                  placeholder="Nama Tamu (misal: Bpk. Bambang & Keluarga)"
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  placeholder="Pax"
+                  value={newGuestPax}
+                  onChange={(e) => setNewGuestPax(e.target.value)}
+                  className={styles.inputPax}
+                  title="Jumlah orang (pax)"
+                />
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className={styles.btnPrimary}
+                >
+                  <UserPlusIcon size={16} />
+                  <span>Tambah Tamu</span>
+                </button>
+              </form>
+
+              {/* Filter Search */}
+              {data.guests.length > 3 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="search"
+                      placeholder="Cari nama tamu…"
+                      value={guestSearch}
+                      onChange={(e) => setGuestSearch(e.target.value)}
+                      className={styles.input}
+                      style={{ width: "100%", paddingLeft: "2.4rem" }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "0.85rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#8c7d6f",
+                        pointerEvents: "none",
+                        display: "flex",
+                      }}
+                    >
+                      <SearchIcon size={16} />
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* List Tamu */}
+              {filteredGuests.length === 0 ? (
+                <div className={styles.emptyBox}>
+                  {data.guests.length === 0
+                    ? "Belum ada tamu yang ditambahkan. Masukkan nama tamu di atas untuk mulai membagikan undangan."
+                    : "Tidak ditemukan tamu dengan nama tersebut."}
+                </div>
+              ) : (
+                <div className={styles.guestList}>
+                  {filteredGuests.map((g) => (
+                    <div key={g.id} className={styles.guestItem}>
+                      <div className={styles.guestInfo}>
+                        <span className={styles.guestName}>{g.name}</span>
+                        <span className={styles.guestSubtext}>
+                          Maks. {g.maxParty} orang (pax)
+                        </span>
+                      </div>
+
+                      <div className={styles.guestActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyGuestLink(g.name)}
+                          className={styles.btnGuestAction}
+                          title="Salin tautan link web undangan saja"
+                        >
+                          <LinkIcon size={14} />
+                          <span>Salin Link</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyFullMessage(g.name)}
+                          className={styles.btnGuestAction}
+                          title="Salin teks pesan lengkap beserta nama tamu dan link"
+                        >
+                          <CopyIcon size={14} />
+                          <span>Salin Pesan</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendWa(g.name)}
+                          className={styles.btnCopyWa}
+                          title="Buka WhatsApp dengan pesan yang sudah terisi otomatis"
+                        >
+                          <WhatsAppIcon size={15} />
+                          <span>Kirim WA</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGuest(g.id, g.name)}
+                          className={styles.btnDeleteGuest}
+                          title="Hapus tamu"
+                        >
+                          <Trash2Icon size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB 2: DATA UNDANGAN (DUAL MODE: MANDIRI vs BANTUAN WA ADMIN) --- */}
         {activeTab === "data" && (
           <div>
             <div className={styles.cardHeader} style={{ marginBottom: "1.25rem" }}>
@@ -672,158 +824,6 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* --- TAB 2: DAFTAR TAMU --- */}
-        {activeTab === "guests" && (
-          <div>
-            {/* Format Pesan WhatsApp Dinamis & Foto Kartu Preview */}
-            <PortalShareMessageCard
-              token={token}
-              presets={data.shareMessageTemplates}
-              activeTemplate={customShareMessage}
-              initialShareImageUrl={customShareImage}
-              eventDetails={{
-                eventTitle: coupleTitle,
-                eventDate: eventDateStr || undefined,
-                eventLocation: data.order?.eventLocation || undefined,
-              }}
-              shareableUrl={data.shareableUrl}
-              onTemplateChange={(newTmpl) => setCustomShareMessage(newTmpl)}
-              onShareImageChange={(newImg) => setCustomShareImage(newImg)}
-              onShowToast={showToast}
-            />
-
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <div>
-                  <h2 className={styles.cardTitle}>Manajemen Daftar Tamu</h2>
-                  <p className={styles.cardDesc}>
-                    Tambahkan nama tamu untuk membuat link undangan personal dan bagikan via WhatsApp
-                  </p>
-                </div>
-              </div>
-
-              {/* Input Tambah Tamu */}
-              <form onSubmit={handleAddGuest} className={styles.guestInputRow}>
-                <input
-                  type="text"
-                  placeholder="Nama Tamu (misal: Bpk. Bambang & Keluarga)"
-                  value={newGuestName}
-                  onChange={(e) => setNewGuestName(e.target.value)}
-                  className={styles.input}
-                  required
-                />
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  placeholder="Pax"
-                  value={newGuestPax}
-                  onChange={(e) => setNewGuestPax(e.target.value)}
-                  className={styles.inputPax}
-                  title="Jumlah orang (pax)"
-                />
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className={styles.btnPrimary}
-                >
-                  <UserPlusIcon size={16} />
-                  <span>Tambah Tamu</span>
-                </button>
-              </form>
-
-              {/* Filter Search */}
-              {data.guests.length > 3 && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="search"
-                      placeholder="Cari nama tamu…"
-                      value={guestSearch}
-                      onChange={(e) => setGuestSearch(e.target.value)}
-                      className={styles.input}
-                      style={{ width: "100%", paddingLeft: "2.4rem" }}
-                    />
-                    <span
-                      style={{
-                        position: "absolute",
-                        left: "0.85rem",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        color: "#8c7d6f",
-                        pointerEvents: "none",
-                        display: "flex",
-                      }}
-                    >
-                      <SearchIcon size={16} />
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* List Tamu */}
-              {filteredGuests.length === 0 ? (
-                <div className={styles.emptyBox}>
-                  {data.guests.length === 0
-                    ? "Belum ada tamu yang ditambahkan. Masukkan nama tamu di atas untuk mulai membagikan undangan."
-                    : "Tidak ditemukan tamu dengan nama tersebut."}
-                </div>
-              ) : (
-                <div className={styles.guestList}>
-                  {filteredGuests.map((g) => (
-                    <div key={g.id} className={styles.guestItem}>
-                      <div className={styles.guestInfo}>
-                        <span className={styles.guestName}>{g.name}</span>
-                        <span className={styles.guestSubtext}>
-                          Maks. {g.maxParty} orang (pax)
-                        </span>
-                      </div>
-
-                      <div className={styles.guestActions}>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyGuestLink(g.name)}
-                          className={styles.btnGuestAction}
-                          title="Salin tautan link web undangan saja"
-                        >
-                          <LinkIcon size={14} />
-                          <span>Salin Link</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyFullMessage(g.name)}
-                          className={styles.btnGuestAction}
-                          title="Salin teks pesan lengkap beserta nama tamu dan link"
-                        >
-                          <CopyIcon size={14} />
-                          <span>Salin Pesan</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleSendWa(g.name)}
-                          className={styles.btnCopyWa}
-                          title="Buka WhatsApp dengan pesan yang sudah terisi otomatis"
-                        >
-                          <WhatsAppIcon size={15} />
-                          <span>Kirim WA</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGuest(g.id, g.name)}
-                          className={styles.btnDeleteGuest}
-                          title="Hapus tamu"
-                        >
-                          <Trash2Icon size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}
