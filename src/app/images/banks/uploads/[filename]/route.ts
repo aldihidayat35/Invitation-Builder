@@ -35,3 +35,4 @@ export async function GET(
     return new NextResponse("Logo not found", { status: 404 });
   }
 }
+
