@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { ForbiddenError } from "@/lib/auth/errors";
 import { seedDev } from "@/lib/db/seed";
-import { templates } from "@/lib/db/schema";
+import { invitations, templates } from "@/lib/db/schema";
 import { createCustomerOrder, listOrderWorkflowEvents } from "@/lib/db/repositories/orders";
 import { findResellerProfileByUserId } from "@/lib/db/repositories/resellers";
 import { listMemberships, getMemberRole } from "@/lib/db/repositories/workspaces";
@@ -16,6 +16,7 @@ import {
   configureOrderProduction,
   createProjectForOrder,
   getInvitationReviewState,
+  markOrderPublished,
   OrderWorkflowError,
   submitClientDecision,
   transitionOrder,
@@ -168,5 +169,22 @@ describe("Fase 1 order-to-production workflow", () => {
 
     // Once approved, publish gate allows proceeding
     await expect(assertApprovedForPublish(db(), owner, project.invitationId)).resolves.toBeDefined();
+
+    // When order is published, content updates (e.g. changing bank to DANA) must be allowed
+    await markOrderPublished(db(), owner, approved);
+    await saveInvitationData(db(), owner, {
+      invitationId: project.invitationId,
+      values: { "gift.bank": "DANA", "gift.bankLogo": "/images/banks/dana.svg" },
+    });
+    const [inv] = await db()
+      .select()
+      .from(invitations)
+      .where(eq(invitations.id, project.invitationId));
+    expect(inv).toBeDefined();
+    if (!inv) throw new Error("Invitation not found");
+    expect(inv.data).toMatchObject({
+      "gift.bank": "DANA",
+      "gift.bankLogo": "/images/banks/dana.svg",
+    });
   });
 });

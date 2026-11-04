@@ -64,6 +64,7 @@ import {
 } from "@/lib/db/repositories/templates";
 import {
   guests,
+  publishedSnapshots,
   templates,
   templateVersions,
   type GuestRow,
@@ -161,7 +162,7 @@ export async function assertInvitationWorkflowMutable(
   invitationId: string,
 ): Promise<void> {
   const order = await findCustomerOrderByInvitationId(db, invitationId);
-  if (order && ["client_review", "approved", "published"].includes(order.productionStatus)) {
+  if (order && ["client_review", "approved"].includes(order.productionStatus)) {
     throw new InvitationInputError(
       "Data dikunci selama review atau setelah persetujuan klien. Minta revisi untuk membukanya kembali.",
     );
@@ -546,20 +547,36 @@ export async function saveInvitationData(
     ...stored,
   };
 
-  // Simpan nilai logo rekening jika disertakan dalam input form,
+  // Simpan nilai rekening dan logo rekening jika disertakan dalam input form,
   // meskipun tidak dideklarasikan secara eksplisit dalam document.variables template versi lama
-  for (const logoKey of [
+  for (const key of [
+    "gift.bank",
+    "gift.bank2",
+    "gift.bank_name",
+    "gift.bank_name2",
+    "bank",
+    "bank2",
+    "gift.accountNumber",
+    "gift.account_number",
+    "gift.accountNumber2",
+    "gift.account_number2",
+    "gift.accountName",
+    "gift.account_name",
+    "gift.accountName2",
+    "gift.account_name2",
     "gift.bankLogo",
     "gift.bankLogo2",
     "gift.bank_logo",
     "gift.bank_logo2",
     "bankLogo",
     "bankLogo2",
+    "rekening.bankLogo",
+    "rekening.bankLogo2",
   ]) {
-    if (typeof input.values[logoKey] === "string" && input.values[logoKey]!.trim()) {
-      finalStored[logoKey] = input.values[logoKey]!.trim();
-    } else if (input.values[logoKey] === "") {
-      delete finalStored[logoKey];
+    if (typeof input.values[key] === "string" && input.values[key]!.trim()) {
+      finalStored[key] = input.values[key]!.trim();
+    } else if (input.values[key] === "") {
+      delete finalStored[key];
     }
   }
 
@@ -577,19 +594,61 @@ export async function saveInvitationData(
     const bName = typeof finalStored["gift.bank"] === "string" ? finalStored["gift.bank"] : "";
     const bAcc = typeof finalStored["gift.accountNumber"] === "string" ? finalStored["gift.accountNumber"] : "";
     const bHolder = typeof finalStored["gift.accountName"] === "string" ? finalStored["gift.accountName"] : "";
+    const bLogo = typeof finalStored["gift.bankLogo"] === "string" ? (finalStored["gift.bankLogo"] as string) : null;
     if (bName || bAcc || bHolder) {
       meta.verifiedPrimary = {
         bank: bName,
         accountNumber: bAcc,
         accountName: bHolder,
+        bankLogo: bLogo,
       };
       meta.status = "verified";
+    }
+
+    const bName2 = typeof finalStored["gift.bank2"] === "string" ? finalStored["gift.bank2"] : "";
+    const bAcc2 = typeof finalStored["gift.accountNumber2"] === "string" ? finalStored["gift.accountNumber2"] : "";
+    const bHolder2 = typeof finalStored["gift.accountName2"] === "string" ? finalStored["gift.accountName2"] : "";
+    const bLogo2 = typeof finalStored["gift.bankLogo2"] === "string" ? (finalStored["gift.bankLogo2"] as string) : null;
+    if (bName2 || bAcc2 || bHolder2) {
+      meta.verifiedSecondary = {
+        bank: bName2,
+        accountNumber: bAcc2,
+        accountName: bHolder2,
+        bankLogo: bLogo2,
+      };
     }
     finalStored[BANK_VERIFICATION_KEY] = meta;
   }
 
   const updated = await updateInvitationData(db, { invitationId: row.id, data: finalStored });
   if (!updated) throw new InvitationArchivedError();
+
+  // Sinkronkan data snapshot aktif jika undangan sudah dipublish agar live view dan crawler langsung sinkron
+  if (row.activePublishedSnapshotId) {
+    try {
+      const [snapshot] = await db
+        .select()
+        .from(publishedSnapshots)
+        .where(eq(publishedSnapshots.id, row.activePublishedSnapshotId))
+        .limit(1);
+
+      if (snapshot) {
+        const snapData = (snapshot.data || {}) as Record<string, unknown>;
+        await db
+          .update(publishedSnapshots)
+          .set({
+            data: {
+              ...snapData,
+              ...finalStored,
+            },
+          })
+          .where(eq(publishedSnapshots.id, snapshot.id));
+      }
+    } catch (err) {
+      console.error("Failed to update active snapshot on saveInvitationData:", err);
+    }
+  }
+
   return { invitation: toSummary(updated), issues };
 }
 

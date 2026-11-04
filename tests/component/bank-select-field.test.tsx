@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { BankSelectField } from "@/features/invitations/components/BankSelectField";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { BankSelectField, findMatchingMasterBank } from "@/features/invitations/components/BankSelectField";
+import { DataModeForm } from "@/features/invitations/components/DataModeForm";
 import { VariableFields } from "@/features/invitations/components/VariableFields";
+import { DEFAULT_MASTER_BANKS } from "@/lib/db/repositories/master-banks";
 import type { FormGroup } from "@/lib/engine";
 
 describe("BankSelectField and VariableFields Combo Box", () => {
@@ -190,6 +192,117 @@ describe("BankSelectField and VariableFields Combo Box", () => {
 
     const logoImg = screen.getByRole("img", { name: "BCA" });
     expect(logoImg).toHaveAttribute("src", "https://example.com/custom-logo.png");
+  });
+
+  it("allows changing bank from BCA to DANA inside DataModeForm without resetting", async () => {
+    const save = vi.fn().mockResolvedValue({ ok: true, errors: {} });
+    const giftGroup: FormGroup = {
+      group: "gift",
+      label: "Gift",
+      fields: [
+        {
+          key: "gift.bank",
+          label: "Jenis Rekening / Bank (Utama)",
+          type: "text",
+          control: "text",
+          required: true,
+          group: "gift",
+          needsTimeZone: false,
+        },
+      ],
+    };
+
+    render(
+      <DataModeForm
+        invitationId="inv-1"
+        groups={[giftGroup]}
+        values={{ "gift.bank": "BCA" }}
+        initialErrors={{}}
+        save={save}
+      />,
+    );
+
+    const select = screen.getByTestId("var-gift.bank-select") as HTMLSelectElement;
+    expect(select.value).toBe("bca");
+
+    fireEvent.change(select, { target: { value: "dana" } });
+    expect(select.value).toBe("dana");
+
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    expect(save).toHaveBeenCalledWith(
+      "inv-1",
+      expect.objectContaining({ "gift.bank": "DANA", "gift.bankLogo": "/images/banks/dana.svg" }),
+    );
+  });
+
+  it("does not snap back to initial bank when parent re-renders before save completes", () => {
+    const { rerender } = render(
+      <BankSelectField
+        id="var-gift-bank"
+        bankKey="gift.bank"
+        logoKey="gift.bankLogo"
+        namePrefix="v."
+        initialBank="BCA"
+        initialLogo="/images/banks/bca.svg"
+      />,
+    );
+
+    const select = screen.getByTestId("var-gift-bank-select") as HTMLSelectElement;
+    expect(select.value).toBe("bca");
+
+    // User changes combo box to DANA
+    fireEvent.change(select, { target: { value: "dana" } });
+    expect(select.value).toBe("dana");
+
+    // Parent re-renders with the SAME initial props (before server revalidates)
+    rerender(
+      <BankSelectField
+        id="var-gift-bank"
+        bankKey="gift.bank"
+        logoKey="gift.bankLogo"
+        namePrefix="v."
+        initialBank="BCA"
+        initialLogo="/images/banks/bca.svg"
+      />,
+    );
+
+    // Value must STILL be dana, not snap back to bca!
+    expect(select.value).toBe("dana");
+    const hiddenBank = screen.getByTestId("var-gift-bank-hidden-bank") as HTMLInputElement;
+    expect(hiddenBank.value).toBe("DANA");
+  });
+
+  describe("findMatchingMasterBank", () => {
+    const banks = DEFAULT_MASTER_BANKS;
+
+    it("matches direct bank names and lowercase codes", () => {
+      expect(findMatchingMasterBank(banks, "BCA")?.code).toBe("bca");
+      expect(findMatchingMasterBank(banks, "bca")?.code).toBe("bca");
+      expect(findMatchingMasterBank(banks, "dana")?.code).toBe("dana");
+      expect(findMatchingMasterBank(banks, "DANA")?.code).toBe("dana");
+    });
+
+    it("matches prefixed bank names like 'Bank BCA' or 'PT Bank Central Asia'", () => {
+      expect(findMatchingMasterBank(banks, "Bank BCA")?.code).toBe("bca");
+      expect(findMatchingMasterBank(banks, "PT Bank Central Asia")?.code).toBe("bca");
+      expect(findMatchingMasterBank(banks, "Bank Mandiri")?.code).toBe("mandiri");
+      expect(findMatchingMasterBank(banks, "Bank Rakyat Indonesia")?.code).toBe("bri");
+      expect(findMatchingMasterBank(banks, "Bank Jago")?.code).toBe("jago");
+    });
+
+    it("matches e-wallets and special names", () => {
+      expect(findMatchingMasterBank(banks, "gopay")?.code).toBe("gopay");
+      expect(findMatchingMasterBank(banks, "GoPay")?.code).toBe("gopay");
+      expect(findMatchingMasterBank(banks, "SeaBank")?.code).toBe("seabank");
+      expect(findMatchingMasterBank(banks, "ShopeePay")?.code).toBe("shopeepay");
+      expect(findMatchingMasterBank(banks, "QRIS")?.code).toBe("qris");
+    });
+
+    it("returns undefined for non-preset custom banks", () => {
+      expect(findMatchingMasterBank(banks, "Bank Sampoerna")).toBeUndefined();
+      expect(findMatchingMasterBank(banks, "")).toBeUndefined();
+      expect(findMatchingMasterBank(banks, null)).toBeUndefined();
+    });
   });
 });
 

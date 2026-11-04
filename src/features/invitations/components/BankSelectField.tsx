@@ -23,6 +23,94 @@ export interface BankSelectFieldProps {
   readonly onChange?: (bank: string, logo: string) => void;
 }
 
+export function findMatchingMasterBank<T extends { code: string; name: string }>(
+  availableBanks: readonly T[],
+  input?: string | null,
+): T | undefined {
+  if (!input || !input.trim()) return undefined;
+  const raw = input.trim().toLowerCase();
+  // Remove common Indonesian business/banking prefixes and suffixes
+  let cleaned = raw
+    .replace(/^(pt|pt\.|cv|cv\.)\s+/gi, "")
+    .trim();
+  cleaned = cleaned
+    .replace(/^bank\s+/gi, "")
+    .replace(/\s+bank$/gi, "")
+    .replace(/\s+(tbk|tbk\.)$/gi, "")
+    .trim();
+
+  // 1. Direct code or name match
+  let found = availableBanks.find(
+    (b) => b.code.toLowerCase() === raw || b.name.toLowerCase() === raw,
+  );
+  if (found) return found;
+
+  // 2. Cleaned name or code match
+  found = availableBanks.find(
+    (b) =>
+      b.code.toLowerCase() === cleaned ||
+      b.name.toLowerCase() === cleaned ||
+      b.name.toLowerCase().replace(/^bank\s+/gi, "").trim() === cleaned,
+  );
+  if (found) return found;
+
+  // 3. Known aliases and abbreviations
+  if (cleaned.includes("central asia") || raw.includes("bca") || cleaned === "bca") {
+    return availableBanks.find((b) => b.code === "bca");
+  }
+  if (cleaned.includes("mandiri") || raw.includes("livin")) {
+    return availableBanks.find((b) => b.code === "mandiri");
+  }
+  if (cleaned.includes("rakyat indonesia") || raw.includes("bri") || raw.includes("brimo")) {
+    return availableBanks.find((b) => b.code === "bri");
+  }
+  if (cleaned.includes("negara indonesia") || /\bbni\b/i.test(raw)) {
+    return availableBanks.find((b) => b.code === "bni");
+  }
+  if (cleaned.includes("syariah indonesia") || /\bbsi\b/i.test(raw) || raw.includes("syariah")) {
+    return availableBanks.find((b) => b.code === "bsi");
+  }
+  if (cleaned.includes("cimb") || cleaned.includes("niaga")) {
+    return availableBanks.find((b) => b.code === "cimb");
+  }
+  if (cleaned.includes("permata")) {
+    return availableBanks.find((b) => b.code === "permata");
+  }
+  if (cleaned.includes("jago")) {
+    return availableBanks.find((b) => b.code === "jago");
+  }
+  if (cleaned.includes("sea") || cleaned.includes("seabank")) {
+    return availableBanks.find((b) => b.code === "seabank");
+  }
+  if (cleaned.includes("blu")) {
+    return availableBanks.find((b) => b.code === "blu");
+  }
+  if (cleaned.includes("dana")) {
+    return availableBanks.find((b) => b.code === "dana");
+  }
+  if (cleaned.includes("gopay") || raw.includes("gojek")) {
+    return availableBanks.find((b) => b.code === "gopay");
+  }
+  if (cleaned.includes("ovo")) {
+    return availableBanks.find((b) => b.code === "ovo");
+  }
+  if (cleaned.includes("shopeepay") || cleaned.includes("shopee") || raw.includes("spay")) {
+    return availableBanks.find((b) => b.code === "shopeepay");
+  }
+  if (
+    cleaned.includes("linkaja") ||
+    raw.includes("tcash") ||
+    /\blink\b/i.test(raw)
+  ) {
+    return availableBanks.find((b) => b.code === "linkaja");
+  }
+  if (cleaned.includes("qris") || /\bqr\b/i.test(raw)) {
+    return availableBanks.find((b) => b.code === "qris");
+  }
+
+  return undefined;
+}
+
 export function BankSelectField({
   id,
   bankKey,
@@ -51,11 +139,7 @@ export function BankSelectField({
     initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : ""),
   );
 
-  const matchedBank = availableBanks.find(
-    (b) =>
-      b.name.toLowerCase() === (initialBank || "").toLowerCase() ||
-      b.code.toLowerCase() === (initialBank || "").toLowerCase(),
-  );
+  const matchedBank = findMatchingMasterBank(availableBanks, initialBank);
 
   const [presetCode, setPresetCode] = useState<string>(
     matchedBank ? matchedBank.code : initialBank ? "__custom__" : "",
@@ -65,18 +149,26 @@ export function BankSelectField({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Synchronize internal state whenever initialBank or initialLogo props change
+  const lastPropBankRef = useRef(initialBank);
+  const lastPropLogoRef = useRef(initialLogo);
+
+  // Synchronize internal state ONLY when initialBank or initialLogo props genuinely change from the parent/server
   useEffect(() => {
+    if (
+      lastPropBankRef.current === initialBank &&
+      lastPropLogoRef.current === initialLogo
+    ) {
+      return;
+    }
+    lastPropBankRef.current = initialBank;
+    lastPropLogoRef.current = initialLogo;
+
     setSelectedBank(initialBank);
     const resolvedLogo =
       initialLogo || (initialBank ? resolveFallbackBankLogo(initialBank) : "");
     setSelectedLogo(resolvedLogo);
 
-    const found = availableBanks.find(
-      (b) =>
-        b.name.toLowerCase() === (initialBank || "").toLowerCase() ||
-        b.code.toLowerCase() === (initialBank || "").toLowerCase(),
-    );
+    const found = findMatchingMasterBank(availableBanks, initialBank);
     setPresetCode(found ? found.code : initialBank ? "__custom__" : "");
     setCustomBankName(found ? "" : initialBank);
   }, [initialBank, initialLogo, availableBanks]);
@@ -102,6 +194,7 @@ export function BankSelectField({
     setPresetCode(code);
     setUploadError(null);
     if (!code) {
+      setCustomBankName("");
       updateValues("", "");
       return;
     }
@@ -120,6 +213,7 @@ export function BankSelectField({
 
     const found = availableBanks.find((b) => b.code === code);
     if (found) {
+      setCustomBankName("");
       updateValues(found.name, found.logoUrl);
     }
   };
@@ -127,11 +221,7 @@ export function BankSelectField({
   const handleCustomNameChange = (name: string) => {
     setCustomBankName(name);
     const trimmed = name.trim();
-    const match = availableBanks.find(
-      (b) =>
-        b.name.toLowerCase() === trimmed.toLowerCase() ||
-        b.code.toLowerCase() === trimmed.toLowerCase(),
-    );
+    const match = findMatchingMasterBank(availableBanks, trimmed);
     // Jika ada logo kustom yang diunggah/diinput, pertahankan logo tersebut
     const isUploadedOrCustomUrl =
       selectedLogo &&

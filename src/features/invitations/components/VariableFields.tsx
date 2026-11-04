@@ -57,15 +57,19 @@ export function VariableFields({
     <div className={styles.groups}>
       {groups.map((group) => {
         // Sembunyikan input manual URL logo bank karena sudah ditangani otomatis oleh combo box pilihan bank
-        const visibleFields = group.fields.filter(
-          (f) =>
-            f.key !== "gift.bankLogo" &&
-            f.key !== "gift.bank_logo" &&
-            f.key !== "bankLogo" &&
-            f.key !== "gift.bankLogo2" &&
-            f.key !== "gift.bank_logo2" &&
-            f.key !== "bankLogo2",
-        );
+        const visibleFields = group.fields.filter((f) => {
+          const k = f.key.toLowerCase().trim();
+          return (
+            k !== "gift.banklogo" &&
+            k !== "gift.bank_logo" &&
+            k !== "banklogo" &&
+            k !== "gift.banklogo2" &&
+            k !== "gift.bank_logo2" &&
+            k !== "banklogo2" &&
+            k !== "rekening.banklogo" &&
+            k !== "rekening.banklogo2"
+          );
+        });
 
         return (
           <fieldset key={group.group} className={styles.group}>
@@ -81,14 +85,38 @@ export function VariableFields({
               const describedBy =
                 error || HINT[field.control] || isFieldLocked ? hintId : undefined;
 
-              const isBank1 =
-                field.key === "gift.bank" ||
-                field.key === "gift.bank_name" ||
-                field.key === "bank";
+              const keyLower = field.key.toLowerCase().trim();
               const isBank2 =
-                field.key === "gift.bank2" ||
-                field.key === "gift.bank_name2" ||
-                field.key === "bank2";
+                keyLower === "gift.bank2" ||
+                keyLower === "gift.bank_name2" ||
+                keyLower === "bank2" ||
+                keyLower === "rekening.bank2" ||
+                keyLower === "rekening_bank2" ||
+                keyLower === "digital_gift.bank2";
+              const isBank1 =
+                !isBank2 &&
+                (keyLower === "gift.bank" ||
+                  keyLower === "gift.bank_name" ||
+                  keyLower === "gift.bank1" ||
+                  keyLower === "gift.bank_name1" ||
+                  keyLower === "bank" ||
+                  keyLower === "bank1" ||
+                  keyLower === "rekening.bank" ||
+                  keyLower === "rekening_bank" ||
+                  keyLower === "digital_gift.bank");
+
+              const logoKey = isBank1 ? "gift.bankLogo" : "gift.bankLogo2";
+              const initialLogo = isBank1
+                ? values["gift.bankLogo"] ??
+                  values["gift.bank_logo"] ??
+                  values["bankLogo"] ??
+                  values["rekening.bankLogo"] ??
+                  ""
+                : values["gift.bankLogo2"] ??
+                  values["gift.bank_logo2"] ??
+                  values["bankLogo2"] ??
+                  values["rekening.bankLogo2"] ??
+                  "";
 
               return (
                 <div
@@ -117,14 +145,10 @@ export function VariableFields({
                     <BankSelectField
                       id={id}
                       bankKey={field.key}
-                      logoKey={isBank1 ? "gift.bankLogo" : "gift.bankLogo2"}
+                      logoKey={logoKey}
                       namePrefix={namePrefix}
                       initialBank={value}
-                      initialLogo={
-                        values[isBank1 ? "gift.bankLogo" : "gift.bankLogo2"] ??
-                        values[isBank1 ? "bankLogo" : "bankLogo2"] ??
-                        ""
-                      }
+                      initialLogo={initialLogo}
                       masterBanks={masterBanks}
                       workspaceId={workspaceId}
                       disabled={isFieldLocked}
