@@ -629,6 +629,7 @@ export function ClientPortalView({ data, token }: ClientPortalViewProps) {
                 previewUrl={data.previewUrl}
                 bankVerification={data.bankVerification}
                 masterBanks={data.masterBanks}
+                audioSettings={audioSettings}
                 onSwitchToAdmin={() => setDataMode("admin_assisted")}
                 onSaved={() => {
                   showToast("Data undangan berhasil disimpan!");

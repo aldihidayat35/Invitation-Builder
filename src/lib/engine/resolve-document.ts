@@ -459,6 +459,8 @@ export function resolveDocument(
   let customAudioSrc: string | undefined;
   if (typeof data["audio.src"] === "string" && data["audio.src"].trim()) {
     customAudioSrc = data["audio.src"].trim();
+  } else if (typeof data["audio.url"] === "string" && data["audio.url"].trim()) {
+    customAudioSrc = data["audio.url"].trim();
   } else if (typeof data["audio.assetId"] === "string" && data["audio.assetId"].trim()) {
     customAudioSrc = `/api/assets/${data["audio.assetId"].trim()}`;
   }

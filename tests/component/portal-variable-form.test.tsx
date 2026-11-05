@@ -178,3 +178,85 @@ describe("PortalVariableForm Master Bank Dropdown & Logo Auto-Binding", () => {
   });
 });
 
+describe("PortalVariableForm Music File Upload Input (FR-PORTAL-AUDIO-UPLOAD)", () => {
+  const audioGroups: FormGroup[] = [
+    {
+      group: "audio",
+      label: "Pengaturan Musik",
+      fields: [
+        {
+          key: "audio.url",
+          label: "Link / URL Audio Lagu",
+          type: "url",
+          control: "url",
+          required: false,
+          group: "audio",
+          needsTimeZone: false,
+        },
+      ],
+    },
+  ];
+
+  it("renders audio upload dropzone instead of url text input when audio variable exists", () => {
+    render(
+      <PortalVariableForm
+        token="test-token"
+        groups={audioGroups}
+        initialValues={{
+          "audio.url": "",
+        }}
+        initialErrors={{}}
+      />,
+    );
+
+    // Assert that NO url text input exists for audio
+    const urlInput = screen.queryByPlaceholderText("https://maps.google.com/...");
+    expect(urlInput).toBeNull();
+
+    // Assert that file upload dropzone is rendered
+    expect(
+      screen.getByText("Klik atau Tarik File Musik ke Sini (Upload MP3)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Format audio MP3, WAV, M4A, AAC, OGG (Maks. 20MB)"),
+    ).toBeInTheDocument();
+  });
+
+  it("renders dedicated music backsound upload card when template groups have no explicit audio variable", () => {
+    const noAudioGroups: FormGroup[] = [
+      {
+        group: "general",
+        label: "Informasi Umum",
+        fields: [
+          {
+            key: "event_title",
+            label: "Nama Acara",
+            type: "text",
+            control: "text",
+            required: true,
+            group: "general",
+            needsTimeZone: false,
+          },
+        ],
+      },
+    ];
+
+    render(
+      <PortalVariableForm
+        token="test-token"
+        groups={noAudioGroups}
+        initialValues={{
+          event_title: "Pernikahan Vidi & Hening",
+        }}
+        initialErrors={{}}
+      />,
+    );
+
+    expect(screen.getByText("Musik Latar Undangan (Backsound)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Klik atau Tarik File Musik ke Sini (Upload MP3)"),
+    ).toBeInTheDocument();
+  });
+});
+
+

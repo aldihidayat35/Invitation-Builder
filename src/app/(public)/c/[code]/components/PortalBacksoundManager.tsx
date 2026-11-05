@@ -51,7 +51,7 @@ export function PortalBacksoundManager({
     assetId: initialAudio?.assetId,
   }));
 
-  const [sourceTab, setSourceTab] = useState<"presets" | "upload">("presets");
+  const [sourceTab, setSourceTab] = useState<"presets" | "upload">("upload");
   const [selectedCategory, setSelectedCategory] = useState<string>("semua");
   const [playingPreviewSrc, setPlayingPreviewSrc] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -374,15 +374,30 @@ export function PortalBacksoundManager({
 
           <div className={styles.activeTrackControls}>
             {audio.src && (
-              <button
-                type="button"
-                onClick={() => handlePlayPreview(audio.src!)}
-                className={styles.playToggleBtn}
-                title={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik Sekarang"}
-                aria-label={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik"}
-              >
-                {isCurrentAudioPlaying ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => handlePlayPreview(audio.src!)}
+                  className={styles.playToggleBtn}
+                  title={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik Sekarang"}
+                  aria-label={isCurrentAudioPlaying ? "Jeda Musik" : "Putar Musik"}
+                >
+                  {isCurrentAudioPlaying ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceTab("upload");
+                    setTimeout(() => fileInputRef.current?.click(), 50);
+                  }}
+                  className={styles.btnSecondary}
+                  style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem", gap: "0.4rem" }}
+                  title="Ganti berkas musik"
+                >
+                  <UploadCloudIcon size={15} />
+                  <span>Ganti File Musik</span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -392,126 +407,27 @@ export function PortalBacksoundManager({
       <div className={styles.sourceTabs}>
         <button
           type="button"
-          onClick={() => setSourceTab("presets")}
-          className={`${styles.sourceTabBtn} ${
-            sourceTab === "presets" ? styles.sourceTabBtnActive : ""
-          }`}
-        >
-          <DiscIcon size={16} />
-          <span>Pilih dari Katalog Lagu</span>
-        </button>
-        <button
-          type="button"
           onClick={() => setSourceTab("upload")}
           className={`${styles.sourceTabBtn} ${
             sourceTab === "upload" ? styles.sourceTabBtnActive : ""
           }`}
         >
           <UploadCloudIcon size={16} />
-          <span>Unggah Musik Sendiri (MP3)</span>
+          <span>Unggah Berkas Audio Sendiri (MP3)</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSourceTab("presets")}
+          className={`${styles.sourceTabBtn} ${
+            sourceTab === "presets" ? styles.sourceTabBtnActive : ""
+          }`}
+        >
+          <DiscIcon size={16} />
+          <span>Pilih dari Katalog Lagu (Preset)</span>
         </button>
       </div>
 
-      {/* Tab 1: Presets Catalog */}
-      {sourceTab === "presets" && (
-        <div>
-          {/* Category Filter Pills */}
-          <div className={styles.categoryPills}>
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`${styles.categoryPill} ${
-                  selectedCategory === cat.id ? styles.categoryPillActive : ""
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Presets Grid */}
-          <div className={styles.presetGrid}>
-            {filteredPresets.map((preset) => {
-              const isSelected = audio.presetId === preset.id || audio.src === preset.src;
-              const isPlayingThis = playingPreviewSrc === preset.src;
-
-              return (
-                <div
-                  key={preset.id}
-                  className={`${styles.presetCard} ${isSelected ? styles.presetCardActive : ""}`}
-                >
-                  <div className={styles.presetCardHeader}>
-                    <div>
-                      <span className={styles.presetCategoryBadge}>{preset.category}</span>
-                      <h4 className={styles.presetTitle}>{preset.name}</h4>
-                      <p className={styles.presetArtist}>{preset.artist}</p>
-                    </div>
-                    {isSelected && (
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          background: "#c59b27",
-                          color: "#ffffff",
-                          padding: "0.2rem 0.6rem",
-                          borderRadius: "9999px",
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.3rem",
-                        }}
-                      >
-                        <CheckIcon size={12} />
-                        <span>Aktif</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {preset.description && (
-                    <p className={styles.presetDesc}>{preset.description}</p>
-                  )}
-
-                  <div className={styles.presetCardFooter}>
-                    <button
-                      type="button"
-                      onClick={() => handlePlayPreview(preset.src)}
-                      className={`${styles.btnPreviewSong} ${
-                        isPlayingThis ? styles.btnPreviewSongActive : ""
-                      }`}
-                      title="Dengarkan cuplikan lagu"
-                    >
-                      {isPlayingThis ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
-                      <span>{isPlayingThis ? "Jeda" : "Dengarkan"}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPreset(preset)}
-                      disabled={isSelected}
-                      className={`${styles.btnSelectSong} ${
-                        isSelected ? styles.btnSelectSongActive : ""
-                      }`}
-                    >
-                      {isSelected ? (
-                        <>
-                          <CheckIcon size={14} />
-                          <span>Digunakan</span>
-                        </>
-                      ) : (
-                        "Pilih Lagu"
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 2: Upload MP3 */}
+      {/* Tab 1: Upload MP3 */}
       {sourceTab === "upload" && (
         <div className={styles.uploadPanel}>
           <div>
@@ -622,6 +538,105 @@ export function PortalBacksoundManager({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab 2: Presets Catalog */}
+      {sourceTab === "presets" && (
+        <div>
+          {/* Category Filter Pills */}
+          <div className={styles.categoryPills}>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`${styles.categoryPill} ${
+                  selectedCategory === cat.id ? styles.categoryPillActive : ""
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Presets Grid */}
+          <div className={styles.presetGrid}>
+            {filteredPresets.map((preset) => {
+              const isSelected = audio.presetId === preset.id || audio.src === preset.src;
+              const isPlayingThis = playingPreviewSrc === preset.src;
+
+              return (
+                <div
+                  key={preset.id}
+                  className={`${styles.presetCard} ${isSelected ? styles.presetCardActive : ""}`}
+                >
+                  <div className={styles.presetCardHeader}>
+                    <div>
+                      <span className={styles.presetCategoryBadge}>{preset.category}</span>
+                      <h4 className={styles.presetTitle}>{preset.name}</h4>
+                      <p className={styles.presetArtist}>{preset.artist}</p>
+                    </div>
+                    {isSelected && (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          background: "#c59b27",
+                          color: "#ffffff",
+                          padding: "0.2rem 0.6rem",
+                          borderRadius: "9999px",
+                          fontWeight: 700,
+                          flexShrink: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.3rem",
+                        }}
+                      >
+                        <CheckIcon size={12} />
+                        <span>Aktif</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {preset.description && (
+                    <p className={styles.presetDesc}>{preset.description}</p>
+                  )}
+
+                  <div className={styles.presetCardFooter}>
+                    <button
+                      type="button"
+                      onClick={() => handlePlayPreview(preset.src)}
+                      className={`${styles.btnPreviewSong} ${
+                        isPlayingThis ? styles.btnPreviewSongActive : ""
+                      }`}
+                      title="Dengarkan cuplikan lagu"
+                    >
+                      {isPlayingThis ? <PauseIcon size={14} /> : <PlayIcon size={14} />}
+                      <span>{isPlayingThis ? "Jeda" : "Dengarkan"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPreset(preset)}
+                      disabled={isSelected}
+                      className={`${styles.btnSelectSong} ${
+                        isSelected ? styles.btnSelectSongActive : ""
+                      }`}
+                    >
+                      {isSelected ? (
+                        <>
+                          <CheckIcon size={14} />
+                          <span>Digunakan</span>
+                        </>
+                      ) : (
+                        "Pilih Lagu"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

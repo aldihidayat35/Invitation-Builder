@@ -11,6 +11,8 @@ import {
 } from "@/lib/engine";
 import { savePortalInvitationDataAction } from "../actions";
 import { PortalImageField } from "./PortalImageField";
+import { PortalAudioField } from "./PortalAudioField";
+import type { PortalAudioSettings } from "@/features/orders/service";
 import {
   VariableGroupIcon,
   ClockIcon,
@@ -24,8 +26,49 @@ import {
   XIcon,
   LightbulbIcon,
   WhatsAppIcon,
+  MusicIcon,
 } from "./PortalIcons";
 import styles from "../client-portal.module.css";
+
+export function isAudioVariableKey(key: string, label?: string): boolean {
+  const k = key.toLowerCase();
+  const l = (label || "").toLowerCase();
+  if (
+    k === "audio.url" ||
+    k === "audio.src" ||
+    k === "music.url" ||
+    k === "music.src" ||
+    k === "backsound.url" ||
+    k === "backsound.src" ||
+    k === "audio" ||
+    k === "music" ||
+    k === "backsound" ||
+    k === "lagu"
+  ) {
+    return true;
+  }
+  if (k.startsWith("audio.") || k.startsWith("music.") || k.startsWith("backsound.")) {
+    if (k.endsWith(".url") || k.endsWith(".src") || k.endsWith(".file") || k.endsWith(".mp3")) {
+      return true;
+    }
+  }
+  if (
+    l.includes("link audio") ||
+    l.includes("link musik") ||
+    l.includes("link lagu") ||
+    l.includes("url audio") ||
+    l.includes("url musik") ||
+    l.includes("url lagu") ||
+    l.includes("file audio") ||
+    l.includes("file musik") ||
+    l.includes("audio lagu") ||
+    l.includes("musik latar") ||
+    l.includes("backsound")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 interface PortalVariableFormProps {
   token: string;
@@ -35,6 +78,7 @@ interface PortalVariableFormProps {
   previewUrl?: string | null;
   bankVerification?: BankVerificationMeta | null;
   masterBanks?: readonly MasterBankItem[];
+  audioSettings?: PortalAudioSettings | null;
   onSwitchToAdmin?: () => void;
   onSaved?: (values: Record<string, string>) => void;
 }
@@ -49,10 +93,16 @@ export function PortalVariableForm({
   previewUrl,
   bankVerification,
   masterBanks = MASTER_BANKS_DEFAULT,
+  audioSettings,
   onSwitchToAdmin,
   onSaved,
 }: PortalVariableFormProps) {
-  const [values, setValues] = useState<Record<string, string>>(initialValues);
+  const [values, setValues] = useState<Record<string, string>>(() => ({
+    ...initialValues,
+    ...(audioSettings?.src && !initialValues["audio.url"] && !initialValues["audio.src"]
+      ? { "audio.src": audioSettings.src, "audio.url": audioSettings.src }
+      : {}),
+  }));
   const [errors, setErrors] = useState<Record<string, string>>(initialErrors);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -62,6 +112,10 @@ export function PortalVariableForm({
   const [bankChangeNote, setBankChangeNote] = useState(bankVerification?.clientNote ?? "");
 
   const isBankVerified = bankVerification?.status === "verified";
+
+  const hasAnyAudioVariable = groups.some((group) =>
+    group.fields.some((f) => isAudioVariableKey(f.key, f.label)),
+  );
 
   const valuesRef = useRef(values);
   useEffect(() => {
@@ -330,6 +384,21 @@ export function PortalVariableForm({
                           disabled={isFieldLocked}
                           token={token}
                           onChange={(newVal) => handleChange(field.key, newVal)}
+                          error={err}
+                        />
+                      ) : isAudioVariableKey(field.key, field.label) ? (
+                        <PortalAudioField
+                          id={fieldId}
+                          name={field.key}
+                          label={field.label}
+                          value={val || values["audio.src"] || values["audio.url"] || audioSettings?.src || ""}
+                          disabled={isFieldLocked}
+                          token={token}
+                          onChange={(newVal) => {
+                            handleChange(field.key, newVal);
+                            if (field.key === "audio.url") handleChange("audio.src", newVal);
+                            if (field.key === "audio.src") handleChange("audio.url", newVal);
+                          }}
                           error={err}
                         />
                       ) : isBankField &&
@@ -656,6 +725,36 @@ export function PortalVariableForm({
             </fieldset>
           );
         })}
+
+        {!hasAnyAudioVariable && (
+          <fieldset className={styles.varGroupCard}>
+            <legend className={styles.varGroupLegend}>
+              <span className={styles.varGroupIcon}>
+                <MusicIcon size={20} />
+              </span>
+              <span>Musik Latar Undangan (Backsound)</span>
+            </legend>
+
+            <div className={styles.varGrid}>
+              <div className={`${styles.varField} ${styles.varFieldFull}`}>
+                <label htmlFor="portal-field-audio-music" className={styles.varLabel}>
+                  <span>Unggah File Musik Latar Undangan</span>
+                </label>
+                <PortalAudioField
+                  id="portal-field-audio-music"
+                  name="audio.src"
+                  label="Musik Latar Undangan"
+                  value={values["audio.src"] || values["audio.url"] || audioSettings?.src || ""}
+                  token={token}
+                  onChange={(newVal) => {
+                    handleChange("audio.src", newVal);
+                    handleChange("audio.url", newVal);
+                  }}
+                />
+              </div>
+            </div>
+          </fieldset>
+        )}
       </div>
 
       {/* Assistance Switcher Banner */}

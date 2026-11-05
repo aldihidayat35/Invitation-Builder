@@ -1341,11 +1341,17 @@ export async function getClientPortalDataByToken(
     invData &&
     (invData["audio.enabled"] !== undefined ||
       invData["audio.src"] ||
+      invData["audio.url"] ||
       invData["audio.assetId"])
   ) {
     audioSettings = {
       enabled: invData["audio.enabled"] !== false,
-      src: typeof invData["audio.src"] === "string" ? invData["audio.src"] : undefined,
+      src:
+        typeof invData["audio.src"] === "string" && invData["audio.src"].trim()
+          ? invData["audio.src"].trim()
+          : typeof invData["audio.url"] === "string" && invData["audio.url"].trim()
+            ? invData["audio.url"].trim()
+            : undefined,
       title: typeof invData["audio.title"] === "string" ? invData["audio.title"] : undefined,
       artist: typeof invData["audio.artist"] === "string" ? invData["audio.artist"] : undefined,
       presetId: typeof invData["audio.presetId"] === "string" ? invData["audio.presetId"] : undefined,
@@ -1664,6 +1670,18 @@ export async function saveClientPortalInvitationData(
     ...safeNonBankStored,
   };
 
+  // Sinkronisasi audio file dari portal klien jika diisi / diunggah
+  const audioVal = values["audio.url"] || values["audio.src"];
+  if (typeof audioVal === "string" && audioVal.trim().length > 0) {
+    updatedData["audio.url"] = audioVal.trim();
+    updatedData["audio.src"] = audioVal.trim();
+    updatedData["audio.enabled"] = true;
+  } else if (values["audio.url"] === "" || values["audio.src"] === "") {
+    updatedData["audio.url"] = "";
+    updatedData["audio.src"] = "";
+    updatedData["audio.enabled"] = false;
+  }
+
   // Tangani usulan atau permohonan perubahan rekening dari klien
   let hasNewBankProposal = false;
   if (clientBankInput.primary) {
@@ -1881,7 +1899,12 @@ export async function saveClientPortalAudio(
   const updatedData: Record<string, unknown> = {
     ...invitation.data,
     "audio.enabled": audioSettings.enabled,
-    ...(audioSettings.src ? { "audio.src": audioSettings.src } : {}),
+    ...(audioSettings.src
+      ? {
+          "audio.src": audioSettings.src,
+          "audio.url": audioSettings.src,
+        }
+      : {}),
     ...(audioSettings.title ? { "audio.title": audioSettings.title } : {}),
     ...(audioSettings.artist ? { "audio.artist": audioSettings.artist } : {}),
     ...(audioSettings.presetId ? { "audio.presetId": audioSettings.presetId } : {}),
