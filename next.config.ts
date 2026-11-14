@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
   // Loaded from node_modules at runtime (native/WASM assets must not be bundled).
   serverExternalPackages: ["pg", "@electric-sql/pglite"],
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
+  },
   async headers() {
     return [{ source: "/:path*", headers: [...SECURITY_HEADERS] }];
   },

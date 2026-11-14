@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BACKSOUND_PRESETS, type BacksoundPreset } from "@/features/audio";
-import { savePortalAudioAction, uploadPortalAudioAssetAction } from "../actions";
+import { savePortalAudioAction } from "../actions";
+import { uploadPortalAudioClient } from "./portal-audio-uploader";
 import type { PortalAudioSettings } from "@/features/orders/service";
 import {
   MusicIcon,
@@ -158,10 +159,7 @@ export function PortalBacksoundManager({
     setUploadText(`Mengunggah berkas musik "${file.name}"…`);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await uploadPortalAudioAssetAction(token, formData);
+      const res = await uploadPortalAudioClient(token, file);
       if (res.ok && res.data) {
         const cleanName = file.name.replace(/\.[^.]+$/, "");
         const updated: PortalAudioSettings = {
@@ -178,9 +176,13 @@ export function PortalBacksoundManager({
       } else {
         alert(res.error || "Gagal mengunggah berkas audio.");
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error uploading audio:", err);
-      alert("Terjadi kesalahan saat mengunggah musik.");
+      const errMsg =
+        err instanceof Error && !err.message.includes("Minified React error")
+          ? err.message
+          : "Gagal mengunggah berkas musik. Pastikan berkas berformat MP3, WAV, atau M4A dan ukuran maksimal 20MB.";
+      alert(errMsg);
     } finally {
       setIsUploading(false);
       setUploadText("");
