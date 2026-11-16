@@ -23,7 +23,7 @@ async function open(url: string): Promise<Database> {
       mkdirSync(dirname(dataDir), { recursive: true });
       const pidFile = join(dataDir, "postmaster.pid");
       try {
-        if (existsSync(pidFile)) {
+        if (existsSync(/*turbopackIgnore: true*/ pidFile)) {
           unlinkSync(pidFile);
         }
       } catch {
@@ -60,7 +60,7 @@ async function open(url: string): Promise<Database> {
           }
         }
         // If dataDir was moved or removed, recreate it; otherwise use a fallback recovery directory to avoid re-opening the locked directory
-        const effectiveDir = (moved || !existsSync(dataDir)) ? dataDir : `${dataDir}_recovered_${Date.now()}`;
+        const effectiveDir = (moved || !existsSync(/*turbopackIgnore: true*/ dataDir)) ? dataDir : `${dataDir}_recovered_${Date.now()}`;
         mkdirSync(effectiveDir, { recursive: true });
         const freshConn = await connectPglite(effectiveDir);
         await freshConn.client.waitReady;
